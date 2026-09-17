@@ -8,6 +8,7 @@ import { createHud } from '../ui/hud.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { createSprite } from '../ui/sprite.js';
 import { gameState } from '../core/state.js';
+import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
 const MENU = [
@@ -62,6 +63,30 @@ export const startScreen = {
 
     const actions = document.createElement('div');
     actions.className = 'start__actions';
+
+    // Banner fuer die Tagesaufgaben - liegt bewusst ueber dem Startknopf,
+    // damit man abholbereite Belohnungen nicht uebersieht.
+    const aufgaben = getTagesAufgaben();
+    const offen = offeneBelohnungen();
+    const erledigt = aufgaben.filter((e) => e.fertig).length;
+
+    const aufgabenKnopf = document.createElement('button');
+    aufgabenKnopf.type = 'button';
+    aufgabenKnopf.className = `tagesbanner${offen > 0 ? ' is-ready' : ''}`;
+    aufgabenKnopf.innerHTML = `
+      <span class="tagesbanner__icon">📋</span>
+      <span class="tagesbanner__body">
+        <span class="tagesbanner__title">Tagesaufgaben</span>
+        <span class="tagesbanner__text">${
+          offen > 0
+            ? `${offen} Belohnung${offen > 1 ? 'en' : ''} abholbereit`
+            : `${erledigt} von ${aufgaben.length} geschafft`
+        }</span>
+      </span>
+      ${offen > 0 ? `<span class="tagesbanner__punkt">${offen}</span>` : '<span class="tagesbanner__pfeil">›</span>'}
+    `;
+    aufgabenKnopf.addEventListener('click', () => showScreen('daily'));
+    actions.appendChild(aufgabenKnopf);
 
     const startButton = document.createElement('button');
     startButton.className = 'btn btn--big';

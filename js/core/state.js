@@ -27,6 +27,13 @@ function createNewGame() {
     decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     characters: {}, // { monsterId: { level, xp, upgrades } } - siehe progression.js
     attackLevels: {}, // { attackId: level }
+    // Tagesaufgaben - siehe js/core/aufgaben.js
+    dailies: {
+      datum: null, // "JJJJ-MM-TT" des Tages, fuer den die Aufgaben gelten
+      aufgaben: [], // die ids der heutigen Aufgaben
+      fortschritt: {}, // { aufgabenId: Anzahl }
+      abgeholt: [], // ids, deren Belohnung schon geholt wurde
+    },
     settings: {
       sound: true,
       animations: true,
@@ -78,6 +85,14 @@ function uebernehmen(saved) {
   gameState.decks = saved.decks ?? {};
   gameState.characters = saved.characters ?? {};
   gameState.attackLevels = saved.attackLevels ?? {};
+  // Fehlt der Block in einem aelteren Spielstand, legt aufgaben.js ihn beim
+  // ersten Blick auf die Aufgaben selbst an.
+  gameState.dailies = {
+    datum: saved.dailies?.datum ?? null,
+    aufgaben: Array.isArray(saved.dailies?.aufgaben) ? saved.dailies.aufgaben : [],
+    fortschritt: saved.dailies?.fortschritt ?? {},
+    abgeholt: Array.isArray(saved.dailies?.abgeholt) ? saved.dailies.abgeholt : [],
+  };
   gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
 }
 

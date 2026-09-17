@@ -41,6 +41,15 @@ import { TRUHEN } from '../js/data/shop.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
 import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belohnung.js';
 import { BOSS_TRUHE } from '../js/data/shop.js';
+import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
+import {
+  aufgabeAbholen,
+  aufgabenFuerTag,
+  fortschrittMelden,
+  getTagesAufgaben,
+  heute,
+  offeneBelohnungen,
+} from '../js/core/aufgaben.js';
 import {
   MAX_ATTACKEN_LEVEL,
   MAX_STUFE,
@@ -476,6 +485,77 @@ console.log('\nBelohnungen');
   );
   pruefe('Normaler Kampf ohne Glueck gibt kein Material', materialBelohnung(ersterKampf, true, nieGlueck) === 0);
   pruefe('Normaler Kampf mit Glueck gibt Material', materialBelohnung(ersterKampf, true, immerGlueck) > 0);
+
+  resetProgress();
+}
+
+console.log('\nTagesaufgaben');
+{
+  resetProgress();
+
+  // Auswahl haengt nur am Datum - nie am Zufall.
+  const a = aufgabenFuerTag('2026-03-14');
+  const b = aufgabenFuerTag('2026-03-14');
+  const c = aufgabenFuerTag('2026-03-15');
+  pruefe('Gleicher Tag ergibt gleiche Aufgaben', a.join() === b.join());
+  pruefe('Anderer Tag ergibt andere Aufgaben', a.join() !== c.join());
+  pruefe(`Es sind ${AUFGABEN_PRO_TAG} Aufgaben pro Tag`, a.length === AUFGABEN_PRO_TAG);
+  pruefe('Keine Aufgabe kommt doppelt vor', new Set(a).size === a.length);
+
+  // Ueber viele Tage muss jede Aufgabe mal drankommen.
+  const gesehen = new Set();
+  for (let tag = 1; tag <= 200; tag++) {
+    aufgabenFuerTag(`2026-01-${String(tag).padStart(3, '0')}`).forEach((id) => gesehen.add(id));
+  }
+  pruefe('Jede Aufgabe kommt irgendwann dran', gesehen.size === AUFGABEN.length);
+
+  pruefe('Heute hat das Format JJJJ-MM-TT', /^\d{4}-\d{2}-\d{2}$/.test(heute()));
+  pruefe(
+    'Heute rechnet mit der Ortszeit',
+    heute(new Date(2026, 0, 5)) === '2026-01-05'
+  );
+
+  // Fortschritt melden und abholen
+  resetProgress();
+  const heutige = getTagesAufgaben();
+  pruefe('Es stehen heute Aufgaben an', heutige.length === AUFGABEN_PRO_TAG);
+  pruefe('Am Anfang ist nichts abholbar', offeneBelohnungen() === 0);
+
+  const erste = heutige[0].aufgabe;
+  fortschrittMelden(erste.typ, erste.ziel);
+  const nachher = getTagesAufgaben().find((e) => e.aufgabe.id === erste.id);
+  pruefe('Gemeldeter Fortschritt zaehlt', nachher.stand === erste.ziel && nachher.fertig);
+  pruefe('Fertige Aufgabe ist abholbar', offeneBelohnungen() >= 1);
+
+  // Fortschritt laeuft nie ueber das Ziel hinaus
+  fortschrittMelden(erste.typ, 999);
+  pruefe(
+    'Fortschritt bleibt beim Ziel stehen',
+    getTagesAufgaben().find((e) => e.aufgabe.id === erste.id).stand === erste.ziel
+  );
+
+  const muenzenVorher = gameState.coins;
+  const materialVorher = gameState.materials;
+  const lohn = aufgabeAbholen(erste.id);
+  pruefe('Abholen zahlt Muenzen und Material aus',
+    lohn !== null &&
+    gameState.coins === muenzenVorher + erste.muenzen &&
+    gameState.materials === materialVorher + erste.material);
+  pruefe('Zweimal abholen geht nicht', aufgabeAbholen(erste.id) === null);
+
+  // Nicht fertige Aufgaben lassen sich nicht abholen
+  const offene = getTagesAufgaben().find((e) => !e.fertig);
+  if (offene) pruefe('Unfertige Aufgabe laesst sich nicht abholen', aufgabeAbholen(offene.aufgabe.id) === null);
+
+  // Unbekannte Aufgabe
+  pruefe('Unbekannte Aufgabe laesst sich nicht abholen', aufgabeAbholen('gibt-es-nicht') === null);
+
+  // Tageswechsel setzt Fortschritt zurueck, laesst Muenzen aber stehen
+  const muenzenVorTagwechsel = gameState.coins;
+  gameState.dailies.datum = '2020-01-01';
+  const neuerTag = getTagesAufgaben();
+  pruefe('Neuer Tag startet bei 0', neuerTag.every((e) => e.stand === 0 && !e.abgeholt));
+  pruefe('Muenzen bleiben ueber den Tageswechsel', gameState.coins === muenzenVorTagwechsel);
 
   resetProgress();
 }

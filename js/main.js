@@ -20,6 +20,7 @@ import { battleScreen } from './screens/battle.js';
 import { monsterScreen } from './screens/monster.js';
 import { deckScreen } from './screens/deck.js';
 import { collectionScreen } from './screens/collection.js';
+import { dailyScreen } from './screens/daily.js';
 import { settingsScreen, applySettings } from './screens/settings.js';
 import { shopScreen } from './screens/shop.js';
 
@@ -44,5 +45,6 @@ registerScreen('deck', deckScreen);
 registerScreen('collection', collectionScreen);
 registerScreen('settings', settingsScreen);
 registerScreen('shop', shopScreen);
+registerScreen('daily', dailyScreen);
 
 showScreen('start');

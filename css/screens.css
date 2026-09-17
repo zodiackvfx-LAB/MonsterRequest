@@ -1432,3 +1432,142 @@
     font-size: 1.3rem;
   }
 }
+
+/* =========================================================
+   Tagesaufgaben
+   ========================================================= */
+
+/* Banner auf dem Startbildschirm */
+.tagesbanner {
+  font: inherit;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  text-align: left;
+  cursor: pointer;
+}
+
+.tagesbanner:active {
+  transform: translateY(2px);
+}
+
+/* Liegt eine Belohnung bereit, faellt das Banner auf. */
+.tagesbanner.is-ready {
+  border-color: var(--gold-2);
+  animation: bar-warnung-gold 1.4s ease-in-out infinite;
+}
+
+@keyframes bar-warnung-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 197, 61, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(255, 197, 61, 0.5); }
+}
+
+.tagesbanner__icon {
+  font-size: 1.5rem;
+}
+
+.tagesbanner__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.tagesbanner__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tagesbanner__text {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.tagesbanner.is-ready .tagesbanner__text {
+  color: var(--gold-2);
+  font-weight: 600;
+}
+
+.tagesbanner__punkt {
+  flex: 0 0 auto;
+  min-width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  color: var(--text-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tagesbanner__pfeil {
+  color: var(--text-dim);
+  font-size: 1.2rem;
+}
+
+/* Eine Zeile im Aufgabenbildschirm */
+.aufgabe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+}
+
+.aufgabe + .aufgabe {
+  margin-top: 8px;
+}
+
+.aufgabe.is-done {
+  opacity: 0.6;
+}
+
+.aufgabe__icon {
+  font-size: 1.5rem;
+  width: 28px;
+  text-align: center;
+}
+
+.aufgabe__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.aufgabe__name {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.aufgabe__text {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.aufgabe__stand {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* Schmalerer Balken als im Kampf. */
+.bar--schmal {
+  height: 9px;
+}
+
+.aufgabe__lohn {
+  flex: 0 0 auto;
+  min-width: 84px;
+  line-height: 1.25;
+  text-align: center;
+}

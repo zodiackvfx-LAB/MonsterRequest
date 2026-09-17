@@ -280,6 +280,7 @@
 /* ---------- Lebens- und XP-Anzeigen ---------- */
 .bar {
   position: relative;
+  display: block;
   height: 14px;
   background: #111a3d;
   border: 2px solid rgba(12, 18, 48, 0.75);
@@ -294,6 +295,9 @@
  * scaleX laeuft im Compositor und zeichnet zuverlaessig neu.
  */
 .bar__fill {
+  /* display: block, weil der Balken auch als <span> gebaut wird (z. B. bei
+     den Tagesaufgaben) - ein inline-Element haette weder Breite noch Hoehe. */
+  display: block;
   height: 100%;
   width: 100%;
   transform-origin: left center;

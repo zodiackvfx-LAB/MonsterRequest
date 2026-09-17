@@ -19,6 +19,7 @@ import { createBattle, MAX_XP } from '../core/battle.js';
 import { calculateStars, getDeck } from '../core/state.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
+import { fortschrittMelden } from '../core/aufgaben.js';
 import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
@@ -268,6 +269,9 @@ export const battleScreen = {
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
           floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
+          // Zaehlt fuer die Tagesaufgaben.
+          fortschrittMelden('attacke');
+          fortschrittMelden('schaden', event.amount);
           break;
         case 'enemy-attack':
           flash(ui.enemySprite, 'lunge-left');
@@ -320,6 +324,11 @@ export const battleScreen = {
         stars = calculateStars(state.player.hp, state.player.maxHp);
         // Berechnet und bucht Münzen, Erfahrung, Material und die Bosstruhe.
         belohnung = siegBelohnung(level, stars, basis.id);
+
+        // Tagesaufgaben mitzaehlen.
+        fortschrittMelden('sieg');
+        if (stars >= 3) fortschrittMelden('dreiSterne');
+        if (level.isBoss) fortschrittMelden('boss');
       }
 
       // Kurz warten, damit der letzte Treffer, die Schadenszahl und der

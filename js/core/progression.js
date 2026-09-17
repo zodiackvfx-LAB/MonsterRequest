@@ -14,6 +14,7 @@
  */
 
 import { gameState, saveProgress } from './state.js';
+import { fortschrittMelden } from './aufgaben.js';
 
 /* ------------------------------------------------------------------ */
 /*  Charakter-Level                                                    */
@@ -113,6 +114,7 @@ export function wertAufwerten(monsterId, wert) {
   gameState.materials -= kosten.material;
   charakter.upgrades[wert] = stufe + 1;
   saveProgress();
+  fortschrittMelden('aufwertung');
   return true;
 }
 
@@ -192,6 +194,7 @@ export function attackeAufwerten(attackId) {
   gameState.materials -= kosten.material;
   gameState.attackLevels[attackId] = level + 1;
   saveProgress();
+  fortschrittMelden('aufwertung');
   return true;
 }
 

@@ -10,6 +10,7 @@ import { TRUHEN } from '../data/shop.js';
 import { SELTENHEITEN } from '../data/items.js';
 import { truheOeffnen } from '../core/loot.js';
 import { bezahlen, beuteGutschreiben, gameState, kannBezahlen } from '../core/state.js';
+import { fortschrittMelden } from '../core/aufgaben.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
@@ -121,6 +122,9 @@ function chancenText(truhe) {
 function oeffnungZeigen(screen, truhe) {
   const stuecke = truheOeffnen(truhe);
   const timer = [];
+
+  // Zaehlt fuer die Tagesaufgabe "Schatzsucher".
+  fortschrittMelden('truhe');
 
   const overlay = document.createElement('div');
   overlay.className = 'overlay overlay--chest';
