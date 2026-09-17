@@ -20,7 +20,7 @@ export const mapScreen = {
 
     screen.innerHTML = `
       <header class="topbar">
-        <button class="button button--ghost button--small" id="btn-back">‹ Zurück</button>
+        <button class="button button--ghost button--small" id="btn-back">‹&nbsp;Zurück</button>
         <h2 class="topbar__title">${region}</h2>
         <span class="topbar__spacer"></span>
       </header>

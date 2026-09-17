@@ -34,17 +34,19 @@ export const battleScreen = {
     screen.className = 'screen screen--battle';
     screen.innerHTML = `
       <header class="topbar">
-        <button class="button button--ghost button--small" id="btn-flee">‹ Fliehen</button>
+        <button class="button button--ghost button--small" id="btn-flee">‹&nbsp;Fliehen</button>
         <h2 class="topbar__title">Level ${level.id}</h2>
         <span class="topbar__spacer"></span>
       </header>
 
       <section class="fighter fighter--enemy">
         <div class="fighter__bars">
-          <div class="fighter__name">${enemyMonster.name}</div>
-          <div class="bar bar--hp">
+          <div class="fighter__head">
+            <span class="fighter__name">${enemyMonster.name}</span>
+            <span class="fighter__hp" id="enemy-hp-text"></span>
+          </div>
+          <div class="bar bar--hp" id="enemy-hp-bar">
             <div class="bar__fill" id="enemy-hp-fill"></div>
-            <span class="bar__label" id="enemy-hp-text"></span>
           </div>
           <div class="mini-xp" title="XP des Gegners">
             <span class="mini-xp__label">XP</span>
@@ -59,10 +61,12 @@ export const battleScreen = {
       <section class="fighter fighter--player">
         <div class="monster-sprite idle-bob" id="player-sprite">${playerMonster.icon}</div>
         <div class="fighter__bars">
-          <div class="fighter__name">${playerMonster.name}</div>
-          <div class="bar bar--hp">
+          <div class="fighter__head">
+            <span class="fighter__name">${playerMonster.name}</span>
+            <span class="fighter__hp" id="player-hp-text"></span>
+          </div>
+          <div class="bar bar--hp" id="player-hp-bar">
             <div class="bar__fill" id="player-hp-fill"></div>
-            <span class="bar__label" id="player-hp-text"></span>
           </div>
         </div>
       </section>
@@ -81,9 +85,11 @@ export const battleScreen = {
     const ui = {
       enemyHpFill: screen.querySelector('#enemy-hp-fill'),
       enemyHpText: screen.querySelector('#enemy-hp-text'),
+      enemyHpBar: screen.querySelector('#enemy-hp-bar'),
       enemySprite: screen.querySelector('#enemy-sprite'),
       playerHpFill: screen.querySelector('#player-hp-fill'),
       playerHpText: screen.querySelector('#player-hp-text'),
+      playerHpBar: screen.querySelector('#player-hp-bar'),
       playerSprite: screen.querySelector('#player-sprite'),
       log: screen.querySelector('#battle-log'),
       xpText: screen.querySelector('#xp-text'),
@@ -121,10 +127,8 @@ export const battleScreen = {
     /* ---------- 3. Anzeige aktualisieren ---------- */
     function render(state) {
       // Lebensbalken
-      ui.enemyHpFill.style.width = `${(state.enemy.hp / state.enemy.maxHp) * 100}%`;
-      ui.enemyHpText.textContent = `${state.enemy.hp} / ${state.enemy.maxHp}`;
-      ui.playerHpFill.style.width = `${(state.player.hp / state.player.maxHp) * 100}%`;
-      ui.playerHpText.textContent = `${state.player.hp} / ${state.player.maxHp}`;
+      renderHp(ui.enemyHpBar, ui.enemyHpFill, ui.enemyHpText, state.enemy);
+      renderHp(ui.playerHpBar, ui.playerHpFill, ui.playerHpText, state.player);
 
       // XP beider Seiten - gleiche Anzeige, weil gleiche Regeln
       ui.xpText.textContent = `${state.player.xp} / ${MAX_XP}`;
@@ -144,6 +148,15 @@ export const battleScreen = {
         card.classList.toggle('is-disabled', !affordable);
         card.disabled = !affordable;
       });
+    }
+
+    /** Aktualisiert Balken und Zahl der Lebenspunkte. */
+    function renderHp(bar, fill, text, fighter) {
+      const share = fighter.hp / fighter.maxHp;
+      fill.style.width = `${share * 100}%`;
+      text.textContent = `${fighter.hp} / ${fighter.maxHp}`;
+      // Unter 30 % wird der Balken rot - deutlich sichtbar, dass es eng wird.
+      bar.classList.toggle('is-low', share <= 0.3);
     }
 
     /** Färbt die XP-Punkte eines Kämpfers passend zu seinen XP ein. */
