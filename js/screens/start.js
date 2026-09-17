@@ -6,6 +6,7 @@ import { showScreen } from '../core/screens.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud } from '../ui/hud.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { createSprite } from '../ui/sprite.js';
 import { gameState } from '../core/state.js';
 
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
@@ -52,9 +53,10 @@ export const startScreen = {
     const hero = document.createElement('div');
     hero.className = 'start__hero';
     hero.innerHTML = `
-      <div class="sprite sprite--large idle-bob">${starter.icon}</div>
+      <div class="sprite sprite--large idle-bob" id="hero-sprite"></div>
       <p class="start__hero-name">Dein Begleiter: ${starter.name}</p>
     `;
+    hero.querySelector('#hero-sprite').appendChild(createSprite(starter));
     screen.appendChild(hero);
 
     const actions = document.createElement('div');

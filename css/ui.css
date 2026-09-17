@@ -222,6 +222,7 @@
   height: 38px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   font-size: 1.3rem;
   border-radius: 50%;
   background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
@@ -417,14 +418,35 @@
   box-shadow: 0 6px 14px rgba(12, 30, 10, 0.35);
 }
 
+/* Behälter für eine Pixel-Figur. Die Größe steht in --sprite und wird
+   weiter unten je nach Bildschirm angepasst. */
 .sprite {
-  font-size: 5rem;
-  line-height: 1;
+  width: var(--sprite, 96px);
+  height: var(--sprite, 96px);
+  display: grid;
+  place-items: end center;
   filter: drop-shadow(0 8px 8px rgba(10, 20, 40, 0.4));
 }
 
 .sprite--large {
-  font-size: 7rem;
+  width: var(--sprite-large, 150px);
+  height: var(--sprite-large, 150px);
+}
+
+/* Bosse werden größer dargestellt als normale Gegner. */
+.sprite--boss {
+  width: calc(var(--sprite, 96px) * 1.35);
+  height: calc(var(--sprite, 96px) * 1.35);
+}
+
+/* Die Figur selbst: hart skaliert, damit die Pixel scharf bleiben. */
+.pixel-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 /* ---------- Overlay (Sieg/Niederlage/Dialoge) ---------- */

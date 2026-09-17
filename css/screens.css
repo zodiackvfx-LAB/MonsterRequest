@@ -223,6 +223,15 @@
   display: grid;
   gap: 2px;
   text-align: center;
+  justify-items: center;
+}
+
+/* Vorschau des Gegners in der Infoleiste */
+.map__info-sprite {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
 }
 
 .map__info-title {
@@ -266,6 +275,12 @@
 .stage--enemy {
   bottom: 26%;
   right: 8%;
+}
+
+/* Die Figuren sind nach rechts gezeichnet. Der Gegner wird gespiegelt,
+   damit sich beide anschauen. */
+.stage--enemy .pixel-sprite {
+  transform: scaleX(-1);
 }
 
 .stage--player {
@@ -499,7 +514,11 @@
 }
 
 .collection-item__sprite {
-  font-size: 2.6rem;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
 }
 
 .collection-item.is-locked .collection-item__sprite {
@@ -654,8 +673,9 @@
     height: 28px;
   }
 
-  .sprite {
-    font-size: 7rem;
+  :root {
+    --sprite: 132px;
+    --sprite-large: 190px;
   }
 
   .arena {
@@ -675,8 +695,9 @@
 
 /* Viel Hoehe: groessere Monster */
 @media (min-height: 760px) {
-  .sprite {
-    font-size: 6.4rem;
+  :root {
+    --sprite: 118px;
+    --sprite-large: 168px;
   }
 
   .sprite--large {
@@ -692,12 +713,9 @@
     gap: 6px;
   }
 
-  .sprite {
-    font-size: 3.1rem;
-  }
-
-  .sprite--large {
-    font-size: 5rem;
+  :root {
+    --sprite: 64px;
+    --sprite-large: 100px;
   }
 
   .fighter-bar {

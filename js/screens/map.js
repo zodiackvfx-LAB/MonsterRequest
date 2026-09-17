@@ -14,6 +14,7 @@ import { getWorld, fightsInWorld } from '../data/worlds.js';
 import { getEnemy } from '../data/enemies.js';
 import { applyRegion, createScenery } from '../ui/scenery.js';
 import { createHud, createStars } from '../ui/hud.js';
+import { createSprite } from '../ui/sprite.js';
 import {
   clearedInWorld,
   gameState,
@@ -147,10 +148,12 @@ export const mapScreen = {
     function selectLevel(level, enemy) {
       selected = level;
       info.innerHTML = `
+        <span class="map__info-sprite"></span>
         <span class="map__info-title">${level.isBoss ? '👑 ' : ''}Kampf ${level.number} von ${levels.length}</span>
-        <span class="map__info-text"><strong>${enemy.icon} ${enemy.name}</strong> · ${enemy.maxHp} LP</span>
+        <span class="map__info-text"><strong>${enemy.name}</strong> · ${enemy.maxHp} LP</span>
         <span class="map__info-text">Belohnung: 🪙 ${level.reward}</span>
       `;
+      info.querySelector('.map__info-sprite').appendChild(createSprite(enemy));
       playButton.textContent = level.isBoss ? '▶  BOSSKAMPF' : `▶  KAMPF ${level.number} STARTEN`;
       playButton.disabled = false;
 

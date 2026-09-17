@@ -9,6 +9,7 @@ import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
 import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
+import { createSprite } from '../ui/sprite.js';
 import { getPlayerLevel } from '../core/state.js';
 
 export const monsterScreen = {
@@ -28,7 +29,7 @@ export const monsterScreen = {
     content.className = 'page__content';
     content.innerHTML = `
       <div class="panel" style="display: grid; justify-items: center; gap: 6px; text-align: center;">
-        <div class="sprite sprite--large idle-bob">${monster.icon}</div>
+        <div class="sprite sprite--large idle-bob" id="monster-sprite"></div>
         <div class="panel__title" style="font-size: 1.2rem; margin: 0;">${monster.name}</div>
         <div class="start__hero-name">${monster.element}</div>
         <p class="map__info-text">${monster.text}</p>
@@ -57,6 +58,7 @@ export const monsterScreen = {
       <button class="btn btn--ghost" id="btn-deck" type="button">Deck ansehen</button>
     `;
 
+    content.querySelector('#monster-sprite').appendChild(createSprite(monster));
     content.querySelector('#btn-deck').addEventListener('click', () => showScreen('deck'));
 
     screen.appendChild(content);

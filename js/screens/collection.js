@@ -12,6 +12,7 @@ import { LEVELS } from '../data/levels.js';
 import { getEnemy } from '../data/enemies.js';
 import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
+import { createSprite } from '../ui/sprite.js';
 import { isLevelCleared, isWorldUnlocked } from '../core/state.js';
 
 export const collectionScreen = {
@@ -76,10 +77,13 @@ function gruppe(titel, eintraege) {
     const item = document.createElement('div');
     item.className = `collection-item${known ? '' : ' is-locked'}${monster.isBoss ? ' is-boss' : ''}`;
     item.innerHTML = `
-      <span class="collection-item__sprite">${known ? monster.icon : '❓'}</span>
+      <span class="collection-item__sprite"></span>
       <span class="collection-item__name">${known ? monster.name : '???'}</span>
       <span class="collection-item__note">${known ? `${monster.maxHp} LP` : 'Unentdeckt'}</span>
     `;
+    const bild = item.querySelector('.collection-item__sprite');
+    if (known) bild.appendChild(createSprite(monster));
+    else bild.textContent = '❓';
     grid.appendChild(item);
   });
 

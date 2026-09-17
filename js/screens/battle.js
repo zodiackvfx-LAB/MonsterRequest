@@ -19,6 +19,7 @@ import { createBattle, MAX_XP } from '../core/battle.js';
 import { calculateStars, completeLevel } from '../core/state.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { createStars } from '../ui/hud.js';
+import { createSprite } from '../ui/sprite.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
@@ -72,14 +73,14 @@ export const battleScreen = {
       <div class="battlefield">
         <div class="arena" id="arena">
           <div class="stage stage--enemy">
-            <div class="sprite idle-bob" id="enemy-sprite">${enemyMonster.icon}</div>
+            <div class="sprite idle-bob${enemyMonster.isBoss ? ' sprite--boss' : ''}" id="enemy-sprite"></div>
             <div class="platform"></div>
           </div>
 
           <p class="battle-log" id="battle-log">${enemyMonster.name} greift an!</p>
 
           <div class="stage stage--player">
-            <div class="sprite idle-bob" id="player-sprite">${playerMonster.icon}</div>
+            <div class="sprite idle-bob" id="player-sprite"></div>
             <div class="platform"></div>
           </div>
         </div>
@@ -105,6 +106,10 @@ export const battleScreen = {
       <section class="hand" id="hand"></section>
       `
     );
+
+    // Die Pixel-Figuren einsetzen (siehe js/ui/sprite.js)
+    screen.querySelector('#enemy-sprite').appendChild(createSprite(enemyMonster));
+    screen.querySelector('#player-sprite').appendChild(createSprite(playerMonster));
 
     // Kulisse der Arena (Hügel, Wiese, Bäume, Kampfplatz) hinter die Monster legen
     screen.querySelector('#arena').prepend(...createArenaLayers());

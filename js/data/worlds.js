@@ -12,6 +12,7 @@
  *   name        - Anzeigename
  *   icon        - Symbol für die Weltauswahl
  *   scenery     - Kulisse/Farbwelt (siehe .region--... in css/scenery.css)
+ *   hueBase     - Grundfarbton der Kreaturen dieser Welt (0-360)
  *   text        - kurze Beschreibung
  *   music       - Klang-Kategorie (noch ohne Wirkung, für später vorgesehen)
  *   powerPerXp  - wie viel Schaden die Gegner pro XP austeilen (Schwierigkeit)
@@ -34,6 +35,7 @@ export const WORLDS = [
     id: 1,
     name: 'Grünes Tal',
     icon: '🌿',
+    hueBase: 110, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'wald',
     text: 'Sonnige Wiesen und dichter Wald. Hier beginnt dein Abenteuer.',
     music: 'wald',
@@ -81,6 +83,7 @@ export const WORLDS = [
     id: 2,
     name: 'Kristallhöhlen',
     icon: '💎',
+    hueBase: 265, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'kristall',
     text: 'Funkelnde Stollen voller scharfkantiger Kristallwesen.',
     music: 'hoehle',
@@ -128,6 +131,7 @@ export const WORLDS = [
     id: 3,
     name: 'Vulkanlande',
     icon: '🌋',
+    hueBase: 14, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'vulkan',
     text: 'Glühende Asche, Lavaströme und Wesen aus Feuer.',
     music: 'vulkan',
@@ -175,6 +179,7 @@ export const WORLDS = [
     id: 4,
     name: 'Eisgebirge',
     icon: '❄️',
+    hueBase: 192, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'eis',
     text: 'Bittere Kälte, Schneestürme und alles, was darin überlebt.',
     music: 'eis',
@@ -222,6 +227,7 @@ export const WORLDS = [
     id: 5,
     name: 'Schattenreich',
     icon: '🌑',
+    hueBase: 288, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'schatten',
     text: 'Ein Land ohne Sonne. Hier bewegt sich etwas in der Dunkelheit.',
     music: 'schatten',
@@ -269,6 +275,7 @@ export const WORLDS = [
     id: 6,
     name: 'Wüstenreich',
     icon: '🏜️',
+    hueBase: 38, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'wueste',
     text: 'Endlose Dünen, alte Ruinen und alles, was im Sand wartet.',
     music: 'wueste',

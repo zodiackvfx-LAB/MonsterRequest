@@ -5,6 +5,7 @@
 import { gameState, getPlayerLevel } from '../core/state.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { LEVELS } from '../data/levels.js';
+import { createSprite } from './sprite.js';
 
 /**
  * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken und Münzen.
@@ -20,7 +21,7 @@ export function createHud() {
   hud.className = 'hud';
   hud.innerHTML = `
     <div class="hud__player">
-      <span class="hud__avatar">${starter.icon}</span>
+      <span class="hud__avatar"></span>
       <span class="hud__level">
         <span class="hud__level-text">Lv. ${level}</span>
         <span class="hud__level-bar">
@@ -33,6 +34,7 @@ export function createHud() {
       <span>${gameState.coins}</span>
     </div>
   `;
+  hud.querySelector('.hud__avatar').appendChild(createSprite(starter));
   return hud;
 }
 

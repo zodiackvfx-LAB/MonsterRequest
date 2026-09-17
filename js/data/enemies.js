@@ -18,6 +18,7 @@
 
 import { registerAttack } from './attacks.js';
 import { WORLDS } from './worlds.js';
+import { BOSS_FORMEN, FORM_NAMEN } from '../ui/sprite.js';
 
 /** Aus "Moosgnubbel" wird "moosgnubbel", aus "Knospenstoß" wird "knospenstoss". */
 function slug(text) {
@@ -70,6 +71,16 @@ function buildEnemies() {
     world.enemies.forEach((entry, index) => {
       const id = `w${world.id}-${slug(entry.n)}`;
       ENEMIES[id] = {
+        // Aussehen: Form und Farbe werden der Reihe nach vergeben. Dadurch
+        // sieht innerhalb einer Welt garantiert kein Gegner aus wie ein
+        // anderer - und jede Welt hat ihren eigenen Farbton.
+        look: {
+          form: FORM_NAMEN[index % FORM_NAMEN.length],
+          hue: (world.hueBase + index * 29) % 360,
+          sattheit: 55 + (index % 4) * 10,
+          akzentHue: (world.hueBase + index * 29 + 150) % 360,
+          zusatz: (index + world.id) % 5,
+        },
         id,
         name: entry.n,
         icon: entry.i,
@@ -86,6 +97,14 @@ function buildEnemies() {
 
     const bossId = `w${world.id}-${slug(world.boss.n)}`;
     ENEMIES[bossId] = {
+      // Bosse bekommen eigene Formen, die kein normaler Gegner hat.
+      look: {
+        form: BOSS_FORMEN[world.id % BOSS_FORMEN.length],
+        hue: (world.hueBase + 200) % 360,
+        sattheit: 70,
+        akzentHue: (world.hueBase + 40) % 360,
+        zusatz: 1,
+      },
       id: bossId,
       name: world.boss.n,
       icon: world.boss.i,

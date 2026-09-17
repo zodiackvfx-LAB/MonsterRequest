@@ -15,6 +15,7 @@
  *   icon          - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
  *   maxHp         - maximale Lebenspunkte
  *   element       - Typ der Kreatur (für die Anzeige; Stärken/Schwächen folgen später)
+ *   look          - Aussehen der Pixel-Figur (siehe js/ui/sprite.js)
  *   text          - kurze Beschreibung für Monster- und Sammlungsbildschirm
  *   deck          - genau 8 Attacken-ids aus js/data/attacks.js
  *
@@ -26,6 +27,8 @@ export const MONSTERS = {
     name: 'Glutwelpe',
     icon: '🐺',
     element: 'Feuer',
+    // Eigenes Aussehen: vierbeiniger Feuerwelpe
+    look: { form: 'vierbeiner', hue: 20, sattheit: 85, akzentHue: 45, zusatz: 1 },
     text: 'Ein junger Feuerwelpe. Mutig, vorlaut und immer als Erster im Kampf.',
     maxHp: 100,
     // Genau 8 Attacken - das ist die Regel für jedes Deck.
