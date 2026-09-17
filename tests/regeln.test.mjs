@@ -38,6 +38,20 @@ import {
   setDeck,
 } from '../js/core/state.js';
 import { TRUHEN } from '../js/data/shop.js';
+import {
+  MAX_ATTACKEN_LEVEL,
+  MAX_STUFE,
+  attackeAufwerten,
+  attackeMitLevel,
+  attackenKosten,
+  aufwertungsKosten,
+  charakterWerte,
+  getAttackenLevel,
+  getCharakter,
+  wertAufwerten,
+  xpFuerNaechstesLevel,
+  xpGutschreiben,
+} from '../js/core/progression.js';
 import { truheOeffnen } from '../js/core/loot.js';
 
 let bestanden = 0;
@@ -189,6 +203,101 @@ console.log('\nShop und Truhen');
   pruefe(
     'Dieselbe Attacke wird nicht doppelt eingetragen',
     gameState.ownedAttacks.filter((a) => a === 'blitzschlag').length === 1
+  );
+  resetProgress();
+}
+
+console.log('\nCharakter-Level');
+{
+  resetProgress();
+  const held = MONSTERS.glutwelpe;
+
+  pruefe('Startet auf Level 1', getCharakter(held.id).level === 1);
+  pruefe(
+    'Jedes Level kostet mehr als das davor',
+    [1, 2, 3, 4, 5].every((l) => xpFuerNaechstesLevel(l) < xpFuerNaechstesLevel(l + 1))
+  );
+
+  const ergebnis = xpGutschreiben(held.id, xpFuerNaechstesLevel(1));
+  pruefe('Genug Erfahrung fuehrt zu Level 2', ergebnis.levelNachher === 2 && ergebnis.aufgestiegen);
+  pruefe('Ueberschuss bleibt erhalten', getCharakter(held.id).xp === 0);
+
+  xpGutschreiben(held.id, 100000);
+  const hoch = getCharakter(held.id).level;
+  pruefe('Viel Erfahrung fuehrt zu mehreren Leveln', hoch > 5);
+
+  const werteHoch = charakterWerte(held);
+  resetProgress();
+  const werteNiedrig = charakterWerte(held);
+  pruefe('Hoeheres Level bedeutet mehr Lebenspunkte', werteHoch.maxHp > werteNiedrig.maxHp);
+  pruefe('Hoeheres Level bedeutet mehr Angriff', werteHoch.damageFactor > werteNiedrig.damageFactor);
+  pruefe('Verteidigung bleibt unter 50 Prozent', werteHoch.defense < 0.5);
+  pruefe('Tempo bleibt hoechstens beim Anderthalbfachen', werteHoch.xpPerSecond <= 1.5);
+
+  // Das Charakter-Level haengt NICHT am Weltfortschritt
+  completeLevel('1-1', { stars: 3, reward: 10 });
+  pruefe(
+    'Ein geschaffter Kampf aendert das Charakter-Level nicht von selbst',
+    getCharakter(held.id).level === 1
+  );
+  resetProgress();
+}
+
+console.log('\nAufwertungen');
+{
+  resetProgress();
+  const held = MONSTERS.glutwelpe;
+
+  pruefe('Ohne Muenzen keine Aufwertung', wertAufwerten(held.id, 'hp') === false);
+
+  gameState.coins = 100000;
+  gameState.materials = 1000;
+  const vorher = charakterWerte(held).maxHp;
+  pruefe('Mit Muenzen klappt die Aufwertung', wertAufwerten(held.id, 'hp') === true);
+  pruefe('Die Aufwertung wirkt sich aus', charakterWerte(held).maxHp > vorher);
+  pruefe(
+    'Jede Stufe kostet mehr als die davor',
+    [0, 1, 2, 3].every((st) => aufwertungsKosten(st).muenzen < aufwertungsKosten(st + 1).muenzen)
+  );
+
+  for (let i = 0; i < MAX_STUFE + 3; i++) wertAufwerten(held.id, 'hp');
+  pruefe(
+    `Aufwertung endet bei Stufe ${MAX_STUFE}`,
+    getCharakter(held.id).upgrades.hp === MAX_STUFE
+  );
+  resetProgress();
+}
+
+console.log('\nAttacken-Level');
+{
+  resetProgress();
+  gameState.coins = 100000;
+  gameState.materials = 1000;
+
+  const grund = getAttack('feuerball');
+  pruefe('Attacke startet auf Level 1', getAttackenLevel('feuerball') === 1);
+
+  attackeAufwerten('feuerball');
+  const stufe2 = attackeMitLevel(getAttack('feuerball'));
+  pruefe('Nach dem Aufwerten macht sie mehr Schaden', stufe2.damage > grund.damage);
+  pruefe('Die XP-Kosten bleiben gleich', stufe2.cost === grund.cost);
+  pruefe(
+    'Jede Attacken-Stufe kostet mehr',
+    [1, 2, 3].every((l) => attackenKosten(l).muenzen < attackenKosten(l + 1).muenzen)
+  );
+
+  for (let i = 0; i < MAX_ATTACKEN_LEVEL + 3; i++) attackeAufwerten('feuerball');
+  pruefe(
+    `Attacken enden bei Level ${MAX_ATTACKEN_LEVEL}`,
+    getAttackenLevel('feuerball') === MAX_ATTACKEN_LEVEL
+  );
+
+  // Gegner duerfen davon nichts mitbekommen
+  const gegnerAttacke = Object.values(ENEMIES)[0].deck[0];
+  pruefe(
+    'Gegner-Attacken bleiben auf Level 1',
+    getAttackenLevel(gegnerAttacke) === 1 &&
+      attackeMitLevel(getAttack(gegnerAttacke)).damage === getAttack(gegnerAttacke).damage
   );
   resetProgress();
 }

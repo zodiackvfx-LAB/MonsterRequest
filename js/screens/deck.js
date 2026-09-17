@@ -1,8 +1,9 @@
 /**
- * Deck-Bildschirm: die genau 8 Attacken des Begleiters ansehen und tauschen.
+ * Deck-Bildschirm: die genau 8 Attacken ansehen, tauschen und aufwerten.
  *
  * Die Regel bleibt: genau 8 Karten im Deck, im Kampf 4 auf der Hand.
- * Getauscht werden kann gegen Attacken, die man aus Truhen erhalten hat.
+ * Neu ist, dass jede Attacke ein eigenes Level hat (siehe progression.js):
+ * Schaden, Heilung und Schild steigen, die XP-Kosten bleiben gleich.
  */
 
 import { showScreen } from '../core/screens.js';
@@ -10,9 +11,16 @@ import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN } from '../data/items.js';
 import { createScenery } from '../ui/scenery.js';
-import { createTopbar } from '../ui/hud.js';
+import { createHud, createTopbar } from '../ui/hud.js';
 import { HAND_SIZE } from '../core/deck.js';
-import { besitztAttacke, getDeck, setDeck } from '../core/state.js';
+import { besitztAttacke, gameState, getDeck, setDeck } from '../core/state.js';
+import {
+  MAX_ATTACKEN_LEVEL,
+  attackeAufwerten,
+  attackeMitLevel,
+  attackenKosten,
+  getAttackenLevel,
+} from '../core/progression.js';
 
 export const deckScreen = {
   mount(root) {
@@ -22,6 +30,7 @@ export const deckScreen = {
     screen.className = 'screen screen--page';
     screen.appendChild(createScenery({ dimmed: true }));
     screen.appendChild(createTopbar('Dein Deck', () => showScreen('start')));
+    screen.appendChild(createHud());
 
     const content = document.createElement('div');
     content.className = 'page__content';
@@ -30,7 +39,7 @@ export const deckScreen = {
 
     zeichnen();
 
-    /** Baut die Liste neu auf - nach jedem Tausch. */
+    /** Baut die Liste neu auf - nach jedem Tausch und jeder Aufwertung. */
     function zeichnen() {
       const deck = getDeck(monster);
       content.innerHTML = '';
@@ -39,9 +48,10 @@ export const deckScreen = {
       intro.className = 'panel panel--tight';
       intro.innerHTML = `
         <p class="map__info-text">
-          ${monster.name} kämpft mit genau ${deck.length} Attacken. Im Kampf liegen
-          immer ${HAND_SIZE} davon auf der Hand - benutzt du eine, wird sofort
-          nachgezogen. <strong>Tippe auf eine Karte, um sie zu tauschen.</strong>
+          Genau ${deck.length} Attacken, im Kampf ${HAND_SIZE} auf der Hand.
+          <strong>Antippen</strong> zum Tauschen, <strong>Aufwerten</strong> macht
+          eine Attacke stärker - die XP-Kosten bleiben gleich.
+          <br>🪙 ${gameState.coins} · 💠 ${gameState.materials}
         </p>
       `;
       content.appendChild(intro);
@@ -50,18 +60,11 @@ export const deckScreen = {
       liste.className = 'deck-list';
 
       deck.forEach((attackId, platz) => {
-        const attacke = getAttack(attackId);
-        const eintrag = document.createElement('button');
-        eintrag.type = 'button';
-        eintrag.className = 'deck-item deck-item--button';
-        eintrag.innerHTML = zeileFuer(attacke);
-        eintrag.addEventListener('click', () => tauschDialog(platz, deck));
-        liste.appendChild(eintrag);
+        liste.appendChild(deckZeile(attackId, platz, deck));
       });
 
       content.appendChild(liste);
 
-      // Übersicht über das, was noch auf der Ersatzbank sitzt
       const ersatz = verfuegbareAttacken().filter((a) => !deck.includes(a.id));
       const info = document.createElement('div');
       info.className = 'panel panel--tight';
@@ -72,6 +75,40 @@ export const deckScreen = {
         </p>
       `;
       content.appendChild(info);
+    }
+
+    /** Eine Zeile: links die Attacke (antippen zum Tauschen), rechts Aufwerten. */
+    function deckZeile(attackId, platz, deck) {
+      const attacke = attackeMitLevel(getAttack(attackId));
+      const level = getAttackenLevel(attackId);
+      const voll = level >= MAX_ATTACKEN_LEVEL;
+      const kosten = attackenKosten(level);
+      const bezahlbar =
+        !voll && gameState.coins >= kosten.muenzen && gameState.materials >= kosten.material;
+
+      const zeile = document.createElement('div');
+      zeile.className = 'deck-item';
+
+      const info = document.createElement('button');
+      info.type = 'button';
+      info.className = 'deck-item__tap';
+      info.innerHTML = inhaltFuer(attacke, level);
+      info.addEventListener('click', () => tauschDialog(platz, deck));
+      zeile.appendChild(info);
+
+      const knopf = document.createElement('button');
+      knopf.type = 'button';
+      knopf.className = `btn btn--small${bezahlbar ? '' : ' btn--ghost'}`;
+      knopf.disabled = voll || !bezahlbar;
+      knopf.innerHTML = voll
+        ? 'Max.'
+        : `🪙 ${kosten.muenzen}<br><span class="upgrade-row__mat">💠 ${kosten.material}</span>`;
+      knopf.addEventListener('click', () => {
+        if (attackeAufwerten(attackId)) zeichnen();
+      });
+      zeile.appendChild(knopf);
+
+      return zeile;
     }
 
     /** Alle Attacken, die der Spieler einsetzen darf. */
@@ -101,16 +138,20 @@ export const deckScreen = {
       `;
 
       const liste = overlay.querySelector('#swap');
-      auswahl.forEach((attacke) => {
+      auswahl.forEach((roh) => {
+        const attacke = attackeMitLevel(roh);
         const imDeck = deck.includes(attacke.id);
         const aktuell = deck[platz] === attacke.id;
 
         const knopf = document.createElement('button');
         knopf.type = 'button';
         knopf.className = `deck-item deck-item--button${aktuell ? ' is-current' : ''}`;
-        // Eine Attacke darf nur einmal im Deck sein.
         knopf.disabled = imDeck && !aktuell;
-        knopf.innerHTML = zeileFuer(attacke, imDeck && !aktuell ? 'bereits im Deck' : null);
+        knopf.innerHTML = inhaltFuer(
+          attacke,
+          getAttackenLevel(attacke.id),
+          imDeck && !aktuell ? 'bereits im Deck' : null
+        );
         knopf.addEventListener('click', () => {
           const neu = [...deck];
           neu[platz] = attacke.id;
@@ -127,8 +168,8 @@ export const deckScreen = {
   },
 };
 
-/** Eine Zeile mit Symbol, Name, Wirkung und Kosten. */
-function zeileFuer(attacke, hinweis = null) {
+/** Symbol, Name mit Level, Wirkung und Kosten. */
+function inhaltFuer(attacke, level, hinweis = null) {
   let wirkung = `${attacke.damage} Schaden`;
   if (attacke.heal > 0) wirkung = `heilt ${attacke.heal} LP`;
   if (attacke.shield > 0) wirkung = `fängt ${attacke.shield} Schaden ab`;
@@ -141,9 +182,10 @@ function zeileFuer(attacke, hinweis = null) {
     <span class="deck-item__body">
       <span class="deck-item__name">
         ${attacke.name}
+        <span class="deck-item__level">Lv. ${level}</span>
         ${seltenheit ? `<span class="deck-item__rarity" style="color:${seltenheit.farbe}">${seltenheit.name}</span>` : ''}
       </span>
-      <span class="deck-item__text">${hinweis ?? `${wirkung} · ${attacke.text}`}</span>
+      <span class="deck-item__text">${hinweis ?? wirkung}</span>
     </span>
     <span class="deck-item__cost">${attacke.cost}</span>
   `;

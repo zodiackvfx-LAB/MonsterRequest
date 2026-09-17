@@ -75,17 +75,29 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
    * Führt eine Attacke aus: Schaden beim Gegenüber, Heilung bei sich selbst.
    * Läuft für Spieler und Gegner identisch ab.
    */
+  /**
+   * Wie viel Schaden kommt tatsächlich an?
+   * Der Angriffswert des Angreifers erhöht ihn, die Verteidigung des
+   * Getroffenen senkt ihn. Mindestens 1 Schaden kommt immer durch.
+   */
+  function schadenBerechnen(attacker, defender, roh) {
+    const mitAngriff = roh * (attacker.state.damageFactor ?? 1);
+    const nachAbwehr = mitAngriff * (1 - (defender.state.defense ?? 0));
+    return Math.max(1, Math.round(nachAbwehr));
+  }
+
   function useAttack(attacker, defender, attack, side) {
     if (attack.damage > 0) {
-      const applied = defender.takeDamage(attack.damage);
+      const schaden = schadenBerechnen(attacker, defender, attack.damage);
+      const applied = defender.takeDamage(schaden);
       emit({
         type: `${side}-attack`,
         attack,
-        amount: attack.damage,
+        amount: schaden,
         absorbed: applied.shield, // vom Schild abgefangener Anteil
         text: applied.shield > 0
-          ? `${attack.name}: ${attack.damage} Schaden - das Schild fängt ${applied.shield} ab!`
-          : `${attacker.state.name} setzt ${attack.name} ein: ${attack.damage} Schaden!`,
+          ? `${attack.name}: ${schaden} Schaden - das Schild fängt ${applied.shield} ab!`
+          : `${attacker.state.name} setzt ${attack.name} ein: ${schaden} Schaden!`,
       });
     }
 

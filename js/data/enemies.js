@@ -112,7 +112,7 @@ function buildEnemies() {
       worldId: world.id,
       isBoss: true,
       text: `Der Herrscher über ${world.name}.`,
-      maxHp: Math.round((world.baseHp + world.enemies.length * world.hpGrowth) * 1.25),
+      maxHp: Math.round((world.baseHp + world.enemies.length * world.hpGrowth) * 1.15),
       deck: bossDeck,
       reactionTime: 0.85,
       patience: 3,

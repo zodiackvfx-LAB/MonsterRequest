@@ -17,6 +17,7 @@ import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_XP } from '../core/battle.js';
 import { calculateStars, completeLevel, getDeck } from '../core/state.js';
+import { attackeMitLevel, monsterMitFortschritt, xpGutschreiben } from '../core/progression.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { createStars } from '../ui/hud.js';
 import { createSprite } from '../ui/sprite.js';
@@ -38,9 +39,10 @@ export const battleScreen = {
       throw new Error(`Level ${params.levelId} gibt es nicht (siehe js/data/levels.js)`);
     }
 
-    // Das Monster kämpft mit dem Deck, das im Deck-Bildschirm gewählt wurde.
+    // Das Monster kämpft mit dem gewählten Deck und mit allen Werten aus
+    // seinem Fortschritt (Level und gekaufte Aufwertungen).
     const basis = getMonster(STARTER_MONSTER_ID);
-    const playerMonster = { ...basis, deck: getDeck(basis) };
+    const playerMonster = { ...monsterMitFortschritt(basis), deck: getDeck(basis) };
     const enemyMonster = getEnemy(level.enemyId);
 
     /* ---------- 1. Grundgerüst bauen ---------- */
@@ -176,12 +178,25 @@ export const battleScreen = {
 
       // Bezahlbarkeit jeder Karte laufend prüfen
       cardElements.forEach((card, index) => {
-        const attack = getAttack(state.player.hand[index]);
+        const attack = kampfAttacke(state.player.hand[index]);
         const affordable = attack.cost <= state.player.xp && !state.finished;
         card.classList.toggle('is-ready', affordable);
         card.classList.toggle('is-disabled', !affordable);
         card.disabled = !affordable;
       });
+    }
+
+    /**
+     * Eine Handkarte so, wie sie im Kampf wirkt: mit ihrem Attacken-Level
+     * und dem Angriffswert des Charakters. Auf der Karte steht damit genau
+     * der Schaden, der auch ankommt.
+     */
+    function kampfAttacke(attackId) {
+      const attack = attackeMitLevel(getAttack(attackId));
+      return {
+        ...attack,
+        damage: Math.round(attack.damage * (battle.state.player.damageFactor ?? 1)),
+      };
     }
 
     /** Lebensbalken, Zahl und Schildanzeige eines Kämpfers. */
@@ -215,7 +230,7 @@ export const battleScreen = {
       cardElements.length = 0;
 
       state.player.hand.forEach((attackId, index) => {
-        const attack = getAttack(attackId);
+        const attack = kampfAttacke(attackId);
 
         let effect = `${attack.damage} SCH`;
         if (attack.heal > 0) effect = `+${attack.heal} LP`;
@@ -300,20 +315,23 @@ export const battleScreen = {
       let coins = 0;
       let newWorld = null; // wird gesetzt, wenn der Boss eine neue Welt öffnet
 
+      let xpErgebnis = null;
       if (result === 'win') {
         stars = calculateStars(state.player.hp, state.player.maxHp);
         ({ coins, newWorld } = completeLevel(level.id, { stars, reward: level.reward ?? 0 }));
+        // Erfahrung gibt es bei jedem Sieg, auch beim Wiederholen.
+        xpErgebnis = xpGutschreiben(basis.id, level.xp ?? 0);
       }
 
       // Kurz warten, damit der letzte Treffer, die Schadenszahl und der
       // leerlaufende Lebensbalken noch zu sehen sind.
       resultTimer = setTimeout(
-        () => buildResultOverlay(result, stars, coins, newWorld),
+        () => buildResultOverlay(result, stars, coins, newWorld, xpErgebnis),
         ERGEBNIS_VERZOEGERUNG
       );
     }
 
-    function buildResultOverlay(result, stars, coins, newWorld) {
+    function buildResultOverlay(result, stars, coins, newWorld, xpErgebnis) {
       const overlay = document.createElement('div');
       overlay.className = 'overlay';
       overlay.innerHTML = `
@@ -325,6 +343,13 @@ export const battleScreen = {
               ? `${enemyMonster.name} wurde besiegt.${coins > 0 ? ` Du erhältst 🪙 ${coins}.` : ''}`
               : `${playerMonster.name} ist erschöpft. Versuch es noch einmal!`}
           </p>
+          ${result === 'win' && level.xp
+            ? `<p class="overlay__xp">⭐ +${level.xp} Erfahrung${
+                xpErgebnis?.aufgestiegen
+                  ? `<br><strong>Level ${xpErgebnis.levelNachher} erreicht!</strong>`
+                  : ''
+              }</p>`
+            : ''}
           ${newWorld ? `<p class="overlay__unlock">🎉 Neue Welt freigeschaltet:<br><strong>${newWorld.icon} ${newWorld.name}</strong></p>` : ''}
           <div class="overlay__actions">
             <button class="btn btn--big btn--green" id="btn-next" type="button"></button>

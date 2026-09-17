@@ -249,9 +249,13 @@
 }
 
 .hud__level-fill {
+  /* display: block ist noetig - als inline-Element haette das span
+     weder Breite noch Hoehe und der Balken bliebe leer. */
+  display: block;
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(180deg, var(--green-1), var(--green-2));
+  transition: width 0.3s ease;
 }
 
 .hud__coins {

@@ -15,6 +15,7 @@
 
 import { getAttack } from '../data/attacks.js';
 import { createDeck } from './deck.js';
+import { attackeMitLevel } from './progression.js';
 
 /** Maximale XP eines Kämpfers. */
 export const MAX_XP = 10;
@@ -29,6 +30,10 @@ export const START_XP = 3;
 export function createFighter(monster) {
   const deck = createDeck(monster.deck);
 
+  // Werte aus dem Fortschritt. Wer nichts mitbringt, kämpft mit den
+  // Grundwerten - so bleiben Gegner unverändert.
+  const xpProSekunde = monster.xpPerSecond ?? XP_PER_SECOND;
+
   /** Der sichtbare Zustand - den liest der Kampfbildschirm aus. */
   const state = {
     name: monster.name,
@@ -40,6 +45,10 @@ export function createFighter(monster) {
     xpProgress: 0, // 0..1 Fortschritt zum nächsten XP-Punkt (nur für die Anzeige)
     hand: deck.hand, // Array mit 4 Attacken-ids
     handVersion: 0, // zählt hoch, sobald sich die Hand ändert
+    // Kampfwerte aus dem Charakterfortschritt (siehe js/core/progression.js)
+    damageFactor: monster.damageFactor ?? 1,
+    defense: monster.defense ?? 0,
+    xpPerSecond: xpProSekunde,
   };
 
   let exactXp = START_XP; // XP mit Nachkommastellen (wächst kontinuierlich)
@@ -53,7 +62,7 @@ export function createFighter(monster) {
 
   /** XP-Regeneration für die vergangene Zeit. */
   function gainXp(seconds) {
-    exactXp += seconds * XP_PER_SECOND;
+    exactXp += seconds * xpProSekunde;
     syncXp();
   }
 
@@ -62,9 +71,12 @@ export function createFighter(monster) {
     return cost <= state.xp;
   }
 
-  /** Die 4 Handkarten als vollständige Attacken-Objekte. */
+  /**
+   * Die 4 Handkarten als vollständige Attacken-Objekte - mit ihrem
+   * aktuellen Attacken-Level (siehe js/core/progression.js).
+   */
   function handAttacks() {
-    return state.hand.map(getAttack);
+    return state.hand.map((id) => attackeMitLevel(getAttack(id)));
   }
 
   /**
@@ -76,7 +88,7 @@ export function createFighter(monster) {
     const cardId = state.hand[handIndex];
     if (!cardId) return null;
 
-    const attack = getAttack(cardId);
+    const attack = attackeMitLevel(getAttack(cardId));
     if (!canAfford(attack.cost)) return null;
 
     exactXp -= attack.cost;

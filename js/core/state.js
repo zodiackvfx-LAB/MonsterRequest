@@ -25,6 +25,8 @@ function createNewGame() {
     ownedSkins: ['skin-standard'],
     activeSkin: {}, // { monsterId: skinId }
     decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
+    characters: {}, // { monsterId: { level, xp, upgrades } } - siehe progression.js
+    attackLevels: {}, // { attackId: level }
     settings: {
       sound: true,
       animations: true,
@@ -74,6 +76,8 @@ function uebernehmen(saved) {
   gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ['skin-standard'];
   gameState.activeSkin = saved.activeSkin ?? {};
   gameState.decks = saved.decks ?? {};
+  gameState.characters = saved.characters ?? {};
+  gameState.attackLevels = saved.attackLevels ?? {};
   gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
 }
 
@@ -147,11 +151,6 @@ export function nextLevelOf(worldId) {
     (level) =>
       level.worldId === Number(worldId) && isLevelUnlocked(level.id) && !isLevelCleared(level.id)
   );
-}
-
-/** Spielerstufe: steigt mit jedem geschafften Kampf. */
-export function getPlayerLevel() {
-  return 1 + gameState.clearedLevels.length;
 }
 
 /**

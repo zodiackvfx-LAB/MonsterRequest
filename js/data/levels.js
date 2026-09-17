@@ -15,6 +15,7 @@
  *   enemyId   - Gegner aus js/data/enemies.js
  *   isBoss    - letzter Kampf einer Welt
  *   reward    - Münzen für den ersten Sieg
+ *   xp        - Charakter-Erfahrung für den Sieg (auch bei Wiederholung)
  *   x, y      - Position auf der Weltkarte in Prozent
  */
 
@@ -59,6 +60,8 @@ function buildLevels() {
         scenery: world.scenery,
         // Spätere Kämpfe geben mehr, der Boss deutlich mehr.
         reward: Math.round(world.reward * (1 + index * 0.12) * (isBoss ? 4 : 1)),
+        // Erfahrung richtet sich nach der Stärke des Gegners.
+        xp: Math.round(enemy.maxHp * 0.8 * (isBoss ? 2.5 : 1)),
         x,
         y,
       });

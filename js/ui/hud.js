@@ -2,20 +2,22 @@
  * Kleine Bausteine, die mehrere Bildschirme gemeinsam nutzen.
  */
 
-import { gameState, getPlayerLevel } from '../core/state.js';
+import { gameState } from '../core/state.js';
+import { charakterWerte, getCharakter, xpFuerNaechstesLevel } from '../core/progression.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
-import { LEVELS } from '../data/levels.js';
 import { createSprite } from './sprite.js';
 
 /**
  * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken und Münzen.
  */
 export function createHud() {
-  const level = getPlayerLevel();
   const starter = getMonster(STARTER_MONSTER_ID);
+  const { level } = charakterWerte(starter);
 
-  // Der Balken zeigt, wie weit das ganze Spiel geschafft ist.
-  const progress = Math.min(1, gameState.clearedLevels.length / LEVELS.length);
+  // Der Balken zeigt, wie weit es bis zum nächsten Charakter-Level ist.
+  const charakter = getCharakter(starter.id);
+  const noetig = xpFuerNaechstesLevel(charakter.level);
+  const progress = noetig === Infinity ? 1 : Math.min(1, charakter.xp / noetig);
 
   const hud = document.createElement('div');
   hud.className = 'hud';
