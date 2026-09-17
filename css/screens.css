@@ -39,6 +39,9 @@
   display: grid;
   gap: 16px;
   flex: 0 0 auto;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
   padding-bottom: 4px;
 }
 
@@ -165,6 +168,9 @@
   flex: 0 0 auto;
   display: grid;
   gap: 8px;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
 }
 
 .map__buttons {
@@ -540,6 +546,93 @@
 
   .collection {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Große Bildschirme (iPad): Das Spiel füllt den ganzen Schirm,
+   deshalb wächst hier alles mit - sonst wirkt die Bedienung verloren.
+   Die Schriftgröße wird an der Wurzel erhöht; weil fast alles in rem
+   gerechnet ist, skaliert der Text damit automatisch mit.
+   --------------------------------------------------------------- */
+@media (min-width: 700px) {
+  html {
+    font-size: 19px;
+  }
+
+  .screen {
+    padding: calc(16px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom)) 20px;
+    gap: 12px;
+  }
+
+  .logo {
+    max-width: 440px;
+  }
+
+  .card {
+    min-height: 150px;
+  }
+
+  .card__icon {
+    font-size: 2.3rem;
+  }
+
+  .card__cost {
+    min-width: 36px;
+    height: 36px;
+    top: -14px;
+    left: -10px;
+  }
+
+  .icon-btn__circle {
+    width: 68px;
+    height: 68px;
+    font-size: 1.9rem;
+  }
+
+  .btn--big {
+    min-height: 70px;
+  }
+
+  .node__circle {
+    width: 78px;
+    height: 78px;
+  }
+
+  .node.is-boss .node__circle {
+    width: 92px;
+    height: 92px;
+  }
+
+  .platform {
+    width: 150px;
+    height: 28px;
+  }
+
+  .sprite {
+    font-size: 7.5rem;
+  }
+
+  .overlay__box {
+    max-width: 440px;
+  }
+
+  .page__content {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+/* Sehr hohe Bildschirme: die Monster rücken zusammen, damit zwischen
+   ihnen nicht so viel leerer Himmel steht. */
+@media (min-height: 900px) {
+  .stage--enemy {
+    top: 12%;
+  }
+
+  .stage--player {
+    bottom: 12%;
   }
 }
 

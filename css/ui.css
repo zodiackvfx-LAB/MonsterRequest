@@ -435,7 +435,10 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(8, 12, 30, 0.8);
+  /* Der Hintergrund wird weichgezeichnet, damit das Fenster im Vordergrund steht. */
+  background: rgba(8, 12, 30, 0.55);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
   animation: fade-in 0.2s ease-out;
 }
 
@@ -504,10 +507,21 @@
   50% { transform: translateY(-7px); }
 }
 
+/* Treffer: das Monster zuckt und leuchtet kurz rot auf. Früher wurde es
+   dabei komplett weiß - das sah aus wie ein Darstellungsfehler. */
 @keyframes hit {
-  0%, 100% { transform: translateX(0) scale(1); filter: none; }
-  20% { transform: translateX(-10px) scale(0.96); filter: brightness(2.4) saturate(0.2); }
-  60% { transform: translateX(10px) scale(1.04); filter: brightness(2.4) saturate(0.2); }
+  0%, 100% {
+    transform: translateX(0) scale(1);
+    filter: drop-shadow(0 8px 8px rgba(10, 20, 40, 0.4));
+  }
+  20% {
+    transform: translateX(-10px) scale(0.95);
+    filter: brightness(1.35) drop-shadow(0 0 12px rgba(255, 70, 70, 0.95));
+  }
+  60% {
+    transform: translateX(10px) scale(1.05);
+    filter: brightness(1.35) drop-shadow(0 0 12px rgba(255, 70, 70, 0.95));
+  }
 }
 
 @keyframes lunge-right {
