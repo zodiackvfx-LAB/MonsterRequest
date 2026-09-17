@@ -12,6 +12,8 @@
  *   shield  - Schild, das kommenden Schaden abfängt (optional)
  *   icon    - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
  *   text    - kurze Beschreibung für die Karte
+ *   seltenheit - 'gewoehnlich' | 'selten' | 'episch' | 'legendaer'
+ *                (nur für die Anzeige in der Sammlung, siehe js/data/items.js)
  *
  * Hier stehen nur die Attacken des Spielers. Die Attacken der Gegner werden
  * aus den Vorlagen der jeweiligen Welt erzeugt (js/data/worlds.js) und über
@@ -31,6 +33,7 @@ export const ATTACKS = {
      =================================================================== */
   krallenhieb: {
     id: 'krallenhieb',
+    seltenheit: 'gewoehnlich',
     name: 'Krallenhieb',
     cost: 2,
     damage: 11,
@@ -39,6 +42,7 @@ export const ATTACKS = {
   },
   biss: {
     id: 'biss',
+    seltenheit: 'gewoehnlich',
     name: 'Biss',
     cost: 2,
     damage: 12,
@@ -47,6 +51,7 @@ export const ATTACKS = {
   },
   feuerball: {
     id: 'feuerball',
+    seltenheit: 'selten',
     name: 'Feuerball',
     cost: 3,
     damage: 17,
@@ -55,6 +60,7 @@ export const ATTACKS = {
   },
   flammenstoss: {
     id: 'flammenstoss',
+    seltenheit: 'selten',
     name: 'Flammenstoß',
     cost: 4,
     damage: 23,
@@ -63,6 +69,7 @@ export const ATTACKS = {
   },
   schutzschild: {
     id: 'schutzschild',
+    seltenheit: 'selten',
     name: 'Schutzschild',
     cost: 4,
     damage: 0,
@@ -72,6 +79,7 @@ export const ATTACKS = {
   },
   feuersturm: {
     id: 'feuersturm',
+    seltenheit: 'episch',
     name: 'Feuersturm',
     cost: 5,
     damage: 30,
@@ -80,6 +88,7 @@ export const ATTACKS = {
   },
   lavabombe: {
     id: 'lavabombe',
+    seltenheit: 'episch',
     name: 'Lavabombe',
     cost: 7,
     damage: 45,
@@ -88,6 +97,7 @@ export const ATTACKS = {
   },
   meteor: {
     id: 'meteor',
+    seltenheit: 'legendaer',
     name: 'Meteor',
     cost: 9,
     damage: 62,
@@ -96,6 +106,13 @@ export const ATTACKS = {
   },
 
 };
+
+/**
+ * Die ids der acht Startattacken - festgehalten, bevor Beute- und
+ * Gegnerattacken über registerAttack() dazukommen. Die Sammlung
+ * unterscheidet darüber, was von Anfang an dabei ist.
+ */
+export const START_ATTACKEN = Object.keys(ATTACKS);
 
 /**
  * Trägt eine Attacke nachträglich in den Katalog ein.

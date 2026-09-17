@@ -550,8 +550,11 @@ function feld(grid, x, y) {
  * Zeichnet die Figur und gibt sie als Bild-Adresse zurück.
  * Jede Figur wird nur einmal gezeichnet und danach wiederverwendet.
  */
-export function spriteDataUrl(monster) {
-  const skin = skinNachschlag(monster);
+export function spriteDataUrl(monster, optionen = {}) {
+  // Ohne Vorgabe gilt der getragene Skin. Die Sammlung gibt dagegen gezielt
+  // einen bestimmten Skin vor, um ihn in der Vorschau zu zeigen - sonst
+  // saehen dort alle Skins wie der gerade getragene aus.
+  const skin = 'skin' in optionen ? optionen.skin : skinNachschlag(monster);
   const key = `${monster.id ?? monster.name}${skin ? `+${skin.id}` : ''}`;
   if (zwischenspeicher.has(key)) return zwischenspeicher.get(key);
 
@@ -619,13 +622,13 @@ export function spriteDataUrl(monster) {
  * @param {object} [options]
  * @param {string} [options.className] - zusätzliche CSS-Klassen
  */
-export function createSprite(monster, { className = '' } = {}) {
+export function createSprite(monster, optionen = {}) {
   const img = document.createElement('img');
   // Ein eigenes Bild hat Vorrang - so lassen sich später echte Grafiken
   // einsetzen, ohne hier etwas zu ändern.
-  img.src = monster.image ?? spriteDataUrl(monster);
+  img.src = monster.image ?? spriteDataUrl(monster, optionen);
   img.alt = monster.name ?? '';
-  img.className = `pixel-sprite ${className}`.trim();
+  img.className = `pixel-sprite ${optionen.className ?? ''}`.trim();
   img.draggable = false;
   return img;
 }

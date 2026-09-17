@@ -161,13 +161,8 @@ export const monsterScreen = {
           <span class="skin-chip__vorschau"></span>
           <span class="skin-chip__name">${besitzt ? skin.name : '🔒 ' + skin.name}</span>
         `;
-        knopf.querySelector('.skin-chip__vorschau').appendChild(
-          createSprite({
-            ...monster,
-            id: `${monster.id}__${skin.id}`,
-            look: { ...monster.look, ...skin.look },
-          })
-        );
+        // Die Vorschau zeigt genau diesen Skin, nicht den getragenen.
+        knopf.querySelector('.skin-chip__vorschau').appendChild(createSprite(monster, { skin }));
         knopf.addEventListener('click', () => {
           setAktiverSkin(monster.id, skin.id);
           spritesNeuZeichnen();

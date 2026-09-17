@@ -18,7 +18,7 @@ globalThis.localStorage = {
 import { createDeck, DECK_SIZE, HAND_SIZE } from '../js/core/deck.js';
 import { createFighter, MAX_XP, START_XP } from '../js/core/fighter.js';
 import { MONSTERS } from '../js/data/monsters.js';
-import { ATTACKS, getAttack } from '../js/data/attacks.js';
+import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
 import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
 import { WORLDS, fightsInWorld } from '../js/data/worlds.js';
@@ -38,6 +38,7 @@ import {
   setDeck,
 } from '../js/core/state.js';
 import { TRUHEN } from '../js/data/shop.js';
+import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
 import {
   MAX_ATTACKEN_LEVEL,
   MAX_STUFE,
@@ -388,6 +389,32 @@ console.log('\nSchaden und Schild');
 
   kaempfer.heal(9999);
   pruefe('Heilung geht nie über das Maximum', kaempfer.state.hp === kaempfer.state.maxHp);
+}
+
+console.log('\nSammlung');
+{
+  pruefe('Es gibt genau 8 Startattacken', START_ATTACKEN.length === 8);
+
+  const ohneSeltenheit = START_ATTACKEN.filter((id) => !SELTENHEITEN[getAttack(id).seltenheit]);
+  pruefe('Jede Startattacke hat eine gueltige Seltenheit', ohneSeltenheit.length === 0);
+
+  const beuteOhne = BEUTE_ATTACKEN.filter((a) => !SELTENHEITEN[a.seltenheit]);
+  pruefe('Jede Beute-Attacke hat eine gueltige Seltenheit', beuteOhne.length === 0);
+
+  const skinOhne = SKINS.filter((skin) => !SELTENHEITEN[skin.seltenheit]);
+  pruefe('Jeder Skin hat eine gueltige Seltenheit', skinOhne.length === 0);
+
+  // Start- und Beuteattacken duerfen sich nicht ueberschneiden.
+  const doppelt = BEUTE_ATTACKEN.filter((a) => START_ATTACKEN.includes(a.id));
+  pruefe('Beute-Attacken sind nicht schon im Startdeck', doppelt.length === 0);
+
+  // Die Sammlung zeigt Start- und Beuteattacken zusammen.
+  const sammelbar = START_ATTACKEN.length + BEUTE_ATTACKEN.length;
+  pruefe('Sammlung umfasst 18 Attacken', sammelbar === 18);
+
+  // Jede sammelbare Attacke muss im Katalog stehen.
+  const fehlend = [...START_ATTACKEN, ...BEUTE_ATTACKEN.map((a) => a.id)].filter((id) => !ATTACKS[id]);
+  pruefe('Jede sammelbare Attacke steht im Katalog', fehlend.length === 0);
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);
