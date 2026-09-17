@@ -1,5 +1,9 @@
 /**
- * Alle Monster des Spiels - Spielerkreaturen und Gegner.
+ * Die Monster des Spielers.
+ *
+ * Die Gegner stehen nicht hier, sondern werden in js/data/enemies.js aus
+ * den Welten erzeugt. So bleibt diese Datei übersichtlich, auch wenn es
+ * später 70 und mehr Gegner gibt.
  *
  * Spieler und Gegner sind gleich aufgebaut: Jeder hat ein Deck aus GENAU
  * 8 Attacken, 4 davon liegen im Kampf auf der Hand, und beide bekommen
@@ -14,12 +18,6 @@
  *   text          - kurze Beschreibung für Monster- und Sammlungsbildschirm
  *   deck          - genau 8 Attacken-ids aus js/data/attacks.js
  *
- * Nur für Gegner (steuert die KI):
- *   reactionTime  - Sekunden, die der Gegner zwischen zwei Entscheidungen
- *                   überlegt (kleiner = wacher, reagiert schneller)
- *   patience      - wie viele Sekunden er höchstens auf eine stärkere
- *                   Attacke wartet, statt sofort eine schwache zu spielen
- *                   (0 = haut alles sofort raus, 3 = sammelt für den grossen Schlag)
  */
 export const MONSTERS = {
   /* ---------- Spielermonster ---------- */
@@ -43,69 +41,6 @@ export const MONSTERS = {
     ],
   },
 
-  /* ---------- Gegner ---------- */
-  moosgnubbel: {
-    id: 'moosgnubbel',
-    name: 'Moosgnubbel',
-    icon: '🌱',
-    element: 'Pflanze',
-    text: 'Ein moosbewachsener Knirps. Harmlos - solange man ihn in Ruhe lässt.',
-    maxHp: 70,
-    deck: [
-      'blattschnitt',
-      'sporenwolke',
-      'moosklatsche',
-      'rankenpeitsche',
-      'knospenstoss',
-      'wurzelgriff',
-      'sporenschleuder',
-      'dornenranke',
-    ],
-    reactionTime: 1.2, // etwas träge
-    patience: 1, // spart kaum, schlägt lieber klein zu
-  },
-
-  schlickhuepfer: {
-    id: 'schlickhuepfer',
-    name: 'Schlickhüpfer',
-    icon: '🐸',
-    element: 'Wasser',
-    text: 'Springt aus dem Schlamm hervor, wenn man am wenigsten damit rechnet.',
-    maxHp: 95,
-    deck: [
-      'tropfschlag',
-      'quakstoss',
-      'sumpfblase',
-      'schlickwelle',
-      'klebezunge',
-      'schlammstoss',
-      'flutstoss',
-      'schlammgeysir',
-    ],
-    reactionTime: 1.0,
-    patience: 2,
-  },
-
-  borkenwaechter: {
-    id: 'borkenwaechter',
-    name: 'Borkenwächter',
-    icon: '🌳',
-    element: 'Pflanze',
-    text: 'Der uralte Wächter des Dornenhorsts. Seine Rinde heilt sich selbst.',
-    maxHp: 120,
-    deck: [
-      'splitterschlag',
-      'asthieb',
-      'borkenfaust',
-      'rindenpanzer',
-      'wurzelschlag',
-      'dornenhagel',
-      'stammstoss',
-      'waldzorn',
-    ],
-    reactionTime: 0.8, // hellwach
-    patience: 3, // sammelt geduldig für die grossen Attacken
-  },
 };
 
 /** Holt ein Monster per id - mit klarer Fehlermeldung, falls die id nicht existiert. */

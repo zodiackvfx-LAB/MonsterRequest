@@ -13,7 +13,7 @@ export function createHud() {
   const level = getPlayerLevel();
   const starter = getMonster(STARTER_MONSTER_ID);
 
-  // Der Balken zeigt, wie weit die Region geschafft ist.
+  // Der Balken zeigt, wie weit das ganze Spiel geschafft ist.
   const progress = Math.min(1, gameState.clearedLevels.length / LEVELS.length);
 
   const hud = document.createElement('div');

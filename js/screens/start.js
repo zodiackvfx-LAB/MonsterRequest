@@ -6,9 +6,11 @@ import { showScreen } from '../core/screens.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud } from '../ui/hud.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { gameState } from '../core/state.js';
 
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
 const MENU = [
+  { icon: '🗺️', label: 'Welten', screen: 'worlds' },
   { icon: '🐾', label: 'Monster', screen: 'monster' },
   { icon: '🃏', label: 'Deck', screen: 'deck' },
   { icon: '📖', label: 'Sammlung', screen: 'collection' },
@@ -62,7 +64,11 @@ export const startScreen = {
     startButton.className = 'btn btn--big';
     startButton.type = 'button';
     startButton.textContent = '▶  SPIEL STARTEN';
-    startButton.addEventListener('click', () => showScreen('map'));
+    // Direkt in die zuletzt freigeschaltete Welt - die Weltauswahl
+    // erreicht man von der Karte aus.
+    startButton.addEventListener('click', () =>
+      showScreen('map', { worldId: gameState.unlockedWorld })
+    );
     actions.appendChild(startButton);
 
     const menu = document.createElement('div');

@@ -1,19 +1,24 @@
 /**
  * Spielfortschritt.
  *
- * Hält fest, welche Level freigeschaltet und geschafft sind, wie viele Sterne
- * und Münzen der Spieler hat, und speichert das im Browser (localStorage),
- * damit der Fortschritt ein Neuladen überlebt.
+ * Hält fest, wie weit der Spieler ist, und speichert das im Browser
+ * (localStorage). Für den Prototypen reicht das; die Struktur ist so
+ * gehalten, dass später ein richtiger Server dahinter kann - dafür müssten
+ * nur loadProgress und saveProgress ausgetauscht werden.
  */
 
-const STORAGE_KEY = 'monsterquest.save.v2';
+import { LEVELS, bossLevelOf } from '../data/levels.js';
+import { WORLDS } from '../data/worlds.js';
+
+const STORAGE_KEY = 'monsterquest.save.v3';
+const ALTER_KEY = 'monsterquest.save.v2'; // Vorgängerversion, wird übernommen
 
 /** Frischer Spielstand - auch die Grundlage fürs Zurücksetzen. */
 function createNewGame() {
   return {
-    unlockedLevel: 1, // höchstes freigeschaltetes Level (Level 1 ist immer offen)
-    clearedLevels: [], // alle gewonnenen Level-ids
-    stars: {}, // { levelId: 1..3 }
+    unlockedWorld: 1, // höchste freigeschaltete Welt
+    clearedLevels: [], // Level-ids wie "1-3"
+    stars: {}, // { "1-3": 2 }
     coins: 0,
     settings: {
       sound: true,
@@ -28,18 +33,38 @@ export const gameState = createNewGame();
 export function loadProgress() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
+    if (raw) {
+      uebernehmen(JSON.parse(raw));
+      return;
+    }
 
-    const saved = JSON.parse(raw);
-    gameState.unlockedLevel = Number(saved.unlockedLevel) || 1;
-    gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels : [];
-    gameState.stars = saved.stars && typeof saved.stars === 'object' ? saved.stars : {};
-    gameState.coins = Number(saved.coins) || 0;
-    gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
+    // Alter Spielstand (3 Level ohne Welten): in die neue Form bringen.
+    const alt = localStorage.getItem(ALTER_KEY);
+    if (alt) {
+      const saved = JSON.parse(alt);
+      uebernehmen({
+        unlockedWorld: 1,
+        clearedLevels: (saved.clearedLevels ?? []).map((nummer) => `1-${nummer}`),
+        stars: Object.fromEntries(
+          Object.entries(saved.stars ?? {}).map(([nummer, wert]) => [`1-${nummer}`, wert])
+        ),
+        coins: saved.coins,
+        settings: saved.settings,
+      });
+      saveProgress();
+    }
   } catch (error) {
     // Ein kaputter oder gesperrter Speicher darf das Spiel nicht blockieren.
     console.warn('Spielstand konnte nicht geladen werden:', error);
   }
+}
+
+function uebernehmen(saved) {
+  gameState.unlockedWorld = Number(saved.unlockedWorld) || 1;
+  gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels.map(String) : [];
+  gameState.stars = saved.stars && typeof saved.stars === 'object' ? saved.stars : {};
+  gameState.coins = Number(saved.coins) || 0;
+  gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
 }
 
 /** Speichert den aktuellen Fortschritt. */
@@ -51,27 +76,70 @@ export function saveProgress() {
   }
 }
 
-/** Ist dieses Level anklickbar? */
+/* ------------------------------------------------------------------ */
+/*  Welten                                                             */
+/* ------------------------------------------------------------------ */
+
+/** Ist diese Welt betretbar? */
+export function isWorldUnlocked(worldId) {
+  return Number(worldId) <= gameState.unlockedWorld;
+}
+
+/** Wie viele Kämpfe einer Welt sind geschafft? */
+export function clearedInWorld(worldId) {
+  return LEVELS.filter(
+    (level) => level.worldId === Number(worldId) && isLevelCleared(level.id)
+  ).length;
+}
+
+/** Ist die Welt komplett durchgespielt? */
+export function isWorldCleared(worldId) {
+  const boss = bossLevelOf(worldId);
+  return Boolean(boss) && isLevelCleared(boss.id);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Level                                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ein Kampf ist offen, wenn seine Welt offen ist und der Kampf davor
+ * geschafft wurde. Der erste Kampf einer Welt ist immer offen.
+ */
 export function isLevelUnlocked(levelId) {
-  return levelId <= gameState.unlockedLevel;
+  const level = LEVELS.find((entry) => entry.id === String(levelId));
+  if (!level || !isWorldUnlocked(level.worldId)) return false;
+  if (level.number === 1) return true;
+  return isLevelCleared(`${level.worldId}-${level.number - 1}`);
 }
 
-/** Wurde dieses Level schon gewonnen? */
+/** Wurde dieser Kampf schon gewonnen? */
 export function isLevelCleared(levelId) {
-  return gameState.clearedLevels.includes(levelId);
+  return gameState.clearedLevels.includes(String(levelId));
 }
 
-/** Bisher beste Sternewertung eines Levels (0 = noch nicht geschafft). */
+/** Bisher beste Sternewertung eines Kampfes (0 = noch nicht geschafft). */
 export function getStars(levelId) {
-  return gameState.stars[levelId] ?? 0;
+  return gameState.stars[String(levelId)] ?? 0;
 }
 
-/** Summe aller Sterne - für die Anzeige auf der Karte. */
-export function getTotalStars() {
-  return Object.values(gameState.stars).reduce((sum, value) => sum + value, 0);
+/** Sterne einer Welt - oder aller Welten, wenn nichts angegeben wird. */
+export function getTotalStars(worldId = null) {
+  return LEVELS.filter((level) => worldId === null || level.worldId === Number(worldId)).reduce(
+    (summe, level) => summe + getStars(level.id),
+    0
+  );
 }
 
-/** Spielerstufe: steigt mit jedem geschafften Level. */
+/** Der nächste offene, noch nicht geschaffte Kampf einer Welt. */
+export function nextLevelOf(worldId) {
+  return LEVELS.find(
+    (level) =>
+      level.worldId === Number(worldId) && isLevelUnlocked(level.id) && !isLevelCleared(level.id)
+  );
+}
+
+/** Spielerstufe: steigt mit jedem geschafften Kampf. */
 export function getPlayerLevel() {
   return 1 + gameState.clearedLevels.length;
 }
@@ -88,28 +156,35 @@ export function calculateStars(hpLeft, maxHp) {
 }
 
 /**
- * Level als geschafft markieren, Sterne und Münzen gutschreiben,
- * nächstes Level freischalten.
+ * Kampf als geschafft markieren, Sterne und Münzen gutschreiben.
+ * War es ein Bosskampf, wird die nächste Welt freigeschaltet.
  *
- * @returns {{stars: number, coins: number, isNew: boolean}} was es dafür gab
+ * @returns {{stars: number, coins: number, isNew: boolean, newWorld: object|null}}
  */
 export function completeLevel(levelId, { stars = 1, reward = 0 } = {}) {
-  const isNew = !isLevelCleared(levelId);
-  if (isNew) gameState.clearedLevels.push(levelId);
+  const id = String(levelId);
+  const level = LEVELS.find((entry) => entry.id === id);
+  const isNew = !isLevelCleared(id);
 
-  // Nur eine Verbesserung wird gespeichert.
-  if (stars > getStars(levelId)) gameState.stars[levelId] = stars;
+  if (isNew) gameState.clearedLevels.push(id);
+  if (stars > getStars(id)) gameState.stars[id] = stars;
 
   // Beim ersten Sieg gibt es die volle Belohnung, danach ein Viertel.
   const coins = isNew ? reward : Math.round(reward * 0.25);
   gameState.coins += coins;
 
-  if (levelId + 1 > gameState.unlockedLevel) {
-    gameState.unlockedLevel = levelId + 1;
+  // Boss besiegt: nächste Welt öffnen.
+  let newWorld = null;
+  if (level?.isBoss) {
+    const naechste = WORLDS.find((world) => world.id === level.worldId + 1);
+    if (naechste && naechste.id > gameState.unlockedWorld) {
+      gameState.unlockedWorld = naechste.id;
+      newWorld = naechste;
+    }
   }
 
   saveProgress();
-  return { stars, coins, isNew };
+  return { stars, coins, isNew, newWorld };
 }
 
 /** Eine Einstellung ändern (z. B. Ton an/aus). */

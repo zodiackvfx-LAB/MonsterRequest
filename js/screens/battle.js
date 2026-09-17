@@ -13,6 +13,7 @@
 import { showScreen } from '../core/screens.js';
 import { getLevel } from '../data/levels.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_XP } from '../core/battle.js';
 import { calculateStars, completeLevel } from '../core/state.js';
@@ -37,7 +38,7 @@ export const battleScreen = {
     }
 
     const playerMonster = getMonster(STARTER_MONSTER_ID);
-    const enemyMonster = getMonster(level.enemyId);
+    const enemyMonster = getEnemy(level.enemyId);
 
     /* ---------- 1. Grundgerüst bauen ---------- */
     const screen = document.createElement('div');
@@ -51,7 +52,7 @@ export const battleScreen = {
       `
       <header class="topbar">
         <button class="btn btn--ghost btn--small" id="btn-flee" type="button">‹&nbsp;Fliehen</button>
-        <h2 class="topbar__title">Level ${level.id}</h2>
+        <h2 class="topbar__title">${level.isBoss ? 'Bosskampf' : `Kampf ${level.number}`}</h2>
         <span class="topbar__spacer"></span>
       </header>
 
@@ -75,7 +76,7 @@ export const battleScreen = {
             <div class="platform"></div>
           </div>
 
-          <p class="battle-log" id="battle-log">${level.name}: ${enemyMonster.name} greift an!</p>
+          <p class="battle-log" id="battle-log">${enemyMonster.name} greift an!</p>
 
           <div class="stage stage--player">
             <div class="sprite idle-bob" id="player-sprite">${playerMonster.icon}</div>
@@ -290,18 +291,22 @@ export const battleScreen = {
       const state = battle.state;
       let stars = 0;
       let coins = 0;
+      let newWorld = null; // wird gesetzt, wenn der Boss eine neue Welt öffnet
 
       if (result === 'win') {
         stars = calculateStars(state.player.hp, state.player.maxHp);
-        ({ coins } = completeLevel(level.id, { stars, reward: level.reward ?? 0 }));
+        ({ coins, newWorld } = completeLevel(level.id, { stars, reward: level.reward ?? 0 }));
       }
 
       // Kurz warten, damit der letzte Treffer, die Schadenszahl und der
       // leerlaufende Lebensbalken noch zu sehen sind.
-      resultTimer = setTimeout(() => buildResultOverlay(result, stars, coins), ERGEBNIS_VERZOEGERUNG);
+      resultTimer = setTimeout(
+        () => buildResultOverlay(result, stars, coins, newWorld),
+        ERGEBNIS_VERZOEGERUNG
+      );
     }
 
-    function buildResultOverlay(result, stars, coins) {
+    function buildResultOverlay(result, stars, coins, newWorld) {
       const overlay = document.createElement('div');
       overlay.className = 'overlay';
       overlay.innerHTML = `
@@ -313,9 +318,10 @@ export const battleScreen = {
               ? `${enemyMonster.name} wurde besiegt.${coins > 0 ? ` Du erhältst 🪙 ${coins}.` : ''}`
               : `${playerMonster.name} ist erschöpft. Versuch es noch einmal!`}
           </p>
+          ${newWorld ? `<p class="overlay__unlock">🎉 Neue Welt freigeschaltet:<br><strong>${newWorld.icon} ${newWorld.name}</strong></p>` : ''}
           <div class="overlay__actions">
             <button class="btn btn--big btn--green" id="btn-next" type="button"></button>
-            <button class="btn btn--ghost" id="btn-map" type="button">Zur Weltkarte</button>
+            <button class="btn btn--ghost" id="btn-map" type="button">Zur Karte</button>
           </div>
         </div>
       `;
@@ -326,17 +332,22 @@ export const battleScreen = {
       }
 
       const nextButton = overlay.querySelector('#btn-next');
-      nextButton.textContent = result === 'win' ? 'Weiter' : 'Nochmal kämpfen';
+      nextButton.textContent = newWorld ? 'Neue Welt ansehen' : result === 'win' ? 'Weiter' : 'Nochmal kämpfen';
       nextButton.addEventListener('click', () => {
-        if (result === 'win') showScreen('map');
+        if (newWorld) showScreen('worlds');
+        else if (result === 'win') showScreen('map', { worldId: level.worldId });
         else showScreen('battle', { levelId: level.id });
       });
 
-      overlay.querySelector('#btn-map').addEventListener('click', () => showScreen('map'));
+      overlay
+        .querySelector('#btn-map')
+        .addEventListener('click', () => showScreen('map', { worldId: level.worldId }));
       screen.appendChild(overlay);
     }
 
-    screen.querySelector('#btn-flee').addEventListener('click', () => showScreen('map'));
+    screen.querySelector('#btn-flee').addEventListener('click', () =>
+      showScreen('map', { worldId: level.worldId })
+    );
 
     root.appendChild(screen);
 

@@ -13,13 +13,15 @@
  *   icon    - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
  *   text    - kurze Beschreibung für die Karte
  *
+ * Hier stehen nur die Attacken des Spielers. Die Attacken der Gegner werden
+ * aus den Vorlagen der jeweiligen Welt erzeugt (js/data/worlds.js) und über
+ * registerAttack() ergänzt.
+ *
  * Faustregel fürs Balancing: Schaden geteilt durch Kosten ergibt die
  * "Stärke pro XP". Weil beide Seiten 1 XP pro Sekunde bekommen, entscheidet
  * dieser Wert darüber, wie hart eine Seite austeilt.
- *   Spieler       ca. 5,5 bis 6,9 (je teurer, desto stärker pro XP)
- *   Moosgnubbel   ca. 3,4   (leicht)
- *   Schlickhüpfer ca. 4,2   (mittel)
- *   Borkenwächter ca. 4,2   (Boss, dafür mit Heilung und mehr LP)
+ *   Spieler  ca. 5,5 bis 6,9 (je teurer, desto stärker pro XP)
+ *   Gegner   3,4 in Welt 1 bis 4,6 in Welt 6 (powerPerXp in worlds.js)
  */
 export const ATTACKS = {
   /* ===================================================================
@@ -93,211 +95,20 @@ export const ATTACKS = {
     text: 'Die stärkste Attacke - fast die gesamte Energie.',
   },
 
-  /* ===================================================================
-     Deck des Moosgnubbels (Level 1 - leichter Gegner)
-     =================================================================== */
-  blattschnitt: {
-    id: 'blattschnitt',
-    name: 'Blattschnitt',
-    cost: 1,
-    damage: 4,
-    icon: '🍃',
-    text: 'Ein scharfkantiges Blatt.',
-  },
-  sporenwolke: {
-    id: 'sporenwolke',
-    name: 'Sporenwolke',
-    cost: 1,
-    damage: 3,
-    icon: '🍄',
-    text: 'Feiner, reizender Staub.',
-  },
-  moosklatsche: {
-    id: 'moosklatsche',
-    name: 'Moosklatsche',
-    cost: 2,
-    damage: 6,
-    icon: '🍀',
-    text: 'Ein feuchter Klaps.',
-  },
-  rankenpeitsche: {
-    id: 'rankenpeitsche',
-    name: 'Rankenpeitsche',
-    cost: 2,
-    damage: 7,
-    icon: '🌿',
-    text: 'Peitscht mit zähen Ranken.',
-  },
-  knospenstoss: {
-    id: 'knospenstoss',
-    name: 'Knospenstoß',
-    cost: 3,
-    damage: 9,
-    icon: '🌷',
-    text: 'Eine Knospe platzt auf.',
-  },
-  wurzelgriff: {
-    id: 'wurzelgriff',
-    name: 'Wurzelgriff',
-    cost: 3,
-    damage: 10,
-    icon: '🪵',
-    text: 'Wurzeln packen von unten zu.',
-  },
-  sporenschleuder: {
-    id: 'sporenschleuder',
-    name: 'Sporenschleuder',
-    cost: 4,
-    damage: 14,
-    icon: '🌾',
-    text: 'Schleudert eine dichte Wolke.',
-  },
-  dornenranke: {
-    id: 'dornenranke',
-    name: 'Dornenranke',
-    cost: 5,
-    damage: 18,
-    icon: '🌹',
-    text: 'Die stärkste Ranke des Moosgnubbels.',
-  },
-
-  /* ===================================================================
-     Deck des Schlickhüpfers (Level 2 - mittlerer Gegner)
-     =================================================================== */
-  tropfschlag: {
-    id: 'tropfschlag',
-    name: 'Tropfschlag',
-    cost: 1,
-    damage: 4,
-    icon: '💧',
-    text: 'Ein schneller Wasserklaps.',
-  },
-  quakstoss: {
-    id: 'quakstoss',
-    name: 'Quakstoß',
-    cost: 1,
-    damage: 4,
-    icon: '🐸',
-    text: 'Ein lautes, unangenehmes Quaken.',
-  },
-  sumpfblase: {
-    id: 'sumpfblase',
-    name: 'Sumpfblase',
-    cost: 2,
-    damage: 7,
-    icon: '🫧',
-    text: 'Eine Blase platzt übelriechend.',
-  },
-  schlickwelle: {
-    id: 'schlickwelle',
-    name: 'Schlickwelle',
-    cost: 2,
-    damage: 8,
-    icon: '🌊',
-    text: 'Eine Welle aus kaltem Schlamm.',
-  },
-  klebezunge: {
-    id: 'klebezunge',
-    name: 'Klebezunge',
-    cost: 3,
-    damage: 11,
-    icon: '👅',
-    text: 'Schnellt nach vorn und trifft hart.',
-  },
-  schlammstoss: {
-    id: 'schlammstoss',
-    name: 'Schlammstoß',
-    cost: 3,
-    damage: 11,
-    icon: '💦',
-    text: 'Ein Schwall zäher Schlamm.',
-  },
-  flutstoss: {
-    id: 'flutstoss',
-    name: 'Flutstoß',
-    cost: 4,
-    damage: 15,
-    icon: '🌀',
-    text: 'Reißt alles mit sich.',
-  },
-  schlammgeysir: {
-    id: 'schlammgeysir',
-    name: 'Schlammgeysir',
-    cost: 5,
-    damage: 19,
-    icon: '⛲',
-    text: 'Bricht mit voller Wucht hervor.',
-  },
-
-  /* ===================================================================
-     Deck des Borkenwächters (Level 3 - Boss)
-     =================================================================== */
-  splitterschlag: {
-    id: 'splitterschlag',
-    name: 'Splitterschlag',
-    cost: 1,
-    damage: 4,
-    icon: '🪵',
-    text: 'Holzsplitter fliegen.',
-  },
-  asthieb: {
-    id: 'asthieb',
-    name: 'Asthieb',
-    cost: 2,
-    damage: 7,
-    icon: '🪓',
-    text: 'Ein schwerer Ast saust herab.',
-  },
-  borkenfaust: {
-    id: 'borkenfaust',
-    name: 'Borkenfaust',
-    cost: 2,
-    damage: 8,
-    icon: '🪨',
-    text: 'Schwerer Schlag aus hartem Holz.',
-  },
-  rindenpanzer: {
-    id: 'rindenpanzer',
-    name: 'Rindenpanzer',
-    cost: 2,
-    damage: 0,
-    heal: 14,
-    icon: '🧱',
-    text: 'Frische Rinde schließt die Wunden.',
-  },
-  wurzelschlag: {
-    id: 'wurzelschlag',
-    name: 'Wurzelschlag',
-    cost: 3,
-    damage: 11,
-    icon: '🌲',
-    text: 'Wurzeln brechen aus dem Boden.',
-  },
-  dornenhagel: {
-    id: 'dornenhagel',
-    name: 'Dornenhagel',
-    cost: 3,
-    damage: 11,
-    icon: '🌵',
-    text: 'Ein Regen aus spitzen Dornen.',
-  },
-  stammstoss: {
-    id: 'stammstoss',
-    name: 'Stammstoß',
-    cost: 4,
-    damage: 14,
-    icon: '🌰',
-    text: 'Der ganze Stamm kippt nach vorn.',
-  },
-  waldzorn: {
-    id: 'waldzorn',
-    name: 'Waldzorn',
-    cost: 5,
-    damage: 18,
-    icon: '💢',
-    text: 'Der Zorn des ganzen Waldes.',
-  },
 };
+
+/**
+ * Trägt eine Attacke nachträglich in den Katalog ein.
+ *
+ * Das nutzt js/data/enemies.js: Die Attacken der Gegner werden aus den
+ * Vorlagen einer Welt erzeugt, statt hier einzeln aufgeschrieben zu werden.
+ * Für die Kampf-Engine sind sie danach ganz normale Attacken.
+ */
+export function registerAttack(attack) {
+  if (!attack.id) throw new Error('Attacke ohne id kann nicht eingetragen werden');
+  ATTACKS[attack.id] = { damage: 0, heal: 0, shield: 0, ...attack };
+  return attack.id;
+}
 
 /** Holt eine Attacke per id - mit klarer Fehlermeldung, falls die id nicht existiert. */
 export function getAttack(id) {

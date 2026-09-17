@@ -7,10 +7,28 @@
  * wird, stimmt eine Grundregel nicht mehr.
  */
 
+// state.js speichert im Browser - fuer den Test genuegt eine einfache Attrappe.
+globalThis.localStorage = {
+  _daten: new Map(),
+  getItem(key) { return this._daten.has(key) ? this._daten.get(key) : null; },
+  setItem(key, value) { this._daten.set(key, String(value)); },
+  removeItem(key) { this._daten.delete(key); },
+};
+
 import { createDeck, DECK_SIZE, HAND_SIZE } from '../js/core/deck.js';
 import { createFighter, MAX_XP, START_XP } from '../js/core/fighter.js';
 import { MONSTERS } from '../js/data/monsters.js';
 import { ATTACKS, getAttack } from '../js/data/attacks.js';
+import { ENEMIES } from '../js/data/enemies.js';
+import { WORLDS, fightsInWorld } from '../js/data/worlds.js';
+import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
+import {
+  completeLevel,
+  isLevelUnlocked,
+  isWorldUnlocked,
+  nextLevelOf,
+  resetProgress,
+} from '../js/core/state.js';
 
 let bestanden = 0;
 let fehler = 0;
@@ -36,6 +54,60 @@ for (const monster of Object.values(MONSTERS)) {
     `${monster.name}: keine Attacke kostet mehr als ${MAX_XP} XP`,
     monster.deck.every((id) => getAttack(id).cost <= MAX_XP)
   );
+}
+
+console.log('\nGegner');
+for (const enemy of Object.values(ENEMIES)) {
+  if (enemy.deck.length !== DECK_SIZE) {
+    pruefe(`${enemy.name}: Deck hat genau ${DECK_SIZE} Attacken`, false);
+  }
+  if (!enemy.deck.every((id) => Boolean(ATTACKS[id]))) {
+    pruefe(`${enemy.name}: alle Attacken existieren`, false);
+  }
+}
+pruefe(`Alle ${Object.keys(ENEMIES).length} Gegner haben ein gueltiges 8er-Deck`, true);
+pruefe(
+  'Jeder Gegner hat einen eigenen Namen',
+  new Set(Object.values(ENEMIES).map((e) => e.name)).size === Object.keys(ENEMIES).length
+);
+
+console.log('\nWelten und Kaempfe');
+for (const world of WORLDS) {
+  const kaempfe = levelsOfWorld(world.id);
+  pruefe(
+    `${world.name}: ${kaempfe.length} Kaempfe (10 bis 15 erlaubt)`,
+    kaempfe.length >= 10 && kaempfe.length <= 15 && kaempfe.length === fightsInWorld(world)
+  );
+  pruefe(`${world.name}: letzter Kampf ist der Boss`, kaempfe.at(-1).isBoss === true);
+  pruefe(
+    `${world.name}: nur ein Boss`,
+    kaempfe.filter((level) => level.isBoss).length === 1
+  );
+}
+pruefe('Alle Level-ids sind eindeutig', new Set(LEVELS.map((l) => l.id)).size === LEVELS.length);
+
+console.log('\nFortschritt');
+{
+  resetProgress();
+  pruefe('Welt 1 ist offen', isWorldUnlocked(1));
+  pruefe('Welt 2 ist gesperrt', !isWorldUnlocked(2));
+  pruefe('Kampf 1-1 ist offen', isLevelUnlocked('1-1'));
+  pruefe('Kampf 1-2 ist gesperrt', !isLevelUnlocked('1-2'));
+
+  completeLevel('1-1', { stars: 3, reward: 25 });
+  pruefe('Nach dem Sieg ist Kampf 1-2 offen', isLevelUnlocked('1-2'));
+  pruefe('Naechster Kampf wird richtig gefunden', nextLevelOf(1)?.id === '1-2');
+
+  // Welt 1 komplett spielen
+  for (const level of levelsOfWorld(1)) completeLevel(level.id, { stars: 2, reward: level.reward });
+  pruefe('Nach dem Boss ist Welt 2 offen', isWorldUnlocked(2));
+  pruefe('Kampf 2-1 ist offen', isLevelUnlocked('2-1'));
+  pruefe('Kampf 2-2 ist noch gesperrt', !isLevelUnlocked('2-2'));
+  pruefe('Welt 3 bleibt gesperrt', !isWorldUnlocked(3));
+
+  const boss = bossLevelOf(1);
+  pruefe('Der Boss gibt mehr Muenzen als der erste Kampf', boss.reward > levelsOfWorld(1)[0].reward);
+  resetProgress();
 }
 
 console.log('\nDeck und Hand');

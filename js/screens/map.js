@@ -1,31 +1,64 @@
 /**
- * Weltkarte: zeigt alle Level aus js/data/levels.js als Punkte in der Landschaft.
+ * Weltkarte einer Welt: zeigt alle Kämpfe als Stationen auf einem Weg.
  *
- * - Die Position eines Levels steht in den Daten (x/y in Prozent).
- * - Der Weg zwischen den Punkten wird automatisch gezeichnet.
- * - Freigeschaltete Level sind anklickbar, gesperrte zeigen ein Schloss.
- * - Kommen neue Level dazu, wächst die Karte mit - hier ist nichts zu ändern.
+ * - Die Positionen stehen in den Level-Daten (js/data/levels.js) und werden
+ *   dort automatisch berechnet. Kommt ein Kampf dazu, wächst die Karte mit.
+ * - Geschaffte Kämpfe tragen einen Haken und ihre Sterne.
+ * - Der nächste offene Kampf wackelt, damit man ihn sofort findet.
+ * - Gesperrte Kämpfe zeigen ein Schloss.
  */
 
 import { showScreen } from '../core/screens.js';
-import { LEVELS } from '../data/levels.js';
-import { getMonster } from '../data/monsters.js';
-import { createScenery } from '../ui/scenery.js';
+import { levelsOfWorld } from '../data/levels.js';
+import { getWorld, fightsInWorld } from '../data/worlds.js';
+import { getEnemy } from '../data/enemies.js';
+import { applyRegion, createScenery } from '../ui/scenery.js';
 import { createHud, createStars } from '../ui/hud.js';
-import { getStars, getTotalStars, isLevelCleared, isLevelUnlocked } from '../core/state.js';
+import {
+  clearedInWorld,
+  gameState,
+  getStars,
+  getTotalStars,
+  isLevelCleared,
+  isLevelUnlocked,
+  nextLevelOf,
+} from '../core/state.js';
 
-/** Beschriftung unter einem Levelpunkt. */
+/**
+ * Beschriftung unter einer Station. Immer die Kampfnummer - ob gesperrt ist,
+ * zeigt schon das Schloss im Kreis. Drei Mal "Gesperrt" untereinander wäre
+ * nur unruhig.
+ */
 function nodeLabel(level, unlocked) {
-  if (!unlocked) return level.isBoss ? 'BOSS' : 'Gesperrt';
-  return level.isBoss ? `BOSS · ${level.name}` : level.name;
+  if (level.isBoss) return unlocked ? `BOSS · ${getEnemy(level.enemyId).name}` : 'BOSS';
+  return `Kampf ${level.number}`;
 }
 
 export const mapScreen = {
-  mount(root) {
+  mount(root, params = {}) {
+    const worldId = Number(params.worldId) || gameState.unlockedWorld;
+    const world = getWorld(worldId);
+    if (!world) throw new Error(`Welt ${worldId} gibt es nicht (siehe js/data/worlds.js)`);
+
+    const levels = levelsOfWorld(worldId);
+    const current = nextLevelOf(worldId);
+
     const screen = document.createElement('div');
     screen.className = 'screen screen--map';
+    applyRegion(screen, world.scenery);
     screen.appendChild(createScenery());
     screen.appendChild(createHud());
+
+    /* ---------- Kopfzeile der Welt ---------- */
+    const header = document.createElement('div');
+    header.className = 'map__header';
+    header.innerHTML = `
+      <button class="btn btn--ghost btn--small" id="btn-worlds" type="button">🗺️&nbsp;Welten</button>
+      <span class="map__world">${world.icon} ${world.name}</span>
+      <span class="map__chip">${clearedInWorld(worldId)} / ${fightsInWorld(world)}</span>
+    `;
+    header.querySelector('#btn-worlds').addEventListener('click', () => showScreen('worlds'));
+    screen.appendChild(header);
 
     /* ---------- Kartenfläche ---------- */
     const map = document.createElement('div');
@@ -33,22 +66,20 @@ export const mapScreen = {
 
     const canvas = document.createElement('div');
     canvas.className = 'map__canvas';
+    // Je mehr Kämpfe, desto höher die Karte - sie wird dann scrollbar.
+    canvas.style.setProperty('--levels', String(levels.length));
 
-    // Der Weg als gestrichelte Linie durch alle Levelpunkte.
-    const points = LEVELS.map((level) => `${level.x},${level.y}`).join(' ');
+    const points = levels.map((level) => `${level.x},${level.y}`).join(' ');
     canvas.innerHTML = `
       <svg class="map__path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <polyline class="map__path-line" points="${points}" vector-effect="non-scaling-stroke" />
       </svg>
     `;
 
-    // Das nächste noch nicht geschaffte Level wird hervorgehoben.
-    const currentLevel = LEVELS.find((level) => isLevelUnlocked(level.id) && !isLevelCleared(level.id));
-
-    LEVELS.forEach((level) => {
+    levels.forEach((level) => {
       const unlocked = isLevelUnlocked(level.id);
       const cleared = isLevelCleared(level.id);
-      const enemy = getMonster(level.enemyId);
+      const enemy = getEnemy(level.enemyId);
 
       const node = document.createElement('button');
       node.type = 'button';
@@ -57,7 +88,7 @@ export const mapScreen = {
         unlocked ? 'is-unlocked' : 'is-locked',
         cleared ? 'is-cleared' : '',
         level.isBoss ? 'is-boss' : '',
-        currentLevel && currentLevel.id === level.id ? 'is-current' : '',
+        current && current.id === level.id ? 'is-current' : '',
       ]
         .filter(Boolean)
         .join(' ');
@@ -66,20 +97,21 @@ export const mapScreen = {
       node.disabled = !unlocked;
       node.setAttribute(
         'aria-label',
-        `Level ${level.id}: ${level.name} (${cleared ? 'geschafft' : unlocked ? 'offen' : 'gesperrt'})`
+        `Kampf ${level.number}: ${level.name} (${cleared ? 'geschafft' : unlocked ? 'offen' : 'gesperrt'})`
       );
 
-      const badge = level.isBoss && unlocked ? '💀' : unlocked ? level.id : '🔒';
+      const badge = cleared ? '✓' : level.isBoss && unlocked ? '💀' : unlocked ? level.number : '🔒';
       node.innerHTML = `
         <span class="node__circle">${badge}</span>
         <span class="node__label">${nodeLabel(level, unlocked)}</span>
       `;
-      node.insertBefore(createStars(getStars(level.id)), node.querySelector('.node__label'));
-
-      if (unlocked) {
-        node.addEventListener('click', () => selectLevel(level, enemy));
+      // Sterne nur bei geschafften Kämpfen - sonst stehen überall graue Sterne.
+      const sterne = getStars(level.id);
+      if (sterne > 0) {
+        node.insertBefore(createStars(sterne), node.querySelector('.node__label'));
       }
 
+      if (unlocked) node.addEventListener('click', () => selectLevel(level, enemy));
       canvas.appendChild(node);
     });
 
@@ -111,30 +143,31 @@ export const mapScreen = {
 
     footer.appendChild(buttons);
 
-    /** Zeigt ein Level in der Infoleiste an und legt den Startknopf darauf. */
     let selected = null;
     function selectLevel(level, enemy) {
       selected = level;
       info.innerHTML = `
-        <span class="map__info-title">${level.isBoss ? '👑 ' : ''}${level.region} · Level ${level.id}</span>
-        <span class="map__info-text"><strong>${level.name}</strong></span>
-        <span class="map__info-text">${level.text}</span>
-        <span class="map__info-text">Gegner: ${enemy.icon} ${enemy.name} · ${enemy.maxHp} LP</span>
+        <span class="map__info-title">${level.isBoss ? '👑 ' : ''}Kampf ${level.number} von ${levels.length}</span>
+        <span class="map__info-text"><strong>${enemy.icon} ${enemy.name}</strong> · ${enemy.maxHp} LP</span>
+        <span class="map__info-text">Belohnung: 🪙 ${level.reward}</span>
       `;
-      playButton.textContent = `▶  LEVEL ${level.id} STARTEN`;
+      playButton.textContent = level.isBoss ? '▶  BOSSKAMPF' : `▶  KAMPF ${level.number} STARTEN`;
       playButton.disabled = false;
+
+      canvas.querySelectorAll('.node').forEach((node) => node.classList.remove('is-selected'));
+      const index = levels.indexOf(level);
+      canvas.querySelectorAll('.node')[index]?.classList.add('is-selected');
     }
 
     playButton.addEventListener('click', () => {
       if (selected) showScreen('battle', { levelId: selected.id });
     });
 
-    // Beim Öffnen ist das nächste offene Level vorausgewählt.
-    const preselect = currentLevel ?? LEVELS.find((level) => isLevelUnlocked(level.id));
+    const preselect = current ?? levels.findLast((level) => isLevelUnlocked(level.id)) ?? levels[0];
     if (preselect) {
-      selectLevel(preselect, getMonster(preselect.enemyId));
+      selectLevel(preselect, getEnemy(preselect.enemyId));
     } else {
-      info.innerHTML = '<span class="map__info-text">Kein Level verfügbar.</span>';
+      info.innerHTML = '<span class="map__info-text">Kein Kampf verfügbar.</span>';
       playButton.disabled = true;
     }
 
@@ -142,14 +175,19 @@ export const mapScreen = {
     screen.appendChild(footer);
     root.appendChild(screen);
 
-    // Region und Sterne in der Kopfzeile ergänzen
+    // Sterne dieser Welt in der Kopfleiste ergänzen
     const hud = screen.querySelector('.hud');
-    const regionChip = document.createElement('div');
-    regionChip.className = 'hud__coins';
-    regionChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars()} / ${LEVELS.length * 3}</span>`;
-    hud.insertBefore(regionChip, hud.lastElementChild);
+    const starChip = document.createElement('div');
+    starChip.className = 'hud__coins';
+    starChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars(worldId)} / ${levels.length * 3}</span>`;
+    hud.insertBefore(starChip, hud.lastElementChild);
 
-    // Die Karte startet unten (bei Level 1), nicht oben.
-    map.scrollTop = map.scrollHeight;
+    // Zum ausgewählten Kampf scrollen, damit er sichtbar ist.
+    const selectedNode = canvas.querySelector('.node.is-selected');
+    if (selectedNode) {
+      map.scrollTop = selectedNode.offsetTop - map.clientHeight / 2;
+    } else {
+      map.scrollTop = map.scrollHeight;
+    }
   },
 };

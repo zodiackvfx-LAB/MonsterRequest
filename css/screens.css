@@ -72,7 +72,9 @@
 .map__canvas {
   position: relative;
   width: 100%;
-  min-height: 100%;
+  /* --levels wird in js/screens/map.js gesetzt: je mehr Kämpfe, desto höher
+     die Karte. Ab etwa acht Kämpfen wird sie scrollbar. */
+  min-height: max(100%, calc(var(--levels, 3) * 92px));
 }
 
 /* Der Weg zwischen den Levelpunkten */
@@ -161,6 +163,41 @@
 
 .node .stars {
   font-size: 0.72rem;
+}
+
+/* Kopfzeile der Welt über der Karte */
+.map__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map__world {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map__chip {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+}
+
+/* Der gerade ausgewählte Kampf */
+.node.is-selected .node__circle {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85), 0 5px 0 rgba(12, 18, 48, 0.5);
 }
 
 /* Infoleiste unten auf der Karte */
@@ -729,4 +766,122 @@
     width: 54px;
     height: 54px;
   }
+}
+
+/* =========================================================
+   Weltauswahl
+   ========================================================= */
+.world-card {
+  font: inherit;
+  color: var(--text);
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+.world-card:not(:disabled):active {
+  transform: translateY(3px);
+}
+
+.world-card.is-locked {
+  cursor: not-allowed;
+  filter: grayscale(0.7) brightness(0.75);
+}
+
+/* Kleine Vorschau der Weltfarben - nutzt dieselben Variablen wie die Kulisse */
+.world-card__art {
+  position: relative;
+  flex: 0 0 96px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--s-sky-top), var(--s-sky-bottom));
+}
+
+.world-card__hill {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  bottom: -30%;
+  height: 70%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: linear-gradient(180deg, var(--s-grass-light), var(--s-grass-dark));
+}
+
+.world-card__icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 2.2rem;
+  filter: drop-shadow(0 4px 4px rgba(10, 20, 40, 0.4));
+}
+
+.world-card__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  padding: 12px 12px 12px 0;
+}
+
+.world-card__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.world-card__text {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.world-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.world-card__chip {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: rgba(12, 18, 48, 0.55);
+}
+
+.world-card__chip--done {
+  background: var(--green-3);
+}
+
+/* Zähler in einer Panel-Überschrift, z. B. "4/12" */
+.panel__count {
+  float: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* Hinweis im Ergebnisfenster, wenn eine neue Welt aufgeht */
+.overlay__unlock {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  background: rgba(255, 190, 60, 0.16);
+  border: 2px solid var(--gold-2);
+}
+
+/* Bosse in der Sammlung hervorheben */
+.collection-item.is-boss {
+  border-color: var(--gold-2);
 }

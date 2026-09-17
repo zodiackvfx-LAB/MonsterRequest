@@ -128,31 +128,74 @@
   background-repeat: repeat-x;
 }
 
-/* ---------- Regionen: gleiche Ebenen, andere Farben ----------
+/* ---------- Welt-Themen ----------
    Die Klasse kommt auf den Bildschirm (nicht auf die Kulisse), damit
-   Kulisse UND Arena die Farben erben. */
-.region--sumpf {
-  --s-tree: #3f7f5c;
-  --s-tree-dark: #23503a;
-  --s-sky-top: #4f8fa8;
-  --s-sky-bottom: #cfe8dd;
-  --s-grass: #4f9e6a;
-  --s-grass-dark: #2f6a48;
-  --s-grass-light: #7cc48c;
-  --s-rock: #6d8a8f;
-  --s-rock-dark: #4d6a70;
+   Kulisse UND Arena die Farben erben. Jede Welt bringt eigene Farben UND
+   eine eigene Form für die Bäume/Felsen mit (siehe weiter unten) - so
+   unterscheiden sich die Welten nicht nur durch einen Farbton. */
+.region--kristall {
+  --s-sky-top: #3a2f8f;
+  --s-sky-bottom: #b9c8ff;
+  --s-grass: #6f7bd6;
+  --s-grass-dark: #454b9e;
+  --s-grass-light: #9aa5f0;
+  --s-rock: #8a7ad0;
+  --s-rock-dark: #5b4f9e;
+  --s-tree: #7ce0ff;
+  --s-tree-dark: #3f7fd0;
+  --snow: #eaf2ff;
 }
 
 .region--vulkan {
-  --s-tree: #6b4a3a;
-  --s-tree-dark: #3d2820;
-  --s-sky-top: #7a3f6e;
-  --s-sky-bottom: #ffb27a;
-  --s-grass: #7a5a46;
-  --s-grass-dark: #4e372a;
-  --s-grass-light: #a07a5e;
-  --s-rock: #6b4a55;
-  --s-rock-dark: #472f3a;
+  --s-sky-top: #6d2140;
+  --s-sky-bottom: #ffa45c;
+  --s-grass: #6b4636;
+  --s-grass-dark: #40261c;
+  --s-grass-light: #96634a;
+  --s-rock: #6b3a45;
+  --s-rock-dark: #43242c;
+  --s-tree: #d95b25;
+  --s-tree-dark: #7a2b12;
+  --snow: #ffd9a0;
+}
+
+.region--eis {
+  --s-sky-top: #5aa7d6;
+  --s-sky-bottom: #e6f6ff;
+  --s-grass: #cfe8f7;
+  --s-grass-dark: #9dc3dd;
+  --s-grass-light: #f2fbff;
+  --s-rock: #9db6cc;
+  --s-rock-dark: #6f8aa3;
+  --s-tree: #4f9ea8;
+  --s-tree-dark: #2c6670;
+  --snow: #ffffff;
+}
+
+.region--schatten {
+  --s-sky-top: #1c1030;
+  --s-sky-bottom: #4b3570;
+  --s-grass: #3b2c55;
+  --s-grass-dark: #241a38;
+  --s-grass-light: #54406f;
+  --s-rock: #3a2b52;
+  --s-rock-dark: #241a38;
+  --s-tree: #6b4a8f;
+  --s-tree-dark: #33214a;
+  --snow: #c9b6e8;
+}
+
+.region--wueste {
+  --s-sky-top: #f0a05a;
+  --s-sky-bottom: #ffe6b8;
+  --s-grass: #e8c07a;
+  --s-grass-dark: #b98c4a;
+  --s-grass-light: #f7dda6;
+  --s-rock: #c99a63;
+  --s-rock-dark: #8f6a3f;
+  --s-tree: #77a05a;
+  --s-tree-dark: #4a6b36;
+  --snow: #fff3d6;
 }
 
 /* Abgedunkelte Kulisse, damit Menues darauf lesbar bleiben */
@@ -362,3 +405,70 @@
 .arena__flower:nth-of-type(3) { left: 18%; top: 88%; }
 .arena__flower:nth-of-type(4) { left: 58%; top: 94%; }
 .arena__flower:nth-of-type(5) { left: 88%; top: 70%; }
+
+/* ---------- Eigene Pflanzen und Felsen je Welt ----------
+   Alle Welten nutzen dieselben Bausteine (.arena__tree), nur die Silhouette
+   wechselt. Dadurch sieht jede Welt anders aus, ohne neuen Code. */
+
+/* Kristallhöhlen: aufragende Kristallsplitter, kein Stamm */
+.region--kristall .arena__tree-top {
+  clip-path: polygon(50% 0%, 78% 36%, 70% 100%, 30% 100%, 22% 36%);
+}
+
+.region--kristall .arena__tree-trunk {
+  background: linear-gradient(90deg, #6f7bd6, #454b9e);
+}
+
+/* Vulkanlande: zackige Felsnadeln */
+.region--vulkan .arena__tree-top {
+  clip-path: polygon(50% 0%, 64% 38%, 56% 42%, 74% 100%, 26% 100%, 44% 42%, 36% 38%);
+}
+
+.region--vulkan .arena__tree-trunk {
+  background: linear-gradient(90deg, #6b4636, #40261c);
+}
+
+/* Eisgebirge: Tannen mit Schneekappe */
+.region--eis .arena__tree-top::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--snow) 0%, rgba(255, 255, 255, 0) 42%);
+}
+
+/* Schattenreich: kahle, krumme Bäume */
+.region--schatten .arena__tree-top {
+  clip-path: polygon(
+    44% 0%, 56% 0%, 56% 34%, 80% 14%, 86% 24%, 56% 50%,
+    56% 100%, 44% 100%, 44% 58%, 14% 30%, 20% 20%, 44% 40%
+  );
+}
+
+/* Wüstenreich: Kakteen */
+.region--wueste .arena__tree-top {
+  clip-path: polygon(
+    40% 14%, 60% 14%, 60% 44%, 76% 44%, 76% 28%, 88% 28%, 88% 60%,
+    60% 60%, 60% 100%, 40% 100%, 40% 68%, 12% 68%, 12% 36%, 24% 36%, 24% 52%, 40% 52%
+  );
+}
+
+.region--wueste .arena__tree-trunk,
+.region--kristall .arena__tree-trunk {
+  height: calc(var(--h) * 0.12);
+}
+
+/* In Vulkan, Schatten und Wüste wächst nichts, was blüht. */
+.region--vulkan .arena__flower,
+.region--schatten .arena__flower,
+.region--wueste .arena__flower {
+  display: none;
+}
+
+/* Im Eis liegen statt Blumen Schneeflecken. */
+.region--eis .arena__flower {
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+  width: 14px;
+  height: 8px;
+  border-radius: 50%;
+}

@@ -12,6 +12,7 @@
 import { initScreens, registerScreen, showScreen } from './core/screens.js';
 import { loadProgress } from './core/state.js';
 import { startScreen } from './screens/start.js';
+import { worldsScreen } from './screens/worlds.js';
 import { mapScreen } from './screens/map.js';
 import { battleScreen } from './screens/battle.js';
 import { monsterScreen } from './screens/monster.js';
@@ -25,6 +26,7 @@ applySettings();
 initScreens(document.getElementById('app'));
 
 registerScreen('start', startScreen);
+registerScreen('worlds', worldsScreen);
 registerScreen('map', mapScreen);
 registerScreen('battle', battleScreen);
 registerScreen('monster', monsterScreen);
