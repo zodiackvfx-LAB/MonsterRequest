@@ -58,6 +58,7 @@ function buildLevels() {
         enemyId: enemy.id,
         isBoss,
         scenery: world.scenery,
+        music: world.music, // Kategorie der Hintergrundmusik (js/data/musik.js)
         // Spätere Kämpfe geben mehr, der Boss deutlich mehr.
         reward: Math.round(world.reward * (1 + index * 0.12) * (isBoss ? 4 : 1)),
         // Erfahrung richtet sich nach der Stärke des Gegners.

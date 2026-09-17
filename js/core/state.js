@@ -35,7 +35,8 @@ function createNewGame() {
       abgeholt: [], // ids, deren Belohnung schon geholt wurde
     },
     settings: {
-      sound: true,
+      sound: true, // Klänge im Spiel
+      musik: true, // Hintergrundmusik
       animations: true,
     },
   };

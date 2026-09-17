@@ -7,6 +7,7 @@ import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
 import { gameState, getTotalStars, resetProgress, setSetting } from '../core/state.js';
 import { LEVELS } from '../data/levels.js';
+import { spieleKlang, tonEinstellungenAnwenden } from '../core/audio.js';
 
 /** Die Schalter. Neue Einstellung = hier einen Eintrag ergänzen. */
 const TOGGLES = [
@@ -17,8 +18,14 @@ const TOGGLES = [
   },
   {
     key: 'sound',
-    name: 'Ton',
-    hint: 'Noch ohne Wirkung - Klänge kommen später',
+    name: 'Klänge',
+    hint: 'Treffer, Knöpfe, Belohnungen',
+    probe: 'bestaetigen', // beim Einschalten kurz vorspielen
+  },
+  {
+    key: 'musik',
+    name: 'Musik',
+    hint: 'Ruhige Hintergrundmusik, je Welt eine andere',
   },
 ];
 
@@ -51,11 +58,15 @@ export const settingsScreen = {
       button.type = 'button';
       button.className = `switch${gameState.settings[toggle.key] ? ' is-on' : ''}`;
       button.setAttribute('aria-label', toggle.name);
+      // Der Schalter spielt seinen eigenen Klang, nicht den Standard-Tipp.
+      button.dataset.klang = 'keiner';
       button.addEventListener('click', () => {
         const value = !gameState.settings[toggle.key];
         setSetting(toggle.key, value);
         button.classList.toggle('is-on', value);
         applySettings();
+        // Beim Einschalten einmal hörbar machen, was man gerade angeschaltet hat.
+        if (value && toggle.probe) spieleKlang(toggle.probe);
       });
 
       row.appendChild(button);
@@ -136,4 +147,5 @@ function askReset(screen) {
  */
 export function applySettings() {
   document.body.classList.toggle('no-animations', !gameState.settings.animations);
+  tonEinstellungenAnwenden();
 }

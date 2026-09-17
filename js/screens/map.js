@@ -36,6 +36,9 @@ function nodeLabel(level, unlocked) {
 }
 
 export const mapScreen = {
+  // Auf der Karte läuft schon die Musik der Welt.
+  musik: (params) => getWorld(Number(params.worldId) || gameState.unlockedWorld)?.music ?? 'menue',
+
   mount(root, params = {}) {
     const worldId = Number(params.worldId) || gameState.unlockedWorld;
     const world = getWorld(worldId);

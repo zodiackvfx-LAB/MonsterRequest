@@ -11,6 +11,7 @@ import { createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createTopbar } from '../ui/hud.js';
 import { gameState } from '../core/state.js';
 import { aufgabeAbholen, getTagesAufgaben } from '../core/aufgaben.js';
+import { spieleKlang } from '../core/audio.js';
 
 export const dailyScreen = {
   mount(root) {
@@ -82,8 +83,10 @@ function aufgabenZeile(aufgabe, stand, erledigt, abgeholt, neuZeichnen) {
   } else if (erledigt) {
     knopf.classList.add('btn--green');
     knopf.innerHTML = `🪙&nbsp;${aufgabe.muenzen}<br>💠&nbsp;${aufgabe.material}`;
+    // data-klang="keiner": der eigene Abhol-Klang statt des Knopfklangs
+    knopf.dataset.klang = 'keiner';
     knopf.addEventListener('click', () => {
-      aufgabeAbholen(aufgabe.id);
+      if (aufgabeAbholen(aufgabe.id)) spieleKlang('aufgabe');
       neuZeichnen();
     });
   } else {

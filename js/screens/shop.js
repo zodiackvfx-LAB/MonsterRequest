@@ -11,6 +11,7 @@ import { SELTENHEITEN } from '../data/items.js';
 import { truheOeffnen } from '../core/loot.js';
 import { bezahlen, beuteGutschreiben, gameState, kannBezahlen } from '../core/state.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
+import { spieleBeute, spieleKlang } from '../core/audio.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
@@ -58,7 +59,10 @@ export const shopScreen = {
       kaufen.innerHTML = `🪙 ${truhe.preis}`;
       kaufen.disabled = !kannBezahlen(truhe.preis);
       kaufen.addEventListener('click', () => {
-        if (!bezahlen(truhe.preis)) return;
+        if (!bezahlen(truhe.preis)) {
+          spieleKlang('gesperrt');
+          return;
+        }
         oeffnungZeigen(screen, truhe);
       });
 
@@ -160,6 +164,7 @@ function oeffnungZeigen(screen, truhe) {
       chest.classList.remove('is-shaking');
       chest.classList.add('is-open');
       titel.textContent = 'Du erhältst:';
+      spieleKlang('truhe');
       stuecke.forEach((stueck, index) => {
         timer.push(setTimeout(() => aufdecken(gitter, stueck, index), index * AUFDECK_TAKT));
       });
@@ -183,6 +188,8 @@ function oeffnungZeigen(screen, truhe) {
 /** Deckt ein einzelnes Beutestück auf und schreibt es gut. */
 function aufdecken(gitter, stueck, index) {
   beuteGutschreiben(stueck);
+  // Seltene Stuecke klingen hoerbar wertvoller.
+  spieleBeute(stueck.seltenheit);
 
   const seltenheit = SELTENHEITEN[stueck.seltenheit];
   const feld = gitter.children[index];

@@ -42,6 +42,8 @@ import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
 import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belohnung.js';
 import { BOSS_TRUHE } from '../js/data/shop.js';
 import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
+import { KLAENGE, getKlang } from '../js/data/sounds.js';
+import { MUSIK, MUSTER_LAENGE, getMusik } from '../js/data/musik.js';
 import {
   aufgabeAbholen,
   aufgabenFuerTag,
@@ -558,6 +560,71 @@ console.log('\nTagesaufgaben');
   pruefe('Muenzen bleiben ueber den Tageswechsel', gameState.coins === muenzenVorTagwechsel);
 
   resetProgress();
+}
+
+console.log('\nKlaenge');
+{
+  const FORMEN_ERLAUBT = ['sine', 'square', 'triangle', 'sawtooth', 'rauschen'];
+  const alleEbenen = Object.values(KLAENGE).flat();
+
+  pruefe('Es gibt Klaenge', Object.keys(KLAENGE).length > 10);
+  pruefe(
+    'Jeder Klang hat mindestens eine Ebene',
+    Object.values(KLAENGE).every((ebenen) => Array.isArray(ebenen) && ebenen.length > 0)
+  );
+  pruefe('Jede Ebene hat eine bekannte Klangform',
+    alleEbenen.every((e) => FORMEN_ERLAUBT.includes(e.form)));
+  pruefe('Jede Ebene dauert laenger als nichts',
+    alleEbenen.every((e) => e.dauer > 0 && e.dauer <= 2));
+  pruefe('Keine Ebene ist zu laut',
+    alleEbenen.every((e) => e.lautstaerke > 0 && e.lautstaerke <= 0.8));
+  // Frequenz 0 wuerde exponentialRampToValueAtTime zum Absturz bringen.
+  pruefe('Jede Schwingung hat eine Frequenz ueber 0',
+    alleEbenen.filter((e) => e.form !== 'rauschen').every((e) => e.von > 0 && e.bis > 0));
+  pruefe('Kein Klang laeuft laenger als 2 Sekunden',
+    Object.values(KLAENGE).every((ebenen) =>
+      Math.max(...ebenen.map((e) => (e.start ?? 0) + e.dauer)) <= 2));
+  pruefe('Unbekannter Klang gibt null statt zu stuerzen', getKlang('gibt-es-nicht') === null);
+
+  // Diese Klaenge werden im Spiel namentlich aufgerufen.
+  const gebraucht = ['tipp', 'zurueck', 'bestaetigen', 'gesperrt', 'karte', 'treffer',
+    'trefferStark', 'heilung', 'schild', 'sieg', 'niederlage', 'levelauf', 'neueWelt',
+    'muenze', 'beute', 'beuteSelten', 'truhe', 'kauf', 'aufgabe'];
+  pruefe('Alle im Spiel benutzten Klaenge sind vorhanden',
+    gebraucht.every((name) => Boolean(KLAENGE[name])));
+}
+
+console.log('\nMusik');
+{
+  const kategorien = Object.values(MUSIK);
+
+  pruefe('Jede Welt hat eine Musikkategorie',
+    WORLDS.every((welt) => Boolean(MUSIK[welt.music])));
+  pruefe('Es gibt zusaetzlich Menuemusik', Boolean(MUSIK.menue));
+  pruefe(`Jedes Motiv ist ${MUSTER_LAENGE} Achtel lang`,
+    kategorien.every((m) => m.muster.length === MUSTER_LAENGE));
+  pruefe('Jedes Motiv hat mindestens 4 Toene',
+    kategorien.every((m) => m.muster.filter((p) => p !== null).length >= 4));
+  // Ein Platz ausserhalb der Skala waere ein stiller Tippfehler.
+  pruefe('Jeder Motivton liegt in der Tonleiter',
+    kategorien.every((m) => m.muster.every((p) => p === null || (p >= 0 && p < m.skala.length))));
+  pruefe('Jeder Basston liegt in der Tonleiter',
+    kategorien.every((m) => m.bassfolge.every((p) => p >= 0 && p < m.skala.length)));
+  pruefe('Jede Bassfolge hat mindestens 2 Stufen',
+    kategorien.every((m) => m.bassfolge.length >= 2));
+  pruefe('Jedes Tempo ist sinnvoll',
+    kategorien.every((m) => m.tempo >= 40 && m.tempo <= 200));
+  pruefe('Jeder Grundton liegt im hoerbaren Bereich',
+    kategorien.every((m) => m.grundton >= 60 && m.grundton <= 500));
+  pruefe('Unbekannte Kategorie faellt auf die Menuemusik zurueck',
+    getMusik('gibt-es-nicht') === MUSIK.menue);
+
+  // Keine zwei Welten sollen gleich klingen.
+  const klangbilder = WORLDS.map((welt) => {
+    const m = MUSIK[welt.music];
+    return `${m.grundton}|${m.form}|${m.tempo}|${m.muster.join(',')}`;
+  });
+  pruefe('Keine zwei Welten klingen gleich', new Set(klangbilder).size === WORLDS.length);
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

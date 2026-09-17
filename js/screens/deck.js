@@ -14,6 +14,7 @@ import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { HAND_SIZE } from '../core/deck.js';
 import { besitztAttacke, gameState, getDeck, setDeck } from '../core/state.js';
+import { spieleKlang } from '../core/audio.js';
 import {
   MAX_ATTACKEN_LEVEL,
   attackeAufwerten,
@@ -104,7 +105,12 @@ export const deckScreen = {
         ? 'Max.'
         : `🪙 ${kosten.muenzen}<br><span class="upgrade-row__mat">💠 ${kosten.material}</span>`;
       knopf.addEventListener('click', () => {
-        if (attackeAufwerten(attackId)) zeichnen();
+        if (attackeAufwerten(attackId)) {
+          spieleKlang('kauf');
+          zeichnen();
+        } else {
+          spieleKlang('gesperrt');
+        }
       });
       zeile.appendChild(knopf);
 

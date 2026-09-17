@@ -14,6 +14,7 @@ import { SELTENHEITEN, SKINS } from '../data/items.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { createSprite, spritesNeuZeichnen } from '../ui/sprite.js';
+import { spieleKlang } from '../core/audio.js';
 import {
   besitztSkin,
   gameState,
@@ -130,7 +131,12 @@ export const monsterScreen = {
           ? 'Maximum'
           : `🪙 ${kosten.muenzen}<br><span class="upgrade-row__mat">💠 ${kosten.material}</span>`;
         knopf.addEventListener('click', () => {
-          if (wertAufwerten(monster.id, schluessel)) zeichnen();
+          if (wertAufwerten(monster.id, schluessel)) {
+            spieleKlang('kauf');
+            zeichnen();
+          } else {
+            spieleKlang('gesperrt');
+          }
         });
 
         reihe.appendChild(knopf);

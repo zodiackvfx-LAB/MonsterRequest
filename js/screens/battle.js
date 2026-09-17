@@ -20,6 +20,7 @@ import { calculateStars, getDeck } from '../core/state.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
+import { spieleBeute, spieleKlang, spieleTreffer } from '../core/audio.js';
 import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
@@ -27,6 +28,7 @@ import { createSprite } from '../ui/sprite.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
+const klangTimer = []; // geplante Klaenge, damit sie beim Verlassen verstummen
 
 /**
  * Wartezeit zwischen dem letzten Treffer und dem Ergebnisfenster.
@@ -36,6 +38,9 @@ let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
 const ERGEBNIS_VERZOEGERUNG = 750;
 
 export const battleScreen = {
+  // Jede Welt hat ihre eigene Musik.
+  musik: (params) => getLevel(params.levelId)?.music ?? 'menue',
+
   mount(root, params) {
     const level = getLevel(params.levelId);
     if (!level) {
@@ -269,6 +274,8 @@ export const battleScreen = {
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
           floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
+          spieleKlang('karte');
+          spieleTreffer(event.amount);
           // Zaehlt fuer die Tagesaufgaben.
           fortschrittMelden('attacke');
           fortschrittMelden('schaden', event.amount);
@@ -277,20 +284,25 @@ export const battleScreen = {
           flash(ui.enemySprite, 'lunge-left');
           flash(ui.playerSprite, 'hit');
           floatNumber(ui.playerSprite, `-${event.amount}`, 'damage');
+          spieleTreffer(event.amount);
           break;
         case 'player-heal':
           flash(ui.playerSprite, 'heal');
           floatNumber(ui.playerSprite, `+${event.amount}`, 'heal');
+          spieleKlang('heilung');
           break;
         case 'enemy-heal':
           flash(ui.enemySprite, 'heal');
           floatNumber(ui.enemySprite, `+${event.amount}`, 'heal');
+          spieleKlang('heilung');
           break;
         case 'player-shield':
           floatNumber(ui.playerSprite, `🛡️ ${event.amount}`, 'shield');
+          spieleKlang('schild');
           break;
         case 'enemy-shield':
           floatNumber(ui.enemySprite, `🛡️ ${event.amount}`, 'shield');
+          spieleKlang('schild');
           break;
         default:
           break;
@@ -370,6 +382,15 @@ export const battleScreen = {
         fuelleBelohnung(overlay.querySelector('#belohnung'), belohnung.stuecke);
       }
 
+      // Erst die Fanfare, danach Aufstieg bzw. neue Welt - nicht alles auf einmal.
+      spieleKlang(result === 'win' ? 'sieg' : 'niederlage');
+      if (belohnung?.xpErgebnis?.aufgestiegen) {
+        klangTimer.push(setTimeout(() => spieleKlang('levelauf'), 900));
+      }
+      if (newWorld) {
+        klangTimer.push(setTimeout(() => spieleKlang('neueWelt'), 1500));
+      }
+
       const nextButton = overlay.querySelector('#btn-next');
       nextButton.textContent = newWorld ? 'Neue Welt ansehen' : result === 'win' ? 'Weiter' : 'Nochmal kämpfen';
       nextButton.addEventListener('click', () => {
@@ -396,6 +417,13 @@ export const battleScreen = {
         feld.style.setProperty('--rarity', seltenheit.farbe);
         // Jedes Feld erscheint 90 ms nach dem vorigen.
         feld.style.animationDelay = `${index * 0.09}s`;
+        // Klang genau dann, wenn das Feld aufpoppt.
+        klangTimer.push(
+          setTimeout(() => {
+            if (stueck.art === 'muenzen') spieleKlang('muenze');
+            else spieleBeute(stueck.seltenheit);
+          }, 250 + index * 90)
+        );
         feld.innerHTML = `
           <span class="loot-item__icon">${stueck.icon}</span>
           <span class="loot-item__name">${stueck.name}</span>
@@ -425,5 +453,8 @@ export const battleScreen = {
       clearTimeout(resultTimer);
       resultTimer = null;
     }
+    // Sonst erklaenge die Fanfare noch auf dem naechsten Bildschirm.
+    klangTimer.forEach((timer) => clearTimeout(timer));
+    klangTimer.length = 0;
   },
 };

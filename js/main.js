@@ -13,6 +13,7 @@ import { initScreens, registerScreen, showScreen } from './core/screens.js';
 import { getAktiverSkin, loadProgress } from './core/state.js';
 import { getSkin } from './data/items.js';
 import { setSkinNachschlag } from './ui/sprite.js';
+import { spieleKlang, tonFreischalten } from './core/audio.js';
 import { startScreen } from './screens/start.js';
 import { worldsScreen } from './screens/worlds.js';
 import { mapScreen } from './screens/map.js';
@@ -33,6 +34,35 @@ setSkinNachschlag((monster) => {
   const skinId = getAktiverSkin(monster.id);
   return skinId ? getSkin(skinId) : null;
 });
+
+// Safari auf iPhone und iPad erlaubt Ton erst nach der ersten Berührung.
+tonFreischalten();
+
+/*
+ * Knopfklänge an einer Stelle statt in jedem Bildschirm einzeln.
+ * Ein Knopf kann den Klang über data-klang selbst bestimmen:
+ *   data-klang="kauf"    - dieser Klang statt des automatischen
+ *   data-klang="keiner"  - still (der Bildschirm spielt selbst etwas)
+ */
+document.addEventListener('click', (event) => {
+  const knopf = event.target.closest('button');
+  if (!knopf || knopf.disabled) return;
+
+  const vorgabe = knopf.dataset.klang;
+  if (vorgabe === 'keiner') return;
+
+  spieleKlang(vorgabe ?? klangFuerKnopf(knopf));
+});
+
+/** Welcher Klang passt zu diesem Knopf? */
+function klangFuerKnopf(knopf) {
+  if (knopf.classList.contains('btn--big') || knopf.classList.contains('btn--green')) {
+    return 'bestaetigen';
+  }
+  // Der Zurück-Knopf der Kopfzeile und der Zurück-Pfeil der Karte
+  if (knopf.closest('.topbar') || knopf.classList.contains('btn--ghost')) return 'zurueck';
+  return 'tipp';
+}
 
 initScreens(document.getElementById('app'));
 

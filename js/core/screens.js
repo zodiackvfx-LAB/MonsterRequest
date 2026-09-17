@@ -4,9 +4,14 @@
  * Ein Screen ist ein Objekt mit:
  *   mount(root, params) - baut seinen Inhalt in das übergebene Element
  *   unmount()           - optional: räumt auf (Timer stoppen, Events entfernen)
+ *   musik               - optional: Name der Musikkategorie oder eine
+ *                         Funktion (params) => Name. Ohne Angabe läuft die
+ *                         Menümusik weiter (siehe js/data/musik.js).
  *
  * Neuer Screen = Datei in js/screens/ anlegen und in js/main.js registrieren.
  */
+
+import { musikStarten } from './audio.js';
 
 const screens = new Map();
 
@@ -34,6 +39,10 @@ export function showScreen(name, params = {}) {
   if (currentScreen && typeof currentScreen.unmount === 'function') {
     currentScreen.unmount();
   }
+
+  // Musik VOR dem Aufbau umstellen: läuft schon dieselbe Kategorie,
+  // passiert nichts - so gibt es beim Blättern keine Aussetzer.
+  musikStarten(typeof screen.musik === 'function' ? screen.musik(params) : screen.musik ?? 'menue');
 
   rootElement.innerHTML = '';
   currentScreen = screen;
