@@ -58,18 +58,21 @@ export function applyRegion(screen, region = 'wald') {
  * Bildschirmrand - dadurch wirkt der Kampf wie eine durchgehende Landschaft
  * und nicht wie ein Kasten.
  *
- * @param {number} [trees] - Anzahl der Bäume am Horizont
+ * Die Bäume stehen in zwei Reihen: kleine, blasse Tannen am Horizont
+ * (hinter der Wiese) und wenige große weiter vorn (vor der Wiese, mit
+ * sichtbarem Stamm). Das ergibt die Tiefenwirkung.
+ *
+ * @param {number} [farTrees] - Anzahl der Bäume in der hinteren Reihe
  * @returns {HTMLElement[]} Ebenen in der Reihenfolge von hinten nach vorn
  */
-export function createArenaLayers(trees = 9) {
+export function createArenaLayers(farTrees = 11) {
   const layers = document.createElement('div');
   layers.innerHTML = `
     <div class="arena__hills"></div>
+    <div class="arena__treeline arena__treeline--fern">${trees(farTrees)}</div>
     <div class="arena__ground"></div>
-    <div class="arena__treeline">
-      ${Array.from({ length: trees }, () => '<span class="arena__tree"></span>').join('')}
-    </div>
     <div class="arena__ring"></div>
+    <div class="arena__treeline arena__treeline--nah">${trees(3)}</div>
     <span class="arena__flower"></span>
     <span class="arena__flower"></span>
     <span class="arena__flower"></span>
@@ -77,4 +80,13 @@ export function createArenaLayers(trees = 9) {
     <span class="arena__flower"></span>
   `;
   return [...layers.children];
+}
+
+/** Eine Tanne besteht aus Stamm und Krone - die Krone wird beschnitten,
+ *  der Stamm nicht. Deshalb sind es zwei getrennte Teile. */
+function trees(count) {
+  return Array.from(
+    { length: count },
+    () => '<span class="arena__tree"><span class="arena__tree-trunk"></span><span class="arena__tree-top"></span></span>'
+  ).join('');
 }

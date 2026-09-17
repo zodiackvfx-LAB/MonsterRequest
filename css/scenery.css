@@ -195,6 +195,18 @@
 }
 
 /* Baumreihe direkt am Horizont */
+/* ---------- Baumreihen am Horizont ----------
+   Es gibt zwei Reihen, damit die Tiefe stimmt:
+
+     "fern"  - kleine, leicht aufgehellte Tannen direkt am Horizont.
+               Sie werden VOR der Wiese gezeichnet, deshalb verdeckt das
+               Gras ihre Stämme - genau wie bei echten weit entfernten Bäumen.
+     "nah"   - wenige große Tannen, die etwas tiefer stehen und NACH der
+               Wiese gezeichnet werden. Sie stehen also sichtbar auf dem
+               Gras, mit vollem Stamm und Schatten.
+
+   Die Größe steuert eine einzige Variable je Baum: --h (Gesamthöhe).
+   Krone, Stamm und Breite rechnen sich daraus aus. */
 .arena__treeline {
   position: absolute;
   left: -3%;
@@ -207,13 +219,36 @@
   padding: 0 1%;
 }
 
-/* Tannen: die Silhouette entsteht durch clip-path (drei Etagen und eine
-   Spitze). Willst du eine andere Baumform, änderst du nur diese Punkte. */
 .arena__tree {
+  --h: 86px;
   position: relative;
-  width: 58px;
-  height: 92px;
   flex: 0 0 auto;
+  width: calc(var(--h) * 0.62);
+  height: var(--h);
+}
+
+/* Der Stamm liegt hinter der Krone und ragt unten heraus. */
+.arena__tree-trunk {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--h) * 0.11);
+  height: calc(var(--h) * 0.26);
+  border-radius: 2px;
+  background: linear-gradient(90deg, #8a6340 0%, #6b4a2f 55%, #4e3521 100%);
+}
+
+/* Die Krone: die Tannenform entsteht durch clip-path (drei Etagen und eine
+   Spitze). Wichtig: das clip-path gehört NUR auf die Krone - liegt es auf
+   dem ganzen Baum, schneidet es den Stamm mit weg.
+   Willst du eine andere Baumform, änderst du nur diese Punkte. */
+.arena__tree-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(var(--h) * 0.84);
   background: linear-gradient(170deg, var(--s-tree) 0%, var(--s-tree-dark) 100%);
   clip-path: polygon(
     50% 0%,
@@ -225,23 +260,42 @@
   );
 }
 
-/* Stamm */
-.arena__tree::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 9px;
-  height: 12px;
-  border-radius: 2px;
-  background: #6b4a2f;
+/* ---------- Ferne Reihe ---------- */
+.arena__treeline--fern .arena__tree {
+  --h: 60px;
+  /* Dunst in der Ferne: heller, blasser, leicht bläulich - dadurch wirkt
+     die Reihe weiter weg als die großen Tannen davor. */
+  filter: brightness(1.22) saturate(0.6) hue-rotate(-6deg);
+  opacity: 0.88;
 }
 
-/* Unterschiedliche Größen, damit die Reihe nicht wie ein Zaun wirkt */
-.arena__tree:nth-child(2n) { width: 46px; height: 74px; }
-.arena__tree:nth-child(3n) { width: 68px; height: 108px; }
-.arena__tree:nth-child(5n) { width: 40px; height: 64px; }
+.arena__treeline--fern .arena__tree:nth-child(2n) { --h: 48px; }
+.arena__treeline--fern .arena__tree:nth-child(3n) { --h: 72px; }
+.arena__treeline--fern .arena__tree:nth-child(5n) { --h: 42px; }
+
+/* ---------- Nahe Reihe ----------
+   Diese Bäume sitzen einzeln an festen Stellen am linken und rechten Rand,
+   damit sie die Monster in der Mitte nicht verdecken. */
+.arena__treeline--nah {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 0;
+}
+
+.arena__treeline--nah .arena__tree {
+  position: absolute;
+  bottom: 0;
+  /* Vorn kräftigere Farbe und ein Schatten auf der Wiese */
+  filter: saturate(1.12) brightness(0.94) drop-shadow(0 8px 7px rgba(20, 50, 15, 0.35));
+}
+
+/* left = Position, margin-bottom = wie weit der Baum vor dem Horizont steht.
+   Je größer und je tiefer, desto näher wirkt der Baum. */
+.arena__treeline--nah .arena__tree:nth-child(1) { --h: 156px; left: -3%; margin-bottom: -58px; }
+.arena__treeline--nah .arena__tree:nth-child(2) { --h: 112px; left: 12%; margin-bottom: -22px; }
+.arena__treeline--nah .arena__tree:nth-child(3) { --h: 142px; left: 92%; margin-bottom: -46px; }
 
 /* Die Wiese: beginnt am Horizont und läuft bis zum unteren Bildschirmrand */
 .arena__ground {

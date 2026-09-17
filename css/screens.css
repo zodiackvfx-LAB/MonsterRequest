@@ -675,14 +675,14 @@
     max-height: 210px;
   }
 
-  .arena__tree {
-    width: 34px;
-    height: 54px;
-  }
-
-  .arena__tree:nth-child(2n) { width: 28px; height: 44px; }
-  .arena__tree:nth-child(3n) { width: 40px; height: 64px; }
-  .arena__tree:nth-child(5n) { width: 24px; height: 38px; }
+  /* Kleine Displays: alle Tannen zusammen kleiner - eine Variable genügt */
+  .arena__tree { --h: 52px; }
+  .arena__treeline--fern .arena__tree:nth-child(2n) { --h: 42px; }
+  .arena__treeline--fern .arena__tree:nth-child(3n) { --h: 58px; }
+  .arena__treeline--fern .arena__tree:nth-child(5n) { --h: 36px; }
+  .arena__treeline--nah .arena__tree:nth-child(1) { --h: 82px; margin-bottom: -18px; }
+  .arena__treeline--nah .arena__tree:nth-child(2) { --h: 64px; margin-bottom: -8px; }
+  .arena__treeline--nah .arena__tree:nth-child(3) { --h: 74px; margin-bottom: -14px; }
 
   .platform {
     width: 80px;
