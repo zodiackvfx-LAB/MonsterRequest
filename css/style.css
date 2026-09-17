@@ -8,7 +8,7 @@
      5. Kampfbildschirm
      6. Overlay (Sieg/Niederlage)
      7. Animationen
-     8. Groessere Bildschirme (Tablet/Desktop)
+     8. Größere Bildschirme (Tablet/Desktop)
    ========================================================================= */
 
 /* ---------- 1. Grundlagen & Farben ---------- */
@@ -56,7 +56,7 @@ body {
 }
 
 .app {
-  /* dvh beruecksichtigt die ein- und ausfahrende Browserleiste auf dem Handy. */
+  /* dvh berücksichtigt die ein- und ausfahrende Browserleiste auf dem Handy. */
   height: 100vh;
   height: 100dvh;
   max-width: 560px;
@@ -135,7 +135,7 @@ body {
 }
 
 .topbar__spacer {
-  width: 84px; /* haelt den Titel mittig, gleich breit wie der Zurueck-Button */
+  width: 84px; /* hält den Titel mittig, gleich breit wie der Zurück-Button */
 }
 
 .bar {
@@ -156,17 +156,6 @@ body {
 
 .bar--hp .bar__fill {
   background: linear-gradient(180deg, #7ef58c, var(--hp));
-}
-
-.bar--timer {
-  height: 8px;
-  margin-top: 4px;
-}
-
-.bar--timer .bar__fill {
-  width: 0;
-  background: var(--danger);
-  transition: none; /* laeuft pro Frame - ohne Uebergang bleibt es exakt */
 }
 
 .bar__label {
@@ -392,9 +381,46 @@ body {
 }
 
 .xp__pips {
+  --pip-color: var(--xp);
+  --pip-charge: rgba(73, 199, 255, 0.55);
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 4px;
+}
+
+/* Die XP-Leiste des Gegners: gleiche Anzeige, Warnfarbe */
+.xp__pips--enemy {
+  --pip-color: var(--danger);
+  --pip-charge: rgba(255, 95, 109, 0.55);
+}
+
+.xp__pips--small {
+  gap: 3px;
+}
+
+.xp__pips--small .xp__pip {
+  height: 8px;
+  border-width: 1px;
+  border-radius: 3px;
+}
+
+/* Beschriftete XP-Zeile im Gegner-Kasten */
+.mini-xp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mini-xp__label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--danger);
+}
+
+.mini-xp .xp__pips {
+  flex: 1;
 }
 
 .xp__pip {
@@ -407,18 +433,18 @@ body {
 }
 
 .xp__pip.is-filled {
-  background: var(--xp);
-  border-color: var(--xp);
+  background: var(--pip-color);
+  border-color: var(--pip-color);
 }
 
-/* Der gerade aufladende Punkt fuellt sich von links nach rechts. */
+/* Der gerade aufladende Punkt füllt sich von links nach rechts. */
 .xp__pip.is-charging::after {
   content: "";
   position: absolute;
   inset: 0;
   transform-origin: left;
   transform: scaleX(var(--charge, 0));
-  background: rgba(73, 199, 255, 0.55);
+  background: var(--pip-charge);
 }
 
 .hand {
@@ -567,12 +593,12 @@ body {
 .heal { animation: heal-pulse 0.4s ease-in-out; }
 .shake { animation: shake 0.25s ease-in-out; }
 
-/* Weniger Bewegung, wenn das Geraet das so eingestellt hat. */
+/* Weniger Bewegung, wenn das Gerät das so eingestellt hat. */
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; }
 }
 
-/* ---------- 8. Groessere Bildschirme ---------- */
+/* ---------- 8. Größere Bildschirme ---------- */
 @media (min-width: 480px) {
   .hand {
     grid-template-columns: repeat(4, 1fr);

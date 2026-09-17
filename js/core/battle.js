@@ -4,75 +4,54 @@
  * Diese Datei enthält NUR Regeln - kein HTML, kein CSS, kein DOM.
  * Der Kampfbildschirm (js/screens/battle.js) zeigt an, was hier passiert.
  *
- * Regeln:
- *   - Der Charakter hat maximal 10 XP.
- *   - Er bekommt automatisch 1 XP pro Sekunde.
- *   - Attacken kosten XP. Der Spieler entscheidet selbst, wann er angreift.
- *   - Der Gegner greift automatisch in festen Abständen an.
+ * Spieler und Gegner sind gleich aufgebaut (siehe js/core/fighter.js):
+ * beide haben ein Deck aus 8 Attacken, 4 Karten auf der Hand, maximal 10 XP
+ * und bekommen 1 XP pro Sekunde. Der einzige Unterschied ist, wer entscheidet:
+ * du per Tipp, der Gegner per KI (weiter unten in dieser Datei).
  */
 
-import { getAttack } from '../data/attacks.js';
-import { createDeck } from './deck.js';
+import { createFighter, MAX_XP, XP_PER_SECOND, START_XP } from './fighter.js';
 
-/** Maximale XP eines Charakters. */
-export const MAX_XP = 10;
-/** XP, die pro Sekunde automatisch dazukommen. */
-export const XP_PER_SECOND = 1;
-/** XP zu Kampfbeginn (zum Balancieren: 0 = zäher Start, höher = schnellerer Einstieg). */
-export const START_XP = 3;
+// Weiterreichen, damit andere Dateien nur diese eine Datei importieren müssen.
+export { MAX_XP, XP_PER_SECOND, START_XP };
+
+/** Standardwerte, falls ein Gegner keine eigenen KI-Werte mitbringt. */
+const DEFAULT_REACTION_TIME = 1.0;
+const DEFAULT_PATIENCE = 2;
 
 /**
  * Startet einen Kampf.
  *
  * @param {object} options
- * @param {object} options.playerMonster - Monster aus js/data/monsters.js (mit deck)
- * @param {object} options.enemyMonster  - Monster aus js/data/monsters.js (mit attacks)
+ * @param {object} options.playerMonster - Monster aus js/data/monsters.js
+ * @param {object} options.enemyMonster  - Monster aus js/data/monsters.js
  * @param {function} [options.onUpdate]  - wird bei jedem Frame mit dem state aufgerufen
  * @param {function} [options.onEvent]   - Kampfereignisse (für Log und Animationen)
  * @param {function} [options.onEnd]     - 'win' oder 'lose'
  */
 export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, onEnd }) {
-  const deck = createDeck(playerMonster.deck);
+  const player = createFighter(playerMonster);
+  const enemy = createFighter(enemyMonster);
+
+  /** Wie schnell der Gegner reagiert und wie geduldig er spart. */
+  const reactionTime = enemyMonster.reactionTime ?? DEFAULT_REACTION_TIME;
+  const patience = enemyMonster.patience ?? DEFAULT_PATIENCE;
 
   const state = {
-    player: {
-      name: playerMonster.name,
-      icon: playerMonster.icon,
-      hp: playerMonster.maxHp,
-      maxHp: playerMonster.maxHp,
-      xp: START_XP, // ganze XP, die ausgegeben werden können
-      xpProgress: 0, // 0..1 Fortschritt zum nächsten XP-Punkt (nur für die Anzeige)
-    },
-    enemy: {
-      name: enemyMonster.name,
-      icon: enemyMonster.icon,
-      hp: enemyMonster.maxHp,
-      maxHp: enemyMonster.maxHp,
-      attackProgress: 0, // 0..1 bis zum nächsten Gegnerangriff
-    },
-    hand: deck.hand, // Array mit 4 Attacken-ids
-    handVersion: 0, // zählt hoch, sobald sich die Hand ändert
+    player: player.state,
+    enemy: enemy.state,
     running: false,
     finished: false,
     result: null, // 'win' | 'lose'
   };
 
-  let exactXp = START_XP; // XP mit Nachkommastellen (wächst kontinuierlich)
-  let enemyTimer = enemyMonster.attackDelay; // Sekunden bis zum nächsten Gegnerangriff
+  let thinkTimer = reactionTime; // Sekunden, bis der Gegner das nächste Mal überlegt
+  let savingFromXp = null; // XP-Stand, ab dem der Gegner gerade spart (null = spart nicht)
   let rafId = null;
   let lastTimestamp = 0;
 
   function emit(event) {
     if (onEvent) onEvent(event);
-  }
-
-  /** Teilt Schaden aus und prüft, ob der Kampf damit endet. */
-  function dealDamage(target, amount) {
-    target.hp = Math.max(0, target.hp - amount);
-  }
-
-  function heal(target, amount) {
-    target.hp = Math.min(target.maxHp, target.hp + amount);
   }
 
   function finish(result) {
@@ -92,11 +71,43 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
     else if (state.player.hp <= 0) finish('lose');
   }
 
-  /** Kann der Spieler sich diese Attacke gerade leisten? */
+  /**
+   * Führt eine Attacke aus: Schaden beim Gegenüber, Heilung bei sich selbst.
+   * Läuft für Spieler und Gegner identisch ab.
+   */
+  function useAttack(attacker, defender, attack, side) {
+    if (attack.damage > 0) {
+      defender.takeDamage(attack.damage);
+      emit({
+        type: `${side}-attack`,
+        attack,
+        amount: attack.damage,
+        text: `${attacker.state.name} setzt ${attack.name} ein: ${attack.damage} Schaden!`,
+      });
+    }
+
+    if (attack.heal > 0) {
+      attacker.heal(attack.heal);
+      emit({
+        type: `${side}-heal`,
+        attack,
+        amount: attack.heal,
+        text: `${attacker.state.name} nutzt ${attack.name} und heilt ${attack.heal} LP.`,
+      });
+    }
+
+    checkEnd();
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Spieler                                                            */
+  /* ------------------------------------------------------------------ */
+
+  /** Kann der Spieler diese Handkarte gerade bezahlen? */
   function canPlay(handIndex) {
-    const cardId = state.hand[handIndex];
-    if (!cardId || state.finished) return false;
-    return getAttack(cardId).cost <= state.player.xp;
+    const attack = player.handAttacks()[handIndex];
+    if (!attack || state.finished) return false;
+    return player.canAfford(attack.cost);
   }
 
   /**
@@ -105,76 +116,101 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
    */
   function playCard(handIndex) {
     if (!state.running || state.finished) return false;
-    if (!canPlay(handIndex)) return false;
 
-    const attack = getAttack(state.hand[handIndex]);
+    const attack = player.useCard(handIndex);
+    if (!attack) return false;
 
-    // XP bezahlen (auch die Nachkommastellen mitnehmen, damit nichts verloren geht)
-    exactXp -= attack.cost;
-    syncXp();
-
-    if (attack.damage > 0) {
-      dealDamage(state.enemy, attack.damage);
-      emit({
-        type: 'player-attack',
-        attack,
-        amount: attack.damage,
-        text: `${state.player.name} setzt ${attack.name} ein: ${attack.damage} Schaden!`,
-      });
-    }
-
-    if (attack.heal > 0) {
-      heal(state.player, attack.heal);
-      emit({
-        type: 'player-heal',
-        attack,
-        amount: attack.heal,
-        text: `${state.player.name} nutzt ${attack.name} und heilt ${attack.heal} LP.`,
-      });
-    }
-
-    // Karte ablegen und sofort nachziehen -> es liegen wieder 4 Karten
-    deck.play(handIndex);
-    state.handVersion++;
-
-    checkEnd();
+    useAttack(player, enemy, attack, 'player');
     return true;
   }
 
-  /** Der Gegner sucht sich eine zufällige Attacke aus. */
-  function enemyTurn() {
-    const attackId = enemyMonster.attacks[Math.floor(Math.random() * enemyMonster.attacks.length)];
-    const attack = getAttack(attackId);
+  /* ------------------------------------------------------------------ */
+  /*  Gegner-KI                                                          */
+  /* ------------------------------------------------------------------ */
 
-    dealDamage(state.player, attack.damage);
-    emit({
-      type: 'enemy-attack',
-      attack,
-      amount: attack.damage,
-      text: `${state.enemy.name} greift mit ${attack.name} an: ${attack.damage} Schaden!`,
+  /**
+   * Wie wertvoll ist diese Attacke für den Gegner gerade?
+   * Schaden zählt immer, Heilung nur so weit, wie ihm LP fehlen -
+   * dadurch heilt er nie mit vollen Lebenspunkten.
+   */
+  function valueOf(attack) {
+    const usefulHeal = Math.min(attack.heal ?? 0, enemy.missingHp());
+    return attack.damage + usefulHeal;
+  }
+
+  /**
+   * Die Entscheidung des Gegners.
+   *
+   * 1. Er sucht die wertvollste Attacke, die er sich gerade leisten kann.
+   * 2. Wäre in den nächsten Sekunden (= patience) etwas Stärkeres bezahlbar,
+   *    spart er lieber weiter - genau wie ein Spieler, der auf die grosse
+   *    Attacke wartet.
+   *
+   * @returns {number} Handposition der Attacke oder -1 für "noch warten"
+   */
+  function chooseCard() {
+    const hand = enemy.handAttacks();
+
+    let bestIndex = -1;
+    let bestValue = -1;
+
+    hand.forEach((attack, index) => {
+      if (!enemy.canAfford(attack.cost)) return;
+      const value = valueOf(attack);
+      if (value > bestValue) {
+        bestValue = value;
+        bestIndex = index;
+      }
     });
 
-    checkEnd();
+    // Gemessen wird ab dem XP-Stand, bei dem er angefangen hat zu sparen.
+    // Sonst würde er sich Stufe für Stufe immer weiter hochsparen und
+    // am Ende doch ewig warten.
+    const startXp = savingFromXp ?? state.enemy.xp;
+
+    // Lohnt sich Warten? (bald bezahlbar UND wertvoller als alles Bezahlbare)
+    const worthWaiting = hand.some(
+      (attack) =>
+        !enemy.canAfford(attack.cost) &&
+        attack.cost <= startXp + patience &&
+        valueOf(attack) > bestValue
+    );
+
+    if (worthWaiting) {
+      if (savingFromXp === null) savingFromXp = state.enemy.xp;
+      return -1;
+    }
+
+    savingFromXp = null;
+    return bestIndex;
   }
 
-  /** Überträgt die internen Nachkommastellen in die Anzeige-Werte. */
-  function syncXp() {
-    exactXp = Math.max(0, Math.min(MAX_XP, exactXp));
-    state.player.xp = Math.floor(exactXp);
-    state.player.xpProgress = state.player.xp >= MAX_XP ? 1 : exactXp - state.player.xp;
+  /** Der Gegner überlegt und spielt gegebenenfalls eine Karte. */
+  function enemyTurn() {
+    const handIndex = chooseCard();
+    if (handIndex < 0) return; // spart noch XP
+
+    const attack = enemy.useCard(handIndex);
+    if (!attack) return;
+
+    useAttack(enemy, player, attack, 'enemy');
   }
+
+  /* ------------------------------------------------------------------ */
+  /*  Spielschleife                                                      */
+  /* ------------------------------------------------------------------ */
 
   /** Ein Schritt der Spielzeit. deltaSeconds = vergangene Zeit seit dem letzten Frame. */
   function tick(deltaSeconds) {
-    // XP-Regeneration
-    exactXp += deltaSeconds * XP_PER_SECOND;
-    syncXp();
+    // XP-Regeneration - für beide Seiten gleich
+    player.gainXp(deltaSeconds);
+    enemy.gainXp(deltaSeconds);
 
-    // Gegner-Timer
-    enemyTimer -= deltaSeconds;
-    state.enemy.attackProgress = 1 - Math.max(0, enemyTimer) / enemyMonster.attackDelay;
-    if (enemyTimer <= 0 && !state.finished) {
-      enemyTimer = enemyMonster.attackDelay;
+    // Der Gegner überlegt nur in festen Abständen, statt in jedem Frame.
+    // Das ist seine "Reaktionszeit" und ersetzt das Dauerfeuer.
+    thinkTimer -= deltaSeconds;
+    if (thinkTimer <= 0 && !state.finished) {
+      thinkTimer = reactionTime;
       enemyTurn();
     }
   }

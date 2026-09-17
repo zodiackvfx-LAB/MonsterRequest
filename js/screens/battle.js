@@ -4,6 +4,10 @@
  * Diese Datei ist reine Darstellung: Sie startet die Kampf-Engine
  * (js/core/battle.js), zeigt deren Zustand an und leitet Tipps des Spielers
  * an sie weiter. Die Regeln selbst stehen alle in der Engine.
+ *
+ * Weil Spieler und Gegner nach denselben Regeln kämpfen, wird auch die
+ * XP-Leiste des Gegners angezeigt - so siehst du, wann bei ihm etwas
+ * Grosses kommt.
  */
 
 import { showScreen } from '../core/screens.js';
@@ -42,8 +46,9 @@ export const battleScreen = {
             <div class="bar__fill" id="enemy-hp-fill"></div>
             <span class="bar__label" id="enemy-hp-text"></span>
           </div>
-          <div class="bar bar--timer" title="Zeit bis zum nächsten Angriff">
-            <div class="bar__fill" id="enemy-timer-fill"></div>
+          <div class="mini-xp" title="XP des Gegners">
+            <span class="mini-xp__label">XP</span>
+            <div class="xp__pips xp__pips--small xp__pips--enemy" id="enemy-xp-pips"></div>
           </div>
         </div>
         <div class="monster-sprite idle-bob" id="enemy-sprite">${enemyMonster.icon}</div>
@@ -76,24 +81,29 @@ export const battleScreen = {
     const ui = {
       enemyHpFill: screen.querySelector('#enemy-hp-fill'),
       enemyHpText: screen.querySelector('#enemy-hp-text'),
-      enemyTimerFill: screen.querySelector('#enemy-timer-fill'),
       enemySprite: screen.querySelector('#enemy-sprite'),
       playerHpFill: screen.querySelector('#player-hp-fill'),
       playerHpText: screen.querySelector('#player-hp-text'),
       playerSprite: screen.querySelector('#player-sprite'),
       log: screen.querySelector('#battle-log'),
       xpText: screen.querySelector('#xp-text'),
-      xpPips: screen.querySelector('#xp-pips'),
       hand: screen.querySelector('#hand'),
     };
 
-    // Die 10 XP-Punkte einmal anlegen; später wird nur ihre Klasse getauscht.
-    const pips = [];
-    for (let i = 0; i < MAX_XP; i++) {
-      const pip = document.createElement('span');
-      pip.className = 'xp__pip';
-      ui.xpPips.appendChild(pip);
-      pips.push(pip);
+    // Die XP-Punkte einmal anlegen; später wird nur ihre Klasse getauscht.
+    const playerPips = createPips(screen.querySelector('#xp-pips'));
+    const enemyPips = createPips(screen.querySelector('#enemy-xp-pips'));
+
+    /** Legt MAX_XP Punkte in einem Container an und gibt sie als Array zurück. */
+    function createPips(container) {
+      const pips = [];
+      for (let i = 0; i < MAX_XP; i++) {
+        const pip = document.createElement('span');
+        pip.className = 'xp__pip';
+        container.appendChild(pip);
+        pips.push(pip);
+      }
+      return pips;
     }
 
     /* ---------- 2. Kampf starten ---------- */
@@ -116,32 +126,35 @@ export const battleScreen = {
       ui.playerHpFill.style.width = `${(state.player.hp / state.player.maxHp) * 100}%`;
       ui.playerHpText.textContent = `${state.player.hp} / ${state.player.maxHp}`;
 
-      // Countdown bis zum nächsten Gegnerangriff
-      ui.enemyTimerFill.style.width = `${state.enemy.attackProgress * 100}%`;
-
-      // XP
+      // XP beider Seiten - gleiche Anzeige, weil gleiche Regeln
       ui.xpText.textContent = `${state.player.xp} / ${MAX_XP}`;
-      pips.forEach((pip, index) => {
-        const filled = index < state.player.xp;
-        // Der nächste Punkt füllt sich langsam - das macht das Warten sichtbar.
-        const isCharging = index === state.player.xp && state.player.xp < MAX_XP;
-        pip.classList.toggle('is-filled', filled);
-        pip.classList.toggle('is-charging', isCharging);
-        pip.style.setProperty('--charge', isCharging ? state.player.xpProgress : 0);
-      });
+      renderPips(playerPips, state.player);
+      renderPips(enemyPips, state.enemy);
 
       // Hand nur neu bauen, wenn sich die Karten geändert haben
-      if (state.handVersion !== renderedHandVersion) {
-        renderedHandVersion = state.handVersion;
+      if (state.player.handVersion !== renderedHandVersion) {
+        renderedHandVersion = state.player.handVersion;
         buildHand(state);
       }
 
       // Bezahlbarkeit jeder Karte laufend prüfen
       cardElements.forEach((card, index) => {
-        const attack = getAttack(state.hand[index]);
+        const attack = getAttack(state.player.hand[index]);
         const affordable = attack.cost <= state.player.xp && !state.finished;
         card.classList.toggle('is-disabled', !affordable);
         card.disabled = !affordable;
+      });
+    }
+
+    /** Färbt die XP-Punkte eines Kämpfers passend zu seinen XP ein. */
+    function renderPips(pips, fighter) {
+      pips.forEach((pip, index) => {
+        const filled = index < fighter.xp;
+        // Der nächste Punkt füllt sich langsam - das macht das Warten sichtbar.
+        const isCharging = index === fighter.xp && fighter.xp < MAX_XP;
+        pip.classList.toggle('is-filled', filled);
+        pip.classList.toggle('is-charging', isCharging);
+        pip.style.setProperty('--charge', isCharging ? fighter.xpProgress : 0);
       });
     }
 
@@ -150,7 +163,7 @@ export const battleScreen = {
       ui.hand.innerHTML = '';
       cardElements.length = 0;
 
-      state.hand.forEach((attackId, index) => {
+      state.player.hand.forEach((attackId, index) => {
         const attack = getAttack(attackId);
 
         const card = document.createElement('button');
@@ -182,6 +195,7 @@ export const battleScreen = {
       if (event.type === 'player-attack') flash(ui.enemySprite, 'hit');
       if (event.type === 'enemy-attack') flash(ui.playerSprite, 'hit');
       if (event.type === 'player-heal') flash(ui.playerSprite, 'heal');
+      if (event.type === 'enemy-heal') flash(ui.enemySprite, 'heal');
     }
 
     /** Setzt kurz eine CSS-Klasse für eine Animation. */
