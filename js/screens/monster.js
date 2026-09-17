@@ -74,7 +74,7 @@ export const monsterScreen = {
               xpNoetig === Infinity ? 'Höchstlevel' : `${charakter.xp} / ${xpNoetig}`
             }</span>
           </div>
-          <div class="bar"><div class="bar__fill" style="width:${Math.min(100, xpAnteil * 100)}%"></div></div>
+          <div class="bar"><div class="bar__fill" style="--fuellung:${Math.min(1, xpAnteil)}"></div></div>
         </div>
       `;
       kopf.querySelector('#monster-sprite').appendChild(createSprite(monster));

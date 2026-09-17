@@ -8,6 +8,22 @@ import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { createSprite } from './sprite.js';
 
 /**
+ * Füllt einen Balken (.bar__fill oder .hud__level-fill).
+ *
+ * Wir setzen die Variable --fuellung von 0 bis 1 statt einer Breite in
+ * Prozent: das CSS staucht den Balken damit über transform: scaleX().
+ * Über "width" liess Safari auf dem iPad den alten, breiteren Anstrich
+ * stehen - der Balken sah dann voller aus als die Lebenszahl.
+ *
+ * @param {HTMLElement} element - das Füll-Element
+ * @param {number} anteil - 0 bis 1
+ */
+export function balkenFuellen(element, anteil) {
+  const sicher = Math.max(0, Math.min(1, Number.isFinite(anteil) ? anteil : 0));
+  element.style.setProperty('--fuellung', sicher);
+}
+
+/**
  * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken und Münzen.
  */
 export function createHud() {
@@ -27,7 +43,7 @@ export function createHud() {
       <span class="hud__level">
         <span class="hud__level-text">Lv. ${level}</span>
         <span class="hud__level-bar">
-          <span class="hud__level-fill" style="width: ${progress * 100}%"></span>
+          <span class="hud__level-fill" style="--fuellung: ${progress}"></span>
         </span>
       </span>
     </div>

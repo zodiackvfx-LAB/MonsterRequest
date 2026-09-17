@@ -19,7 +19,7 @@ import { createBattle, MAX_XP } from '../core/battle.js';
 import { calculateStars, completeLevel, getDeck } from '../core/state.js';
 import { attackeMitLevel, monsterMitFortschritt, xpGutschreiben } from '../core/progression.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
-import { createStars } from '../ui/hud.js';
+import { balkenFuellen, createStars } from '../ui/hud.js';
 import { createSprite } from '../ui/sprite.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
@@ -202,7 +202,7 @@ export const battleScreen = {
     /** Lebensbalken, Zahl und Schildanzeige eines Kämpfers. */
     function renderFighter(bar, fill, text, shieldBadge, fighter) {
       const share = fighter.hp / fighter.maxHp;
-      fill.style.width = `${share * 100}%`;
+      balkenFuellen(fill, share);
       text.textContent = `${fighter.hp} / ${fighter.maxHp}`;
       bar.classList.toggle('is-low', share <= 0.3);
 
