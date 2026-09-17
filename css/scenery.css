@@ -1,0 +1,164 @@
+/* =========================================================================
+   MonsterQuest · scenery.css
+   Die Spielwelt-Kulissen: Himmel, Sonne, Wolken, Berge, Huegel, Boden.
+   Alles reines CSS - spaeter kannst du einzelne Ebenen durch eigene
+   Grafiken ersetzen, ohne den Rest anzufassen:
+       .scenery__hills { background-image: url('../bilder/huegel.png'); }
+   Aufbau (von hinten nach vorn): sky → sun → clouds → mountains → hills → ground
+   ========================================================================= */
+
+.scenery {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  /* Farben pro Region ueberschreibbar (siehe .scenery--sumpf usw. unten) */
+  --s-sky-top: var(--sky-top);
+  --s-sky-bottom: var(--sky-bottom);
+  --s-grass: var(--grass);
+  --s-grass-dark: var(--grass-dark);
+  --s-grass-light: var(--grass-light);
+  --s-rock: var(--rock);
+  --s-rock-dark: var(--rock-dark);
+}
+
+.scenery__sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--s-sky-top) 0%, var(--s-sky-bottom) 62%);
+}
+
+.scenery__sun {
+  position: absolute;
+  top: -70px;
+  right: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 249, 214, 0.95) 0%,
+    rgba(255, 233, 150, 0.55) 38%,
+    rgba(255, 233, 150, 0) 70%
+  );
+}
+
+/* ---------- Wolken ---------- */
+.scenery__cloud {
+  position: absolute;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  /* Die Beulen der Wolke sind Schatten desselben Elements - spart Markup. */
+  box-shadow: 26px -14px 0 -2px rgba(255, 255, 255, 0.92),
+    58px -4px 0 -6px rgba(255, 255, 255, 0.92), 0 12px 18px rgba(80, 140, 190, 0.18);
+  animation: drift 26s linear infinite;
+}
+
+.scenery__cloud:nth-child(1) { top: 9%;  left: -30%; width: 96px; animation-duration: 34s; }
+.scenery__cloud:nth-child(2) { top: 18%; left: -55%; width: 74px; animation-duration: 46s; animation-delay: -12s; }
+.scenery__cloud:nth-child(3) { top: 5%;  left: -80%; width: 120px; animation-duration: 58s; animation-delay: -30s; }
+
+@keyframes drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(260%); }
+}
+
+/* ---------- Berge im Hintergrund ---------- */
+.scenery__mountains {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 34%;
+  height: 32%;
+  background: var(--s-rock-dark);
+  clip-path: polygon(
+    0% 100%, 8% 52%, 16% 72%, 27% 26%, 38% 66%, 47% 44%,
+    58% 78%, 68% 38%, 79% 68%, 88% 50%, 100% 88%, 100% 100%
+  );
+  opacity: 0.85;
+}
+
+.scenery__mountains::after {
+  /* Schneekappen: dieselbe Silhouette, nur oben abgeschnitten */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--snow);
+  clip-path: polygon(
+    22% 34%, 27% 26%, 33% 40%, 30% 38%, 27% 33%, 24% 37%,
+    63% 46%, 68% 38%, 74% 52%, 71% 49%, 68% 45%, 65% 49%
+  );
+  opacity: 0.9;
+}
+
+/* ---------- Huegel ---------- */
+.scenery__hills {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 22%;
+  height: 26%;
+  background: var(--s-grass-dark);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transform: scaleX(1.6);
+}
+
+.scenery__hills--second {
+  bottom: 18%;
+  height: 20%;
+  background: var(--s-grass);
+  transform: scaleX(1.9) translateX(-8%);
+}
+
+/* ---------- Boden ---------- */
+.scenery__ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24%;
+  background: linear-gradient(180deg, var(--s-grass-light) 0%, var(--s-grass) 40%, var(--s-grass-dark) 100%);
+}
+
+.scenery__ground::before {
+  /* Angedeutete Grasbueschel als weiche Wellenlinie */
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 22px;
+  background: radial-gradient(circle at 50% 100%, var(--s-grass-light) 55%, transparent 56%);
+  background-size: 34px 22px;
+  background-repeat: repeat-x;
+}
+
+/* ---------- Regionen: gleiche Ebenen, andere Farben ---------- */
+.scenery--sumpf {
+  --s-sky-top: #4f8fa8;
+  --s-sky-bottom: #cfe8dd;
+  --s-grass: #4f9e6a;
+  --s-grass-dark: #2f6a48;
+  --s-grass-light: #7cc48c;
+  --s-rock: #6d8a8f;
+  --s-rock-dark: #4d6a70;
+}
+
+.scenery--vulkan {
+  --s-sky-top: #7a3f6e;
+  --s-sky-bottom: #ffb27a;
+  --s-grass: #7a5a46;
+  --s-grass-dark: #4e372a;
+  --s-grass-light: #a07a5e;
+  --s-rock: #6b4a55;
+  --s-rock-dark: #472f3a;
+}
+
+/* Abgedunkelte Kulisse, damit Menues darauf lesbar bleiben */
+.scenery--gedimmt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 16, 44, 0.55), rgba(10, 16, 44, 0.78));
+}

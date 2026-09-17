@@ -9,85 +9,88 @@
  *   cost    - XP-Kosten (1 bis 10, siehe MAX_XP in js/core/fighter.js)
  *   damage  - Schaden am Gegenüber (0, wenn die Attacke nur heilt)
  *   heal    - Heilung für sich selbst (optional)
+ *   shield  - Schild, das kommenden Schaden abfängt (optional)
  *   icon    - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
  *   text    - kurze Beschreibung für die Karte
  *
  * Faustregel fürs Balancing: Schaden geteilt durch Kosten ergibt die
  * "Stärke pro XP". Weil beide Seiten 1 XP pro Sekunde bekommen, entscheidet
  * dieser Wert darüber, wie hart eine Seite austeilt.
- *   Spieler       ca. 5,5
+ *   Spieler       ca. 5,5 bis 6,9 (je teurer, desto stärker pro XP)
  *   Moosgnubbel   ca. 3,4   (leicht)
  *   Schlickhüpfer ca. 4,2   (mittel)
  *   Borkenwächter ca. 4,2   (Boss, dafür mit Heilung und mehr LP)
  */
 export const ATTACKS = {
   /* ===================================================================
-     Deck des Spielers (Glutwelpe)
+     Deck des Spielers (Glutwelpe) - die acht Platzhalter-Attacken.
+     Teurere Attacken sind pro XP etwas stärker. Das belohnt Sparen,
+     ohne die billigen Karten nutzlos zu machen.
      =================================================================== */
-  zuendfunke: {
-    id: 'zuendfunke',
-    name: 'Zündfunke',
-    cost: 1,
-    damage: 5,
-    icon: '✨',
-    text: 'Billig und schnell.',
-  },
-  kratzer: {
-    id: 'kratzer',
-    name: 'Kratzer',
-    cost: 1,
-    damage: 6,
-    icon: '🪶',
-    text: 'Schneller Hieb ohne Aufwärmen.',
-  },
-  funkenflug: {
-    id: 'funkenflug',
-    name: 'Funkenflug',
+  krallenhieb: {
+    id: 'krallenhieb',
+    name: 'Krallenhieb',
     cost: 2,
-    damage: 10,
-    icon: '🔥',
-    text: 'Solider Standardangriff.',
+    damage: 11,
+    icon: '🐾',
+    text: 'Schneller Hieb mit scharfen Krallen.',
   },
-  rauchschild: {
-    id: 'rauchschild',
-    name: 'Rauchschild',
+  biss: {
+    id: 'biss',
+    name: 'Biss',
     cost: 2,
-    damage: 0,
-    heal: 12,
-    icon: '🛡️',
-    text: 'Heilt dich um 12 LP.',
-  },
-  aschehieb: {
-    id: 'aschehieb',
-    name: 'Aschehieb',
-    cost: 3,
-    damage: 14,
-    icon: '🌑',
-    text: 'Harter Nahkampfschlag.',
-  },
-  glutbiss: {
-    id: 'glutbiss',
-    name: 'Glutbiss',
-    cost: 3,
-    damage: 15,
+    damage: 12,
     icon: '🦷',
-    text: 'Beißt sich glutheiß fest.',
+    text: 'Beißt kräftig zu.',
   },
-  sengwirbel: {
-    id: 'sengwirbel',
-    name: 'Sengwirbel',
+  feuerball: {
+    id: 'feuerball',
+    name: 'Feuerball',
+    cost: 3,
+    damage: 17,
+    icon: '🔥',
+    text: 'Eine kompakte Kugel aus Glut.',
+  },
+  flammenstoss: {
+    id: 'flammenstoss',
+    name: 'Flammenstoß',
     cost: 4,
-    damage: 20,
-    icon: '🌪️',
-    text: 'Wirbelnder Flammensturm.',
+    damage: 23,
+    icon: '💥',
+    text: 'Ein gebündelter Flammenstrahl.',
   },
-  feuerstoss: {
-    id: 'feuerstoss',
-    name: 'Feuerstoß',
+  schutzschild: {
+    id: 'schutzschild',
+    name: 'Schutzschild',
+    cost: 4,
+    damage: 0,
+    shield: 26,
+    icon: '🛡️',
+    text: 'Eine Barriere aus glühender Luft.',
+  },
+  feuersturm: {
+    id: 'feuersturm',
+    name: 'Feuersturm',
     cost: 5,
-    damage: 27,
-    icon: '☄️',
+    damage: 30,
+    icon: '🌪️',
+    text: 'Ein Wirbel aus Feuer.',
+  },
+  lavabombe: {
+    id: 'lavabombe',
+    name: 'Lavabombe',
+    cost: 7,
+    damage: 45,
+    icon: '🌋',
     text: 'Teuer, aber verheerend.',
+  },
+  meteor: {
+    id: 'meteor',
+    name: 'Meteor',
+    cost: 9,
+    damage: 62,
+    icon: '☄️',
+    text: 'Die stärkste Attacke - fast die gesamte Energie.',
   },
 
   /* ===================================================================
@@ -181,7 +184,7 @@ export const ATTACKS = {
     id: 'sumpfblase',
     name: 'Sumpfblase',
     cost: 2,
-    damage: 8,
+    damage: 7,
     icon: '🫧',
     text: 'Eine Blase platzt übelriechend.',
   },
@@ -189,7 +192,7 @@ export const ATTACKS = {
     id: 'schlickwelle',
     name: 'Schlickwelle',
     cost: 2,
-    damage: 9,
+    damage: 8,
     icon: '🌊',
     text: 'Eine Welle aus kaltem Schlamm.',
   },
@@ -197,7 +200,7 @@ export const ATTACKS = {
     id: 'klebezunge',
     name: 'Klebezunge',
     cost: 3,
-    damage: 12,
+    damage: 11,
     icon: '👅',
     text: 'Schnellt nach vorn und trifft hart.',
   },
@@ -205,7 +208,7 @@ export const ATTACKS = {
     id: 'schlammstoss',
     name: 'Schlammstoß',
     cost: 3,
-    damage: 13,
+    damage: 11,
     icon: '💦',
     text: 'Ein Schwall zäher Schlamm.',
   },
@@ -213,7 +216,7 @@ export const ATTACKS = {
     id: 'flutstoss',
     name: 'Flutstoß',
     cost: 4,
-    damage: 18,
+    damage: 15,
     icon: '🌀',
     text: 'Reißt alles mit sich.',
   },
@@ -221,7 +224,7 @@ export const ATTACKS = {
     id: 'schlammgeysir',
     name: 'Schlammgeysir',
     cost: 5,
-    damage: 22,
+    damage: 19,
     icon: '⛲',
     text: 'Bricht mit voller Wucht hervor.',
   },
@@ -241,7 +244,7 @@ export const ATTACKS = {
     id: 'asthieb',
     name: 'Asthieb',
     cost: 2,
-    damage: 8,
+    damage: 7,
     icon: '🪓',
     text: 'Ein schwerer Ast saust herab.',
   },
@@ -249,7 +252,7 @@ export const ATTACKS = {
     id: 'borkenfaust',
     name: 'Borkenfaust',
     cost: 2,
-    damage: 9,
+    damage: 8,
     icon: '🪨',
     text: 'Schwerer Schlag aus hartem Holz.',
   },
@@ -266,7 +269,7 @@ export const ATTACKS = {
     id: 'wurzelschlag',
     name: 'Wurzelschlag',
     cost: 3,
-    damage: 12,
+    damage: 11,
     icon: '🌲',
     text: 'Wurzeln brechen aus dem Boden.',
   },
@@ -274,7 +277,7 @@ export const ATTACKS = {
     id: 'dornenhagel',
     name: 'Dornenhagel',
     cost: 3,
-    damage: 13,
+    damage: 11,
     icon: '🌵',
     text: 'Ein Regen aus spitzen Dornen.',
   },
@@ -282,7 +285,7 @@ export const ATTACKS = {
     id: 'stammstoss',
     name: 'Stammstoß',
     cost: 4,
-    damage: 17,
+    damage: 14,
     icon: '🌰',
     text: 'Der ganze Stamm kippt nach vorn.',
   },
@@ -290,7 +293,7 @@ export const ATTACKS = {
     id: 'waldzorn',
     name: 'Waldzorn',
     cost: 5,
-    damage: 21,
+    damage: 18,
     icon: '💢',
     text: 'Der Zorn des ganzen Waldes.',
   },

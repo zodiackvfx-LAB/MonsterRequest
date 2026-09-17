@@ -1,0 +1,626 @@
+/* =========================================================================
+   MonsterQuest · screens.css
+   Aufbau der einzelnen Bildschirme.
+   ========================================================================= */
+
+/* =========================================================
+   Startbildschirm
+   ========================================================= */
+.screen--start {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.start__logo {
+  margin-top: 4px;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.start__hero {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  min-height: 0;
+}
+
+.start__hero-name {
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+}
+
+.start__actions {
+  display: grid;
+  gap: 16px;
+  flex: 0 0 auto;
+  padding-bottom: 4px;
+}
+
+.start__menu {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  justify-items: center;
+}
+
+/* =========================================================
+   Weltkarte
+   ========================================================= */
+.screen--map {
+  gap: 10px;
+}
+
+.map {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+}
+
+/* Die Flaeche, auf der die Levelpunkte liegen. Waechst automatisch mit,
+   wenn in js/data/levels.js weitere Level dazukommen. */
+.map__canvas {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* Der Weg zwischen den Levelpunkten */
+.map__path {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map__path-line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 2 18;
+}
+
+/* Ein Levelpunkt */
+.node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.node__circle {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(180deg, #8ea3d6, #5a6ba8);
+  box-shadow: 0 5px 0 rgba(12, 18, 48, 0.5), 0 10px 16px rgba(10, 16, 44, 0.4);
+  transition: transform 0.1s ease;
+}
+
+.node.is-unlocked .node__circle {
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  color: var(--text-dark);
+}
+
+.node.is-cleared .node__circle {
+  background: linear-gradient(180deg, var(--green-1), var(--green-2));
+  color: #0f2a08;
+}
+
+.node.is-boss .node__circle {
+  width: 74px;
+  height: 74px;
+  font-size: 1.1rem;
+  background: linear-gradient(180deg, #b06bd8, #6b2f9e);
+  color: #fff;
+}
+
+.node:not(:disabled):active .node__circle {
+  transform: translateY(4px);
+}
+
+.node:disabled {
+  cursor: not-allowed;
+}
+
+.node.is-current .node__circle {
+  animation: bob 1.8s ease-in-out infinite;
+}
+
+.node__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(12, 18, 48, 0.65);
+  white-space: nowrap;
+}
+
+.node .stars {
+  font-size: 0.72rem;
+}
+
+/* Infoleiste unten auf der Karte */
+.map__footer {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+}
+
+.map__buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.map__buttons .btn--big {
+  flex: 1;
+}
+
+.map__info {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.map__info-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.map__info-text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* =========================================================
+   Kampfbildschirm
+   ========================================================= */
+.screen--battle {
+  gap: 8px;
+}
+
+/* Die Kampffläche: hier stehen sich die beiden Monster gegenüber. */
+.battlefield {
+  position: relative;
+  flex: 1;
+  min-height: 150px;
+}
+
+.stage {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+}
+
+.stage--enemy {
+  top: 2%;
+  right: 4%;
+}
+
+.stage--player {
+  bottom: 2%;
+  left: 4%;
+}
+
+/* Infozeile eines Kämpfers (Name, Lebenspunkte, XP) */
+.fighter-bar {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 5px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.fighter-bar__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fighter-bar__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.fighter-bar__hp {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.fighter-bar__xp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fighter-bar__xp-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.fighter-bar__xp .pips {
+  flex: 1;
+}
+
+/* Schild-Anzeige, erscheint nur wenn ein Schild aktiv ist */
+.shield-badge {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8fe3ff;
+}
+
+.shield-badge.is-active {
+  display: flex;
+}
+
+.battle-log {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  padding: 0 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(12, 18, 48, 0.9);
+}
+
+/* XP-Leiste des Spielers */
+.xp-row {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+}
+
+.xp-row__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.xp-row__title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6fd4ff;
+  letter-spacing: 0.04em;
+}
+
+.xp-row__value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* Die vier Handkarten */
+.hand {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* =========================================================
+   Unterseiten (Monster, Deck, Sammlung, Einstellungen)
+   ========================================================= */
+.screen--page {
+  gap: 10px;
+}
+
+.page__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding-bottom: 6px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.88rem;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-row__label {
+  color: var(--text-dim);
+}
+
+.stat-row__value {
+  font-weight: 600;
+}
+
+/* Deckliste: Karte mit Name, Kosten und Wirkung */
+.deck-list {
+  display: grid;
+  gap: 8px;
+}
+
+.deck-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid var(--panel-border);
+}
+
+.deck-item__icon {
+  font-size: 1.6rem;
+}
+
+.deck-item__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.deck-item__name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.deck-item__text {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.deck-item__cost {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #06234a;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8fe3ff, #2ba7e0);
+  border: 2px solid #0d1430;
+}
+
+/* Sammlung: Raster aus Monsterkacheln */
+.collection {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.collection-item {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid var(--panel-border);
+}
+
+.collection-item.is-locked {
+  opacity: 0.55;
+}
+
+.collection-item__sprite {
+  font-size: 2.6rem;
+}
+
+.collection-item.is-locked .collection-item__sprite {
+  filter: grayscale(1) brightness(0.4);
+}
+
+.collection-item__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.collection-item__note {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* Einstellungen */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.setting-row__label {
+  display: grid;
+  gap: 2px;
+}
+
+.setting-row__name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.setting-row__hint {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+/* Schalter zum Ein- und Ausschalten */
+.switch {
+  position: relative;
+  width: 58px;
+  height: 32px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: #101838;
+  border: 2px solid var(--panel-border);
+  transition: background 0.15s ease;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #8ea3d6;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.switch.is-on {
+  background: var(--green-2);
+}
+
+.switch.is-on::after {
+  transform: translateX(26px);
+  background: #fff;
+}
+
+/* =========================================================
+   Anpassungen an die Bildschirmgroesse
+   ========================================================= */
+
+/* Breitere Geraete: vier Karten nebeneinander */
+@media (min-width: 480px) {
+  .hand {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .card {
+    min-height: 112px;
+  }
+
+  .collection {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Viel Hoehe: groessere Monster */
+@media (min-height: 760px) {
+  .sprite {
+    font-size: 6.4rem;
+  }
+
+  .sprite--large {
+    font-size: 8rem;
+  }
+}
+
+/* Niedrige Displays (iPhone SE): alles kompakter, damit die vier
+   Handkarten sicher auf den Bildschirm passen. */
+@media (max-height: 700px) {
+  .screen {
+    padding: calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+    gap: 6px;
+  }
+
+  .sprite {
+    font-size: 3.1rem;
+  }
+
+  .sprite--large {
+    font-size: 5rem;
+  }
+
+  .fighter-bar {
+    padding: 7px 10px;
+  }
+
+  .battlefield {
+    min-height: 110px;
+  }
+
+  .platform {
+    width: 80px;
+    height: 16px;
+  }
+
+  .logo {
+    max-width: 250px;
+  }
+
+  .battle-log {
+    font-size: 0.8rem;
+  }
+
+  .card {
+    min-height: 74px;
+    padding: 9px 5px 7px;
+  }
+
+  .card__icon {
+    font-size: 1.3rem;
+  }
+
+  .card__name {
+    font-size: 0.74rem;
+  }
+
+  .card__effect {
+    font-size: 0.66rem;
+  }
+
+  .btn--big {
+    min-height: 52px;
+    font-size: 1.1rem;
+  }
+
+  .icon-btn__circle {
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
+  }
+
+  .node__circle {
+    width: 54px;
+    height: 54px;
+  }
+}

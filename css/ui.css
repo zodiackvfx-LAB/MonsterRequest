@@ -1,0 +1,579 @@
+/* =========================================================================
+   MonsterQuest · ui.css
+   Wiederverwendbare Bausteine: Logo, Buttons, Panels, Balken, Karten, HUD.
+   Diese Klassen gelten auf allen Bildschirmen.
+   ========================================================================= */
+
+/* ---------- Logo ----------
+   Als SVG gebaut, weil nur dort die dunkle Kontur sauber HINTER der
+   Farbfuellung liegt (paint-order). In reinem HTML-Text würde die Kontur
+   die Füllung überdecken. */
+.logo {
+  display: block;
+  width: 100%;
+  max-width: 330px;
+  margin: 0 auto;
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgba(10, 20, 60, 0.4));
+}
+
+.logo__text {
+  font-family: var(--font);
+  font-weight: 700;
+  text-anchor: middle;
+  stroke: #16204f;
+  stroke-width: 8;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+}
+
+.logo__text--monster { font-size: 40px; }
+.logo__text--quest { font-size: 52px; }
+
+.logo__claim {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #ffffff;
+  text-shadow: 0 2px 3px rgba(12, 18, 48, 0.8);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 5px 0 var(--gold-3),
+    0 10px 18px rgba(10, 16, 44, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.btn:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 1px 0 var(--gold-3),
+    0 4px 10px rgba(10, 16, 44, 0.3);
+}
+
+.btn--big {
+  width: 100%;
+  min-height: 62px;
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+}
+
+.btn--green {
+  color: #0f2a08;
+  background: linear-gradient(180deg, var(--green-1), var(--green-2));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 5px 0 var(--green-3),
+    0 10px 18px rgba(10, 16, 44, 0.35);
+}
+
+.btn--green:active {
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 1px 0 var(--green-3);
+}
+
+.btn--ghost {
+  color: var(--text);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 0 #101838,
+    0 8px 16px rgba(10, 16, 44, 0.35);
+}
+
+.btn--ghost:active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 0 #101838;
+}
+
+.btn--small {
+  min-height: 42px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.btn--danger {
+  color: #fff;
+  background: linear-gradient(180deg, #ff8a93, var(--danger));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 5px 0 var(--danger-dark),
+    0 10px 18px rgba(10, 16, 44, 0.35);
+}
+
+.btn:disabled {
+  filter: grayscale(0.7) brightness(0.8);
+  cursor: not-allowed;
+}
+
+/* Runde Symbol-Buttons (Monster, Deck, Sammlung, Einstellungen) */
+.icon-btn {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  background: none;
+  color: var(--text);
+  padding: 0;
+}
+
+.icon-btn__circle {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 5px 0 #101838,
+    0 8px 16px rgba(10, 16, 44, 0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.icon-btn:active .icon-btn__circle {
+  transform: translateY(4px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.15), 0 1px 0 #101838;
+}
+
+.icon-btn__label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.7);
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  padding: 14px;
+}
+
+.panel--tight {
+  padding: 10px 12px;
+}
+
+.panel__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* ---------- Kopfleiste ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.topbar__title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar__spacer {
+  width: 84px;
+  flex: 0 0 auto;
+}
+
+/* ---------- Spieler-Anzeige (Avatar, Stufe, Muenzen) ---------- */
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.hud__player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 5px 5px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.hud__avatar {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  border: 2px solid #fff;
+}
+
+.hud__level {
+  display: grid;
+  gap: 3px;
+}
+
+.hud__level-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.hud__level-bar {
+  width: 68px;
+  height: 7px;
+  border-radius: 999px;
+  background: #0d1430;
+  overflow: hidden;
+}
+
+.hud__level-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--green-1), var(--green-2));
+}
+
+.hud__coins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.hud__coin-icon {
+  font-size: 1rem;
+}
+
+/* ---------- Lebens- und XP-Anzeigen ---------- */
+.bar {
+  position: relative;
+  height: 14px;
+  background: #111a3d;
+  border: 2px solid rgba(12, 18, 48, 0.75);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar__fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--green-1), var(--green-2));
+  transition: width 0.2s ease-out;
+}
+
+.bar.is-low .bar__fill {
+  background: linear-gradient(180deg, #ff8f97, var(--danger));
+  animation: pulse 0.9s ease-in-out infinite;
+}
+
+.pips {
+  --pip-color: #49c7ff;
+  --pip-charge: rgba(73, 199, 255, 0.5);
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.pips--enemy {
+  --pip-color: var(--danger);
+  --pip-charge: rgba(255, 95, 109, 0.5);
+}
+
+.pips--small {
+  gap: 3px;
+}
+
+.pip {
+  position: relative;
+  height: 13px;
+  border-radius: 4px;
+  background: #111a3d;
+  border: 2px solid rgba(12, 18, 48, 0.75);
+  overflow: hidden;
+}
+
+.pips--small .pip {
+  height: 8px;
+  border-width: 1px;
+  border-radius: 3px;
+}
+
+.pip.is-filled {
+  background: var(--pip-color);
+  border-color: var(--pip-color);
+}
+
+.pip.is-charging::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  transform: scaleX(var(--charge, 0));
+  background: var(--pip-charge);
+}
+
+/* ---------- Angriffskarten ---------- */
+.card {
+  font: inherit;
+  color: var(--text);
+  position: relative;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  align-content: center;
+  padding: 12px 6px 10px;
+  min-height: 96px;
+  cursor: pointer;
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  box-shadow: 0 5px 0 #101838, 0 8px 14px rgba(10, 16, 44, 0.4);
+  transition: transform 0.1s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.card.is-ready {
+  border-color: var(--gold-2);
+  box-shadow: 0 5px 0 var(--gold-3), 0 0 16px rgba(255, 190, 60, 0.4);
+}
+
+.card.is-ready:active {
+  transform: translateY(4px) scale(0.97);
+}
+
+/* Nicht bezahlbare Karte: abgedunkelt statt durchsichtig - sonst scheint
+   der helle Hintergrund durch und die Karte wird unleserlich. */
+.card.is-disabled {
+  filter: grayscale(0.55) brightness(0.6);
+  cursor: not-allowed;
+}
+
+.card__cost {
+  position: absolute;
+  top: -11px;
+  left: -8px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #06234a;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8fe3ff, #2ba7e0);
+  border: 2px solid #0d1430;
+}
+
+.card__icon {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.card__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.card__effect {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Monster-Darstellung ---------- */
+.platform {
+  width: 110px;
+  height: 22px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.35), rgba(20, 60, 15, 0.35));
+  box-shadow: 0 6px 14px rgba(12, 30, 10, 0.35);
+}
+
+.sprite {
+  font-size: 5rem;
+  line-height: 1;
+  filter: drop-shadow(0 8px 8px rgba(10, 20, 40, 0.4));
+}
+
+.sprite--large {
+  font-size: 7rem;
+}
+
+/* ---------- Overlay (Sieg/Niederlage/Dialoge) ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 12, 30, 0.8);
+  animation: fade-in 0.2s ease-out;
+}
+
+.overlay__box {
+  width: 100%;
+  max-width: 360px;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+  padding: 22px 20px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 3px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+  animation: pop-in 0.25s cubic-bezier(0.2, 1.4, 0.5, 1);
+}
+
+.overlay__icon {
+  font-size: 3.4rem;
+}
+
+.overlay__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.overlay__text {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.overlay__actions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.overlay__actions .btn {
+  width: 100%;
+}
+
+/* ---------- Sterne ---------- */
+.stars {
+  display: flex;
+  gap: 3px;
+  font-size: 1.1rem;
+}
+
+.star {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.star.is-earned {
+  filter: none;
+  animation: star-pop 0.4s backwards cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.star.is-earned:nth-child(2) { animation-delay: 0.15s; }
+.star.is-earned:nth-child(3) { animation-delay: 0.3s; }
+
+/* ---------- Animationen ---------- */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes hit {
+  0%, 100% { transform: translateX(0) scale(1); filter: none; }
+  20% { transform: translateX(-10px) scale(0.96); filter: brightness(2.4) saturate(0.2); }
+  60% { transform: translateX(10px) scale(1.04); filter: brightness(2.4) saturate(0.2); }
+}
+
+@keyframes lunge-right {
+  0%, 100% { transform: translate(0, 0); }
+  40% { transform: translate(26px, -14px) scale(1.06); }
+}
+
+@keyframes lunge-left {
+  0%, 100% { transform: translate(0, 0); }
+  40% { transform: translate(-26px, 14px) scale(1.06); }
+}
+
+@keyframes heal-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); filter: drop-shadow(0 0 14px var(--green-1)); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes star-pop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@keyframes float-up {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-46px); opacity: 0; }
+}
+
+.idle-bob { animation: bob 2.6s ease-in-out infinite; }
+.hit { animation: hit 0.4s ease-in-out; }
+.lunge-right { animation: lunge-right 0.35s ease-out; }
+.lunge-left { animation: lunge-left 0.35s ease-out; }
+.heal { animation: heal-pulse 0.45s ease-in-out; }
+.shake { animation: shake 0.25s ease-in-out; }
+
+/* Schadenszahlen, die vom Monster aufsteigen */
+.float-number {
+  position: absolute;
+  z-index: 3;
+  font-size: 1.5rem;
+  font-weight: 700;
+  pointer-events: none;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8);
+  animation: float-up 0.9s ease-out forwards;
+}
+
+.float-number--damage { color: #ffd76a; }
+.float-number--heal { color: var(--green-1); }
+.float-number--shield { color: #8fe3ff; }

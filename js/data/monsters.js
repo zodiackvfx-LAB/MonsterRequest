@@ -10,6 +10,8 @@
  *   name          - Anzeigename
  *   icon          - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
  *   maxHp         - maximale Lebenspunkte
+ *   element       - Typ der Kreatur (für die Anzeige; Stärken/Schwächen folgen später)
+ *   text          - kurze Beschreibung für Monster- und Sammlungsbildschirm
  *   deck          - genau 8 Attacken-ids aus js/data/attacks.js
  *
  * Nur für Gegner (steuert die KI):
@@ -25,16 +27,19 @@ export const MONSTERS = {
     id: 'glutwelpe',
     name: 'Glutwelpe',
     icon: '🐺',
+    element: 'Feuer',
+    text: 'Ein junger Feuerwelpe. Mutig, vorlaut und immer als Erster im Kampf.',
     maxHp: 100,
+    // Genau 8 Attacken - das ist die Regel für jedes Deck.
     deck: [
-      'zuendfunke',
-      'kratzer',
-      'funkenflug',
-      'rauchschild',
-      'aschehieb',
-      'glutbiss',
-      'sengwirbel',
-      'feuerstoss',
+      'krallenhieb',
+      'biss',
+      'feuerball',
+      'flammenstoss',
+      'schutzschild',
+      'feuersturm',
+      'lavabombe',
+      'meteor',
     ],
   },
 
@@ -43,7 +48,9 @@ export const MONSTERS = {
     id: 'moosgnubbel',
     name: 'Moosgnubbel',
     icon: '🌱',
-    maxHp: 55,
+    element: 'Pflanze',
+    text: 'Ein moosbewachsener Knirps. Harmlos - solange man ihn in Ruhe lässt.',
+    maxHp: 70,
     deck: [
       'blattschnitt',
       'sporenwolke',
@@ -62,7 +69,9 @@ export const MONSTERS = {
     id: 'schlickhuepfer',
     name: 'Schlickhüpfer',
     icon: '🐸',
-    maxHp: 80,
+    element: 'Wasser',
+    text: 'Springt aus dem Schlamm hervor, wenn man am wenigsten damit rechnet.',
+    maxHp: 95,
     deck: [
       'tropfschlag',
       'quakstoss',
@@ -81,7 +90,9 @@ export const MONSTERS = {
     id: 'borkenwaechter',
     name: 'Borkenwächter',
     icon: '🌳',
-    maxHp: 100,
+    element: 'Pflanze',
+    text: 'Der uralte Wächter des Dornenhorsts. Seine Rinde heilt sich selbst.',
+    maxHp: 120,
     deck: [
       'splitterschlag',
       'asthieb',

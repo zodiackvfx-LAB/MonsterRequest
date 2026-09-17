@@ -7,7 +7,7 @@
  *
  * Weil Spieler und Gegner nach denselben Regeln kämpfen, wird auch die
  * XP-Leiste des Gegners angezeigt - so siehst du, wann bei ihm etwas
- * Grosses kommt.
+ * Großes kommt.
  */
 
 import { showScreen } from '../core/screens.js';
@@ -15,7 +15,9 @@ import { getLevel } from '../data/levels.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_XP } from '../core/battle.js';
-import { completeLevel } from '../core/state.js';
+import { calculateStars, completeLevel } from '../core/state.js';
+import { createScenery } from '../ui/scenery.js';
+import { createStars } from '../ui/hud.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 
@@ -32,71 +34,81 @@ export const battleScreen = {
     /* ---------- 1. Grundgerüst bauen ---------- */
     const screen = document.createElement('div');
     screen.className = 'screen screen--battle';
-    screen.innerHTML = `
+    screen.appendChild(createScenery({ region: level.scenery ?? 'wald' }));
+
+    screen.insertAdjacentHTML(
+      'beforeend',
+      `
       <header class="topbar">
-        <button class="button button--ghost button--small" id="btn-flee">‹&nbsp;Fliehen</button>
+        <button class="btn btn--ghost btn--small" id="btn-flee" type="button">‹&nbsp;Fliehen</button>
         <h2 class="topbar__title">Level ${level.id}</h2>
         <span class="topbar__spacer"></span>
       </header>
 
-      <section class="fighter fighter--enemy">
-        <div class="fighter__bars">
-          <div class="fighter__head">
-            <span class="fighter__name">${enemyMonster.name}</span>
-            <span class="fighter__hp" id="enemy-hp-text"></span>
-          </div>
-          <div class="bar bar--hp" id="enemy-hp-bar">
-            <div class="bar__fill" id="enemy-hp-fill"></div>
-          </div>
-          <div class="mini-xp" title="XP des Gegners">
-            <span class="mini-xp__label">XP</span>
-            <div class="xp__pips xp__pips--small xp__pips--enemy" id="enemy-xp-pips"></div>
-          </div>
+      <section class="fighter-bar">
+        <div class="fighter-bar__head">
+          <span class="fighter-bar__name">${enemyMonster.name}</span>
+          <span class="fighter-bar__hp" id="enemy-hp-text"></span>
         </div>
-        <div class="monster-sprite idle-bob" id="enemy-sprite">${enemyMonster.icon}</div>
+        <div class="bar" id="enemy-hp-bar"><div class="bar__fill" id="enemy-hp-fill"></div></div>
+        <div class="fighter-bar__xp">
+          <span class="fighter-bar__xp-label">XP</span>
+          <div class="pips pips--enemy pips--small" id="enemy-xp-pips"></div>
+        </div>
+        <div class="shield-badge" id="enemy-shield">🛡️ <span></span></div>
       </section>
 
-      <p class="battle-log" id="battle-log">${level.name}: ${enemyMonster.name} greift an!</p>
-
-      <section class="fighter fighter--player">
-        <div class="monster-sprite idle-bob" id="player-sprite">${playerMonster.icon}</div>
-        <div class="fighter__bars">
-          <div class="fighter__head">
-            <span class="fighter__name">${playerMonster.name}</span>
-            <span class="fighter__hp" id="player-hp-text"></span>
-          </div>
-          <div class="bar bar--hp" id="player-hp-bar">
-            <div class="bar__fill" id="player-hp-fill"></div>
-          </div>
+      <div class="battlefield">
+        <div class="stage stage--enemy">
+          <div class="sprite idle-bob" id="enemy-sprite">${enemyMonster.icon}</div>
+          <div class="platform"></div>
         </div>
+
+        <p class="battle-log" id="battle-log">${level.name}: ${enemyMonster.name} greift an!</p>
+
+        <div class="stage stage--player">
+          <div class="sprite idle-bob" id="player-sprite">${playerMonster.icon}</div>
+          <div class="platform"></div>
+        </div>
+      </div>
+
+      <section class="fighter-bar">
+        <div class="fighter-bar__head">
+          <span class="fighter-bar__name">${playerMonster.name}</span>
+          <span class="fighter-bar__hp" id="player-hp-text"></span>
+        </div>
+        <div class="bar" id="player-hp-bar"><div class="bar__fill" id="player-hp-fill"></div></div>
+        <div class="shield-badge" id="player-shield">🛡️ <span></span></div>
       </section>
 
-      <section class="xp">
-        <div class="xp__header">
-          <span class="xp__title">XP</span>
-          <span class="xp__value" id="xp-text">0 / ${MAX_XP}</span>
+      <section class="xp-row">
+        <div class="xp-row__head">
+          <span class="xp-row__title">DEINE XP</span>
+          <span class="xp-row__value" id="xp-text">0 / ${MAX_XP}</span>
         </div>
-        <div class="xp__pips" id="xp-pips"></div>
+        <div class="pips" id="xp-pips"></div>
       </section>
 
       <section class="hand" id="hand"></section>
-    `;
+      `
+    );
 
     const ui = {
       enemyHpFill: screen.querySelector('#enemy-hp-fill'),
       enemyHpText: screen.querySelector('#enemy-hp-text'),
       enemyHpBar: screen.querySelector('#enemy-hp-bar'),
       enemySprite: screen.querySelector('#enemy-sprite'),
+      enemyShield: screen.querySelector('#enemy-shield'),
       playerHpFill: screen.querySelector('#player-hp-fill'),
       playerHpText: screen.querySelector('#player-hp-text'),
       playerHpBar: screen.querySelector('#player-hp-bar'),
       playerSprite: screen.querySelector('#player-sprite'),
+      playerShield: screen.querySelector('#player-shield'),
       log: screen.querySelector('#battle-log'),
       xpText: screen.querySelector('#xp-text'),
       hand: screen.querySelector('#hand'),
     };
 
-    // Die XP-Punkte einmal anlegen; später wird nur ihre Klasse getauscht.
     const playerPips = createPips(screen.querySelector('#xp-pips'));
     const enemyPips = createPips(screen.querySelector('#enemy-xp-pips'));
 
@@ -105,7 +117,7 @@ export const battleScreen = {
       const pips = [];
       for (let i = 0; i < MAX_XP; i++) {
         const pip = document.createElement('span');
-        pip.className = 'xp__pip';
+        pip.className = 'pip';
         container.appendChild(pip);
         pips.push(pip);
       }
@@ -126,11 +138,9 @@ export const battleScreen = {
 
     /* ---------- 3. Anzeige aktualisieren ---------- */
     function render(state) {
-      // Lebensbalken
-      renderHp(ui.enemyHpBar, ui.enemyHpFill, ui.enemyHpText, state.enemy);
-      renderHp(ui.playerHpBar, ui.playerHpFill, ui.playerHpText, state.player);
+      renderFighter(ui.enemyHpBar, ui.enemyHpFill, ui.enemyHpText, ui.enemyShield, state.enemy);
+      renderFighter(ui.playerHpBar, ui.playerHpFill, ui.playerHpText, ui.playerShield, state.player);
 
-      // XP beider Seiten - gleiche Anzeige, weil gleiche Regeln
       ui.xpText.textContent = `${state.player.xp} / ${MAX_XP}`;
       renderPips(playerPips, state.player);
       renderPips(enemyPips, state.enemy);
@@ -145,18 +155,23 @@ export const battleScreen = {
       cardElements.forEach((card, index) => {
         const attack = getAttack(state.player.hand[index]);
         const affordable = attack.cost <= state.player.xp && !state.finished;
+        card.classList.toggle('is-ready', affordable);
         card.classList.toggle('is-disabled', !affordable);
         card.disabled = !affordable;
       });
     }
 
-    /** Aktualisiert Balken und Zahl der Lebenspunkte. */
-    function renderHp(bar, fill, text, fighter) {
+    /** Lebensbalken, Zahl und Schildanzeige eines Kämpfers. */
+    function renderFighter(bar, fill, text, shieldBadge, fighter) {
       const share = fighter.hp / fighter.maxHp;
       fill.style.width = `${share * 100}%`;
       text.textContent = `${fighter.hp} / ${fighter.maxHp}`;
-      // Unter 30 % wird der Balken rot - deutlich sichtbar, dass es eng wird.
       bar.classList.toggle('is-low', share <= 0.3);
+
+      shieldBadge.classList.toggle('is-active', fighter.shield > 0);
+      if (fighter.shield > 0) {
+        shieldBadge.querySelector('span').textContent = fighter.shield;
+      }
     }
 
     /** Färbt die XP-Punkte eines Kämpfers passend zu seinen XP ein. */
@@ -179,21 +194,24 @@ export const battleScreen = {
       state.player.hand.forEach((attackId, index) => {
         const attack = getAttack(attackId);
 
+        let effect = `${attack.damage} SCH`;
+        if (attack.heal > 0) effect = `+${attack.heal} LP`;
+        if (attack.shield > 0) effect = `${attack.shield} Schild`;
+
         const card = document.createElement('button');
         card.className = 'card';
+        card.type = 'button';
         card.innerHTML = `
           <span class="card__cost">${attack.cost}</span>
           <span class="card__icon">${attack.icon}</span>
           <span class="card__name">${attack.name}</span>
-          <span class="card__effect">${attack.heal > 0 ? `+${attack.heal} LP` : `${attack.damage} SCH`}</span>
+          <span class="card__effect">${effect}</span>
         `;
 
         card.addEventListener('click', () => {
           const played = battle.playCard(index);
-          if (!played) {
-            // Nicht genug XP: kurzes Wackeln als Rückmeldung.
-            flash(card, 'shake');
-          }
+          // Nicht genug XP: kurzes Wackeln als Rückmeldung.
+          if (!played) flash(card, 'shake');
         });
 
         ui.hand.appendChild(card);
@@ -201,14 +219,38 @@ export const battleScreen = {
       });
     }
 
-    /* ---------- 4. Ereignisse: Log und Animationen ---------- */
+    /* ---------- 4. Ereignisse: Log, Animationen, Zahlen ---------- */
     function handleEvent(event) {
       if (event.text) ui.log.textContent = event.text;
 
-      if (event.type === 'player-attack') flash(ui.enemySprite, 'hit');
-      if (event.type === 'enemy-attack') flash(ui.playerSprite, 'hit');
-      if (event.type === 'player-heal') flash(ui.playerSprite, 'heal');
-      if (event.type === 'enemy-heal') flash(ui.enemySprite, 'heal');
+      switch (event.type) {
+        case 'player-attack':
+          flash(ui.playerSprite, 'lunge-right');
+          flash(ui.enemySprite, 'hit');
+          floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
+          break;
+        case 'enemy-attack':
+          flash(ui.enemySprite, 'lunge-left');
+          flash(ui.playerSprite, 'hit');
+          floatNumber(ui.playerSprite, `-${event.amount}`, 'damage');
+          break;
+        case 'player-heal':
+          flash(ui.playerSprite, 'heal');
+          floatNumber(ui.playerSprite, `+${event.amount}`, 'heal');
+          break;
+        case 'enemy-heal':
+          flash(ui.enemySprite, 'heal');
+          floatNumber(ui.enemySprite, `+${event.amount}`, 'heal');
+          break;
+        case 'player-shield':
+          floatNumber(ui.playerSprite, `🛡️ ${event.amount}`, 'shield');
+          break;
+        case 'enemy-shield':
+          floatNumber(ui.enemySprite, `🛡️ ${event.amount}`, 'shield');
+          break;
+        default:
+          break;
+      }
     }
 
     /** Setzt kurz eine CSS-Klasse für eine Animation. */
@@ -216,13 +258,27 @@ export const battleScreen = {
       element.classList.remove(className);
       void element.offsetWidth; // erzwingt den Neustart der Animation
       element.classList.add(className);
-      setTimeout(() => element.classList.remove(className), 400);
+      setTimeout(() => element.classList.remove(className), 450);
+    }
+
+    /** Lässt eine Zahl über dem Monster aufsteigen. */
+    function floatNumber(sprite, text, kind) {
+      const number = document.createElement('span');
+      number.className = `float-number float-number--${kind}`;
+      number.textContent = text;
+      sprite.parentElement.appendChild(number);
+      setTimeout(() => number.remove(), 900);
     }
 
     /* ---------- 5. Kampfende ---------- */
     function showResult(result) {
+      const state = battle.state;
+      let stars = 0;
+      let coins = 0;
+
       if (result === 'win') {
-        completeLevel(level.id);
+        stars = calculateStars(state.player.hp, state.player.maxHp);
+        ({ coins } = completeLevel(level.id, { stars, reward: level.reward ?? 0 }));
       }
 
       const overlay = document.createElement('div');
@@ -233,29 +289,33 @@ export const battleScreen = {
           <h3 class="overlay__title">${result === 'win' ? 'Sieg!' : 'Niederlage'}</h3>
           <p class="overlay__text">
             ${result === 'win'
-              ? `${enemyMonster.name} wurde besiegt. Das nächste Level ist frei!`
+              ? `${enemyMonster.name} wurde besiegt.${coins > 0 ? ` Du erhältst 🪙 ${coins}.` : ''}`
               : `${playerMonster.name} ist erschöpft. Versuch es noch einmal!`}
           </p>
           <div class="overlay__actions">
-            <button class="button button--primary" id="btn-retry">Nochmal kämpfen</button>
-            <button class="button button--ghost" id="btn-map">Zur Karte</button>
+            <button class="btn btn--big btn--green" id="btn-next" type="button"></button>
+            <button class="btn btn--ghost" id="btn-map" type="button">Zur Weltkarte</button>
           </div>
         </div>
       `;
 
-      overlay.querySelector('#btn-retry').addEventListener('click', () => {
-        showScreen('battle', { levelId: level.id });
-      });
-      overlay.querySelector('#btn-map').addEventListener('click', () => {
-        showScreen('map');
+      if (result === 'win') {
+        const box = overlay.querySelector('.overlay__box');
+        box.insertBefore(createStars(stars), box.querySelector('.overlay__text'));
+      }
+
+      const nextButton = overlay.querySelector('#btn-next');
+      nextButton.textContent = result === 'win' ? 'Weiter' : 'Nochmal kämpfen';
+      nextButton.addEventListener('click', () => {
+        if (result === 'win') showScreen('map');
+        else showScreen('battle', { levelId: level.id });
       });
 
+      overlay.querySelector('#btn-map').addEventListener('click', () => showScreen('map'));
       screen.appendChild(overlay);
     }
 
-    screen.querySelector('#btn-flee').addEventListener('click', () => {
-      showScreen('map');
-    });
+    screen.querySelector('#btn-flee').addEventListener('click', () => showScreen('map'));
 
     root.appendChild(screen);
 

@@ -77,12 +77,15 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
    */
   function useAttack(attacker, defender, attack, side) {
     if (attack.damage > 0) {
-      defender.takeDamage(attack.damage);
+      const applied = defender.takeDamage(attack.damage);
       emit({
         type: `${side}-attack`,
         attack,
         amount: attack.damage,
-        text: `${attacker.state.name} setzt ${attack.name} ein: ${attack.damage} Schaden!`,
+        absorbed: applied.shield, // vom Schild abgefangener Anteil
+        text: applied.shield > 0
+          ? `${attack.name}: ${attack.damage} Schaden - das Schild fängt ${applied.shield} ab!`
+          : `${attacker.state.name} setzt ${attack.name} ein: ${attack.damage} Schaden!`,
       });
     }
 
@@ -93,6 +96,16 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
         attack,
         amount: attack.heal,
         text: `${attacker.state.name} nutzt ${attack.name} und heilt ${attack.heal} LP.`,
+      });
+    }
+
+    if (attack.shield > 0) {
+      attacker.addShield(attack.shield);
+      emit({
+        type: `${side}-shield`,
+        attack,
+        amount: attack.shield,
+        text: `${attacker.state.name} stellt ein Schutzschild auf: ${attack.shield} Schaden werden abgefangen.`,
       });
     }
 
@@ -131,11 +144,15 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
   /**
    * Wie wertvoll ist diese Attacke für den Gegner gerade?
    * Schaden zählt immer, Heilung nur so weit, wie ihm LP fehlen -
-   * dadurch heilt er nie mit vollen Lebenspunkten.
+   * dadurch heilt er nie mit vollen Lebenspunkten. Ein Schild zählt nur,
+   * wenn er bereits angeschlagen ist.
    */
   function valueOf(attack) {
     const usefulHeal = Math.min(attack.heal ?? 0, enemy.missingHp());
-    return attack.damage + usefulHeal;
+    // Ein Schild lohnt sich vor allem, wenn es für den Gegner eng wird.
+    const inDanger = state.enemy.hp < state.enemy.maxHp * 0.5;
+    const usefulShield = inDanger ? attack.shield ?? 0 : 0;
+    return attack.damage + usefulHeal + usefulShield;
   }
 
   /**

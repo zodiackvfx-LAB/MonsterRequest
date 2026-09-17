@@ -8,9 +8,9 @@
  *
  * Regeln (für beide gleich):
  *   - Deck aus genau 8 Attacken, davon immer 4 auf der Hand
- *   - maximal 10 XP
+ *   - maximal 10 XP, niemals mehr und niemals weniger als 0
  *   - 1 XP pro Sekunde, automatisch
- *   - jede Attacke kostet XP
+ *   - jede Attacke kostet XP und kann nur bezahlt gespielt werden
  */
 
 import { getAttack } from '../data/attacks.js';
@@ -35,6 +35,7 @@ export function createFighter(monster) {
     icon: monster.icon,
     hp: monster.maxHp,
     maxHp: monster.maxHp,
+    shield: 0, // fängt Schaden ab, bevor Lebenspunkte verloren gehen
     xp: START_XP, // ganze XP, die ausgegeben werden können
     xpProgress: 0, // 0..1 Fortschritt zum nächsten XP-Punkt (nur für die Anzeige)
     hand: deck.hand, // Array mit 4 Attacken-ids
@@ -86,8 +87,23 @@ export function createFighter(monster) {
     return attack;
   }
 
+  /**
+   * Schaden einstecken. Ein Schild wird zuerst aufgebraucht.
+   * @returns {{hp: number, shield: number}} wie viel wovon abgezogen wurde
+   */
   function takeDamage(amount) {
-    state.hp = Math.max(0, state.hp - amount);
+    const absorbed = Math.min(state.shield, amount);
+    state.shield -= absorbed;
+
+    const rest = amount - absorbed;
+    state.hp = Math.max(0, state.hp - rest);
+
+    return { hp: rest, shield: absorbed };
+  }
+
+  /** Schild aufbauen (ersetzt ein schwächeres Schild, statt sich zu stapeln). */
+  function addShield(amount) {
+    state.shield = Math.max(state.shield, amount);
   }
 
   function heal(amount) {
@@ -99,5 +115,15 @@ export function createFighter(monster) {
     return state.maxHp - state.hp;
   }
 
-  return { state, gainXp, canAfford, handAttacks, useCard, takeDamage, heal, missingHp };
+  return {
+    state,
+    gainXp,
+    canAfford,
+    handAttacks,
+    useCard,
+    takeDamage,
+    addShield,
+    heal,
+    missingHp,
+  };
 }
