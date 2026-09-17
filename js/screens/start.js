@@ -21,7 +21,7 @@ export const startScreen = {
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--start';
-    screen.appendChild(createScenery({ region: 'wald' }));
+    screen.appendChild(createScenery());
     screen.appendChild(createHud());
 
     const content = document.createElement('div');

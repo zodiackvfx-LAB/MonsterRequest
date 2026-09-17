@@ -21,7 +21,7 @@ export const monsterScreen = {
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--page';
-    screen.appendChild(createScenery({ region: 'wald', dimmed: true }));
+    screen.appendChild(createScenery({ dimmed: true }));
     screen.appendChild(createTopbar('Dein Monster', () => showScreen('start')));
 
     const content = document.createElement('div');

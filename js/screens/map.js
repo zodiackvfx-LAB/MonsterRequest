@@ -24,7 +24,7 @@ export const mapScreen = {
   mount(root) {
     const screen = document.createElement('div');
     screen.className = 'screen screen--map';
-    screen.appendChild(createScenery({ region: 'wald' }));
+    screen.appendChild(createScenery());
     screen.appendChild(createHud());
 
     /* ---------- Kartenfläche ---------- */

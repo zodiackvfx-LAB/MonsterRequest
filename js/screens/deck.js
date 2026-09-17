@@ -18,7 +18,7 @@ export const deckScreen = {
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--page';
-    screen.appendChild(createScenery({ region: 'wald', dimmed: true }));
+    screen.appendChild(createScenery({ dimmed: true }));
     screen.appendChild(createTopbar('Dein Deck', () => showScreen('start')));
 
     const content = document.createElement('div');

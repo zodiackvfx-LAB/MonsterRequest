@@ -28,14 +28,16 @@
 /* ---------- Farben und Masse an einer Stelle ----------
    Willst du die Optik aendern, aendere hier - nicht in den einzelnen Regeln. */
 :root {
-  /* Himmel und Natur (fuer die Kulissen) */
-  --sky-top: #3ba7e8;
-  --sky-bottom: #b6e8ff;
-  --grass: #66c447;
-  --grass-dark: #3f8f2c;
-  --grass-light: #8fdd63;
-  --rock: #7c8fb5;
-  --rock-dark: #5a6c92;
+  /* Himmel und Natur. Diese Werte gelten für die Kulisse UND die Arena -
+     deshalb stehen sie hier ganz oben und nicht in einer der beiden.
+     Eine Region (siehe .region--sumpf in scenery.css) überschreibt sie. */
+  --s-sky-top: #3ba7e8;
+  --s-sky-bottom: #b6e8ff;
+  --s-grass: #66c447;
+  --s-grass-dark: #3f8f2c;
+  --s-grass-light: #8fdd63;
+  --s-rock: #7c8fb5;
+  --s-rock-dark: #5a6c92;
   --snow: #f2f8ff;
 
   /* Oberflaeche der Bedienelemente */

@@ -1,25 +1,19 @@
 /* =========================================================================
    MonsterQuest · scenery.css
-   Die Spielwelt-Kulissen: Himmel, Sonne, Wolken, Berge, Huegel, Boden.
+   Die Spielwelt-Kulissen: Himmel, Sonne, Wolken, Berge, Hügel, Boden.
    Alles reines CSS - spaeter kannst du einzelne Ebenen durch eigene
    Grafiken ersetzen, ohne den Rest anzufassen:
        .scenery__hills { background-image: url('../bilder/huegel.png'); }
    Aufbau (von hinten nach vorn): sky → sun → clouds → mountains → hills → ground
    ========================================================================= */
 
+/* Die Farben (--s-...) stehen in css/base.css, damit Kulisse und Arena
+   dieselben benutzen. Eine Region überschreibt sie weiter unten. */
 .scenery {
   position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  /* Farben pro Region ueberschreibbar (siehe .scenery--sumpf usw. unten) */
-  --s-sky-top: var(--sky-top);
-  --s-sky-bottom: var(--sky-bottom);
-  --s-grass: var(--grass);
-  --s-grass-dark: var(--grass-dark);
-  --s-grass-light: var(--grass-light);
-  --s-rock: var(--rock);
-  --s-rock-dark: var(--rock-dark);
 }
 
 .scenery__sky {
@@ -92,7 +86,7 @@
   opacity: 0.9;
 }
 
-/* ---------- Huegel ---------- */
+/* ---------- Hügel ---------- */
 .scenery__hills {
   position: absolute;
   left: 0;
@@ -122,7 +116,7 @@
 }
 
 .scenery__ground::before {
-  /* Angedeutete Grasbueschel als weiche Wellenlinie */
+  /* Angedeutete Grasbüschel als weiche Wellenlinie */
   content: '';
   position: absolute;
   top: -10px;
@@ -134,8 +128,10 @@
   background-repeat: repeat-x;
 }
 
-/* ---------- Regionen: gleiche Ebenen, andere Farben ---------- */
-.scenery--sumpf {
+/* ---------- Regionen: gleiche Ebenen, andere Farben ----------
+   Die Klasse kommt auf den Bildschirm (nicht auf die Kulisse), damit
+   Kulisse UND Arena die Farben erben. */
+.region--sumpf {
   --s-sky-top: #4f8fa8;
   --s-sky-bottom: #cfe8dd;
   --s-grass: #4f9e6a;
@@ -145,7 +141,7 @@
   --s-rock-dark: #4d6a70;
 }
 
-.scenery--vulkan {
+.region--vulkan {
   --s-sky-top: #7a3f6e;
   --s-sky-bottom: #ffb27a;
   --s-grass: #7a5a46;
@@ -162,3 +158,141 @@
   inset: 0;
   background: linear-gradient(180deg, rgba(10, 16, 44, 0.55), rgba(10, 16, 44, 0.78));
 }
+
+/* =========================================================================
+   Die Kampfarena
+   ---------------------------------------------------------------------
+   Im Kampf zeigt die Kulisse nur Himmel, Sonne und Wolken (skyOnly).
+   Alles andere gehört zur Arena: Hügel, Baumreihe, Wiese und Kampfplatz.
+   Dadurch gibt es genau EINEN Horizont, und beide Monster stehen sicher
+   darauf - egal wie hoch der Bildschirm ist.
+
+   Die Arena ist in der Höhe begrenzt und wird mittig gesetzt, damit die
+   Monster auch auf dem iPad dicht beieinander stehen.
+   ========================================================================= */
+.arena {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: 400px;
+  /* Die Wiese reicht absichtlich über die Arena hinaus. */
+  overflow: visible;
+}
+
+/* Hügel hinter dem Horizont */
+.arena__hills {
+  position: absolute;
+  left: -25%;
+  right: -25%;
+  top: 26%;
+  height: 30%;
+  background: var(--s-grass-dark);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+/* Baumreihe direkt am Horizont */
+.arena__treeline {
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 52%;
+  height: 52px;
+  transform: translateY(-100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 2%;
+}
+
+.arena__tree {
+  position: relative;
+  width: 44px;
+  height: 38px;
+  border-radius: 50% 50% 42% 42%;
+  background: linear-gradient(180deg, var(--s-grass), var(--s-grass-dark));
+  box-shadow: inset -6px -4px 0 rgba(0, 0, 0, 0.12);
+}
+
+/* Stamm */
+.arena__tree::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 11px;
+  border-radius: 2px;
+  background: #6b4a2f;
+}
+
+/* Unterschiedliche Größen, damit die Reihe nicht wie ein Zaun wirkt */
+.arena__tree:nth-child(2n) { width: 36px; height: 30px; }
+.arena__tree:nth-child(3n) { width: 52px; height: 45px; }
+.arena__tree:nth-child(5n) { width: 32px; height: 26px; }
+
+/* Die Wiese: beginnt am Horizont und läuft bis zum unteren Bildschirmrand */
+.arena__ground {
+  position: absolute;
+  left: -50vw;
+  right: -50vw;
+  top: 52%;
+  bottom: -100vh;
+  background: linear-gradient(
+    180deg,
+    var(--s-grass-light) 0%,
+    var(--s-grass) 14%,
+    var(--s-grass-dark) 100%
+  );
+}
+
+/* Angedeutete Grasbüschel an der Kante */
+.arena__ground::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: radial-gradient(circle at 50% 100%, var(--s-grass-light) 55%, transparent 56%);
+  background-size: 30px 20px;
+  background-repeat: repeat-x;
+}
+
+/* Heller Kampfplatz, auf dem die beiden stehen */
+.arena__ring {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  transform: translateX(-50%);
+  width: 96%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 249, 214, 0.3) 0%,
+    rgba(255, 249, 214, 0.1) 55%,
+    rgba(255, 249, 214, 0) 72%
+  );
+}
+
+/* Ein paar Blumen, damit die Wiese nicht wie eine leere Fläche wirkt */
+.arena__flower {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff6c9;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+  opacity: 0.85;
+}
+
+.arena__flower:nth-of-type(2n) {
+  background: #ffd9ec;
+}
+
+.arena__flower:nth-of-type(1) { left: 32%; top: 66%; }
+.arena__flower:nth-of-type(2) { left: 72%; top: 80%; }
+.arena__flower:nth-of-type(3) { left: 18%; top: 88%; }
+.arena__flower:nth-of-type(4) { left: 58%; top: 94%; }
+.arena__flower:nth-of-type(5) { left: 88%; top: 70%; }
