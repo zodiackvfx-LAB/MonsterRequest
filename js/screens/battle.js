@@ -20,6 +20,14 @@ import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js'
 import { createStars } from '../ui/hud.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
+let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
+
+/**
+ * Wartezeit zwischen dem letzten Treffer und dem Ergebnisfenster.
+ * Ohne sie erscheint das Fenster, während der Lebensbalken noch leerläuft -
+ * dann sieht es so aus, als hätte der Gegner noch Leben gehabt.
+ */
+const ERGEBNIS_VERZOEGERUNG = 750;
 
 export const battleScreen = {
   mount(root, params) {
@@ -288,6 +296,12 @@ export const battleScreen = {
         ({ coins } = completeLevel(level.id, { stars, reward: level.reward ?? 0 }));
       }
 
+      // Kurz warten, damit der letzte Treffer, die Schadenszahl und der
+      // leerlaufende Lebensbalken noch zu sehen sind.
+      resultTimer = setTimeout(() => buildResultOverlay(result, stars, coins), ERGEBNIS_VERZOEGERUNG);
+    }
+
+    function buildResultOverlay(result, stars, coins) {
       const overlay = document.createElement('div');
       overlay.className = 'overlay';
       overlay.innerHTML = `
@@ -335,6 +349,11 @@ export const battleScreen = {
     if (battle) {
       battle.stop();
       battle = null;
+    }
+    // Sonst könnte das Ergebnisfenster auf einem anderen Bildschirm landen.
+    if (resultTimer !== null) {
+      clearTimeout(resultTimer);
+      resultTimer = null;
     }
   },
 };

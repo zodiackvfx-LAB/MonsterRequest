@@ -676,9 +676,13 @@
   }
 
   .arena__tree {
-    width: 30px;
-    height: 24px;
+    width: 34px;
+    height: 54px;
   }
+
+  .arena__tree:nth-child(2n) { width: 28px; height: 44px; }
+  .arena__tree:nth-child(3n) { width: 40px; height: 64px; }
+  .arena__tree:nth-child(5n) { width: 24px; height: 38px; }
 
   .platform {
     width: 80px;

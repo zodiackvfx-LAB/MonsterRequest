@@ -132,6 +132,8 @@
    Die Klasse kommt auf den Bildschirm (nicht auf die Kulisse), damit
    Kulisse UND Arena die Farben erben. */
 .region--sumpf {
+  --s-tree: #3f7f5c;
+  --s-tree-dark: #23503a;
   --s-sky-top: #4f8fa8;
   --s-sky-bottom: #cfe8dd;
   --s-grass: #4f9e6a;
@@ -142,6 +144,8 @@
 }
 
 .region--vulkan {
+  --s-tree: #6b4a3a;
+  --s-tree-dark: #3d2820;
   --s-sky-top: #7a3f6e;
   --s-sky-bottom: #ffb27a;
   --s-grass: #7a5a46;
@@ -193,43 +197,51 @@
 /* Baumreihe direkt am Horizont */
 .arena__treeline {
   position: absolute;
-  left: -2%;
-  right: -2%;
+  left: -3%;
+  right: -3%;
   top: 52%;
-  height: 52px;
   transform: translateY(-100%);
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 0 2%;
+  padding: 0 1%;
 }
 
+/* Tannen: die Silhouette entsteht durch clip-path (drei Etagen und eine
+   Spitze). Willst du eine andere Baumform, änderst du nur diese Punkte. */
 .arena__tree {
   position: relative;
-  width: 44px;
-  height: 38px;
-  border-radius: 50% 50% 42% 42%;
-  background: linear-gradient(180deg, var(--s-grass), var(--s-grass-dark));
-  box-shadow: inset -6px -4px 0 rgba(0, 0, 0, 0.12);
+  width: 58px;
+  height: 92px;
+  flex: 0 0 auto;
+  background: linear-gradient(170deg, var(--s-tree) 0%, var(--s-tree-dark) 100%);
+  clip-path: polygon(
+    50% 0%,
+    68% 30%, 58% 30%,
+    80% 62%, 68% 62%,
+    93% 100%, 7% 100%,
+    32% 62%, 20% 62%,
+    42% 30%, 32% 30%
+  );
 }
 
 /* Stamm */
 .arena__tree::after {
   content: '';
   position: absolute;
-  bottom: -8px;
+  bottom: -9px;
   left: 50%;
   transform: translateX(-50%);
-  width: 8px;
-  height: 11px;
+  width: 9px;
+  height: 12px;
   border-radius: 2px;
   background: #6b4a2f;
 }
 
 /* Unterschiedliche Größen, damit die Reihe nicht wie ein Zaun wirkt */
-.arena__tree:nth-child(2n) { width: 36px; height: 30px; }
-.arena__tree:nth-child(3n) { width: 52px; height: 45px; }
-.arena__tree:nth-child(5n) { width: 32px; height: 26px; }
+.arena__tree:nth-child(2n) { width: 46px; height: 74px; }
+.arena__tree:nth-child(3n) { width: 68px; height: 108px; }
+.arena__tree:nth-child(5n) { width: 40px; height: 64px; }
 
 /* Die Wiese: beginnt am Horizont und läuft bis zum unteren Bildschirmrand */
 .arena__ground {
