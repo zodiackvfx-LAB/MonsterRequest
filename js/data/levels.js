@@ -28,10 +28,13 @@ import { enemyIdFor, getEnemy } from './enemies.js';
  */
 function positionFor(index, total) {
   const muster = [26, 50, 74, 50];
-  const abstand = total > 1 ? 92 / (total - 1) : 0;
+  // Der erste und der letzte Punkt bleiben bewusst vom Rand weg (88 % bis
+  // 8 %), damit sie beim Scrollen nicht am Rand der Karte kleben und
+  // angeschnitten wirken.
+  const abstand = total > 1 ? 80 / (total - 1) : 0;
   return {
     x: muster[index % muster.length],
-    y: Number((95 - index * abstand).toFixed(2)),
+    y: Number((88 - index * abstand).toFixed(2)),
   };
 }
 

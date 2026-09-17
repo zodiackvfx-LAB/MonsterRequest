@@ -47,8 +47,8 @@
 
 .start__menu {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 6px;
   justify-items: center;
 }
 
@@ -65,6 +65,28 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: var(--radius);
+  /* Oben und unten laufen die Stationen weich aus, statt hart abgeschnitten
+     zu werden. Ein halb sichtbarer Levelpunkt sieht dadurch gewollt aus. */
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 54px,
+    #000 calc(100% - 26px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 54px,
+    #000 calc(100% - 26px),
+    transparent 100%
+  );
+  /* Beim Loslassen rastet die Karte sanft auf einer Station ein. */
+  scroll-snap-type: y proximity;
+}
+
+.map .node {
+  scroll-snap-align: center;
 }
 
 /* Die Flaeche, auf der die Levelpunkte liegen. Waechst automatisch mit,
@@ -475,6 +497,48 @@
 .deck-item__text {
   font-size: 0.75rem;
   color: var(--text-dim);
+}
+
+.deck-item--button {
+  font: inherit;
+  color: var(--text);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.deck-item--button:not(:disabled):active {
+  transform: translateY(2px);
+}
+
+.deck-item--button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.deck-item--button.is-current {
+  border-color: var(--gold-2);
+}
+
+.deck-item__rarity {
+  margin-left: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Auswahlliste beim Kartentausch */
+.overlay__box--wide {
+  max-width: 460px;
+}
+
+.swap-list {
+  width: 100%;
+  max-height: 46vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 6px;
+  padding-right: 2px;
 }
 
 .deck-item__cost {
@@ -902,4 +966,206 @@
 /* Bosse in der Sammlung hervorheben */
 .collection-item.is-boss {
   border-color: var(--gold-2);
+}
+
+/* =========================================================
+   Shop und Truhen
+   ========================================================= */
+.chest-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.chest-card__icon {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  font-size: 2.1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(12, 18, 48, 0.5);
+}
+
+.chest-card__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.chest-card__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.chest-card__text,
+.chest-card__odds {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.chest-card__buy {
+  flex: 0 0 auto;
+}
+
+/* ---------- Truhe öffnen ---------- */
+.overlay--chest {
+  align-items: center;
+}
+
+.chest-open {
+  width: 100%;
+  max-width: 460px;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.chest-open__chest {
+  font-size: 4.6rem;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.5));
+}
+
+.chest-open__chest.is-shaking {
+  animation: chest-shake 0.35s ease-in-out infinite;
+}
+
+.chest-open__chest.is-open {
+  animation: chest-pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.chest-open__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8);
+}
+
+.loot-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.loot-item {
+  --rarity: var(--panel-border);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 92px;
+  padding: 8px 4px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid var(--rarity);
+  box-shadow: 0 0 14px -2px var(--rarity);
+  animation: loot-reveal 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.loot-item.is-hidden {
+  opacity: 0.35;
+  border-style: dashed;
+  box-shadow: none;
+  animation: none;
+  align-content: center;
+}
+
+.loot-item__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.loot-item__name {
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.loot-item__rarity {
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: var(--rarity);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chest-open__done {
+  margin-top: 6px;
+}
+
+@keyframes chest-shake {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+
+@keyframes chest-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.35) translateY(-10px); }
+  100% { transform: scale(1.12); }
+}
+
+@keyframes loot-reveal {
+  from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Auf schmalen Bildschirmen zwei Reihen statt einer sehr engen */
+@media (max-width: 420px) {
+  .loot-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .loot-item {
+    min-height: 84px;
+  }
+}
+
+/* Skin-Auswahl im Monster-Bildschirm */
+.skin-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+.skin-chip {
+  --rarity: var(--panel-border);
+  font: inherit;
+  color: var(--text);
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid var(--rarity);
+}
+
+.skin-chip.is-active {
+  box-shadow: 0 0 0 3px var(--gold-2), 0 0 14px -2px var(--rarity);
+}
+
+.skin-chip.is-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.skin-chip__vorschau {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+
+.skin-chip__name {
+  font-size: 0.68rem;
+  font-weight: 600;
 }

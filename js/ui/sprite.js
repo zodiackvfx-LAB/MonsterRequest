@@ -325,15 +325,33 @@ function standardAussehen(monster) {
 
 const zwischenspeicher = new Map();
 
+/** Wird von aussen gesetzt, damit sprite.js nichts ueber den Spielstand wissen muss. */
+let skinNachschlag = () => null;
+
+/**
+ * Legt fest, wie der aktive Skin eines Monsters gefunden wird.
+ * Wird einmal beim Start gesetzt (siehe js/main.js).
+ */
+export function setSkinNachschlag(funktion) {
+  skinNachschlag = funktion;
+}
+
+/** Leert den Zwischenspeicher - nötig, wenn ein Skin gewechselt wurde. */
+export function spritesNeuZeichnen() {
+  zwischenspeicher.clear();
+}
+
 /**
  * Zeichnet die Figur und gibt sie als Bild-Adresse zurück.
  * Jede Figur wird nur einmal gezeichnet und danach wiederverwendet.
  */
 export function spriteDataUrl(monster) {
-  const key = monster.id ?? monster.name;
+  const skin = skinNachschlag(monster);
+  const key = `${monster.id ?? monster.name}${skin ? `+${skin.id}` : ''}`;
   if (zwischenspeicher.has(key)) return zwischenspeicher.get(key);
 
-  const look = aussehenVon(monster);
+  // Ein Skin überschreibt nur die Farben, nicht die Form.
+  const look = { ...aussehenVon(monster), ...(skin?.look ?? {}) };
   const grid = [...(FORMEN[look.form] ?? FORMEN.klecks)];
   const zusatz = ZUSAETZE[look.zusatz % ZUSAETZE.length];
   if (zusatz) zusatz(grid);

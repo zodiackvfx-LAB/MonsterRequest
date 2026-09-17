@@ -16,7 +16,7 @@ import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_XP } from '../core/battle.js';
-import { calculateStars, completeLevel } from '../core/state.js';
+import { calculateStars, completeLevel, getDeck } from '../core/state.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { createStars } from '../ui/hud.js';
 import { createSprite } from '../ui/sprite.js';
@@ -38,7 +38,9 @@ export const battleScreen = {
       throw new Error(`Level ${params.levelId} gibt es nicht (siehe js/data/levels.js)`);
     }
 
-    const playerMonster = getMonster(STARTER_MONSTER_ID);
+    // Das Monster kämpft mit dem Deck, das im Deck-Bildschirm gewählt wurde.
+    const basis = getMonster(STARTER_MONSTER_ID);
+    const playerMonster = { ...basis, deck: getDeck(basis) };
     const enemyMonster = getEnemy(level.enemyId);
 
     /* ---------- 1. Grundgerüst bauen ---------- */

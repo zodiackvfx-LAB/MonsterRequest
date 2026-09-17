@@ -185,10 +185,16 @@ export const mapScreen = {
     starChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars(worldId)} / ${levels.length * 3}</span>`;
     hud.insertBefore(starChip, hud.lastElementChild);
 
-    // Zum ausgewählten Kampf scrollen, damit er sichtbar ist.
+    // Zum ausgewählten Kampf scrollen - und zwar so, dass er komplett im
+    // Bild liegt und nicht am oberen oder unteren Rand angeschnitten wird.
     const selectedNode = canvas.querySelector('.node.is-selected');
     if (selectedNode) {
-      map.scrollTop = selectedNode.offsetTop - map.clientHeight / 2;
+      const mitte = selectedNode.offsetTop - map.clientHeight / 2 + selectedNode.offsetHeight / 2;
+      const rand = 60; // Platz für den weichen Rand der Karte
+      map.scrollTop = Math.max(
+        0,
+        Math.min(mitte, map.scrollHeight - map.clientHeight - rand + rand)
+      );
     } else {
       map.scrollTop = map.scrollHeight;
     }

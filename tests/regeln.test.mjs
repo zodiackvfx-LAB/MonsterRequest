@@ -23,12 +23,21 @@ import { ENEMIES } from '../js/data/enemies.js';
 import { WORLDS, fightsInWorld } from '../js/data/worlds.js';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
+  besitztAttacke,
+  beuteGutschreiben,
+  bezahlen,
   completeLevel,
+  gameState,
+  getDeck,
   isLevelUnlocked,
   isWorldUnlocked,
+  kannBezahlen,
   nextLevelOf,
   resetProgress,
+  setDeck,
 } from '../js/core/state.js';
+import { TRUHEN } from '../js/data/shop.js';
+import { truheOeffnen } from '../js/core/loot.js';
 
 let bestanden = 0;
 let fehler = 0;
@@ -107,6 +116,73 @@ console.log('\nFortschritt');
 
   const boss = bossLevelOf(1);
   pruefe('Der Boss gibt mehr Muenzen als der erste Kampf', boss.reward > levelsOfWorld(1)[0].reward);
+  resetProgress();
+}
+
+console.log('\nShop und Truhen');
+{
+  resetProgress();
+  gameState.coins = 10000;
+
+  for (const truhe of TRUHEN) {
+    const beute = truheOeffnen(truhe);
+    pruefe(`${truhe.name}: enthaelt genau ${truhe.anzahl} Stuecke`, beute.length === truhe.anzahl);
+    pruefe(
+      `${truhe.name}: jedes Stueck hat Art und Seltenheit`,
+      beute.every((b) => b.art && b.seltenheit && b.name)
+    );
+    if (truhe.garantie) {
+      // Ueber viele Durchlaeufe muss die Garantie immer halten.
+      const rang = { gewoehnlich: 0, selten: 1, episch: 2, legendaer: 3 };
+      let immer = true;
+      for (let i = 0; i < 200; i++) {
+        const probe = truheOeffnen(truhe);
+        if (!probe.some((b) => rang[b.seltenheit] >= rang[truhe.garantie])) immer = false;
+      }
+      pruefe(`${truhe.name}: Garantie "${truhe.garantie}" haelt in 200 Durchlaeufen`, immer);
+    }
+  }
+
+  // Bezahlen
+  gameState.coins = 300;
+  pruefe('250 Muenzen sind bezahlbar', kannBezahlen(250));
+  pruefe('2000 Muenzen sind nicht bezahlbar', !kannBezahlen(2000));
+  bezahlen(250);
+  pruefe('Nach dem Kauf sind 50 Muenzen uebrig', gameState.coins === 50);
+  pruefe('Ein zu teurer Kauf wird abgelehnt', bezahlen(999) === false && gameState.coins === 50);
+
+  // Gutschreiben
+  beuteGutschreiben({ art: 'muenzen', menge: 100, seltenheit: 'selten' });
+  pruefe('Muenzen werden gutgeschrieben', gameState.coins === 150);
+  beuteGutschreiben({ art: 'attacke', id: 'blitzschlag', seltenheit: 'selten' });
+  pruefe('Attacke wird freigeschaltet', besitztAttacke('blitzschlag'));
+  beuteGutschreiben({ art: 'attacke', id: 'blitzschlag', seltenheit: 'selten' });
+  pruefe(
+    'Dieselbe Attacke wird nicht doppelt eingetragen',
+    gameState.ownedAttacks.filter((a) => a === 'blitzschlag').length === 1
+  );
+  resetProgress();
+}
+
+console.log('\nDeck aendern');
+{
+  resetProgress();
+  const monster = MONSTERS.glutwelpe;
+  pruefe('Ohne Aenderung gilt das Standarddeck', getDeck(monster).join() === monster.deck.join());
+
+  const neu = [...monster.deck];
+  neu[0] = 'blitzschlag';
+  setDeck(monster.id, neu);
+  pruefe('Geaendertes Deck wird verwendet', getDeck(monster)[0] === 'blitzschlag');
+  pruefe('Das Deck hat weiterhin 8 Karten', getDeck(monster).length === DECK_SIZE);
+
+  let abgelehnt = false;
+  try {
+    setDeck(monster.id, ['krallenhieb', 'biss']);
+  } catch {
+    abgelehnt = true;
+  }
+  pruefe('Ein Deck mit 2 Karten wird abgelehnt', abgelehnt);
   resetProgress();
 }
 

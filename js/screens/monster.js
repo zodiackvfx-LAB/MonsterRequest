@@ -10,7 +10,9 @@ import { getAttack } from '../data/attacks.js';
 import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
 import { createSprite } from '../ui/sprite.js';
-import { getPlayerLevel } from '../core/state.js';
+import { besitztSkin, getAktiverSkin, getPlayerLevel, setAktiverSkin } from '../core/state.js';
+import { SELTENHEITEN, SKINS } from '../data/items.js';
+import { spritesNeuZeichnen } from '../ui/sprite.js';
 
 export const monsterScreen = {
   mount(root) {
@@ -55,8 +57,43 @@ export const monsterScreen = {
         </div>
       </div>
 
+      <div class="panel">
+        <div class="panel__title">Skins</div>
+        <div class="skin-list" id="skins"></div>
+      </div>
+
       <button class="btn btn--ghost" id="btn-deck" type="button">Deck ansehen</button>
     `;
+
+    // Skins zur Auswahl: besessene sind anklickbar, fehlende ausgegraut.
+    const skinListe = content.querySelector('#skins');
+    SKINS.filter((skin) => skin.monsterId === monster.id).forEach((skin) => {
+      const besitzt = besitztSkin(skin.id);
+      const aktiv = (getAktiverSkin(monster.id) ?? 'skin-standard') === skin.id;
+      const seltenheit = SELTENHEITEN[skin.seltenheit];
+
+      const knopf = document.createElement('button');
+      knopf.type = 'button';
+      knopf.className = `skin-chip${aktiv ? ' is-active' : ''}${besitzt ? '' : ' is-locked'}`;
+      knopf.disabled = !besitzt;
+      knopf.style.setProperty('--rarity', seltenheit.farbe);
+      knopf.innerHTML = `
+        <span class="skin-chip__vorschau"></span>
+        <span class="skin-chip__name">${besitzt ? skin.name : '🔒 ' + skin.name}</span>
+      `;
+      // Kleine Vorschau in den Farben des Skins
+      knopf.querySelector('.skin-chip__vorschau').appendChild(
+        createSprite({ ...monster, id: `${monster.id}__${skin.id}`, look: { ...monster.look, ...skin.look } })
+      );
+
+      knopf.addEventListener('click', () => {
+        setAktiverSkin(monster.id, skin.id);
+        spritesNeuZeichnen();
+        showScreen('monster');
+      });
+
+      skinListe.appendChild(knopf);
+    });
 
     content.querySelector('#monster-sprite').appendChild(createSprite(monster));
     content.querySelector('#btn-deck').addEventListener('click', () => showScreen('deck'));

@@ -20,6 +20,11 @@ function createNewGame() {
     clearedLevels: [], // Level-ids wie "1-3"
     stars: {}, // { "1-3": 2 }
     coins: 0,
+    materials: 0, // für spätere Aufwertungen
+    ownedAttacks: [], // aus Truhen freigeschaltete Attacken
+    ownedSkins: ['skin-standard'],
+    activeSkin: {}, // { monsterId: skinId }
+    decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     settings: {
       sound: true,
       animations: true,
@@ -64,6 +69,11 @@ function uebernehmen(saved) {
   gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels.map(String) : [];
   gameState.stars = saved.stars && typeof saved.stars === 'object' ? saved.stars : {};
   gameState.coins = Number(saved.coins) || 0;
+  gameState.materials = Number(saved.materials) || 0;
+  gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
+  gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ['skin-standard'];
+  gameState.activeSkin = saved.activeSkin ?? {};
+  gameState.decks = saved.decks ?? {};
   gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
 }
 
@@ -185,6 +195,91 @@ export function completeLevel(levelId, { stars = 1, reward = 0 } = {}) {
 
   saveProgress();
   return { stars, coins, isNew, newWorld };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Besitz: Münzen, Material, Attacken, Skins                          */
+/* ------------------------------------------------------------------ */
+
+/** Reichen die Münzen? */
+export function kannBezahlen(preis) {
+  return gameState.coins >= preis;
+}
+
+/** Münzen abziehen. Gibt false zurück, wenn es nicht reicht. */
+export function bezahlen(preis) {
+  if (!kannBezahlen(preis)) return false;
+  gameState.coins -= preis;
+  saveProgress();
+  return true;
+}
+
+export function besitztAttacke(id) {
+  return gameState.ownedAttacks.includes(id);
+}
+
+export function besitztSkin(id) {
+  return gameState.ownedSkins.includes(id);
+}
+
+/**
+ * Schreibt ein Beutestück gut.
+ *
+ * Attacken und Skins, die man schon hat, werden zu Münzen - das entscheidet
+ * schon js/core/loot.js, hier wird nur noch eingetragen.
+ *
+ * @returns {object} das gutgeschriebene Stück
+ */
+export function beuteGutschreiben(stueck) {
+  switch (stueck.art) {
+    case 'muenzen':
+      gameState.coins += stueck.menge;
+      break;
+    case 'material':
+      gameState.materials += stueck.menge;
+      break;
+    case 'attacke':
+      if (!besitztAttacke(stueck.id)) gameState.ownedAttacks.push(stueck.id);
+      break;
+    case 'skin':
+      if (!besitztSkin(stueck.id)) gameState.ownedSkins.push(stueck.id);
+      break;
+    default:
+      break;
+  }
+
+  saveProgress();
+  return stueck;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Deck und Skin eines Monsters                                       */
+/* ------------------------------------------------------------------ */
+
+/** Das aktuelle Deck eines Monsters - oder sein Standarddeck. */
+export function getDeck(monster) {
+  const eigenes = gameState.decks[monster.id];
+  return Array.isArray(eigenes) && eigenes.length === 8 ? eigenes : monster.deck;
+}
+
+/** Ein Deck speichern. Es muss genau 8 Attacken enthalten. */
+export function setDeck(monsterId, attacken) {
+  if (attacken.length !== 8) {
+    throw new Error(`Ein Deck braucht genau 8 Attacken, bekommen: ${attacken.length}`);
+  }
+  gameState.decks[monsterId] = [...attacken];
+  saveProgress();
+}
+
+/** Der aktive Skin eines Monsters (oder null). */
+export function getAktiverSkin(monsterId) {
+  return gameState.activeSkin[monsterId] ?? null;
+}
+
+/** Skin auswählen. */
+export function setAktiverSkin(monsterId, skinId) {
+  gameState.activeSkin[monsterId] = skinId;
+  saveProgress();
 }
 
 /** Eine Einstellung ändern (z. B. Ton an/aus). */

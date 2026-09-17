@@ -439,6 +439,13 @@
   height: calc(var(--sprite, 96px) * 1.35);
 }
 
+/* Im runden Avatar bekommt die Figur etwas Luft, damit sie nicht am Rand
+   klebt. */
+.hud__avatar .pixel-sprite {
+  width: 84%;
+  height: 84%;
+}
+
 /* Die Figur selbst: hart skaliert, damit die Pixel scharf bleiben. */
 .pixel-sprite {
   width: 100%;

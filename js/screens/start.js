@@ -15,6 +15,7 @@ const MENU = [
   { icon: '🐾', label: 'Monster', screen: 'monster' },
   { icon: '🃏', label: 'Deck', screen: 'deck' },
   { icon: '📖', label: 'Sammlung', screen: 'collection' },
+  { icon: '🏪', label: 'Shop', screen: 'shop' },
   { icon: '⚙️', label: 'Einstellungen', screen: 'settings' },
 ];
 
