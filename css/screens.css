@@ -995,17 +995,6 @@
   color: var(--text-dim);
 }
 
-/* Erfahrungshinweis im Ergebnisfenster */
-.overlay__xp {
-  width: 100%;
-  padding: 8px;
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  line-height: 1.4;
-  background: rgba(73, 199, 255, 0.14);
-  border: 2px solid #49c7ff;
-}
-
 /* Hinweis im Ergebnisfenster, wenn eine neue Welt aufgeht */
 .overlay__unlock {
   width: 100%;
@@ -1404,4 +1393,42 @@
 .collection-item.is-active {
   border-color: var(--gold-2);
   box-shadow: 0 0 0 2px rgba(255, 197, 61, 0.28);
+}
+
+/* =========================================================
+   Belohnungen im Siegesfenster
+   ========================================================= */
+
+.belohnung {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin: 2px 0 4px;
+}
+
+.belohnung .loot-item {
+  /* Schmaler als im Shop: hier stehen bis zu sechs Felder nebeneinander. */
+  min-height: 0;
+  width: 76px;
+  padding: 8px 4px;
+  /* backwards: vor dem eigenen Einsatz unsichtbar bleiben, sonst blitzen
+     alle Felder kurz auf, bevor die Verzoegerung greift. */
+  animation-fill-mode: backwards;
+}
+
+.belohnung .loot-item__name {
+  font-size: 0.6rem;
+}
+
+@media (max-height: 700px) {
+  .belohnung .loot-item {
+    width: 66px;
+    padding: 6px 3px;
+  }
+
+  .belohnung .loot-item__icon {
+    font-size: 1.3rem;
+  }
 }

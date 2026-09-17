@@ -39,6 +39,8 @@ import {
 } from '../js/core/state.js';
 import { TRUHEN } from '../js/data/shop.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
+import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belohnung.js';
+import { BOSS_TRUHE } from '../js/data/shop.js';
 import {
   MAX_ATTACKEN_LEVEL,
   MAX_STUFE,
@@ -415,6 +417,67 @@ console.log('\nSammlung');
   // Jede sammelbare Attacke muss im Katalog stehen.
   const fehlend = [...START_ATTACKEN, ...BEUTE_ATTACKEN.map((a) => a.id)].filter((id) => !ATTACKS[id]);
   pruefe('Jede sammelbare Attacke steht im Katalog', fehlend.length === 0);
+}
+
+console.log('\nBelohnungen');
+{
+  resetProgress();
+
+  const ersterKampf = LEVELS.find((l) => l.worldId === 1 && !l.isBoss);
+  const boss = bossLevelOf(1);
+
+  // Immer gleicher Wuerfel, damit das Ergebnis pruefbar ist.
+  const nieGlueck = () => 0.99;
+  const immerGlueck = () => 0;
+
+  const normal = siegBelohnung(ersterKampf, 3, 'glutwelpe', nieGlueck);
+  pruefe('Sieg bringt Muenzen und Erfahrung', normal.stuecke.length >= 2);
+  pruefe(
+    'Jedes Belohnungsstueck hat Symbol, Name und Seltenheit',
+    normal.stuecke.every((s) => s.icon && s.name && SELTENHEITEN[s.seltenheit])
+  );
+
+  // 3 Sterne = +30 Prozent Muenzen
+  const ohneSterne = LEVELS.find((l) => l.worldId === 1 && l.number === 2);
+  resetProgress();
+  const mitDrei = siegBelohnung(ohneSterne, 3, 'glutwelpe', nieGlueck).stuecke[0].menge;
+  resetProgress();
+  const mitNull = siegBelohnung(ohneSterne, 0, 'glutwelpe', nieGlueck).stuecke[0].menge;
+  pruefe('Sterne erhoehen die Muenzen', mitDrei > mitNull);
+
+  // Wiederholung bringt weniger
+  resetProgress();
+  const erstesMal = siegBelohnung(ersterKampf, 3, 'glutwelpe', nieGlueck);
+  const zweitesMal = siegBelohnung(ersterKampf, 3, 'glutwelpe', nieGlueck);
+  pruefe('Erster Sieg zaehlt als neu', erstesMal.erstesMal && !zweitesMal.erstesMal);
+  pruefe('Wiederholung bringt weniger Muenzen', zweitesMal.stuecke[0].menge < erstesMal.stuecke[0].menge);
+  pruefe(
+    'Erfahrung bleibt auch beim Wiederholen gleich',
+    zweitesMal.stuecke[1].menge === erstesMal.stuecke[1].menge
+  );
+
+  // Boss gibt deutlich mehr
+  resetProgress();
+  const bossLohn = siegBelohnung(boss, 3, 'glutwelpe', nieGlueck);
+  pruefe('Boss gibt mehr Muenzen als ein normaler Kampf', bossLohn.stuecke[0].menge > erstesMal.stuecke[0].menge * 2);
+  pruefe('Boss gibt mehr Erfahrung', bossLohn.stuecke[1].menge > erstesMal.stuecke[1].menge);
+  pruefe('Boss oeffnet eine neue Welt', bossLohn.newWorld?.id === 2);
+
+  // Bosstruhe nur beim ersten Sieg
+  const mitTruhe = bossLohn.stuecke.length;
+  const bossZweimal = siegBelohnung(boss, 3, 'glutwelpe', nieGlueck);
+  pruefe('Bosstruhe gibt es nur beim ersten Sieg', bossZweimal.stuecke.length < mitTruhe);
+  pruefe('Bosstruhe enthaelt 3 Stuecke', mitTruhe - bossZweimal.stuecke.length === BOSS_TRUHE.anzahl);
+
+  // Material
+  pruefe(
+    'Boss wirft immer Material ab',
+    materialBelohnung(boss, true, nieGlueck) >= BOSS_MATERIAL[0]
+  );
+  pruefe('Normaler Kampf ohne Glueck gibt kein Material', materialBelohnung(ersterKampf, true, nieGlueck) === 0);
+  pruefe('Normaler Kampf mit Glueck gibt Material', materialBelohnung(ersterKampf, true, immerGlueck) > 0);
+
+  resetProgress();
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

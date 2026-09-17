@@ -16,8 +16,10 @@ import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_XP } from '../core/battle.js';
-import { calculateStars, completeLevel, getDeck } from '../core/state.js';
-import { attackeMitLevel, monsterMitFortschritt, xpGutschreiben } from '../core/progression.js';
+import { calculateStars, getDeck } from '../core/state.js';
+import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
+import { siegBelohnung } from '../core/belohnung.js';
+import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
 import { createSprite } from '../ui/sprite.js';
@@ -312,43 +314,38 @@ export const battleScreen = {
     function showResult(result) {
       const state = battle.state;
       let stars = 0;
-      let coins = 0;
-      let newWorld = null; // wird gesetzt, wenn der Boss eine neue Welt öffnet
+      let belohnung = null;
 
-      let xpErgebnis = null;
       if (result === 'win') {
         stars = calculateStars(state.player.hp, state.player.maxHp);
-        ({ coins, newWorld } = completeLevel(level.id, { stars, reward: level.reward ?? 0 }));
-        // Erfahrung gibt es bei jedem Sieg, auch beim Wiederholen.
-        xpErgebnis = xpGutschreiben(basis.id, level.xp ?? 0);
+        // Berechnet und bucht Münzen, Erfahrung, Material und die Bosstruhe.
+        belohnung = siegBelohnung(level, stars, basis.id);
       }
 
       // Kurz warten, damit der letzte Treffer, die Schadenszahl und der
       // leerlaufende Lebensbalken noch zu sehen sind.
       resultTimer = setTimeout(
-        () => buildResultOverlay(result, stars, coins, newWorld, xpErgebnis),
+        () => buildResultOverlay(result, stars, belohnung),
         ERGEBNIS_VERZOEGERUNG
       );
     }
 
-    function buildResultOverlay(result, stars, coins, newWorld, xpErgebnis) {
+    function buildResultOverlay(result, stars, belohnung) {
+      const newWorld = belohnung?.newWorld ?? null;
       const overlay = document.createElement('div');
       overlay.className = 'overlay';
       overlay.innerHTML = `
         <div class="overlay__box">
-          <div class="overlay__icon">${result === 'win' ? '🏆' : '💀'}</div>
+          <div class="overlay__icon">${result === 'win' ? (level.isBoss ? '👑' : '🏆') : '💀'}</div>
           <h3 class="overlay__title">${result === 'win' ? 'Sieg!' : 'Niederlage'}</h3>
           <p class="overlay__text">
             ${result === 'win'
-              ? `${enemyMonster.name} wurde besiegt.${coins > 0 ? ` Du erhältst 🪙 ${coins}.` : ''}`
+              ? `${enemyMonster.name} wurde besiegt.`
               : `${playerMonster.name} ist erschöpft. Versuch es noch einmal!`}
           </p>
-          ${result === 'win' && level.xp
-            ? `<p class="overlay__xp">⭐ +${level.xp} Erfahrung${
-                xpErgebnis?.aufgestiegen
-                  ? `<br><strong>Level ${xpErgebnis.levelNachher} erreicht!</strong>`
-                  : ''
-              }</p>`
+          ${result === 'win' ? '<div class="belohnung" id="belohnung"></div>' : ''}
+          ${belohnung?.xpErgebnis?.aufgestiegen
+            ? `<p class="overlay__unlock">🌟 <strong>Level ${belohnung.xpErgebnis.levelNachher} erreicht!</strong></p>`
             : ''}
           ${newWorld ? `<p class="overlay__unlock">🎉 Neue Welt freigeschaltet:<br><strong>${newWorld.icon} ${newWorld.name}</strong></p>` : ''}
           <div class="overlay__actions">
@@ -361,6 +358,7 @@ export const battleScreen = {
       if (result === 'win') {
         const box = overlay.querySelector('.overlay__box');
         box.insertBefore(createStars(stars), box.querySelector('.overlay__text'));
+        fuelleBelohnung(overlay.querySelector('#belohnung'), belohnung.stuecke);
       }
 
       const nextButton = overlay.querySelector('#btn-next');
@@ -375,6 +373,26 @@ export const battleScreen = {
         .querySelector('#btn-map')
         .addEventListener('click', () => showScreen('map', { worldId: level.worldId }));
       screen.appendChild(overlay);
+    }
+
+    /**
+     * Zeigt die Belohnungen als Reihe von Feldern - eins nach dem anderen,
+     * damit man jedes einzeln wahrnimmt.
+     */
+    function fuelleBelohnung(behaelter, stuecke) {
+      stuecke.forEach((stueck, index) => {
+        const seltenheit = SELTENHEITEN[stueck.seltenheit] ?? SELTENHEITEN.gewoehnlich;
+        const feld = document.createElement('div');
+        feld.className = 'loot-item';
+        feld.style.setProperty('--rarity', seltenheit.farbe);
+        // Jedes Feld erscheint 90 ms nach dem vorigen.
+        feld.style.animationDelay = `${index * 0.09}s`;
+        feld.innerHTML = `
+          <span class="loot-item__icon">${stueck.icon}</span>
+          <span class="loot-item__name">${stueck.name}</span>
+        `;
+        behaelter.appendChild(feld);
+      });
     }
 
     screen.querySelector('#btn-flee').addEventListener('click', () =>

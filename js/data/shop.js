@@ -45,6 +45,21 @@ export const TRUHEN = [
   },
 ];
 
+/**
+ * Die Truhe, die es nach dem ersten Sieg gegen einen Boss gibt.
+ * Sie steht bewusst NICHT in TRUHEN - man kann sie nicht kaufen.
+ */
+export const BOSS_TRUHE = {
+  id: 'bosstruhe',
+  name: 'Bosstruhe',
+  icon: '👑',
+  text: 'Der Lohn für einen besiegten Boss.',
+  preis: 0,
+  anzahl: 3,
+  chancen: { gewoehnlich: 35, selten: 42, episch: 19, legendaer: 4 },
+  garantie: 'selten',
+};
+
 export function getTruhe(id) {
   return TRUHEN.find((truhe) => truhe.id === id);
 }
