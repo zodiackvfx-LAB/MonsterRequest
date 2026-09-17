@@ -8,8 +8,9 @@
  *   2. eine Farbwelt, die sich aus einem Farbwert ergibt
  *   3. Zusätze wie Hörner, Stacheln, Flügel oder ein drittes Auge
  *
- * Aus Form + Farbe + Zusätzen entstehen tausende Kombinationen, und jede
- * Figur hat einen eigenen Umriss, ein Gesicht und eine eigene Farbgebung.
+ * Die Figuren sind 32 mal 32 Felder gross. Licht- und Schattenkanten werden
+ * beim Zeichnen automatisch gesetzt - sie müssen in keiner Form von Hand
+ * eingetragen werden.
  *
  * ECHTE GRAFIKEN SPÄTER EINSETZEN:
  * Jedes Monster darf ein Feld "image" bekommen. Ist es gesetzt, wird dieses
@@ -18,213 +19,379 @@
  * Der übrige Code bleibt gleich.
  *
  * Zeichen in den Formen:
- *   .  leer          B  Körper        S  Schatten (dunkler)
- *   L  Bauch/Licht   A  Zusatzfarbe   E  Augenweiß
- *   P  Pupille       M  Mund/Detail
+ *   .  leer            B  Körper          S  Schatten (dunkler)
+ *   L  Bauch/Licht     A  Zusatzfarbe     C  zweite Zusatzfarbe
+ *   E  Augenweiß       P  Pupille         M  Mund/Detail
  */
 
-/** Alle Grundformen. Jede ist 16 Zeichen breit und 16 hoch. */
+/** Kantenlänge einer Figur in Feldern. */
+export const GROESSE = 32;
+
+/** Alle Grundformen. Jede ist 32 Felder breit und 32 hoch. */
 const FORMEN = {
-  // Rundes Wesen mit kleinen Füßen
   klecks: [
-    '................',
-    '......BBBB......',
-    '....BBBBBBBB....',
-    '...BBBBBBBBBB...',
-    '..BBBBBBBBBBBB..',
-    '..BBBBBBBBBBBB..',
-    '..BBEEBBBBEEBB..',
-    '..BBEPBBBBEPBB..',
-    '..BBBBBBBBBBBB..',
-    '..BBBBMMMMBBBB..',
-    '..LBBBBBBBBBBL..',
-    '..LLBBBBBBBBLL..',
-    '...LLLLLLLLLL...',
-    '....SSS..SSS....',
-    '....SSS..SSS....',
-    '................',
+    '................................',
+    '................................',
+    '..........BBBBBBBBBBBB..........',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBEEEEEBBBBBBBBEEEEEBBBBB...',
+    '...BBEEEEEEEBBBBBBEEEEEEEBBBB...',
+    '...BBEEEPPPEBBBBBBEEEPPPEBBBB...',
+    '...BBEEEPPPEBBBBBBEEEPPPEBBBB...',
+    '...BBEEEEEEEBBBBBBEEEEEEEBBBB...',
+    '...BBBEEEEEBBBBBBBBEEEEEBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '....BBBBBBBBMMMMMMBBBBBBBBBB....',
+    '....BBBBBBBMMMMMMMMBBBBBBBBB....',
+    '....BBBBBBBBMMMMMMBBBBBBBBBB....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '......LLLLBBBBBBBBBBBBLLLL......',
+    '.......LLLLLLLLLLLLLLLLLL.......',
+    '........LLLLLLLLLLLLLLLL........',
+    '.........LLLLLLLLLLLLLL.........',
+    '.......SSSSS......SSSSS.........',
+    '.......SSSSS......SSSSS.........',
+    '.......SSSSS......SSSSS.........',
+    '................................',
+    '................................',
   ],
-
-  // Vierbeiner mit Kopf vorn und Schwanz hinten
   vierbeiner: [
-    '................',
-    '.........BBBB...',
-    'A.......BBBBBB..',
-    'AA.....BBBBBBBB.',
-    '.AA....BBEEBBBB.',
-    '..BBBBBBBEPBBBB.',
-    '.BBBBBBBBBBBMBB.',
-    'BBBBBBBBBBBBBBB.',
-    'BBBBBBBBBBBBBB..',
-    'LBBBBBBBBBBBB...',
-    '.LLLLLLLLLLL....',
-    '.SS..SS..SS.....',
-    '.SS..SS..SS.....',
-    '.SS..SS..SS.....',
-    '................',
-    '................',
+    '................................',
+    '..AA......................AA....',
+    '..AAA....................AAA....',
+    '...AAA..................AAA.....',
+    '....AAA................AAA......',
+    '.....AA...............AA........',
+    '......A..BBBBBBBBBBBBBB.........',
+    '.....BBBBBBBBBBBBBBBBBBBB.......',
+    '...BBBBBBBBBBBBBBBBBBBBBBB......',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBB.....',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBB....',
+    'BBBBBBBBBBBBBBBBBBBBBEEEEEBB....',
+    'BBBBBBBBBBBBBBBBBBBBEEPPPEBBB...',
+    '.BBBBBBBBBBBBBBBBBBBEEPPPEBBB...',
+    '..BBBBBBBBBBBBBBBBBBEEEEEBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBMMBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBMMBB...',
+    '...LLBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....LLLLLLLLLLLLLLLLLLLLLLL.....',
+    '.....LLLLLLLLLLLLLLLLLLLLL......',
+    '....BBBB....BBBB....BBBB........',
+    '....BBBB....BBBB....BBBB........',
+    '....BBBB....BBBB....BBBB........',
+    '....SSSS....SSSS....SSSS........',
+    '....SSSS....SSSS....SSSS........',
+    '....SSSS....SSSS....SSSS........',
+    '....SSSS....SSSS....SSSS........',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
   ],
-
-  // Geflügeltes Wesen mit weit gespannten Flügeln
   fluegler: [
-    '................',
-    'AAA.........AAA.',
-    'AAAAA.....AAAAA.',
-    'AAAAAA.BB.AAAAAA',
-    'AAAAABBBBBBAAAAA',
-    '.AAAABEEBEEBAAA.',
-    '..AAABEPBEPBAA..',
-    '...AABBBBBBBA...',
-    '....BBBMMMBB....',
-    '....BBBBBBBB....',
-    '....LBBBBBBL....',
-    '.....LLLLLL.....',
-    '.....S....S.....',
-    '....SS....SS....',
-    '................',
-    '................',
+    '................................',
+    '.AAA........................AAA.',
+    '.AAAAA....................AAAAA.',
+    'AAAAAAA..................AAAAAAA',
+    'AAAAAAAA................AAAAAAAA',
+    'AAAAAAAAA...BBBBBB.....AAAAAAAAA',
+    'AAAAAAAAA..BBBBBBBB...AAAAAAAAAA',
+    '.AAAAAAAA.BBBBBBBBBB..AAAAAAAAA.',
+    '.AAAAAAABBBBBBBBBBBBBBAAAAAAAAA.',
+    '..AAAAABBBEEEEBBEEEEBBBAAAAAAA..',
+    '..AAAABBBEEPPEBBEEPPEBBBAAAAAA..',
+    '...AAABBBEEPPEBBEEPPEBBBAAAAA...',
+    '....AABBBBEEEEBBEEEEBBBBAAAA....',
+    '.....ABBBBBBBBBBBBBBBBBBAAA.....',
+    '......BBBBBBMMMMMMBBBBBBBA......',
+    '......BBBBBBMMMMMMBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBB.......',
+    '.......BBBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBB........',
+    '........LLLLLLLLLLLLLL..........',
+    '.........LLLLLLLLLLLL...........',
+    '..........LLLLLLLLLL............',
+    '..........CCC....CCC............',
+    '..........CCC....CCC............',
+    '..........SSS....SSS............',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
   ],
-
-  // Aufrechte Gestalt mit Armen und Beinen
   gestalt: [
-    '................',
-    '.....AAAAAA.....',
-    '....BBBBBBBB....',
-    '...BBBBBBBBBB...',
-    '...BBEEBBEEBB...',
-    '...BBEPBBEPBB...',
-    '...BBBBBBBBBB...',
-    '....BBMMMMBB....',
-    '..B..BBBBBB..B..',
-    '.BB.BBBBBBBB.BB.',
-    'BB..LBBBBBBL..BB',
-    '....LLLLLLLL....',
-    '....BBB..BBB....',
-    '....SSS..SSS....',
-    '...SSSS..SSSS...',
-    '................',
+    '................................',
+    '..............AA................',
+    '.............AAAA...............',
+    '............AAAAAA..............',
+    '...........AAAAAAAA.............',
+    '..........BBBBBBBBBB............',
+    '.........BBBBBBBBBBBB...........',
+    '........BBBBBBBBBBBBBB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BBBBBBBBBBBBBB..........',
+    '.........BBBMMMMMMBBB...........',
+    '..........BBBBBBBBBB............',
+    '...BB......BBBBBBBB......BB.....',
+    '..BBBB....BBBBBBBBBB....BBBB....',
+    '.BBBBB...BBBBBBBBBBBB...BBBBB...',
+    'BBBBB...BBBBBBBBBBBBBB...BBBBB..',
+    'BBBB....BBBBBBBBBBBBBB....BBBB..',
+    'CCC.....LLBBBBBBBBBBLL.....CCC..',
+    '........LLLLLLLLLLLLLL..........',
+    '.........LLLLLLLLLLLL...........',
+    '..........BBBB..BBBB............',
+    '..........BBBB..BBBB............',
+    '..........BBBB..BBBB............',
+    '.........SSSSS..SSSSS...........',
+    '.........SSSSS..SSSSS...........',
+    '.........SSSSS..SSSSS...........',
+    '................................',
+    '................................',
+    '................................',
   ],
-
-  // Schlange, aufgerichtet
   schlange: [
-    '................',
-    '......BBBB......',
-    '.....BBBBBB.....',
-    '.....BEEBEEB....',
-    '.....BEPBEPB....',
-    '.....BBBBBBB....',
-    '......BMMMB.....',
-    '.......BBB......',
-    '......BBBB......',
-    '.....BBBBB......',
-    '....BBBBB.......',
-    '...BBBBB....AAA.',
-    '..BBBBB...AAAAA.',
-    '.LLBBBBBBBBBAA..',
-    '..LLLLLLLLLLL...',
-    '................',
+    '................................',
+    '..........BBBBBBBBBB............',
+    '.........BBBBBBBBBBBB...........',
+    '........BBBBBBBBBBBBBB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BBBBBBBBBBBBBB..........',
+    '.........BBBMMMMMMBBB...........',
+    '..........BBBBBBBBBB............',
+    '...........BBBBBBBB.............',
+    '............BBBBBB..............',
+    '...........BBBBBBBB.............',
+    '..........BBBBBBBBBB............',
+    '.........BBBBBBBBBB.............',
+    '........BBBBBBBBBB..............',
+    '.......BBBBBBBBBB...............',
+    '......BBBBBBBBBB................',
+    '.....BBBBBBBBBB.................',
+    '....BBBBBBBBBB.............AAA..',
+    '...BBBBBBBBBB............AAAAAA.',
+    '..BBBBBBBBBB...........AAAAAAAA.',
+    '..LBBBBBBBBBBBBBBBBBBBBAAAAAAA..',
+    '..LLBBBBBBBBBBBBBBBBBBBBAAAA....',
+    '...LLLLLLLLLLLLLLLLLLLLLL.......',
+    '....LLLLLLLLLLLLLLLLLLL.........',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
   ],
-
-  // Schwerer Golem aus Brocken
   golem: [
-    '................',
-    '..AA........AA..',
-    '..BBBBBBBBBBBB..',
-    '.BBBBBBBBBBBBBB.',
-    '.BBEEBBBBBBEEBB.',
-    '.BBEPBBBBBBEPBB.',
-    '.BBBBBBBBBBBBBB.',
-    'BBBBBMMMMMMBBBBB',
-    'BBBBBBBBBBBBBBBB',
-    'BBBBBBBBBBBBBBBB',
-    'BBLLBBBBBBBBLLBB',
-    'BBLLLLLLLLLLLLBB',
-    '.SSS.SSSSSS.SSS.',
-    '.SSS.SSSSSS.SSS.',
-    '..SS..SSSS..SS..',
-    '................',
+    '................................',
+    '....AAA..................AAA....',
+    '...AAAAA................AAAAA...',
+    '...AAAAA................AAAAA...',
+    '....AAA..................AAA....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBEEEEEBBBBBBBBBBEEEEEBBBB...',
+    '...BBEEPPPEBBBBBBBBEEEPPPEBBB...',
+    '...BBEEPPPEBBBBBBBBEEEPPPEBBB...',
+    '...BBEEEEEBBBBBBBBBBEEEEEBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '..BBBBBBBMMMMMMMMMMMMBBBBBBBBB..',
+    '..BBBBBBBMMMMMMMMMMMMBBBBBBBBB..',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBLLLLBBBBBBBBBBBBBBLLLLBBBBBB',
+    'BBBBLLLLLLLLLLLLLLLLLLLLLLBBBBBB',
+    'BBBBLLLLLLLLLLLLLLLLLLLLLLBBBBBB',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.',
+    '..SSSSSS......SSSSSS......SSSS..',
+    '..SSSSSS......SSSSSS......SSSS..',
+    '..SSSSSS......SSSSSS......SSSS..',
+    '...SSSS........SSSS........SS...',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
   ],
-
-  // Krabbelnder Käfer mit Fühlern
   kaefer: [
-    '................',
-    '.A............A.',
-    '..A..........A..',
-    '...AA.BBBB.AA...',
-    '....BBBBBBBB....',
-    '...BBEEBBEEBB...',
-    '...BBEPBBEPBB...',
-    '..BBBBBBBBBBBB..',
-    '.SBBBBBBBBBBBBS.',
-    'SSBBLLBBBBLLBBSS',
-    'S.BBBLLLLLLBBB.S',
-    '..BBBBBBBBBBBB..',
-    '.S.SS.SS.SS.SS.S',
-    'S...S..S..S...S.',
-    '................',
-    '................',
+    '................................',
+    '..A..........................A..',
+    '..AA........................AA..',
+    '...AA......................AA...',
+    '....AA....BBBBBBBBBB.....AA.....',
+    '.....AA..BBBBBBBBBBBB...AA......',
+    '......A.BBBBBBBBBBBBBB.A........',
+    '.......BBBBBBBBBBBBBBBB.........',
+    '......BBEEEEEBBBBEEEEEBB........',
+    '......BEEEPPPEBBEEEPPPEB........',
+    '......BEEEPPPEBBEEEPPPEB........',
+    '......BBEEEEEBBBBEEEEEBB........',
+    '.....BBBBBBBBBBBBBBBBBBBB.......',
+    '.....BBBBBBMMMMMMMMBBBBBB.......',
+    '....BBBBBBBBBBBBBBBBBBBBBB......',
+    '...BBBBBBBBBBBBBBBBBBBBBBBB.....',
+    '..BBBBBBLLLLBBBBLLLLBBBBBBBB....',
+    '.SBBBBBBLLLLBBBBLLLLBBBBBBBBS...',
+    'SSBBBBBBBLLBBBBBBLLBBBBBBBBBSS..',
+    'SSBBBBBBBBBBBBBBBBBBBBBBBBBBSS..',
+    '.SBBBBBBBBBBBBBBBBBBBBBBBBBBS...',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBBB....',
+    '..SS.SS..SS..........SS..SS.....',
+    '.SS...SS..SS........SS....SS....',
+    'SS.....SS..SS......SS......SS...',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
   ],
-
-  // Boss: gehörnter Drache mit Flügeln
-  drache: [
-    '.A............A.',
-    '.AA..........AA.',
-    'AAAA..BBBB..AAAA',
-    'AAAAABBBBBBAAAAA',
-    'AAAABBEEBEEBBAAA',
-    '.AAABBEPBEPBBAA.',
-    '..AABBBBBBBBBA..',
-    '...BBMMMMMMBB...',
-    '..BBBBBBBBBBBB..',
-    '.BBBBBBBBBBBBBB.',
-    '.LLBBBBBBBBBBLL.',
-    '..LLLLLLLLLLLL..',
-    '..SS..SSSS..SS..',
-    '.SSS..SSSS..SSS.',
-    '.SS....SS....SS.',
-    '................',
-  ],
-
-  // Boss: gekrönte Gestalt mit Umhang
-  herrscher: [
-    '...A.A.AA.A.A...',
-    '...AAAAAAAAAA...',
-    '....BBBBBBBB....',
-    '...BBBBBBBBBB...',
-    '...BBEEBBEEBB...',
-    '...BBEPBBEPBB...',
-    '...BBBBBBBBBB...',
-    '....BBMMMMBB....',
-    '..ABBBBBBBBBBA..',
-    '.AABBBBBBBBBBAA.',
-    'AAALBBBBBBBBLAAA',
-    'AAALLLLLLLLLLAAA',
-    '.AA.BBB..BBB.AA.',
-    '....SSS..SSS....',
-    '...SSSS..SSSS...',
-    '................',
-  ],
-
-  // Geist mit wehendem Saum
   geist: [
-    '................',
-    '.....BBBBBB.....',
-    '...BBBBBBBBBB...',
-    '..BBBBBBBBBBBB..',
-    '..BBEEBBBBEEBB..',
-    '..BBEPBBBBEPBB..',
-    '..BBBBBBBBBBBB..',
-    '..BBBBMMMMBBBB..',
-    '..BBBBBBBBBBBB..',
-    '..LBBBBBBBBBBL..',
-    '..LLBBBBBBBBLL..',
-    '..LLLLLLLLLLLL..',
-    '..LL.LLLL.LLLL..',
-    '..L...LL...LL...',
-    '................',
-    '................',
+    '................................',
+    '................................',
+    '..........BBBBBBBBBBBB..........',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '....BBBBEEEEEBBBBEEEEEBBBBBB....',
+    '....BBBEEEEEEEBBEEEEEEEBBBBB....',
+    '....BBBEEEPPPEBBEEEPPPEBBBBB....',
+    '....BBBEEEPPPEBBEEEPPPEBBBBB....',
+    '....BBBEEEEEEEBBEEEEEEEBBBBB....',
+    '....BBBBEEEEEBBBBEEEEEBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '..CCBBBBBBBMMMMMMMMBBBBBBBBCC...',
+    '.CCCBBBBBBBMMMMMMMMBBBBBBBBCCC..',
+    '.CCCBBBBBBBBMMMMMMBBBBBBBBBCCC..',
+    '..CCBBBBBBBBBBBBBBBBBBBBBBBCC...',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....LLLBBBBBBBBBBBBBBBBBBLLL....',
+    '....LLLLLLLLLLLLLLLLLLLLLLLL....',
+    '....LLLLLLLLLLLLLLLLLLLLLLLL....',
+    '....LLLL..LLLLLL..LLLLLLLLLL....',
+    '....LLL....LLLL....LLLL..LLL....',
+    '....LL......LL......LL....LL....',
+    '.....L.......L.......L.....L....',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  drache: [
+    '....A......................A....',
+    '...AA......................AA...',
+    'A.AAA......................AAA.A',
+    'AAACAA....................AACAAA',
+    'AACCCAA....BBBBBB........AACCCAA',
+    'ACCCCCAA..BBBBBBBB......AACCCCCA',
+    'ACCCCCCA.BBBBBBBBBB....ACCCCCCCA',
+    'ACCCCCCAABBBBBBBBBBBBAACCCCCCCCA',
+    'AACCCCCABBEEEEBBEEEEBBACCCCCCCAA',
+    'AAACCCCABBEEEPPEBEEPPEBACCCCCAAA',
+    '.AAACCCABBEEEPPEBEEPPEBACCCCAAA.',
+    '..AAACCABBBEEEEBBEEEEBBACCCAAA..',
+    '...AAACAABBBBBBBBBBBBBBAACAAA...',
+    '....AAAA.BBBMMMMMMMMBBB.AAAA....',
+    '.....AA..BBBMMMMMMMMBBB..AA.....',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '......BBBLLLLBBBBLLLLBBBBB......',
+    '.......BBLLLLLLLLLLLLBBBB.......',
+    '.......BBBLLLLLLLLLLBBBBB.......',
+    '........BBBBBBBBBBBBBBBB....CC..',
+    '........BBBB......BBBB.....CCC..',
+    '........BBBB......BBBB...CCCC...',
+    '.......SSSSS.....SSSSS.CCCC.....',
+    '.......SSSSS.....SSSSS..........',
+    '.......SSSSS.....SSSSS..........',
+    '........SSS.......SSS...........',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  herrscher: [
+    '.....A....A....A....A...........',
+    '....AAA..AAA..AAA..AAA..........',
+    '....AAAAAAAAAAAAAAAAAA..........',
+    '....AAAAAAAAAAAAAAAAAA..........',
+    '.....BBBBBBBBBBBBBBBB...........',
+    '....BBBBBBBBBBBBBBBBBB..........',
+    '...BBBBBBBBBBBBBBBBBBBB.........',
+    '...BBEEEEEBBBBBBEEEEEBB.........',
+    '...BEEEPPPEBBBBEEEPPPEB.........',
+    '...BEEEPPPEBBBBEEEPPPEB.........',
+    '...BBEEEEEBBBBBBEEEEEBB.........',
+    '...BBBBBBBBBBBBBBBBBBBB.........',
+    '....BBBBMMMMMMMMMMBBBB..........',
+    '..C..BBBBBBBBBBBBBBB..C.........',
+    '.CCC..BBBBBBBBBBBBB..CCC........',
+    'CCCCC.BBBBBBBBBBBBBB.CCCCC......',
+    'CCCCCBBBBBBBBBBBBBBBBCCCCCC.....',
+    'CCCCCBBBBBBBBBBBBBBBBCCCCCC.....',
+    'CCCCCBBBBBBBBBBBBBBBBCCCCCC.....',
+    'CCCCCBBBLLLLBBBBLLLLBBCCCCC.....',
+    'CCCCCBBBLLLLLLLLLLLLBBCCCCC.....',
+    '.CCCCBBBBLLLLLLLLLLBBBCCCC......',
+    '..CCCBBBBBBBBBBBBBBBBBCCC.......',
+    '...CCCBBBBBBBBBBBBBBBCCC........',
+    '....C.BBBBBB....BBBBB.C.........',
+    '......BBBBBB....BBBBB...........',
+    '......SSSSSS....SSSSS...........',
+    '......SSSSSS....SSSSS...........',
+    '......SSSSSS....SSSSS...........',
+    '................................',
+    '................................',
+    '................................',
   ],
 };
+
+/**
+ * Prüft, ob alle Formen die richtige Größe haben.
+ * Wird vom Test in tests/regeln.test.mjs benutzt - eine verrutschte Zeile
+ * in einer Form würde die Figur sonst unbemerkt verunstalten.
+ *
+ * @returns {string[]} Liste der Probleme (leer = alles in Ordnung)
+ */
+export function formenPruefen() {
+  const probleme = [];
+  for (const [name, zeilen] of Object.entries(FORMEN)) {
+    if (zeilen.length !== GROESSE) {
+      probleme.push(`${name}: ${zeilen.length} Zeilen statt ${GROESSE}`);
+    }
+    zeilen.forEach((zeile, i) => {
+      if (zeile.length !== GROESSE) {
+        probleme.push(`${name}, Zeile ${i}: ${zeile.length} Zeichen statt ${GROESSE}`);
+      }
+    });
+  }
+  return probleme;
+}
 
 /** Formen für normale Gegner. */
 export const FORM_NAMEN = Object.keys(FORMEN).filter(
@@ -238,35 +405,20 @@ export const BOSS_FORMEN = ['drache', 'herrscher', 'golem'];
 /*  Zusätze                                                            */
 /* ------------------------------------------------------------------ */
 
-/** Hörner oben auf dem Kopf. */
-function hoerner(grid) {
-  setzen(grid, 4, 0, 'A');
-  setzen(grid, 5, 1, 'A');
-  setzen(grid, 11, 0, 'A');
-  setzen(grid, 10, 1, 'A');
+/**
+ * Sucht den Kopfbereich einer Form: die oberste Zeile mit Körper und deren
+ * linken und rechten Rand. Dadurch sitzen Hörner und Stacheln bei jeder Form
+ * an der richtigen Stelle, ohne dass sie einzeln eingetragen werden müssen.
+ */
+function kopfBereich(grid) {
+  for (let y = 0; y < grid.length; y++) {
+    const links = grid[y].indexOf('B');
+    if (links >= 0) {
+      return { y, links, rechts: grid[y].lastIndexOf('B') };
+    }
+  }
+  return { y: 0, links: 12, rechts: 19 };
 }
-
-/** Stachelkamm auf dem Rücken. */
-function stacheln(grid) {
-  for (let x = 5; x <= 10; x += 2) setzen(grid, x, 0, 'A');
-}
-
-/** Ein drittes Auge auf der Stirn. */
-function drittesAuge(grid) {
-  setzen(grid, 7, 3, 'E');
-  setzen(grid, 8, 3, 'E');
-  setzen(grid, 7, 4, 'P');
-  setzen(grid, 8, 4, 'P');
-}
-
-/** Ein Schweif seitlich. */
-function schweif(grid) {
-  setzen(grid, 15, 8, 'A');
-  setzen(grid, 15, 9, 'A');
-  setzen(grid, 14, 10, 'A');
-}
-
-const ZUSAETZE = [null, hoerner, stacheln, drittesAuge, schweif];
 
 function setzen(grid, x, y, zeichen) {
   if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) return;
@@ -275,20 +427,68 @@ function setzen(grid, x, y, zeichen) {
   grid[y] = zeile.join('');
 }
 
+/** Zwei gebogene Hörner auf dem Kopf. */
+function hoerner(grid) {
+  const { y, links, rechts } = kopfBereich(grid);
+  for (let i = 0; i < 5; i++) {
+    setzen(grid, links + 2 - i, y - 1 - i, 'A');
+    setzen(grid, links + 3 - i, y - 1 - i, 'A');
+    setzen(grid, rechts - 2 + i, y - 1 - i, 'A');
+    setzen(grid, rechts - 3 + i, y - 1 - i, 'A');
+  }
+}
+
+/** Stachelkamm über dem Rücken. */
+function stacheln(grid) {
+  const { y, links, rechts } = kopfBereich(grid);
+  for (let x = links + 2; x <= rechts - 2; x += 4) {
+    setzen(grid, x, y - 1, 'A');
+    setzen(grid, x, y - 2, 'A');
+    setzen(grid, x - 1, y - 1, 'A');
+  }
+}
+
+/** Ein drittes Auge über den anderen beiden. */
+function drittesAuge(grid) {
+  // Die Zeile mit den ersten Augen finden und darüber ein weiteres setzen.
+  const augenZeile = grid.findIndex((zeile) => zeile.includes('P'));
+  if (augenZeile < 3) return;
+  const mitte = Math.floor(GROESSE / 2);
+  for (let x = mitte - 2; x <= mitte + 1; x++) {
+    setzen(grid, x, augenZeile - 3, 'E');
+    setzen(grid, x, augenZeile - 2, 'E');
+  }
+  setzen(grid, mitte - 1, augenZeile - 2, 'P');
+  setzen(grid, mitte, augenZeile - 2, 'P');
+}
+
+/** Ein Schweif, der seitlich heraussteht. */
+function schweif(grid) {
+  const unten = grid.reduce((letzte, zeile, y) => (zeile.includes('B') ? y : letzte), 0);
+  const start = Math.max(0, unten - 9);
+  for (let i = 0; i < 7; i++) {
+    setzen(grid, GROESSE - 3 + Math.min(2, i), start + i, 'C');
+    setzen(grid, GROESSE - 4 + Math.min(3, i), start + i, 'C');
+  }
+}
+
+const ZUSAETZE = [null, hoerner, stacheln, drittesAuge, schweif];
+
 /* ------------------------------------------------------------------ */
 /*  Farben                                                             */
 /* ------------------------------------------------------------------ */
 
 function farbwelt(hue, sattheit, akzentHue) {
   return {
-    B: `hsl(${hue}, ${sattheit}%, 56%)`,
-    S: `hsl(${hue}, ${sattheit}%, 38%)`,
-    L: `hsl(${hue}, ${Math.round(sattheit * 0.8)}%, 74%)`,
+    B: `hsl(${hue}, ${sattheit}%, 54%)`,
+    S: `hsl(${hue}, ${sattheit}%, 36%)`,
+    L: `hsl(${hue}, ${Math.round(sattheit * 0.85)}%, 72%)`,
     A: `hsl(${akzentHue}, ${Math.min(95, sattheit + 15)}%, 62%)`,
+    C: `hsl(${(akzentHue + 40) % 360}, ${Math.min(95, sattheit + 10)}%, 55%)`,
     E: '#ffffff',
     P: '#141d33',
-    M: `hsl(${hue}, ${sattheit}%, 26%)`,
-    umriss: `hsl(${hue}, ${Math.round(sattheit * 0.9)}%, 18%)`,
+    M: `hsl(${hue}, ${sattheit}%, 24%)`,
+    kante: `hsl(${hue}, ${Math.round(sattheit * 0.9)}%, 16%)`,
   };
 }
 
@@ -341,6 +541,11 @@ export function spritesNeuZeichnen() {
   zwischenspeicher.clear();
 }
 
+function feld(grid, x, y) {
+  if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) return '.';
+  return grid[y][x];
+}
+
 /**
  * Zeichnet die Figur und gibt sie als Bild-Adresse zurück.
  * Jede Figur wird nur einmal gezeichnet und danach wiederverwendet.
@@ -357,30 +562,47 @@ export function spriteDataUrl(monster) {
   if (zusatz) zusatz(grid);
 
   const farben = farbwelt(look.hue, look.sattheit, look.akzentHue);
-  const groesse = grid.length;
   const canvas = document.createElement('canvas');
-  canvas.width = groesse;
-  canvas.height = groesse;
+  canvas.width = GROESSE;
+  canvas.height = GROESSE;
   const ctx = canvas.getContext('2d');
 
-  // 1. Umriss: jedes belegte Feld wird nach allen Seiten um ein Feld
+  // 1. Kante: jedes belegte Feld wird nach allen Seiten um ein Feld
   //    verbreitert. Das ergibt eine saubere dunkle Kontur, ohne dass sie
   //    in jeder Form von Hand gezeichnet werden muss.
-  ctx.fillStyle = farben.umriss;
-  for (let y = 0; y < groesse; y++) {
-    for (let x = 0; x < grid[y].length; x++) {
-      if (grid[y][x] === '.') continue;
+  ctx.fillStyle = farben.kante;
+  for (let y = 0; y < GROESSE; y++) {
+    for (let x = 0; x < GROESSE; x++) {
+      if (feld(grid, x, y) === '.') continue;
       ctx.fillRect(x - 1, y, 3, 1);
       ctx.fillRect(x, y - 1, 1, 3);
     }
   }
 
-  // 2. Füllung
-  for (let y = 0; y < groesse; y++) {
-    for (let x = 0; x < grid[y].length; x++) {
-      const zeichen = grid[y][x];
+  // 2. Füllung mit automatischer Licht- und Schattenkante:
+  //    Körperfelder, über denen nichts liegt, bekommen Licht;
+  //    Körperfelder, unter denen nichts liegt, bekommen Schatten.
+  //    Dadurch wirken die Figuren rund, ohne dass jede Schattierung
+  //    von Hand gezeichnet werden muss.
+  for (let y = 0; y < GROESSE; y++) {
+    for (let x = 0; x < GROESSE; x++) {
+      const zeichen = feld(grid, x, y);
       if (zeichen === '.') continue;
-      ctx.fillStyle = farben[zeichen] ?? farben.B;
+
+      let farbe = farben[zeichen] ?? farben.B;
+
+      if (zeichen === 'B') {
+        if (feld(grid, x, y - 1) === '.') farbe = farben.L;
+        else if (feld(grid, x, y + 1) === '.') farbe = farben.S;
+      }
+
+      // Augenglanz: das obere linke Feld einer Pupille wird hell. Das gibt
+      // den Augen Leben, ohne dass es in jeder Form eingetragen werden muss.
+      if (zeichen === 'P' && feld(grid, x, y - 1) === 'E' && feld(grid, x - 1, y) === 'E') {
+        farbe = '#ffffff';
+      }
+
+      ctx.fillStyle = farbe;
       ctx.fillRect(x, y, 1, 1);
     }
   }

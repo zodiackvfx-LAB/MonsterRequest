@@ -20,6 +20,7 @@ import { createFighter, MAX_XP, START_XP } from '../js/core/fighter.js';
 import { MONSTERS } from '../js/data/monsters.js';
 import { ATTACKS, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
+import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
 import { WORLDS, fightsInWorld } from '../js/data/worlds.js';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
@@ -63,6 +64,34 @@ for (const monster of Object.values(MONSTERS)) {
     `${monster.name}: keine Attacke kostet mehr als ${MAX_XP} XP`,
     monster.deck.every((id) => getAttack(id).cost <= MAX_XP)
   );
+}
+
+console.log('\nPixel-Figuren');
+{
+  const probleme = formenPruefen();
+  pruefe(`Alle Grundformen sind ${GROESSE} mal ${GROESSE} Felder`, probleme.length === 0);
+  if (probleme.length) probleme.slice(0, 5).forEach((t) => console.log('       ' + t));
+
+  const formen = new Set([...FORM_NAMEN, ...BOSS_FORMEN]);
+  const gegner = Object.values(ENEMIES);
+  pruefe(
+    'Jeder Gegner hat eine gueltige Form',
+    gegner.every((e) => formen.has(e.look.form))
+  );
+  pruefe(
+    'Bosse benutzen Formen, die kein normaler Gegner hat',
+    gegner.filter((e) => e.isBoss).every((e) => BOSS_FORMEN.includes(e.look.form))
+  );
+
+  // In einer Welt darf keine Figur aussehen wie eine andere
+  let eindeutig = true;
+  for (const world of WORLDS) {
+    const bilder = gegner
+      .filter((e) => e.worldId === world.id)
+      .map((e) => `${e.look.form}|${e.look.hue}`);
+    if (new Set(bilder).size !== bilder.length) eindeutig = false;
+  }
+  pruefe('In jeder Welt sieht keine Figur aus wie eine andere', eindeutig);
 }
 
 console.log('\nGegner');
