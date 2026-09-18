@@ -14,7 +14,8 @@ import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
 const MENU = [
   { icon: '🗺️', label: 'Welten', screen: 'worlds' },
-  { icon: '🧍', label: 'Figur', screen: 'monster' },
+  // figur: true - dieser Knopf zeigt den echten Charakter statt eines Symbols.
+  { icon: '🧍', label: 'Figur', screen: 'monster', figur: true },
   { icon: '🃏', label: 'Deck', screen: 'deck' },
   { icon: '📖', label: 'Sammlung', screen: 'collection' },
   { icon: '🏪', label: 'Shop', screen: 'shop' },
@@ -146,9 +147,18 @@ export const startScreen = {
       button.className = 'icon-btn';
       button.type = 'button';
       button.innerHTML = `
-        <span class="icon-btn__circle">${entry.icon}</span>
+        <span class="icon-btn__circle"></span>
         <span class="icon-btn__label">${entry.label}</span>
       `;
+
+      const kreis = button.querySelector('.icon-btn__circle');
+      if (entry.figur) {
+        // Wie beim Avatar oben links wird nur der Kopf gezeigt - ganzkoerpers
+        // waere Timo in dem kleinen Kreis nur ein schmaler Streifen.
+        kreis.appendChild(createSprite(starter));
+      } else {
+        kreis.textContent = entry.icon;
+      }
       button.addEventListener('click', () => showScreen(entry.screen));
       menu.appendChild(button);
     });
