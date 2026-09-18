@@ -24,11 +24,12 @@ import { spieleBeute, spieleKlang, spieleTreffer } from '../core/audio.js';
 import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
-import { createSprite } from '../ui/sprite.js';
+import { createSprite, spieleBildfolge } from '../ui/sprite.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
 const klangTimer = []; // geplante Klaenge, damit sie beim Verlassen verstummen
+let bildfolgeStoppen = () => {}; // bricht eine laufende Angriffsanimation ab
 
 /**
  * Wartezeit zwischen dem letzten Treffer und dem Ergebnisfenster.
@@ -121,7 +122,10 @@ export const battleScreen = {
 
     // Die Pixel-Figuren einsetzen (siehe js/ui/sprite.js)
     screen.querySelector('#enemy-sprite').appendChild(createSprite(enemyMonster));
-    screen.querySelector('#player-sprite').appendChild(createSprite(playerMonster));
+    // Im Kampf zeigt Timo seine Kampfhaltung statt der Vorderansicht.
+    screen.querySelector('#player-sprite').appendChild(
+      createSprite(playerMonster, { bild: basis.bildKampf })
+    );
 
     // Kulisse der Arena (Hügel, Wiese, Bäume, Kampfplatz) hinter die Monster legen
     screen.querySelector('#arena').prepend(...createArenaLayers());
@@ -271,6 +275,11 @@ export const battleScreen = {
 
       switch (event.type) {
         case 'player-attack':
+          // Hat die Figur eine Angriffsfolge, wird sie abgespielt.
+          if (basis.bildAngriff) {
+            bildfolgeStoppen();
+            bildfolgeStoppen = spieleBildfolge(ui.playerSprite, basis.bildAngriff);
+          }
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
           floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
@@ -456,5 +465,7 @@ export const battleScreen = {
     // Sonst erklaenge die Fanfare noch auf dem naechsten Bildschirm.
     klangTimer.forEach((timer) => clearTimeout(timer));
     klangTimer.length = 0;
+    bildfolgeStoppen();
+    bildfolgeStoppen = () => {};
   },
 };

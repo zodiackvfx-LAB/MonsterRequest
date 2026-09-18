@@ -12,7 +12,8 @@
 import { initScreens, registerScreen, showScreen } from './core/screens.js';
 import { getAktiverSkin, loadProgress } from './core/state.js';
 import { getSkin } from './data/items.js';
-import { setSkinNachschlag } from './ui/sprite.js';
+import { getMonster, STARTER_MONSTER_ID } from './data/monsters.js';
+import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
 import { spieleKlang, tonFreischalten } from './core/audio.js';
 import { startScreen } from './screens/start.js';
 import { worldsScreen } from './screens/worlds.js';
@@ -34,6 +35,11 @@ setSkinNachschlag((monster) => {
   const skinId = getAktiverSkin(monster.id);
   return skinId ? getSkin(skinId) : null;
 });
+
+// Die Grafiken der Spielfigur im Voraus laden, damit die erste
+// Angriffsanimation nicht ruckelt.
+const spielfigur = getMonster(STARTER_MONSTER_ID);
+bilderVorladen([spielfigur.image, spielfigur.bildKampf, ...(spielfigur.bildAngriff ?? [])]);
 
 // Safari auf iPhone und iPad erlaubt Ton erst nach der ersten Berührung.
 tonFreischalten();

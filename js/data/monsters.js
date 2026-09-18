@@ -1,5 +1,5 @@
 /**
- * Die Monster des Spielers.
+ * Die Figuren des Spielers.
  *
  * Die Gegner stehen nicht hier, sondern werden in js/data/enemies.js aus
  * den Welten erzeugt. So bleibt diese Datei übersichtlich, auch wenn es
@@ -21,15 +21,37 @@
  *
  */
 export const MONSTERS = {
-  /* ---------- Spielermonster ---------- */
-  glutwelpe: {
-    id: 'glutwelpe',
-    name: 'Glutwelpe',
-    icon: '🐺',
+  /* ---------- Spielerfigur ---------- */
+  timo: {
+    id: 'timo',
+    name: 'Timo',
+    icon: '🧑',
     element: 'Feuer',
-    // Eigenes Aussehen: vierbeiniger Feuerwelpe
-    look: { form: 'vierbeiner', hue: 20, sattheit: 85, akzentHue: 45, zusatz: 1 },
-    text: 'Ein junger Feuerwelpe. Mutig, vorlaut und immer als Erster im Kampf.',
+    /*
+     * Timo hat als einzige Figur eigene Grafiken statt einer berechneten
+     * Pixelfigur. Die Felder:
+     *   image       - im Menü und in der Sammlung (Vorderansicht)
+     *   bildKampf   - im Kampf (Kampfhaltung, nach rechts gerichtet)
+     *   bildAngriff - die Bildfolge beim Angreifen
+     *   hoch        - Mensch statt Tier: schmal und hoch. Damit er im
+     *                 quadratischen Kasten nicht winzig wirkt, darf er
+     *                 darüber hinauswachsen (siehe .pixel-sprite--hoch).
+     *
+     * Eigene Grafiken für weitere Figuren gehören nach bilder/ und werden
+     * hier genauso eingetragen.
+     */
+    image: 'bilder/timo/front.png',
+    bildKampf: 'bilder/timo/kampf.png',
+    bildAngriff: [
+      'bilder/timo/attacke-1.png',
+      'bilder/timo/attacke-2.png',
+      'bilder/timo/attacke-3.png',
+      'bilder/timo/attacke-4.png',
+      'bilder/timo/attacke-5.png',
+      'bilder/timo/attacke-6.png',
+    ],
+    hoch: true,
+    text: 'Ein junger Kämpfer mit schneller Faust. Redet wenig, trifft dafür genau.',
     maxHp: 100,
     // Genau 8 Attacken - das ist die Regel für jedes Deck.
     deck: [
@@ -55,5 +77,5 @@ export function getMonster(id) {
   return monster;
 }
 
-/** Das Monster, mit dem der Spieler startet. */
-export const STARTER_MONSTER_ID = 'glutwelpe';
+/** Die Figur, mit der der Spieler startet. */
+export const STARTER_MONSTER_ID = 'timo';

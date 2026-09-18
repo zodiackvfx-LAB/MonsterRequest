@@ -13,7 +13,7 @@ import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
 const MENU = [
   { icon: '🗺️', label: 'Welten', screen: 'worlds' },
-  { icon: '🐾', label: 'Monster', screen: 'monster' },
+  { icon: '🧍', label: 'Figur', screen: 'monster' },
   { icon: '🃏', label: 'Deck', screen: 'deck' },
   { icon: '📖', label: 'Sammlung', screen: 'collection' },
   { icon: '🏪', label: 'Shop', screen: 'shop' },
@@ -56,7 +56,7 @@ export const startScreen = {
     hero.className = 'start__hero';
     hero.innerHTML = `
       <div class="sprite sprite--large idle-bob" id="hero-sprite"></div>
-      <p class="start__hero-name">Dein Begleiter: ${starter.name}</p>
+      <p class="start__hero-name">Deine Figur: ${starter.name}</p>
     `;
     hero.querySelector('#hero-sprite').appendChild(createSprite(starter));
     screen.appendChild(hero);

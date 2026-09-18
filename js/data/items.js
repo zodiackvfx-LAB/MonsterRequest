@@ -44,17 +44,54 @@ export const BEUTE_ATTACKEN = [
 ];
 
 /**
- * Skins verändern nur das Aussehen eines Monsters, nicht seine Werte.
- * "look" überschreibt die Farbwerte der Pixel-Figur (siehe js/ui/sprite.js).
+ * Skins verändern nur das Aussehen einer Figur, nie ihre Werte.
+ *
+ * Es gibt zwei Wege, je nachdem wie die Figur gezeichnet wird:
+ *
+ *   look    - für berechnete Pixel-Figuren (siehe js/ui/sprite.js).
+ *             Überschreibt Farbton, Sättigung und Akzentfarbe.
+ *   filter  - für Figuren mit eigener Grafik wie Timo. Ein fertiges Bild
+ *             lässt sich nicht umrechnen, also legen wir einen Farbfilter
+ *             darüber (dieselbe Technik wie ein Fotofilter).
+ *
+ * Beide Felder stehen nebeneinander, damit ein Skin für jede Art von Figur
+ * passt.
  */
 export const SKINS = [
-  { id: 'skin-standard', name: 'Standard', monsterId: 'glutwelpe', seltenheit: 'gewoehnlich', look: {} },
-  { id: 'skin-asche', name: 'Asche', monsterId: 'glutwelpe', seltenheit: 'gewoehnlich', look: { hue: 220, sattheit: 12, akzentHue: 30 } },
-  { id: 'skin-frost', name: 'Frost', monsterId: 'glutwelpe', seltenheit: 'selten', look: { hue: 195, sattheit: 70, akzentHue: 210 } },
-  { id: 'skin-gift', name: 'Gift', monsterId: 'glutwelpe', seltenheit: 'selten', look: { hue: 95, sattheit: 80, akzentHue: 300 } },
-  { id: 'skin-schatten', name: 'Schatten', monsterId: 'glutwelpe', seltenheit: 'episch', look: { hue: 280, sattheit: 45, akzentHue: 320 } },
-  { id: 'skin-gold', name: 'Gold', monsterId: 'glutwelpe', seltenheit: 'legendaer', look: { hue: 45, sattheit: 95, akzentHue: 20 } },
-  { id: 'skin-kosmisch', name: 'Kosmisch', monsterId: 'glutwelpe', seltenheit: 'legendaer', look: { hue: 255, sattheit: 85, akzentHue: 180 } },
+  {
+    id: 'skin-standard', name: 'Standard', monsterId: 'timo',
+    seltenheit: 'gewoehnlich', look: {}, filter: null,
+  },
+  {
+    id: 'skin-asche', name: 'Asche', monsterId: 'timo', seltenheit: 'gewoehnlich',
+    look: { hue: 220, sattheit: 12, akzentHue: 30 },
+    filter: 'grayscale(1) brightness(1.15) contrast(1.05)',
+  },
+  {
+    id: 'skin-frost', name: 'Frost', monsterId: 'timo', seltenheit: 'selten',
+    look: { hue: 195, sattheit: 70, akzentHue: 210 },
+    filter: 'hue-rotate(175deg) saturate(1.6) brightness(1.08)',
+  },
+  {
+    id: 'skin-gift', name: 'Gift', monsterId: 'timo', seltenheit: 'selten',
+    look: { hue: 95, sattheit: 80, akzentHue: 300 },
+    filter: 'hue-rotate(90deg) saturate(2) brightness(1.05)',
+  },
+  {
+    id: 'skin-schatten', name: 'Schatten', monsterId: 'timo', seltenheit: 'episch',
+    look: { hue: 280, sattheit: 45, akzentHue: 320 },
+    filter: 'hue-rotate(255deg) saturate(1.5) brightness(0.72) contrast(1.1)',
+  },
+  {
+    id: 'skin-gold', name: 'Gold', monsterId: 'timo', seltenheit: 'legendaer',
+    look: { hue: 45, sattheit: 95, akzentHue: 20 },
+    filter: 'sepia(0.9) saturate(2.6) hue-rotate(-12deg) brightness(1.15)',
+  },
+  {
+    id: 'skin-kosmisch', name: 'Kosmisch', monsterId: 'timo', seltenheit: 'legendaer',
+    look: { hue: 255, sattheit: 85, akzentHue: 180 },
+    filter: 'hue-rotate(250deg) saturate(2.2) contrast(1.12)',
+  },
 ];
 
 /** Münzbeträge je Seltenheit. */

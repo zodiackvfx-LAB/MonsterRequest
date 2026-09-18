@@ -504,10 +504,47 @@
 .pixel-sprite {
   width: 100%;
   height: 100%;
+  /* min-*: 0 ist noetig, weil ein Bild in einem Gitter von sich aus eine
+     Mindestgroesse aus seinen Originalmassen bekommt. Die ueberstimmt sonst
+     die Vorgaben hier - die Figur wurde dadurch viel zu gross. */
+  min-width: 0;
+  min-height: 0;
   object-fit: contain;
   image-rendering: pixelated;
   -webkit-user-drag: none;
   user-select: none;
+}
+
+/*
+ * Menschen statt Tiere.
+ *
+ * Eine menschliche Figur ist etwa doppelt so hoch wie breit. In einem
+ * quadratischen Kasten waere sie winzig - also darf sie nach oben darueber
+ * hinauswachsen. Weil der Kasten seine Kinder unten ausrichtet, bleiben die
+ * Fuesse dabei genau auf dem Boden stehen.
+ */
+/* Der Kasten selbst wird hoeher, statt dass die Figur darueber hinauswaechst.
+   Nur so rechnet das Layout mit ihrer Hoehe - sonst ragt sie in die Zeile
+   darueber hinein. :has() fragt: "enthaelt dieser Kasten eine hohe Figur?" */
+.sprite:has(.pixel-sprite--hoch) {
+  height: calc(var(--sprite, 96px) * 1.5);
+}
+
+.sprite--large:has(.pixel-sprite--hoch) {
+  height: calc(var(--sprite-large, 150px) * 1.4);
+}
+
+.pixel-sprite--hoch {
+  align-self: end;
+}
+
+/* Im runden Avatar wird nur der Kopf gezeigt - ganzkoerpers waere die Figur
+   dort nur ein Streifen. */
+.hud__avatar .pixel-sprite--hoch {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 6%;
 }
 
 /* ---------- Overlay (Sieg/Niederlage/Dialoge) ---------- */

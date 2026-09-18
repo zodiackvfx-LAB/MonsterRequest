@@ -624,11 +624,67 @@ export function spriteDataUrl(monster, optionen = {}) {
  */
 export function createSprite(monster, optionen = {}) {
   const img = document.createElement('img');
-  // Ein eigenes Bild hat Vorrang - so lassen sich später echte Grafiken
-  // einsetzen, ohne hier etwas zu ändern.
-  img.src = monster.image ?? spriteDataUrl(monster, optionen);
+  const skin = 'skin' in optionen ? optionen.skin : skinNachschlag(monster);
+
+  // Ein eigenes Bild hat Vorrang vor der berechneten Pixelfigur. So bekommt
+  // Timo seine gezeichneten Grafiken, alle Gegner weiterhin gerechnete.
+  const eigenesBild = optionen.bild ?? monster.image;
+
+  if (eigenesBild) {
+    img.src = eigenesBild;
+    // Ein fertiges Bild lässt sich nicht umrechnen - ein Skin wird deshalb
+    // als Farbfilter darübergelegt (siehe SKINS in js/data/items.js).
+    if (skin?.filter) img.style.filter = skin.filter;
+  } else {
+    img.src = spriteDataUrl(monster, optionen);
+  }
+
+  const klassen = ['pixel-sprite'];
+  // Menschen sind schmal und hoch und dürfen über den quadratischen Kasten
+  // hinauswachsen, sonst wirken sie neben den Gegnern winzig.
+  if (monster.hoch) klassen.push('pixel-sprite--hoch');
+  if (optionen.className) klassen.push(optionen.className);
+
   img.alt = monster.name ?? '';
-  img.className = `pixel-sprite ${optionen.className ?? ''}`.trim();
+  img.className = klassen.join(' ');
   img.draggable = false;
   return img;
+}
+
+/**
+ * Spielt eine Bildfolge auf einer Figur ab und kehrt danach zum Ausgangsbild
+ * zurück - so wird aus Einzelbildern eine Angriffsanimation.
+ *
+ * @param {HTMLElement} spriteElement - der Kasten mit dem Bild darin
+ * @param {string[]} bilder - die Bildadressen der Reihe nach
+ * @param {number} [proBild] - Anzeigedauer je Bild in Millisekunden
+ * @returns {function} Abbrechen - stoppt die Folge und stellt das Bild zurück
+ */
+export function spieleBildfolge(spriteElement, bilder, proBild = 75) {
+  const img = spriteElement?.querySelector('img');
+  if (!img || !bilder?.length) return () => {};
+
+  const ausgangsbild = img.src;
+  const timer = [];
+
+  bilder.forEach((bild, index) => {
+    timer.push(setTimeout(() => { img.src = bild; }, index * proBild));
+  });
+  timer.push(setTimeout(() => { img.src = ausgangsbild; }, bilder.length * proBild));
+
+  return () => {
+    timer.forEach(clearTimeout);
+    img.src = ausgangsbild;
+  };
+}
+
+/**
+ * Lädt Bilder im Voraus, damit die erste Animation nicht ruckelt.
+ * Wird einmal beim Start aufgerufen (js/main.js).
+ */
+export function bilderVorladen(bilder) {
+  bilder.filter(Boolean).forEach((bild) => {
+    const img = new Image();
+    img.src = bild;
+  });
 }

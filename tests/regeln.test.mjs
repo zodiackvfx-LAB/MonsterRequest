@@ -17,7 +17,7 @@ globalThis.localStorage = {
 
 import { createDeck, DECK_SIZE, HAND_SIZE } from '../js/core/deck.js';
 import { createFighter, MAX_XP, START_XP } from '../js/core/fighter.js';
-import { MONSTERS } from '../js/data/monsters.js';
+import { MONSTERS, STARTER_MONSTER_ID, getMonster } from '../js/data/monsters.js';
 import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
 import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
@@ -34,6 +34,7 @@ import {
   isWorldUnlocked,
   kannBezahlen,
   nextLevelOf,
+  loadProgress,
   resetProgress,
   setDeck,
 } from '../js/core/state.js';
@@ -67,6 +68,10 @@ import {
   xpGutschreiben,
 } from '../js/core/progression.js';
 import { truheOeffnen } from '../js/core/loot.js';
+
+/** Die Spielerfigur - ueber die id geholt, damit ein Figurenwechsel
+    (frueher Glutwelpe, jetzt Timo) die Tests nicht bricht. */
+const SPIELFIGUR = getMonster(STARTER_MONSTER_ID);
 
 let bestanden = 0;
 let fehler = 0;
@@ -224,7 +229,7 @@ console.log('\nShop und Truhen');
 console.log('\nCharakter-Level');
 {
   resetProgress();
-  const held = MONSTERS.glutwelpe;
+  const held = SPIELFIGUR;
 
   pruefe('Startet auf Level 1', getCharakter(held.id).level === 1);
   pruefe(
@@ -260,7 +265,7 @@ console.log('\nCharakter-Level');
 console.log('\nAufwertungen');
 {
   resetProgress();
-  const held = MONSTERS.glutwelpe;
+  const held = SPIELFIGUR;
 
   pruefe('Ohne Muenzen keine Aufwertung', wertAufwerten(held.id, 'hp') === false);
 
@@ -319,7 +324,7 @@ console.log('\nAttacken-Level');
 console.log('\nDeck aendern');
 {
   resetProgress();
-  const monster = MONSTERS.glutwelpe;
+  const monster = SPIELFIGUR;
   pruefe('Ohne Aenderung gilt das Standarddeck', getDeck(monster).join() === monster.deck.join());
 
   const neu = [...monster.deck];
@@ -340,7 +345,7 @@ console.log('\nDeck aendern');
 
 console.log('\nDeck und Hand');
 {
-  const deck = createDeck(MONSTERS.glutwelpe.deck);
+  const deck = createDeck(SPIELFIGUR.deck);
   pruefe(`Starthand hat ${HAND_SIZE} Karten`, deck.hand.length === HAND_SIZE);
 
   // 20 Karten ausspielen: die Hand muss immer wieder aufgefüllt werden,
@@ -359,7 +364,7 @@ console.log('\nDeck und Hand');
 
 console.log('\nXP-System');
 {
-  const kaempfer = createFighter(MONSTERS.glutwelpe);
+  const kaempfer = createFighter(SPIELFIGUR);
   pruefe(`Startet mit ${START_XP} XP`, kaempfer.state.xp === START_XP);
 
   kaempfer.gainXp(100); // 100 Sekunden auf einmal
@@ -373,7 +378,7 @@ console.log('\nXP-System');
   }
   pruefe('XP fallen nie unter 0', kaempfer.state.xp >= 0);
 
-  const teuer = createFighter(MONSTERS.glutwelpe);
+  const teuer = createFighter(SPIELFIGUR);
   const teuerste = teuer.handAttacks().reduce((a, b) => (a.cost > b.cost ? a : b));
   const index = teuer.state.hand.indexOf(teuerste.id);
   const darf = teuerste.cost <= teuer.state.xp;
@@ -386,7 +391,7 @@ console.log('\nXP-System');
 
 console.log('\nSchaden und Schild');
 {
-  const kaempfer = createFighter(MONSTERS.glutwelpe);
+  const kaempfer = createFighter(SPIELFIGUR);
   const start = kaempfer.state.hp;
 
   kaempfer.takeDamage(10);
@@ -441,7 +446,7 @@ console.log('\nBelohnungen');
   const nieGlueck = () => 0.99;
   const immerGlueck = () => 0;
 
-  const normal = siegBelohnung(ersterKampf, 3, 'glutwelpe', nieGlueck);
+  const normal = siegBelohnung(ersterKampf, 3, SPIELFIGUR.id, nieGlueck);
   pruefe('Sieg bringt Muenzen und Erfahrung', normal.stuecke.length >= 2);
   pruefe(
     'Jedes Belohnungsstueck hat Symbol, Name und Seltenheit',
@@ -451,15 +456,15 @@ console.log('\nBelohnungen');
   // 3 Sterne = +30 Prozent Muenzen
   const ohneSterne = LEVELS.find((l) => l.worldId === 1 && l.number === 2);
   resetProgress();
-  const mitDrei = siegBelohnung(ohneSterne, 3, 'glutwelpe', nieGlueck).stuecke[0].menge;
+  const mitDrei = siegBelohnung(ohneSterne, 3, SPIELFIGUR.id, nieGlueck).stuecke[0].menge;
   resetProgress();
-  const mitNull = siegBelohnung(ohneSterne, 0, 'glutwelpe', nieGlueck).stuecke[0].menge;
+  const mitNull = siegBelohnung(ohneSterne, 0, SPIELFIGUR.id, nieGlueck).stuecke[0].menge;
   pruefe('Sterne erhoehen die Muenzen', mitDrei > mitNull);
 
   // Wiederholung bringt weniger
   resetProgress();
-  const erstesMal = siegBelohnung(ersterKampf, 3, 'glutwelpe', nieGlueck);
-  const zweitesMal = siegBelohnung(ersterKampf, 3, 'glutwelpe', nieGlueck);
+  const erstesMal = siegBelohnung(ersterKampf, 3, SPIELFIGUR.id, nieGlueck);
+  const zweitesMal = siegBelohnung(ersterKampf, 3, SPIELFIGUR.id, nieGlueck);
   pruefe('Erster Sieg zaehlt als neu', erstesMal.erstesMal && !zweitesMal.erstesMal);
   pruefe('Wiederholung bringt weniger Muenzen', zweitesMal.stuecke[0].menge < erstesMal.stuecke[0].menge);
   pruefe(
@@ -469,14 +474,14 @@ console.log('\nBelohnungen');
 
   // Boss gibt deutlich mehr
   resetProgress();
-  const bossLohn = siegBelohnung(boss, 3, 'glutwelpe', nieGlueck);
+  const bossLohn = siegBelohnung(boss, 3, SPIELFIGUR.id, nieGlueck);
   pruefe('Boss gibt mehr Muenzen als ein normaler Kampf', bossLohn.stuecke[0].menge > erstesMal.stuecke[0].menge * 2);
   pruefe('Boss gibt mehr Erfahrung', bossLohn.stuecke[1].menge > erstesMal.stuecke[1].menge);
   pruefe('Boss oeffnet eine neue Welt', bossLohn.newWorld?.id === 2);
 
   // Bosstruhe nur beim ersten Sieg
   const mitTruhe = bossLohn.stuecke.length;
-  const bossZweimal = siegBelohnung(boss, 3, 'glutwelpe', nieGlueck);
+  const bossZweimal = siegBelohnung(boss, 3, SPIELFIGUR.id, nieGlueck);
   pruefe('Bosstruhe gibt es nur beim ersten Sieg', bossZweimal.stuecke.length < mitTruhe);
   pruefe('Bosstruhe enthaelt 3 Stuecke', mitTruhe - bossZweimal.stuecke.length === BOSS_TRUHE.anzahl);
 
@@ -559,6 +564,52 @@ console.log('\nTagesaufgaben');
   pruefe('Neuer Tag startet bei 0', neuerTag.every((e) => e.stand === 0 && !e.abgeholt));
   pruefe('Muenzen bleiben ueber den Tageswechsel', gameState.coins === muenzenVorTagwechsel);
 
+  resetProgress();
+}
+
+console.log('\nSpielfigur');
+{
+  pruefe('Die Spielfigur heisst Timo', SPIELFIGUR.name === 'Timo');
+  pruefe('Sie hat eine eigene Grafik statt einer gerechneten Figur',
+    typeof SPIELFIGUR.image === 'string' && SPIELFIGUR.image.endsWith('.png'));
+  pruefe('Sie hat ein eigenes Kampfbild', typeof SPIELFIGUR.bildKampf === 'string');
+  pruefe('Die Angriffsfolge hat mehrere Bilder',
+    Array.isArray(SPIELFIGUR.bildAngriff) && SPIELFIGUR.bildAngriff.length >= 4);
+  pruefe('Alle Bildadressen zeigen in den Bilderordner',
+    [SPIELFIGUR.image, SPIELFIGUR.bildKampf, ...SPIELFIGUR.bildAngriff]
+      .every((b) => b.startsWith('bilder/')));
+  pruefe('Sie ist als hohe Figur gekennzeichnet', SPIELFIGUR.hoch === true);
+
+  // Skins muessen zur Figur passen, sonst waere der Skin-Bereich leer.
+  const meine = SKINS.filter((skin) => skin.monsterId === SPIELFIGUR.id);
+  pruefe('Alle Skins gehoeren zur Spielfigur', meine.length === SKINS.length);
+  pruefe('Jeder Skin ausser Standard hat einen Farbfilter',
+    meine.filter((skin) => skin.id !== 'skin-standard').every((skin) => Boolean(skin.filter)));
+  pruefe('Keine zwei Skins sehen gleich aus',
+    new Set(meine.map((skin) => skin.filter)).size === meine.length);
+
+  // Alter Spielstand: Fortschritt darf beim Figurenwechsel nicht verlorengehen.
+  resetProgress();
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({
+    unlockedWorld: 3,
+    clearedLevels: ['1-1'],
+    coins: 777,
+    characters: { glutwelpe: { level: 9, xp: 42, upgrades: { hp: 2 } } },
+    decks: { glutwelpe: ['biss', 'krallenhieb', 'feuerball', 'flammenstoss', 'schutzschild', 'feuersturm', 'lavabombe', 'meteor'] },
+    activeSkin: { glutwelpe: 'skin-gold' },
+  }));
+  loadProgress();
+  pruefe('Alter Spielstand: Level zieht auf die neue Figur um',
+    gameState.characters[SPIELFIGUR.id]?.level === 9);
+  pruefe('Alter Spielstand: Aufwertungen bleiben erhalten',
+    gameState.characters[SPIELFIGUR.id]?.upgrades?.hp === 2);
+  pruefe('Alter Spielstand: Deck zieht mit um',
+    gameState.decks[SPIELFIGUR.id]?.length === 8);
+  pruefe('Alter Spielstand: getragener Skin bleibt',
+    gameState.activeSkin[SPIELFIGUR.id] === 'skin-gold');
+  pruefe('Alter Spielstand: Muenzen bleiben', gameState.coins === 777);
+  pruefe('Der alte Name ist verschwunden',
+    !('glutwelpe' in gameState.characters) && !('glutwelpe' in gameState.decks));
   resetProgress();
 }
 

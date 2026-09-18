@@ -98,7 +98,7 @@ function baueMonster(content) {
 
   content.appendChild(
     gruppe(
-      'Deine Monster',
+      'Deine Figur',
       eigene.map((monster) => ({
         monster,
         bekannt: true,

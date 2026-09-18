@@ -74,6 +74,24 @@ export function loadProgress() {
   }
 }
 
+/** Frueherer Name der Spielerfigur -> heutiger Name. */
+const ALTE_FIGUR = 'glutwelpe';
+const NEUE_FIGUR = 'timo';
+
+/**
+ * Zieht einen Eintrag von der alten auf die neue Figur um.
+ * Betrifft alles, was nach Figur abgelegt ist: Deck, Charakterfortschritt
+ * und der getragene Skin. Ein bereits umgezogener Spielstand bleibt, wie er ist.
+ */
+function figurUmbenennen(eintrag) {
+  if (!eintrag || typeof eintrag !== 'object') return {};
+  if (!(ALTE_FIGUR in eintrag)) return eintrag;
+
+  const { [ALTE_FIGUR]: alt, ...rest } = eintrag;
+  // Gibt es den neuen Eintrag schon, hat er Vorrang.
+  return { [NEUE_FIGUR]: alt, ...rest };
+}
+
 function uebernehmen(saved) {
   gameState.unlockedWorld = Number(saved.unlockedWorld) || 1;
   gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels.map(String) : [];
@@ -82,9 +100,11 @@ function uebernehmen(saved) {
   gameState.materials = Number(saved.materials) || 0;
   gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
   gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ['skin-standard'];
-  gameState.activeSkin = saved.activeSkin ?? {};
-  gameState.decks = saved.decks ?? {};
-  gameState.characters = saved.characters ?? {};
+  gameState.activeSkin = figurUmbenennen(saved.activeSkin ?? {});
+  // Die Spielerfigur hiess frueher "glutwelpe" und heisst jetzt "timo".
+  // Alte Spielstaende werden umgezogen, damit Level, Deck und Skin bleiben.
+  gameState.decks = figurUmbenennen(saved.decks ?? {});
+  gameState.characters = figurUmbenennen(saved.characters ?? {});
   gameState.attackLevels = saved.attackLevels ?? {};
   // Fehlt der Block in einem aelteren Spielstand, legt aufgaben.js ihn beim
   // ersten Blick auf die Aufgaben selbst an.
