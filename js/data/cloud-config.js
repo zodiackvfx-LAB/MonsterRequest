@@ -22,8 +22,8 @@
  */
 export const CLOUD = {
   /** Die Projektadresse, z. B. 'https://abcdefgh.supabase.co' */
-  url: '',
+  url: 'https://qlkmoffasuypzkopvcow.supabase.co',
 
   /** Der oeffentliche Schluessel (anon / publishable key). */
-  schluessel: '',
+  schluessel: 'sb_publishable_xw0vE-J87oIABwxNVlSTaA_GmuKwPxY',
 };
