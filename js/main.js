@@ -10,8 +10,9 @@
  */
 
 import { initScreens, registerScreen, showScreen } from './core/screens.js';
-import { getAktiverSkin, loadProgress } from './core/state.js';
+import { getAktiverSkin, loadProgress, setSpielername } from './core/state.js';
 import { cloudStart } from './core/sync.js';
+import { zeigeWillkommen } from './ui/willkommen.js';
 import { getSkin } from './data/items.js';
 import { getMonster, STARTER_MONSTER_ID } from './data/monsters.js';
 import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
@@ -27,7 +28,7 @@ import { dailyScreen } from './screens/daily.js';
 import { settingsScreen, applySettings } from './screens/settings.js';
 import { shopScreen } from './screens/shop.js';
 
-loadProgress();
+const hatSpielstand = loadProgress();
 applySettings();
 
 // Die Pixel-Figuren sollen den gewählten Skin verwenden. sprite.js kennt den
@@ -92,6 +93,21 @@ registerScreen('shop', shopScreen);
 registerScreen('daily', dailyScreen);
 
 showScreen('start');
+
+/*
+ * Erster Start auf diesem Geraet: nach einem Namen fragen. hatSpielstand ist
+ * false, wenn im Browser noch nichts lag. Das Pop-up wird ueber den
+ * Startbildschirm gelegt; nach der Eingabe wird der Bildschirm neu
+ * gezeichnet, damit der Name gleich oben in der Spielerleiste steht.
+ */
+if (!hatSpielstand) {
+  zeigeWillkommen(document.getElementById('app'), (name) => {
+    if (name) {
+      setSpielername(name);
+      showScreen('start');
+    }
+  });
+}
 
 /*
  * Abgleich mit der Datenbank - erst JETZT, nachdem das Spiel schon zu sehen

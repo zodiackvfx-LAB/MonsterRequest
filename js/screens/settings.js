@@ -1,11 +1,22 @@
 /**
- * Einstellungen: Schalter und das Zurücksetzen des Fortschritts.
+ * Einstellungen.
+ *
+ * Zwei Reiter:
+ *   "Spiel"     - Schalter, Ton-Test, Fortschritt, Zurücksetzen
+ *   "Datenbank" - Name und der Spielstand in der Datenbank (Codes)
  */
 
 import { showScreen } from '../core/screens.js';
 import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
-import { gameState, getTotalStars, resetProgress, setSetting } from '../core/state.js';
+import {
+  gameState,
+  getTotalStars,
+  resetProgress,
+  setSetting,
+  setSpielername,
+  NAME_MAX,
+} from '../core/state.js';
 import {
   cloudAktiv,
   cloudBeobachten,
@@ -37,139 +48,255 @@ const TOGGLES = [
   },
 ];
 
+/** Die beiden Reiter. */
+const REITER = [
+  { id: 'spiel', label: 'Spiel', bauen: baueSpiel },
+  { id: 'datenbank', label: 'Datenbank', bauen: baueDatenbank },
+];
+
 export const settingsScreen = {
-  mount(root) {
+  mount(root, params = {}) {
     // Ein alter Melder kann hier nicht mehr liegen - unmount raeumt ihn weg.
-    // Zur Sicherheit trotzdem, falls der Bildschirm je ohne unmount neu
-    // aufgebaut wird.
-    if (abmelden) {
-      abmelden();
-      abmelden = null;
-    }
+    melderAbmelden();
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--page';
     screen.appendChild(createScenery({ dimmed: true }));
     screen.appendChild(createTopbar('Einstellungen', () => showScreen('start')));
 
+    const reiterLeiste = document.createElement('div');
+    reiterLeiste.className = 'tabs';
+    screen.appendChild(reiterLeiste);
+
     const content = document.createElement('div');
     content.className = 'page__content';
+    screen.appendChild(content);
 
-    /* ---------- Schalter ---------- */
-    const panel = document.createElement('div');
-    panel.className = 'panel';
-    panel.innerHTML = '<div class="panel__title">Spiel</div>';
+    // Mit dem passenden Reiter starten - z. B. direkt "Datenbank", wenn man
+    // aus dem Willkommens-Pop-up dorthin geschickt wird.
+    let aktiv = REITER.some((r) => r.id === params.tab) ? params.tab : 'spiel';
 
-    TOGGLES.forEach((toggle) => {
-      const row = document.createElement('div');
-      row.className = 'setting-row';
-      row.innerHTML = `
-        <span class="setting-row__label">
-          <span class="setting-row__name">${toggle.name}</span>
-          <span class="setting-row__hint">${toggle.hint}</span>
-        </span>
-      `;
+    function zeichne() {
+      // Vor jedem Neubau den alten Datenbank-Melder abmelden.
+      melderAbmelden();
 
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `switch${gameState.settings[toggle.key] ? ' is-on' : ''}`;
-      button.setAttribute('aria-label', toggle.name);
-      // Der Schalter spielt seinen eigenen Klang, nicht den Standard-Tipp.
-      button.dataset.klang = 'keiner';
-      button.addEventListener('click', () => {
-        const value = !gameState.settings[toggle.key];
-        setSetting(toggle.key, value);
-        button.classList.toggle('is-on', value);
-        applySettings();
-        // Beim Einschalten einmal hörbar machen, was man gerade angeschaltet hat.
-        if (value && toggle.probe) spieleKlang(toggle.probe);
+      reiterLeiste.innerHTML = '';
+      REITER.forEach((reiter) => {
+        const knopf = document.createElement('button');
+        knopf.className = `tab${reiter.id === aktiv ? ' is-active' : ''}`;
+        knopf.type = 'button';
+        knopf.textContent = reiter.label;
+        knopf.addEventListener('click', () => {
+          if (aktiv === reiter.id) return;
+          aktiv = reiter.id;
+          zeichne();
+        });
+        reiterLeiste.appendChild(knopf);
       });
 
-      row.appendChild(button);
-      panel.appendChild(row);
-    });
+      content.innerHTML = '';
+      REITER.find((reiter) => reiter.id === aktiv).bauen(content, screen, zeichne);
+      content.scrollTop = 0;
+    }
 
-    /* ---------- Ton-Test ---------- */
-    // Damit man unterscheiden kann: liegt es am Spiel oder am Geraet?
-    const testZeile = document.createElement('div');
-    testZeile.className = 'setting-row';
-    testZeile.innerHTML = `
-      <span class="setting-row__label">
-        <span class="setting-row__name">Ton testen</span>
-        <span class="setting-row__hint" id="ton-befund">Antippen - du solltest zwei Töne hören.</span>
-      </span>
-    `;
-
-    const testKnopf = document.createElement('button');
-    testKnopf.type = 'button';
-    testKnopf.className = 'btn btn--small';
-    testKnopf.textContent = '🔊 Test';
-    testKnopf.dataset.klang = 'keiner';
-    testKnopf.addEventListener('click', () => {
-      spieleKlang('bestaetigen');
-      // Kurz warten: der Tonkanal wacht erst mit dieser Berührung auf.
-      setTimeout(() => {
-        testZeile.querySelector('#ton-befund').innerHTML = befundText(tonStatus());
-      }, 250);
-    });
-
-    testZeile.appendChild(testKnopf);
-    panel.appendChild(testZeile);
-
-    content.appendChild(panel);
-
-    /* ---------- Fortschritt ---------- */
-    const progress = document.createElement('div');
-    progress.className = 'panel';
-    progress.innerHTML = `
-      <div class="panel__title">Fortschritt</div>
-      <div class="stat-row">
-        <span class="stat-row__label">Geschaffte Level</span>
-        <span class="stat-row__value">${gameState.clearedLevels.length} / ${LEVELS.length}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-row__label">Sterne</span>
-        <span class="stat-row__value">${getTotalStars()} / ${LEVELS.length * 3}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-row__label">Münzen</span>
-        <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
-      </div>
-    `;
-    content.appendChild(progress);
-
-    /* ---------- Spielstand ---------- */
-    content.appendChild(spielstandBlock());
-
-    const resetButton = document.createElement('button');
-    resetButton.className = 'btn btn--danger';
-    resetButton.type = 'button';
-    resetButton.textContent = 'Fortschritt zurücksetzen';
-    resetButton.addEventListener('click', () => askReset(screen));
-    content.appendChild(resetButton);
-
-    const note = document.createElement('p');
-    note.className = 'map__info-text';
-    note.style.textAlign = 'center';
-    note.textContent = 'MonsterQuest · Phase 1';
-    content.appendChild(note);
-
-    screen.appendChild(content);
+    zeichne();
     root.appendChild(screen);
   },
 
   unmount() {
     // Der Zustandsmelder der Datenbank laeuft sonst weiter und schreibt in
     // einen Bildschirm, den es nicht mehr gibt.
-    if (abmelden) {
-      abmelden();
-      abmelden = null;
-    }
+    melderAbmelden();
   },
 };
 
-/** Meldet den Statustext wieder ab, wenn der Bildschirm schliesst. */
+/* ------------------------------------------------------------------ */
+/*  Reiter 1: Spiel                                                    */
+/* ------------------------------------------------------------------ */
+
+function baueSpiel(content, screen) {
+  /* ---------- Schalter ---------- */
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.innerHTML = '<div class="panel__title">Spiel</div>';
+
+  TOGGLES.forEach((toggle) => {
+    const row = document.createElement('div');
+    row.className = 'setting-row';
+    row.innerHTML = `
+      <span class="setting-row__label">
+        <span class="setting-row__name">${toggle.name}</span>
+        <span class="setting-row__hint">${toggle.hint}</span>
+      </span>
+    `;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `switch${gameState.settings[toggle.key] ? ' is-on' : ''}`;
+    button.setAttribute('aria-label', toggle.name);
+    // Der Schalter spielt seinen eigenen Klang, nicht den Standard-Tipp.
+    button.dataset.klang = 'keiner';
+    button.addEventListener('click', () => {
+      const value = !gameState.settings[toggle.key];
+      setSetting(toggle.key, value);
+      button.classList.toggle('is-on', value);
+      applySettings();
+      // Beim Einschalten einmal hörbar machen, was man gerade angeschaltet hat.
+      if (value && toggle.probe) spieleKlang(toggle.probe);
+    });
+
+    row.appendChild(button);
+    panel.appendChild(row);
+  });
+
+  /* ---------- Ton-Test ---------- */
+  // Damit man unterscheiden kann: liegt es am Spiel oder am Geraet?
+  const testZeile = document.createElement('div');
+  testZeile.className = 'setting-row';
+  testZeile.innerHTML = `
+    <span class="setting-row__label">
+      <span class="setting-row__name">Ton testen</span>
+      <span class="setting-row__hint" id="ton-befund">Antippen - du solltest zwei Töne hören.</span>
+    </span>
+  `;
+
+  const testKnopf = document.createElement('button');
+  testKnopf.type = 'button';
+  testKnopf.className = 'btn btn--small';
+  testKnopf.textContent = '🔊 Test';
+  testKnopf.dataset.klang = 'keiner';
+  testKnopf.addEventListener('click', () => {
+    spieleKlang('bestaetigen');
+    // Kurz warten: der Tonkanal wacht erst mit dieser Berührung auf.
+    setTimeout(() => {
+      testZeile.querySelector('#ton-befund').innerHTML = befundText(tonStatus());
+    }, 250);
+  });
+
+  testZeile.appendChild(testKnopf);
+  panel.appendChild(testZeile);
+  content.appendChild(panel);
+
+  /* ---------- Fortschritt ---------- */
+  const progress = document.createElement('div');
+  progress.className = 'panel';
+  progress.innerHTML = `
+    <div class="panel__title">Fortschritt</div>
+    <div class="stat-row">
+      <span class="stat-row__label">Geschaffte Level</span>
+      <span class="stat-row__value">${gameState.clearedLevels.length} / ${LEVELS.length}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-row__label">Sterne</span>
+      <span class="stat-row__value">${getTotalStars()} / ${LEVELS.length * 3}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-row__label">Münzen</span>
+      <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
+    </div>
+  `;
+  content.appendChild(progress);
+
+  const resetButton = document.createElement('button');
+  resetButton.className = 'btn btn--danger';
+  resetButton.type = 'button';
+  resetButton.textContent = 'Fortschritt zurücksetzen';
+  resetButton.addEventListener('click', () => askReset(screen));
+  content.appendChild(resetButton);
+
+  const note = document.createElement('p');
+  note.className = 'map__info-text';
+  note.style.textAlign = 'center';
+  note.textContent = 'MonsterQuest · Phase 1';
+  content.appendChild(note);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Reiter 2: Datenbank                                                */
+/* ------------------------------------------------------------------ */
+
+function baueDatenbank(content, screen, neuZeichnen) {
+  content.appendChild(namePanel(neuZeichnen));
+  content.appendChild(spielstandBlock());
+}
+
+/**
+ * Der Name des Spielers. Er steht oben in der Spielerleiste und - wenn eine
+ * Datenbank eingetragen ist - in deiner Übersicht statt der langen Nummer.
+ */
+function namePanel(neuZeichnen) {
+  const block = document.createElement('div');
+  block.className = 'panel';
+  block.innerHTML = '<div class="panel__title">Dein Name</div>';
+
+  const row = document.createElement('div');
+  row.className = 'setting-row setting-row--breit';
+  row.innerHTML = `
+    <span class="setting-row__label">
+      <span class="setting-row__hint" id="name-befund">So erscheinst du im Spiel und in der Übersicht.</span>
+    </span>
+  `;
+
+  const feld = document.createElement('input');
+  feld.type = 'text';
+  feld.className = 'eingabe';
+  feld.maxLength = NAME_MAX;
+  feld.placeholder = 'Dein Name';
+  feld.value = gameState.name;
+  feld.autocapitalize = 'words';
+  feld.autocomplete = 'off';
+  feld.spellcheck = false;
+  feld.setAttribute('aria-label', 'Dein Name');
+  feld.style.flex = '1';
+
+  const knopf = document.createElement('button');
+  knopf.type = 'button';
+  knopf.className = 'btn btn--small btn--green';
+  knopf.textContent = 'Speichern';
+
+  function speichern() {
+    setSpielername(feld.value);
+    // Neu zeichnen, damit das Feld den gekürzten/getrimmten Namen zeigt.
+    neuZeichnen();
+    // Kurze Rückmeldung - der Reiter ist ja schon wieder aufgebaut, deshalb
+    // per Timeout nach dem Neuzeichnen.
+    setTimeout(() => {
+      const befund = document.getElementById('name-befund');
+      if (befund) befund.textContent = 'Gespeichert.';
+    }, 0);
+  }
+
+  knopf.addEventListener('click', speichern);
+  feld.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      speichern();
+    }
+  });
+
+  const gruppe = document.createElement('span');
+  gruppe.className = 'eingabe-gruppe';
+  gruppe.style.flex = '1 1 100%';
+  gruppe.append(feld, knopf);
+  row.appendChild(gruppe);
+  block.appendChild(row);
+
+  return block;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Spielstand-Block (Datenbank-Reiter)                                */
+/* ------------------------------------------------------------------ */
+
+/** Meldet den Statustext wieder ab, wenn der Bildschirm oder Reiter wechselt. */
 let abmelden = null;
+
+function melderAbmelden() {
+  if (abmelden) {
+    abmelden();
+    abmelden = null;
+  }
+}
 
 /** Wie der Zustand aus cloud.js auf Deutsch heisst. */
 const STATUS_TEXT = {

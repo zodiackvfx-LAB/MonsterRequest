@@ -316,10 +316,23 @@
   gap: 3px;
 }
 
+/* Der Spielername - nur da, wenn einer gewählt wurde. Er darf die schmale
+   Leiste nicht sprengen: zu lange Namen werden mit … abgeschnitten. */
+.hud__name {
+  max-width: 118px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .hud__level-text {
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1;
+  color: var(--text-dim);
 }
 
 .hud__level-bar {
@@ -1039,4 +1052,18 @@
   letter-spacing: 0.16em;
   color: var(--text-dark);
   background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+}
+
+/* ---------- Willkommens-Pop-up (erster Start) ---------- */
+.willkommen__feld {
+  width: 100%;
+  text-align: center;
+  font-size: 16px; /* unter 16px zoomt Safari beim Antippen hinein */
+  letter-spacing: 0.01em;
+}
+
+.willkommen__hinweis {
+  margin-top: -2px;
+  font-size: 0.74rem;
+  color: var(--text-dim);
 }

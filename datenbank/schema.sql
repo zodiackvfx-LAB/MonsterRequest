@@ -235,6 +235,9 @@ grant execute on function public.mq_code_einloesen(text)     to anon, authentica
 create or replace view public.spielstaende_uebersicht as
   select
     s.id,
+    -- Der vom Spieler gewaehlte Name. Steht er nicht im Spielstand, bleibt
+    -- die Spalte leer und du siehst weiterhin die id.
+    nullif(s.daten ->> 'name', '') as name,
     public.mq_zahl(s.daten, 'characters', 'timo', 'level')::int as level,
     public.mq_zahl(s.daten, 'coins')::int                       as muenzen,
     public.mq_zahl(s.daten, 'unlockedWorld')::int               as welt,

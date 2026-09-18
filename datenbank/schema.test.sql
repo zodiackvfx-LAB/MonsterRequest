@@ -146,11 +146,11 @@ begin
   reset role;
 
   perform public.mq_speichern(v_b,
-    '{"revision":7,"coins":3450,"unlockedWorld":3,"clearedLevels":["1-1","1-2","2-1"],
-      "characters":{"timo":{"level":6}}}'::jsonb);
-  select (level = 6 and muenzen = 3450 and welt = 3 and geschaffte_kaempfe = 3)
+    '{"revision":7,"name":"Timo123","coins":3450,"unlockedWorld":3,
+      "clearedLevels":["1-1","1-2","2-1"],"characters":{"timo":{"level":6}}}'::jsonb);
+  select (name = 'Timo123' and level = 6 and muenzen = 3450 and welt = 3 and geschaffte_kaempfe = 3)
     into v_ok from public.spielstaende_uebersicht where id = v_b;
-  if v_ok then v_gut := v_gut + 1; raise notice 'ok   Die Uebersicht liest die Werte richtig';
+  if v_ok then v_gut := v_gut + 1; raise notice 'ok   Die Uebersicht liest Name und Werte richtig';
   else v_schlecht := v_schlecht + 1; raise notice 'FEHL Die Uebersicht zeigt falsche Werte'; end if;
 
   -- Ein kaputter Spielstand darf die Uebersicht nicht umwerfen.

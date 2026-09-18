@@ -9,6 +9,23 @@ import { createSprite } from './sprite.js';
 import { MUENZE } from '../data/items.js';
 
 /**
+ * Macht Text sicher fürs Einsetzen in HTML.
+ *
+ * Der Spielername kommt vom Spieler selbst. Ohne diese Umwandlung könnte ein
+ * Name wie "<b>" das Layout verbiegen oder Schlimmeres - deshalb werden die
+ * fünf gefährlichen Zeichen ersetzt.
+ */
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (z) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[z]);
+}
+
+/**
  * Füllt einen Balken (.bar__fill oder .hud__level-fill).
  *
  * Wir setzen die Variable --fuellung von 0 bis 1 statt einer Breite in
@@ -42,6 +59,7 @@ export function createHud() {
     <div class="hud__player">
       <span class="hud__avatar"></span>
       <span class="hud__level">
+        ${gameState.name ? `<span class="hud__name">${escapeHtml(gameState.name)}</span>` : ''}
         <span class="hud__level-text">Lv. ${level}</span>
         <span class="hud__level-bar">
           <span class="hud__level-fill" style="--fuellung: ${progress}"></span>

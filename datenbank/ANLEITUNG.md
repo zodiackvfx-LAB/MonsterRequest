@@ -95,8 +95,14 @@ Lesbarer wird es über den SQL-Editor:
 select * from spielstaende_uebersicht;
 ```
 
-Das zeigt je Zeile Level, Münzen, Welt, geschaffte Kämpfe und wann zuletzt
-gespeichert wurde.
+Das zeigt je Zeile den **Namen** (den der Spieler beim ersten Start gewählt
+hat), Level, Münzen, Welt, geschaffte Kämpfe und wann zuletzt gespeichert
+wurde.
+
+> **Wenn du die Datenbank schon vor dem Namens-Update eingerichtet hast:**
+> Die Namensspalte fehlt in deiner Übersicht noch. Führe `schema.sql` einmal
+> neu aus (SQL-Editor → einfügen → Run) – das ist gefahrlos, es überschreibt
+> nur die Ansicht und lässt alle Spielstände unangetastet.
 
 ---
 

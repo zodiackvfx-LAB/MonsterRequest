@@ -180,7 +180,9 @@ async function zaehleSpeicherungen() {
   const zeile = seite.split('<tr>').find((t) => t.includes(kurz));
   if (!zeile) return 0;
   const spalten = [...zeile.matchAll(/<td>(.*?)<\/td>/g)].map((t) => t[1]);
-  return Number(spalten[6]) || 0;
+  // "Speicherungen" ist die vorletzte Spalte (vor "Zuletzt") - so bleibt der
+  // Test heil, wenn vorne eine Spalte dazukommt (z. B. der Name).
+  return Number(spalten[spalten.length - 2]) || 0;
 }
 
 async function kleinSchreibenGeht() {

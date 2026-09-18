@@ -129,7 +129,9 @@ function uebersichtSeite() {
     .map(([id, e]) => {
       const d = e.daten ?? {};
       const level = d.characters?.timo?.level ?? '-';
-      return `<tr><td><code>${id.slice(0, 8)}…</code></td><td>${level}</td>`
+      const name = (d.name || '').replace(/[<>&]/g, '');
+      return `<tr><td>${name || '<span style="opacity:.4">—</span>'}</td>`
+        + `<td><code>${id.slice(0, 8)}…</code></td><td>${level}</td>`
         + `<td>${d.coins ?? 0}</td><td>${d.unlockedWorld ?? 1}</td>`
         + `<td>${(d.clearedLevels ?? []).length}</td><td>${d.revision ?? 0}</td>`
         + `<td>${e.speicherungen}</td><td>${e.gespeichert.replace('T', ' ').slice(0, 19)}</td></tr>`;
@@ -148,9 +150,9 @@ function uebersichtSeite() {
 </style></head><body>
 <h1>Spielstände · ${spielstaende.size}</h1>
 <p>Testserver, nur im Arbeitsspeicher. Seite neu laden zum Aktualisieren.</p>
-<table><thead><tr><th>Nummer</th><th>Level</th><th>Münzen</th><th>Welt</th>
+<table><thead><tr><th>Name</th><th>Nummer</th><th>Level</th><th>Münzen</th><th>Welt</th>
 <th>Kämpfe</th><th>Zähler</th><th>Speicherungen</th><th>Zuletzt</th></tr></thead>
-<tbody>${zeilen || '<tr><td colspan="8">Noch nichts gespeichert.</td></tr>'}</tbody></table>
+<tbody>${zeilen || '<tr><td colspan="9">Noch nichts gespeichert.</td></tr>'}</tbody></table>
 </body></html>`;
 }
 

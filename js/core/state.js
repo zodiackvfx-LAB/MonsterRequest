@@ -21,6 +21,7 @@ function createNewGame() {
        Start, ob der Stand aus der Datenbank neuer ist als der im Browser -
        siehe js/core/cloud.js. */
     revision: 0,
+    name: '', // vom Spieler beim ersten Start gewählt (siehe js/ui/willkommen.js)
     unlockedWorld: 1, // höchste freigeschaltete Welt
     clearedLevels: [], // Level-ids wie "1-3"
     stars: {}, // { "1-3": 2 }
@@ -49,13 +50,19 @@ function createNewGame() {
 
 export const gameState = createNewGame();
 
-/** Lädt den gespeicherten Fortschritt, falls vorhanden. */
+/**
+ * Lädt den gespeicherten Fortschritt, falls vorhanden.
+ *
+ * @returns {boolean} true, wenn schon ein Spielstand da war. false heisst:
+ *   erster Start auf diesem Gerät - dann fragt das Spiel nach einem Namen
+ *   (siehe js/main.js und js/ui/willkommen.js).
+ */
 export function loadProgress() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       uebernehmen(JSON.parse(raw));
-      return;
+      return true;
     }
 
     // Alter Spielstand (3 Level ohne Welten): in die neue Form bringen.
@@ -72,11 +79,13 @@ export function loadProgress() {
         settings: saved.settings,
       });
       saveProgress();
+      return true;
     }
   } catch (error) {
     // Ein kaputter oder gesperrter Speicher darf das Spiel nicht blockieren.
     console.warn('Spielstand konnte nicht geladen werden:', error);
   }
+  return false;
 }
 
 /** Frueherer Name der Spielerfigur -> heutiger Name. */
@@ -121,6 +130,7 @@ function figurUmbenennen(eintrag) {
 
 function uebernehmen(saved) {
   gameState.revision = Number(saved.revision) || 0;
+  gameState.name = typeof saved.name === 'string' ? saved.name : '';
   gameState.unlockedWorld = Number(saved.unlockedWorld) || 1;
   gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels.map(String) : [];
   gameState.stars = saved.stars && typeof saved.stars === 'object' ? saved.stars : {};
@@ -392,6 +402,18 @@ export function setAktiverSkin(monsterId, skinId) {
 /** Eine Einstellung ändern (z. B. Ton an/aus). */
 export function setSetting(key, value) {
   gameState.settings[key] = value;
+  saveProgress();
+}
+
+/** Der Name, unter dem der Spieler auftritt - höchstens 16 Zeichen. */
+export const NAME_MAX = 16;
+
+/**
+ * Setzt den Spielernamen. Leerzeichen am Rand fallen weg, zu lange Namen
+ * werden gekürzt. Ein leerer Name ist erlaubt (dann zeigt das Spiel keinen).
+ */
+export function setSpielername(name) {
+  gameState.name = String(name ?? '').trim().slice(0, NAME_MAX);
   saveProgress();
 }
 
