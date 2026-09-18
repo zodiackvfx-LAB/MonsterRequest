@@ -9,7 +9,7 @@
 import { showScreen } from '../core/screens.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
-import { BEUTE_ATTACKEN, SELTENHEITEN } from '../data/items.js';
+import { BEUTE_ATTACKEN, MUENZE, SELTENHEITEN } from '../data/items.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { HAND_SIZE } from '../core/deck.js';
@@ -52,7 +52,7 @@ export const deckScreen = {
           Genau ${deck.length} Attacken, im Kampf ${HAND_SIZE} auf der Hand.
           <strong>Antippen</strong> zum Tauschen, <strong>Aufwerten</strong> macht
           eine Attacke stärker - die XP-Kosten bleiben gleich.
-          <br>🪙 ${gameState.coins} · 💠 ${gameState.materials}
+          <br>${MUENZE} ${gameState.coins} · 💠 ${gameState.materials}
         </p>
       `;
       content.appendChild(intro);
@@ -103,7 +103,7 @@ export const deckScreen = {
       knopf.disabled = voll || !bezahlbar;
       knopf.innerHTML = voll
         ? 'Max.'
-        : `🪙 ${kosten.muenzen}<br><span class="upgrade-row__mat">💠 ${kosten.material}</span>`;
+        : `${MUENZE} ${kosten.muenzen}<br><span class="upgrade-row__mat">💠 ${kosten.material}</span>`;
       knopf.addEventListener('click', () => {
         if (attackeAufwerten(attackId)) {
           spieleKlang('kauf');

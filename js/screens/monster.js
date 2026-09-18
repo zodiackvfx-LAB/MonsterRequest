@@ -10,7 +10,7 @@
 import { showScreen } from '../core/screens.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
-import { SELTENHEITEN, SKINS } from '../data/items.js';
+import { MUENZE, SELTENHEITEN, SKINS } from '../data/items.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { createSprite, spritesNeuZeichnen } from '../ui/sprite.js';
@@ -100,7 +100,7 @@ export const monsterScreen = {
       upgrade.innerHTML = `
         <div class="panel__title">
           Aufwertungen
-          <span class="panel__count">🪙 ${gameState.coins} · 💠 ${gameState.materials}</span>
+          <span class="panel__count">${MUENZE} ${gameState.coins} · 💠 ${gameState.materials}</span>
         </div>
       `;
 
@@ -129,7 +129,7 @@ export const monsterScreen = {
         knopf.disabled = voll || !bezahlbar;
         knopf.innerHTML = voll
           ? 'Maximum'
-          : `🪙 ${kosten.muenzen}<br><span class="upgrade-row__mat">💠 ${kosten.material}</span>`;
+          : `${MUENZE} ${kosten.muenzen}<br><span class="upgrade-row__mat">💠 ${kosten.material}</span>`;
         knopf.addEventListener('click', () => {
           if (wertAufwerten(monster.id, schluessel)) {
             spieleKlang('kauf');

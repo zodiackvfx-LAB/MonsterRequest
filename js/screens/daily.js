@@ -12,6 +12,7 @@ import { balkenFuellen, createTopbar } from '../ui/hud.js';
 import { gameState } from '../core/state.js';
 import { aufgabeAbholen, getTagesAufgaben } from '../core/aufgaben.js';
 import { spieleKlang } from '../core/audio.js';
+import { MUENZE } from '../data/items.js';
 
 export const dailyScreen = {
   mount(root) {
@@ -36,7 +37,7 @@ export const dailyScreen = {
           Geschafft: <strong>${fertig} von ${aufgaben.length}</strong>.
           Morgen gibt es neue Aufgaben.
         </p>
-        <p class="map__info-text">🪙 ${gameState.coins} · 💠 ${gameState.materials}</p>
+        <p class="map__info-text">${MUENZE} ${gameState.coins} · 💠 ${gameState.materials}</p>
       `;
       content.appendChild(kopf);
 
@@ -82,7 +83,7 @@ function aufgabenZeile(aufgabe, stand, erledigt, abgeholt, neuZeichnen) {
     knopf.textContent = 'Geholt';
   } else if (erledigt) {
     knopf.classList.add('btn--green');
-    knopf.innerHTML = `🪙&nbsp;${aufgabe.muenzen}<br>💠&nbsp;${aufgabe.material}`;
+    knopf.innerHTML = `${MUENZE}&nbsp;${aufgabe.muenzen}<br>💠&nbsp;${aufgabe.material}`;
     // data-klang="keiner": der eigene Abhol-Klang statt des Knopfklangs
     knopf.dataset.klang = 'keiner';
     knopf.addEventListener('click', () => {
@@ -92,7 +93,7 @@ function aufgabenZeile(aufgabe, stand, erledigt, abgeholt, neuZeichnen) {
   } else {
     knopf.classList.add('btn--ghost');
     knopf.disabled = true;
-    knopf.innerHTML = `🪙&nbsp;${aufgabe.muenzen}<br>💠&nbsp;${aufgabe.material}`;
+    knopf.innerHTML = `${MUENZE}&nbsp;${aufgabe.muenzen}<br>💠&nbsp;${aufgabe.material}`;
   }
 
   zeile.appendChild(knopf);

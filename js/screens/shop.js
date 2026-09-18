@@ -7,7 +7,7 @@
 
 import { showScreen } from '../core/screens.js';
 import { TRUHEN } from '../data/shop.js';
-import { SELTENHEITEN } from '../data/items.js';
+import { MUENZE, SELTENHEITEN } from '../data/items.js';
 import { truheOeffnen } from '../core/loot.js';
 import { bezahlen, beuteGutschreiben, gameState, kannBezahlen } from '../core/state.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
@@ -56,7 +56,7 @@ export const shopScreen = {
       const kaufen = document.createElement('button');
       kaufen.className = 'btn btn--small chest-card__buy';
       kaufen.type = 'button';
-      kaufen.innerHTML = `🪙 ${truhe.preis}`;
+      kaufen.innerHTML = `${MUENZE} ${truhe.preis}`;
       kaufen.disabled = !kannBezahlen(truhe.preis);
       kaufen.addEventListener('click', () => {
         if (!bezahlen(truhe.preis)) {
@@ -76,7 +76,7 @@ export const shopScreen = {
       <div class="panel__title">Dein Besitz</div>
       <div class="stat-row">
         <span class="stat-row__label">Münzen</span>
-        <span class="stat-row__value">🪙 ${gameState.coins}</span>
+        <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
       </div>
       <div class="stat-row">
         <span class="stat-row__label">Material</span>

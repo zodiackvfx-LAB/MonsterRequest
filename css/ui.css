@@ -260,6 +260,33 @@
   transition: transform 0.3s ease;
 }
 
+/*
+ * Die gezeichnete Muenze.
+ *
+ * Statt des Emojis 🪙, das je nach Geraet anders aussieht - auf dem iPhone
+ * silbergrau, sonst golden. Gezeichnet passt sie ueberall zur Goldfarbe des
+ * Spiels. Sie waechst mit der Schriftgroesse (em statt px).
+ */
+.muenze {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  /* Lichtpunkt oben links, dunkler Rand unten rechts - das macht rund. */
+  background: radial-gradient(circle at 34% 28%, #ffeda6 0%, var(--gold-1) 42%, var(--gold-2) 100%);
+  border: 0.09em solid #a86c14;
+  box-shadow: inset 0 -0.1em 0.12em rgba(120, 66, 8, 0.45);
+  vertical-align: -0.13em;
+}
+
+/* Auf einem goldenen Knopf ginge Gold auf Gold unter - ein heller Ring
+   hebt die Muenze ab. */
+.btn .muenze {
+  border-color: #6d4408;
+  box-shadow: inset 0 -0.1em 0.12em rgba(120, 66, 8, 0.45),
+    0 0 0 0.07em rgba(255, 255, 255, 0.6);
+}
+
 .hud__coins {
   display: flex;
   align-items: center;

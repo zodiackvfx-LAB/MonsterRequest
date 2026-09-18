@@ -19,7 +19,7 @@
  *     eine Bosstruhe.
  */
 
-import { MATERIAL_BEUTE } from '../data/items.js';
+import { MATERIAL_BEUTE, MUENZE } from '../data/items.js';
 import { BOSS_TRUHE } from '../data/shop.js';
 import { truheOeffnen } from './loot.js';
 import { beuteGutschreiben, completeLevel, isLevelCleared } from './state.js';
@@ -72,7 +72,7 @@ export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) 
   // Münzen und Erfahrung sind durch completeLevel und xpGutschreiben schon
   // auf dem Konto - sie werden nur noch angezeigt.
   const bereitsGebucht = [
-    stueck('muenzen', coins, `${coins} Münzen`, '🪙', 'gewoehnlich'),
+    stueck('muenzen', coins, `${coins} Münzen`, MUENZE, 'gewoehnlich'),
     stueck('erfahrung', level.xp ?? 0, `${level.xp ?? 0} Erfahrung`, '⭐', 'selten'),
   ];
 

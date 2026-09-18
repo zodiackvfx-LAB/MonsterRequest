@@ -8,6 +8,16 @@ import { registerAttack } from './attacks.js';
  * Sammlung ziehen ihre Daten von hier.
  */
 
+/**
+ * Das Münzsymbol.
+ *
+ * Bewusst kein Emoji: 🪙 sieht je nach Gerät anders aus - auf dem iPhone
+ * silbergrau, auf anderen Systemen golden. Weil Münzen die einzige Währung
+ * sind und überall in Gold auftauchen, wird die Münze gezeichnet (siehe
+ * .muenze in css/ui.css). So sieht sie auf jedem Gerät gleich aus.
+ */
+export const MUENZE = '<span class="muenze" aria-hidden="true"></span>';
+
 /** Die vier Seltenheiten. Die Farbe wird in der Anzeige verwendet. */
 export const SELTENHEITEN = {
   gewoehnlich: { id: 'gewoehnlich', name: 'Gewöhnlich', farbe: '#9aa8d4', rang: 0 },

@@ -5,7 +5,7 @@
  * Der Shop-Bildschirm (js/screens/shop.js) zeigt das Ergebnis an.
  */
 
-import { BEUTE_ATTACKEN, MATERIAL_BEUTE, MUENZ_BEUTE, SKINS } from '../data/items.js';
+import { BEUTE_ATTACKEN, MATERIAL_BEUTE, MUENZE, MUENZ_BEUTE, SKINS } from '../data/items.js';
 import { besitztAttacke, besitztSkin } from './state.js';
 
 /** Zufallszahl zwischen min und max (beide eingeschlossen). */
@@ -76,7 +76,7 @@ function ziehe(seltenheit) {
   }
 
   const menge = zwischen(...MUENZ_BEUTE[seltenheit]);
-  return { art: 'muenzen', seltenheit, menge, name: `${menge} Münzen`, icon: '🪙' };
+  return { art: 'muenzen', seltenheit, menge, name: `${menge} Münzen`, icon: MUENZE };
 }
 
 /** Mischt eine Liste (damit das garantierte Stück nicht immer vorne liegt). */

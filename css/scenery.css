@@ -198,6 +198,13 @@
   --snow: #fff3d6;
 }
 
+/* Hinter einem Menue haben die Wolken nichts zu suchen: Unter dem
+   Abdunkel-Schleier bleibt von einer weissen Wolke nur ein grauer Fleck
+   uebrig, der wie ein Anzeigefehler aussieht - besonders am oberen Rand. */
+.scenery--gedimmt .scenery__cloud {
+  display: none;
+}
+
 /* Abgedunkelte Kulisse, damit Menues darauf lesbar bleiben */
 .scenery--gedimmt::after {
   content: '';

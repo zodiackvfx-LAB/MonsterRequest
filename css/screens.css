@@ -1571,3 +1571,243 @@
   line-height: 1.25;
   text-align: center;
 }
+
+/* =========================================================
+   Querformat auf dem Handy
+   =========================================================
+   Gedreht bleiben nur rund 390 Pixel Hoehe - untereinander passt der
+   Startbildschirm da nicht mehr hin. Statt alles zu schrumpfen, nutzen wir
+   die Breite: links Logo und Monster, rechts die Knoepfe.
+   ========================================================= */
+@media (orientation: landscape) and (max-height: 560px) {
+  .screen--start {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    align-items: center;
+    column-gap: 18px;
+    row-gap: 4px;
+  }
+
+  /* Die Spielerleiste laeuft ueber beide Spalten. */
+  .screen--start .hud {
+    grid-area: 1 / 1 / 2 / 3;
+  }
+
+  .screen--start .start__logo {
+    grid-area: 2 / 1 / 3 / 2;
+    margin-top: 0;
+    align-self: end;
+  }
+
+  .screen--start .start__hero {
+    grid-area: 3 / 1 / 4 / 2;
+    /* min-height: 0 liesse den Bereich auf null zusammenfallen - die Figur
+       wuerde dann ueber das Logo laufen. */
+    min-height: 90px;
+    align-content: start;
+    gap: 8px;
+  }
+
+  .screen--start .start__actions {
+    grid-area: 2 / 2 / 4 / 3;
+    align-self: center;
+    padding-bottom: 0;
+    gap: 10px;
+  }
+
+  /* Alle sechs Menuepunkte in eine Reihe - spart eine ganze Zeile Hoehe. */
+  .screen--start .start__menu {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+
+  .logo {
+    max-width: 210px;
+  }
+
+  .logo__claim {
+    font-size: 0.72rem;
+  }
+
+  :root {
+    --sprite-large: 84px;
+  }
+
+  .start__hero-name {
+    font-size: 0.72rem;
+    padding: 3px 12px;
+  }
+
+  .tagesbanner {
+    padding: 7px 12px;
+  }
+
+  .tagesbanner__icon {
+    font-size: 1.2rem;
+  }
+
+  .btn--big {
+    min-height: 46px;
+    font-size: 1rem;
+  }
+
+  .icon-btn__circle {
+    width: 42px;
+    height: 42px;
+    font-size: 1.1rem;
+  }
+
+  .icon-btn__label {
+    font-size: 0.5rem;
+  }
+
+  /* Unterseiten: weniger Luft, damit der Inhalt nicht wegscrollt. */
+  .page__content {
+    gap: 8px;
+  }
+
+  /* ---- Kampf ----
+     Gedreht muss die ganze Kampfanzeige in rund 390 Pixel Hoehe passen:
+     Kopfzeile, zwei Kaempferleisten, die Arena, die XP-Leiste und vier
+     Karten. Deshalb ist hier alles eine Nummer kleiner. Die Karten stehen
+     ohnehin schon nebeneinander, weil der Bildschirm breit genug ist. */
+  .screen--battle {
+    gap: 5px;
+  }
+
+  .fighter-bar {
+    padding: 5px 10px;
+    gap: 3px;
+  }
+
+  .fighter-bar__name {
+    font-size: 0.82rem;
+  }
+
+  .fighter-bar__hp {
+    font-size: 0.72rem;
+  }
+
+  .bar {
+    height: 11px;
+  }
+
+  .pip {
+    height: 9px;
+  }
+
+  .battlefield {
+    min-height: 60px;
+  }
+
+  .arena {
+    max-height: 124px;
+  }
+
+  .battle-log {
+    font-size: 0.74rem;
+  }
+
+  .xp-row {
+    padding: 5px 10px;
+  }
+
+  .xp-row__head {
+    margin-bottom: 4px;
+  }
+
+  .hand {
+    margin-top: 2px;
+  }
+
+  .card {
+    min-height: 58px;
+    padding: 5px 4px 4px;
+  }
+
+  .card__icon {
+    font-size: 1.05rem;
+  }
+
+  .card__name {
+    font-size: 0.66rem;
+  }
+
+  .card__effect {
+    font-size: 0.6rem;
+  }
+
+  :root {
+    --sprite: 54px;
+  }
+
+  /* Die Baeume der Arena mit verkleinern, sonst ragen sie oben heraus. */
+  .arena__tree { --h: 40px; }
+  .arena__treeline--fern .arena__tree:nth-child(2n) { --h: 32px; }
+  .arena__treeline--fern .arena__tree:nth-child(3n) { --h: 44px; }
+  .arena__treeline--fern .arena__tree:nth-child(5n) { --h: 28px; }
+  .arena__treeline--nah .arena__tree:nth-child(1) { --h: 60px; margin-bottom: -12px; }
+  .arena__treeline--nah .arena__tree:nth-child(2) { --h: 48px; margin-bottom: -6px; }
+  .arena__treeline--nah .arena__tree:nth-child(3) { --h: 54px; margin-bottom: -10px; }
+
+  .platform {
+    width: 64px;
+    height: 13px;
+  }
+
+  /* ---- Fenster (Sieg, Niederlage, Nachfragen) ----
+     Hochkant stehen die Knoepfe untereinander. Gedreht wuerde das Fenster
+     dadurch hoeher als der Bildschirm und man muesste darin scrollen, um
+     "Weiter" zu erreichen. Also breiter statt hoeher. */
+  .overlay__box {
+    max-width: 520px;
+    gap: 6px;
+    padding: 14px 18px;
+  }
+
+  .overlay__icon {
+    font-size: 2rem;
+  }
+
+  .overlay__title {
+    font-size: 1.15rem;
+  }
+
+  .overlay__text {
+    font-size: 0.8rem;
+  }
+
+  .overlay__actions {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 2px;
+  }
+
+  /* Der Hauptknopf steht links, damit er unter dem Daumen liegt. */
+  .overlay__actions .btn--big {
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+
+  .belohnung .loot-item {
+    width: 62px;
+    min-height: 0;
+    padding: 5px 3px;
+  }
+
+  .belohnung .loot-item__icon {
+    font-size: 1.1rem;
+  }
+
+  .overlay__unlock {
+    font-size: 0.78rem;
+    padding: 5px 8px;
+  }
+}
+
+/* Ein zu hohes Fenster darf nie ueber den Rand laufen - lieber scrollen.
+   Betrifft vor allem das Siegesfenster im Querformat. */
+.overlay__box {
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+}

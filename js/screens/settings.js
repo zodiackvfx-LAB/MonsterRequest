@@ -8,6 +8,7 @@ import { createTopbar } from '../ui/hud.js';
 import { gameState, getTotalStars, resetProgress, setSetting } from '../core/state.js';
 import { LEVELS } from '../data/levels.js';
 import { spieleKlang, tonEinstellungenAnwenden, tonStatus } from '../core/audio.js';
+import { MUENZE } from '../data/items.js';
 
 /** Die Schalter. Neue Einstellung = hier einen Eintrag ergänzen. */
 const TOGGLES = [
@@ -117,7 +118,7 @@ export const settingsScreen = {
       </div>
       <div class="stat-row">
         <span class="stat-row__label">Münzen</span>
-        <span class="stat-row__value">🪙 ${gameState.coins}</span>
+        <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
       </div>
     `;
     content.appendChild(progress);

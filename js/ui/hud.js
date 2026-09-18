@@ -6,6 +6,7 @@ import { gameState } from '../core/state.js';
 import { charakterWerte, getCharakter, xpFuerNaechstesLevel } from '../core/progression.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { createSprite } from './sprite.js';
+import { MUENZE } from '../data/items.js';
 
 /**
  * Füllt einen Balken (.bar__fill oder .hud__level-fill).
@@ -48,7 +49,7 @@ export function createHud() {
       </span>
     </div>
     <div class="hud__coins">
-      <span class="hud__coin-icon">🪙</span>
+      <span class="hud__coin-icon">${MUENZE}</span>
       <span>${gameState.coins}</span>
     </div>
   `;
