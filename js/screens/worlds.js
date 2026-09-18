@@ -7,7 +7,7 @@
 
 import { showScreen } from '../core/screens.js';
 import { WORLDS, fightsInWorld } from '../data/worlds.js';
-import { createScenery } from '../ui/scenery.js';
+import { applyWorldColors, createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { clearedInWorld, getTotalStars, isWorldCleared, isWorldUnlocked } from '../core/state.js';
 
@@ -31,6 +31,9 @@ export const worldsScreen = {
       const card = document.createElement('button');
       card.type = 'button';
       card.className = `world-card region--${world.scenery}${unlocked ? '' : ' is-locked'}`;
+      // Damit die kleine Vorschau die Farben ihrer Welt zeigt und nicht
+      // ueberall dieselbe gruene Wiese.
+      applyWorldColors(card, world);
       card.disabled = !unlocked;
       card.innerHTML = `
         <span class="world-card__art">

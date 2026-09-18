@@ -279,7 +279,7 @@ export const WORLDS = [
   {
     id: 5,
     name: 'Schattenreich',
-    icon: '🌑',
+    icon: '🌙',
     hueBase: 288, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'schatten',
     farben: {

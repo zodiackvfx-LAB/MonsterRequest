@@ -124,14 +124,7 @@ export function applyRegion(screen, region = 'wald', welt = null) {
 
   if (!welt) return;
 
-  // Die Farben kommen aus js/data/worlds.js und werden hier gesetzt.
-  // So steht alles ueber eine Welt an einer Stelle.
-  if (welt.farben) {
-    Object.entries(FARB_NAMEN).forEach(([name, variable]) => {
-      const wert = welt.farben[name];
-      if (wert) screen.style.setProperty(variable, wert);
-    });
-  }
+  applyWorldColors(screen, welt);
 
   // Eigenes Hintergrundbild statt der gezeichneten Kulisse.
   if (welt.hintergrund) {
@@ -142,6 +135,25 @@ export function applyRegion(screen, region = 'wald', welt = null) {
     screen.style.setProperty('--welt-bild', `url("${adresse}")`);
     screen.classList.add('region--eigenes-bild');
   }
+}
+
+/**
+ * Setzt nur die Farben einer Welt auf ein beliebiges Element.
+ *
+ * Gebraucht wird das ueberall dort, wo eine Welt in klein vorkommt -
+ * zum Beispiel die Vorschau auf einer Weltkarte in der Weltauswahl.
+ * Ohne diesen Aufruf wuerde jede Vorschau die Standardfarben zeigen
+ * und alle Welten saehen gleich aus.
+ *
+ * @param {HTMLElement} el
+ * @param {object} welt - ein Eintrag aus js/data/worlds.js
+ */
+export function applyWorldColors(el, welt) {
+  if (!welt || !welt.farben) return;
+  Object.entries(FARB_NAMEN).forEach(([name, variable]) => {
+    const wert = welt.farben[name];
+    if (wert) el.style.setProperty(variable, wert);
+  });
 }
 
 /**

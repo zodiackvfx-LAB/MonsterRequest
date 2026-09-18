@@ -186,12 +186,14 @@ function inhaltFuer(attacke, level, hinweis = null) {
   return `
     <span class="deck-item__icon">${attacke.icon}</span>
     <span class="deck-item__body">
-      <span class="deck-item__name">
-        ${attacke.name}
+      <span class="deck-item__name">${attacke.name}</span>
+      <!-- Stufe und Seltenheit stehen in der zweiten Zeile. Sonst wird der
+           Name bei langen Attacken wie "Aufwaertshaken" umgebrochen. -->
+      <span class="deck-item__text">
         <span class="deck-item__level">Lv. ${level}</span>
         ${seltenheit ? `<span class="deck-item__rarity" style="color:${seltenheit.farbe}">${seltenheit.name}</span>` : ''}
+        <span>${hinweis ?? wirkung}</span>
       </span>
-      <span class="deck-item__text">${hinweis ?? wirkung}</span>
     </span>
     <span class="deck-item__cost">${attacke.cost}</span>
   `;

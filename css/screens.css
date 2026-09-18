@@ -31,8 +31,9 @@
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
-  background: var(--panel);
-  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(60, 95, 208, 0.9), rgba(27, 42, 99, 0.92));
+  border: 2px solid var(--fantasy-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 8px rgba(8, 14, 40, 0.45);
 }
 
 .start__actions {
@@ -131,6 +132,7 @@
 }
 
 .node__circle {
+  position: relative;
   width: 62px;
   height: 62px;
   display: grid;
@@ -138,10 +140,26 @@
   font-size: 1.5rem;
   font-weight: 700;
   border-radius: 50%;
-  border: 3px solid #fff;
-  background: linear-gradient(180deg, #8ea3d6, #5a6ba8);
-  box-shadow: 0 5px 0 rgba(12, 18, 48, 0.5), 0 10px 16px rgba(10, 16, 44, 0.4);
+  /* Goldener Ring statt weissem - das Abzeichen wirkt dadurch wertiger. */
+  border: 3px solid var(--gold-1);
+  background: linear-gradient(180deg, #9db1e0 0%, #6a7cb8 45%, #3f4c80 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(8, 14, 40, 0.4),
+    0 5px 0 rgba(12, 18, 48, 0.55), 0 10px 16px rgba(10, 16, 44, 0.45);
   transition: transform 0.1s ease;
+}
+
+/* Glanzlicht oben auf dem Abzeichen. */
+.node__circle::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 16%;
+  width: 68%;
+  height: 34%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent);
+  pointer-events: none;
 }
 
 .node.is-unlocked .node__circle {
@@ -150,7 +168,7 @@
 }
 
 .node.is-cleared .node__circle {
-  background: linear-gradient(180deg, var(--green-1), var(--green-2));
+  background: linear-gradient(180deg, #bdf58a 0%, var(--green-1) 40%, var(--green-2) 100%);
   color: #0f2a08;
 }
 
@@ -170,8 +188,17 @@
   cursor: not-allowed;
 }
 
+/* Der naechste Kampf wippt und traegt einen goldenen Schein - so findet
+   man ihn sofort, auch wenn die Karte lang ist. */
 .node.is-current .node__circle {
-  animation: bob 1.8s ease-in-out infinite;
+  animation: bob 1.8s ease-in-out infinite, node-leuchten 2.2s ease-in-out infinite;
+}
+
+@keyframes node-leuchten {
+  0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.4),
+                         0 5px 0 rgba(12,18,48,0.55), 0 0 12px rgba(255, 197, 61, 0.35); }
+  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.4),
+                         0 5px 0 rgba(12,18,48,0.55), 0 0 24px rgba(255, 197, 61, 0.7); }
 }
 
 .node__label {
@@ -213,8 +240,9 @@
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 600;
-  background: var(--panel);
-  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, #2f3f7d, #16204a);
+  border: 2px solid var(--gold-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(8, 14, 40, 0.4);
 }
 
 /* Der gerade ausgewählte Kampf */
@@ -312,14 +340,26 @@
 
 /* Infozeile eines Kämpfers (Name, Lebenspunkte, Energie) */
 .fighter-bar {
+  position: relative;
   flex: 0 0 auto;
   display: grid;
   gap: 5px;
   padding: 9px 12px;
   border-radius: var(--radius-sm);
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(42, 58, 114, 0.94), rgba(17, 24, 58, 0.94));
   border: 2px solid var(--panel-border);
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* goldener Lichtstrich oben - dasselbe Muster wie bei .panel */
+.fighter-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 197, 61, 0.6), transparent);
 }
 
 .fighter-bar__head {
@@ -389,8 +429,9 @@
   flex: 0 0 auto;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(42, 58, 114, 0.94), rgba(17, 24, 58, 0.94));
   border: 2px solid var(--panel-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .wert-leiste__kopf {
@@ -469,17 +510,29 @@
 }
 
 .deck-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
   border: 2px solid var(--panel-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 3px 0 rgba(8, 14, 40, 0.35);
 }
 
+/* Das Symbol sitzt auf einer runden Scheibe - wirkt wie ein Wappen */
 .deck-item__icon {
-  font-size: 1.6rem;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #4a63bd, #1a2350 75%);
+  border: 2px solid rgba(255, 197, 61, 0.55);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .deck-item__body {
@@ -490,15 +543,15 @@
 }
 
 .deck-item__name {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 2px 0;
   font-size: 0.92rem;
   font-weight: 600;
 }
 
 .deck-item__text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
   font-size: 0.75rem;
   color: var(--text-dim);
 }
@@ -524,9 +577,7 @@
 }
 
 .deck-item__level {
-  margin-left: 6px;
-  /* nowrap, damit "Lv." und die Zahl bei langen Attackennamen
-     nicht auf zwei Zeilen zerrissen werden. */
+  /* nowrap, damit "Lv." und die Zahl nicht auf zwei Zeilen zerrissen werden. */
   white-space: nowrap;
   padding: 1px 7px;
   border-radius: 999px;
@@ -564,7 +615,6 @@
 }
 
 .deck-item__rarity {
-  margin-left: 6px;
   font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -596,6 +646,7 @@
   border-radius: 999px;
   background: linear-gradient(180deg, #8fe3ff, #2ba7e0);
   border: 2px solid #0d1430;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55), 0 2px 4px rgba(8, 14, 40, 0.45);
 }
 
 /* Sammlung: Raster aus Monsterkacheln */
@@ -606,26 +657,45 @@
 }
 
 .collection-item {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 4px;
   padding: 14px 10px;
   text-align: center;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
   border: 2px solid var(--panel-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 3px 0 rgba(8, 14, 40, 0.35);
+}
+
+/* Heller Schimmer oben, damit die Kachel gewoelbt aussieht.
+   Der Schimmer holt sich die Rundung selbst - die Kachel braucht deshalb
+   kein overflow:hidden (das wuerde sie im Raster schrumpfen lassen). */
+.collection-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 42%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+  pointer-events: none;
 }
 
 .collection-item.is-locked {
   opacity: 0.55;
 }
 
+/* runder Lichtfleck hinter der Figur - als Hintergrund, damit
+   die Figur selbst immer davor liegt */
 .collection-item__sprite {
+  position: relative;
   width: 56px;
   height: 56px;
   display: grid;
   place-items: center;
   font-size: 2rem;
+  background: radial-gradient(circle, rgba(109, 146, 255, 0.34), transparent 68%);
 }
 
 .collection-item.is-locked .collection-item__sprite {
@@ -897,6 +967,7 @@
    Weltauswahl
    ========================================================= */
 .world-card {
+  position: relative;
   font: inherit;
   color: var(--text);
   display: flex;
@@ -907,10 +978,19 @@
   overflow: hidden;
   text-align: left;
   cursor: pointer;
-  background: var(--panel);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 55%, #16204a 100%);
   border: 2px solid var(--panel-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* schraeger Lichtstreifen wie auf einer Sammelkarte */
+.world-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(118deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
 }
 
 .world-card:not(:disabled):active {
@@ -922,12 +1002,26 @@
   filter: grayscale(0.7) brightness(0.75);
 }
 
+/* freigespielte Welten bekommen einen goldenen Rand */
+.world-card:not(.is-locked) {
+  border-color: var(--gold-2);
+}
+
 /* Kleine Vorschau der Weltfarben - nutzt dieselben Variablen wie die Kulisse */
 .world-card__art {
   position: relative;
   flex: 0 0 96px;
   overflow: hidden;
   background: linear-gradient(180deg, var(--s-sky-top), var(--s-sky-bottom));
+  border-right: 2px solid rgba(8, 14, 40, 0.5);
+}
+
+/* weiche Abdunklung zum Text hin, damit die Kante nicht hart wirkt */
+.world-card__art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 55%, rgba(12, 18, 48, 0.45) 100%);
 }
 
 .world-card__hill {
@@ -943,6 +1037,7 @@
 .world-card__icon {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
   font-size: 2.2rem;
@@ -980,11 +1075,14 @@
   border-radius: 999px;
   font-size: 0.68rem;
   font-weight: 600;
-  background: rgba(12, 18, 48, 0.55);
+  background: rgba(12, 18, 48, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .world-card__chip--done {
-  background: var(--green-3);
+  background: linear-gradient(180deg, var(--green-2), var(--green-3));
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Zähler in einer Panel-Überschrift, z. B. "4/12" */
@@ -1015,17 +1113,30 @@
    Shop und Truhen
    ========================================================= */
 .chest-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px;
   border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
-  border: 2px solid var(--panel-border);
-  box-shadow: var(--shadow-panel);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 58%, #16204a 100%);
+  border: 2px solid var(--gold-2);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* schraeger Glanz - Truhen sollen wertvoll aussehen */
+.chest-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(118deg, transparent 40%, rgba(255, 220, 140, 0.1) 50%, transparent 60%);
 }
 
 .chest-card__icon {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
   width: 58px;
   height: 58px;
@@ -1033,7 +1144,9 @@
   place-items: center;
   font-size: 2.1rem;
   border-radius: var(--radius-sm);
-  background: rgba(12, 18, 48, 0.5);
+  background: radial-gradient(circle at 50% 38%, rgba(255, 197, 61, 0.28), rgba(12, 18, 48, 0.65) 70%);
+  border: 2px solid rgba(255, 197, 61, 0.45);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45);
 }
 
 .chest-card__body {
@@ -1107,9 +1220,9 @@
   padding: 8px 4px;
   text-align: center;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  background: linear-gradient(180deg, #2f4185 0%, var(--panel-solid) 60%, #18224e 100%);
   border: 2px solid var(--rarity);
-  box-shadow: 0 0 14px -2px var(--rarity);
+  box-shadow: 0 0 14px -2px var(--rarity), inset 0 1px 0 rgba(255, 255, 255, 0.16);
   animation: loot-reveal 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
 }
 
@@ -1171,17 +1284,28 @@
   }
 }
 
-/* Steckbrief oben im Monster-Bildschirm */
+/* Steckbrief oben im Monster-Bildschirm.
+   Der Lichtkegel liegt als zweite Hintergrundschicht ueber dem Panel-
+   Verlauf - so bleibt die Figur immer davor. */
 .monster-head {
   display: grid;
   justify-items: center;
   gap: 6px;
   text-align: center;
+  background:
+    radial-gradient(circle at 50% 32%, rgba(120, 158, 255, 0.34), transparent 58%),
+    linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 55%, #16204a 100%);
+}
+
+/* Die Figur bekommt einen weichen Schatten nach unten */
+.monster-head .pixel-sprite {
+  filter: drop-shadow(0 8px 10px rgba(8, 14, 40, 0.55));
 }
 
 .monster-head__name {
   font-size: 1.2rem;
   font-weight: 600;
+  text-shadow: 0 2px 0 rgba(8, 14, 40, 0.5), 0 0 14px rgba(255, 197, 61, 0.28);
 }
 
 /* Eine Zeile im Aufwertungs-Block */
@@ -1241,8 +1365,9 @@
   padding: 8px 4px;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  background: linear-gradient(180deg, #2f4185 0%, var(--panel-solid) 60%, #18224e 100%);
   border: 2px solid var(--rarity);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .skin-chip.is-active {
@@ -1277,23 +1402,38 @@
 }
 
 .tab {
+  position: relative;
   font: inherit;
   flex: 1;
   padding: 10px 6px;
   border: 2px solid var(--panel-border);
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  background: linear-gradient(180deg, #232e62, #18224e);
   color: var(--text-dim);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .tab.is-active {
   border-color: var(--gold-2);
   color: var(--text);
-  background: linear-gradient(180deg, #33407a, #232e5e);
+  background: linear-gradient(180deg, #3d4f97, #232e5e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 10px rgba(255, 197, 61, 0.22);
+}
+
+/* goldener Strich unter dem aktiven Reiter */
+.tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-1), transparent);
 }
 
 .tab:not(.is-active):active {
@@ -1315,10 +1455,11 @@
   gap: 12px;
   padding: 9px 12px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
   /* Der farbige Streifen links zeigt die Seltenheit. */
   border: 2px solid var(--panel-border);
   border-left: 6px solid var(--seltenheit, var(--panel-border));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 0 rgba(8, 14, 40, 0.3);
 }
 
 .katalog-item.is-locked {
@@ -1327,9 +1468,16 @@
 }
 
 .katalog-item__icon {
-  font-size: 1.5rem;
-  width: 28px;
-  text-align: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #445bb0, #182048 75%);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .katalog-item.is-locked .katalog-item__icon {
@@ -1382,6 +1530,7 @@
   color: var(--text-dark);
   font-size: 0.82rem;
   font-weight: 700;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(8, 14, 40, 0.4);
 }
 
 .katalog-item.is-locked .katalog-item__cost {
@@ -1526,7 +1675,13 @@
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   border: 2px solid var(--panel-border);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 0 rgba(8, 14, 40, 0.3);
+}
+
+/* erledigte Aufgaben bekommen einen gruenen Rand statt nur blasser zu werden */
+.aufgabe.is-done {
+  border-color: var(--green-2);
 }
 
 .aufgabe + .aufgabe {
@@ -1538,9 +1693,16 @@
 }
 
 .aufgabe__icon {
-  font-size: 1.5rem;
-  width: 28px;
-  text-align: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #445bb0, #182048 75%);
+  border: 2px solid rgba(255, 197, 61, 0.4);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .aufgabe__body {
