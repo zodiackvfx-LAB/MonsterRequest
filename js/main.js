@@ -11,6 +11,7 @@
 
 import { initScreens, registerScreen, showScreen } from './core/screens.js';
 import { getAktiverSkin, loadProgress } from './core/state.js';
+import { cloudStart } from './core/sync.js';
 import { getSkin } from './data/items.js';
 import { getMonster, STARTER_MONSTER_ID } from './data/monsters.js';
 import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
@@ -91,3 +92,19 @@ registerScreen('shop', shopScreen);
 registerScreen('daily', dailyScreen);
 
 showScreen('start');
+
+/*
+ * Abgleich mit der Datenbank - erst JETZT, nachdem das Spiel schon zu sehen
+ * ist. Es laeuft im Hintergrund weiter; ohne Netz oder ohne eingetragene
+ * Datenbank passiert einfach nichts.
+ *
+ * Gewinnt der Stand aus der Datenbank, wird der Startbildschirm neu
+ * gezeichnet - sonst stuenden dort noch die alten Muenzen.
+ */
+cloudStart(() => {
+  setSkinNachschlag((monster) => {
+    const skinId = getAktiverSkin(monster.id);
+    return skinId ? getSkin(skinId) : null;
+  });
+  showScreen('start');
+});

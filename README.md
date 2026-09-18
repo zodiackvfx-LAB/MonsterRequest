@@ -41,6 +41,14 @@ css/
 
 fonts/                  Spielschrift Fredoka (lokal, kein externer Aufruf)
 
+datenbank/              Spielstände auf einem Server – siehe ANLEITUNG.md
+  schema.sql            Tabellen und Funktionen, einmal in Supabase einfügen
+  schema.test.sql       Prüft schema.sql nach dem Einspielen
+
+werkzeuge/              Hilfsskripte, die nicht zum Spiel gehören
+  logo-bauen.py         Erzeugt die Logo-Pfade aus der Schrift
+  test-datenbank.mjs    Spiel mit Datenbank zum Ausprobieren, ohne Konto
+
 js/
   main.js               Startet das Spiel, registriert alle Bildschirme
 
@@ -52,6 +60,8 @@ js/
   core/                 NUR Logik – kennt kein HTML
     screens.js          Bildschirmverwaltung
     state.js            Fortschritt, Sterne, Münzen, Einstellungen, Speichern
+    cloud.js            Leitung zur Datenbank (Spielernummer, Senden, Codes)
+    sync.js             Bringt Browser und Datenbank beim Start zusammen
     deck.js             8-Karten-Deck, Hand mit 4 Karten, Nachziehen
     fighter.js          Ein Kämpfer: XP, Deck, Hand, Schaden, Schild
     battle.js           Kampfablauf, Zeitsteuerung, Gegner-KI
@@ -123,8 +133,31 @@ Schaden und Schild) prüft ein Test ohne Browser:
 node tests/regeln.test.mjs
 ```
 
+Die Spielstand-Datenbank hat einen eigenen Test. Er startet die Testdatenbank
+selbst – du brauchst dafür kein Konto und keine Einrichtung:
+
+```bash
+node tests/datenbank.test.mjs
+```
+
 Wenn du an `data/` oder `core/` etwas änderst, lohnt sich ein Durchlauf –
 er zeigt sofort, wenn eine Grundregel verletzt ist.
+
+---
+
+## Spielstände speichern
+
+Jeder Spielstand liegt zuerst im Browser des Spielers (`localStorage`). Das
+geht sofort und funktioniert auch ohne Netz.
+
+Zusätzlich kann jeder Spielstand in einer Datenbank landen – dann siehst du
+alle, die dein Spiel geöffnet haben, und ein Spieler kann seinen Stand mit
+einem kurzen Code auf ein anderes Gerät holen. Eingerichtet wird das einmalig
+über `js/data/cloud-config.js`; wie das geht, steht Schritt für Schritt in
+[datenbank/ANLEITUNG.md](datenbank/ANLEITUNG.md).
+
+**Solange dort nichts eingetragen ist, ändert sich nichts** – das Spiel
+verhält sich genau wie vorher und schickt nichts ins Netz.
 
 ---
 

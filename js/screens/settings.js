@@ -6,6 +6,13 @@ import { showScreen } from '../core/screens.js';
 import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
 import { gameState, getTotalStars, resetProgress, setSetting } from '../core/state.js';
+import {
+  cloudAktiv,
+  cloudBeobachten,
+  cloudCodeEinloesen,
+  cloudCodeErstellen,
+} from '../core/cloud.js';
+import { spielstandUebernehmenVonCode } from '../core/sync.js';
 import { LEVELS } from '../data/levels.js';
 import { spieleKlang, tonEinstellungenAnwenden, tonStatus } from '../core/audio.js';
 import { MUENZE } from '../data/items.js';
@@ -32,6 +39,14 @@ const TOGGLES = [
 
 export const settingsScreen = {
   mount(root) {
+    // Ein alter Melder kann hier nicht mehr liegen - unmount raeumt ihn weg.
+    // Zur Sicherheit trotzdem, falls der Bildschirm je ohne unmount neu
+    // aufgebaut wird.
+    if (abmelden) {
+      abmelden();
+      abmelden = null;
+    }
+
     const screen = document.createElement('div');
     screen.className = 'screen screen--page';
     screen.appendChild(createScenery({ dimmed: true }));
@@ -123,6 +138,9 @@ export const settingsScreen = {
     `;
     content.appendChild(progress);
 
+    /* ---------- Spielstand ---------- */
+    content.appendChild(spielstandBlock());
+
     const resetButton = document.createElement('button');
     resetButton.className = 'btn btn--danger';
     resetButton.type = 'button';
@@ -139,7 +157,154 @@ export const settingsScreen = {
     screen.appendChild(content);
     root.appendChild(screen);
   },
+
+  unmount() {
+    // Der Zustandsmelder der Datenbank laeuft sonst weiter und schreibt in
+    // einen Bildschirm, den es nicht mehr gibt.
+    if (abmelden) {
+      abmelden();
+      abmelden = null;
+    }
+  },
 };
+
+/** Meldet den Statustext wieder ab, wenn der Bildschirm schliesst. */
+let abmelden = null;
+
+/** Wie der Zustand aus cloud.js auf Deutsch heisst. */
+const STATUS_TEXT = {
+  aus: 'Nur auf diesem Gerät gespeichert.',
+  bereit: 'Mit der Datenbank verbunden.',
+  sendet: 'Wird gespeichert …',
+  gespeichert: 'In der Datenbank gespeichert.',
+  wartet: 'Kein Netz - wird nachgeholt.',
+  fehler: 'Die Datenbank ist gerade nicht erreichbar. Dein Spielstand liegt sicher auf dem Gerät.',
+};
+
+/**
+ * Der Block "Spielstand": zeigt, ob der Stand in der Datenbank liegt, und
+ * bringt ihn mit einem kurzen Code auf ein anderes Geraet.
+ */
+function spielstandBlock() {
+  const block = document.createElement('div');
+  block.className = 'panel';
+  block.innerHTML = '<div class="panel__title">Spielstand</div>';
+
+  const zustand = document.createElement('p');
+  zustand.className = 'setting-row__hint';
+  zustand.id = 'cloud-zustand';
+  block.appendChild(zustand);
+
+  if (!cloudAktiv()) {
+    zustand.textContent = STATUS_TEXT.aus;
+    const hinweis = document.createElement('p');
+    hinweis.className = 'setting-row__hint';
+    hinweis.style.marginTop = '6px';
+    hinweis.textContent =
+      'Eine Datenbank ist noch nicht eingetragen. Wie das geht, steht in datenbank/ANLEITUNG.md.';
+    block.appendChild(hinweis);
+    return block;
+  }
+
+  abmelden = cloudBeobachten((status) => {
+    zustand.textContent = STATUS_TEXT[status] ?? status;
+  });
+
+  /* --- Auf ein anderes Geraet mitnehmen --- */
+  const raus = document.createElement('div');
+  raus.className = 'setting-row';
+  raus.innerHTML = `
+    <span class="setting-row__label">
+      <span class="setting-row__name">Auf ein anderes Gerät</span>
+      <span class="setting-row__hint" id="code-anzeige">Code erstellen und dort eingeben.</span>
+    </span>
+  `;
+  const codeKnopf = document.createElement('button');
+  codeKnopf.type = 'button';
+  codeKnopf.className = 'btn btn--small';
+  codeKnopf.textContent = 'Code';
+  codeKnopf.addEventListener('click', async () => {
+    const anzeige = raus.querySelector('#code-anzeige');
+    codeKnopf.disabled = true;
+    anzeige.textContent = 'Wird erstellt …';
+    try {
+      const code = await cloudCodeErstellen();
+      anzeige.innerHTML = `<strong class="spielstand-code">${code}</strong> · 30 Minuten gültig`;
+    } catch (fehler) {
+      console.warn('Code konnte nicht erstellt werden:', fehler);
+      anzeige.textContent = 'Hat nicht geklappt. Später noch einmal versuchen.';
+    } finally {
+      codeKnopf.disabled = false;
+    }
+  });
+  raus.appendChild(codeKnopf);
+  block.appendChild(raus);
+
+  /* --- Von einem anderen Geraet holen --- */
+  const rein = document.createElement('div');
+  // --breit: Feld und Knopf kommen unter die Beschriftung. Nebeneinander
+  // bliebe fuer "Von einem anderen Geraet" nur eine schmale Spalte.
+  rein.className = 'setting-row setting-row--breit';
+  rein.innerHTML = `
+    <span class="setting-row__label">
+      <span class="setting-row__name">Von einem anderen Gerät</span>
+      <span class="setting-row__hint" id="hol-befund">Code vom anderen Gerät eintippen.</span>
+    </span>
+  `;
+  const feld = document.createElement('input');
+  feld.type = 'text';
+  feld.className = 'eingabe eingabe--code';
+  feld.maxLength = 8;
+  feld.placeholder = 'ABCD2345';
+  feld.autocapitalize = 'characters';
+  feld.autocomplete = 'off';
+  feld.spellcheck = false;
+  feld.setAttribute('aria-label', 'Übertragungscode');
+
+  const holKnopf = document.createElement('button');
+  holKnopf.type = 'button';
+  holKnopf.className = 'btn btn--small btn--green';
+  holKnopf.textContent = 'Holen';
+  holKnopf.addEventListener('click', async () => {
+    const befund = rein.querySelector('#hol-befund');
+    const code = feld.value.trim().toUpperCase();
+    if (code.length !== 8) {
+      befund.textContent = 'Der Code hat genau 8 Zeichen.';
+      return;
+    }
+    holKnopf.disabled = true;
+    befund.textContent = 'Wird geholt …';
+    try {
+      const ergebnis = await cloudCodeEinloesen(code);
+      if (!ergebnis) {
+        befund.textContent = 'Der Code stimmt nicht oder ist abgelaufen.';
+        return;
+      }
+      spielstandUebernehmenVonCode(ergebnis);
+      showScreen('start');
+    } catch (fehler) {
+      console.warn('Spielstand konnte nicht geholt werden:', fehler);
+      befund.textContent = 'Hat nicht geklappt. Später noch einmal versuchen.';
+    } finally {
+      holKnopf.disabled = false;
+    }
+  });
+
+  const gruppe = document.createElement('span');
+  gruppe.className = 'eingabe-gruppe';
+  gruppe.append(feld, holKnopf);
+  rein.appendChild(gruppe);
+  block.appendChild(rein);
+
+  const warnung = document.createElement('p');
+  warnung.className = 'setting-row__hint';
+  warnung.style.marginTop = '8px';
+  warnung.textContent =
+    'Achtung: Der geholte Spielstand ersetzt den Stand auf diesem Gerät.';
+  block.appendChild(warnung);
+
+  return block;
+}
 
 /**
  * Sagt in einem Satz, warum man nichts hört.

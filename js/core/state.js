@@ -9,6 +9,7 @@
 
 import { LEVELS, bossLevelOf } from '../data/levels.js';
 import { WORLDS } from '../data/worlds.js';
+import { cloudMerken } from './cloud.js';
 
 const STORAGE_KEY = 'monsterquest.save.v3';
 const ALTER_KEY = 'monsterquest.save.v2'; // Vorgängerversion, wird übernommen
@@ -16,6 +17,10 @@ const ALTER_KEY = 'monsterquest.save.v2'; // Vorgängerversion, wird übernommen
 /** Frischer Spielstand - auch die Grundlage fürs Zurücksetzen. */
 function createNewGame() {
   return {
+    /* Zaehler, der bei jedem Speichern um eins steigt. Er entscheidet beim
+       Start, ob der Stand aus der Datenbank neuer ist als der im Browser -
+       siehe js/core/cloud.js. */
+    revision: 0,
     unlockedWorld: 1, // höchste freigeschaltete Welt
     clearedLevels: [], // Level-ids wie "1-3"
     stars: {}, // { "1-3": 2 }
@@ -115,6 +120,7 @@ function figurUmbenennen(eintrag) {
 }
 
 function uebernehmen(saved) {
+  gameState.revision = Number(saved.revision) || 0;
   gameState.unlockedWorld = Number(saved.unlockedWorld) || 1;
   gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels.map(String) : [];
   gameState.stars = saved.stars && typeof saved.stars === 'object' ? saved.stars : {};
@@ -148,13 +154,48 @@ function uebernehmen(saved) {
   gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
 }
 
-/** Speichert den aktuellen Fortschritt. */
+/**
+ * Speichert den aktuellen Fortschritt.
+ *
+ * Erst in den Browser - das geht sofort und klappt auch ohne Netz. Danach
+ * wird der Stand der Datenbank gemeldet; die sammelt kurz und schickt dann
+ * gebuendelt (siehe js/core/cloud.js). Ist keine Datenbank eingetragen,
+ * passiert dort nichts.
+ */
 export function saveProgress() {
+  gameState.revision = (Number(gameState.revision) || 0) + 1;
+
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
   } catch (error) {
     console.warn('Spielstand konnte nicht gespeichert werden:', error);
   }
+
+  cloudMerken(JSON.parse(JSON.stringify(gameState)));
+}
+
+/**
+ * Uebernimmt einen fremden Spielstand - aus der Datenbank oder ueber einen
+ * Uebertragungscode. Geht durch dieselbe Pruefung wie ein gespeicherter
+ * Stand, damit kaputte Daten das Spiel nicht umwerfen.
+ *
+ * @param {object} daten
+ * @param {boolean} [speichern] - false, wenn der Stand gerade erst von dort
+ *        kam und nicht sofort wieder hochgeschickt werden soll
+ */
+export function spielstandUebernehmen(daten, speichern = true) {
+  if (!daten || typeof daten !== 'object') return false;
+  uebernehmen(daten);
+  if (speichern) {
+    saveProgress();
+  } else {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    } catch (error) {
+      console.warn('Spielstand konnte nicht gespeichert werden:', error);
+    }
+  }
+  return true;
 }
 
 /* ------------------------------------------------------------------ */
@@ -356,6 +397,11 @@ export function setSetting(key, value) {
 
 /** Setzt den gesamten Fortschritt zurück. */
 export function resetProgress() {
+  // Der Zaehler laeuft weiter. Setzte man ihn auf 0 zurueck, waere der alte
+  // Stand in der Datenbank "neuer" und wuerde das Zuruecksetzen beim
+  // naechsten Start wieder rueckgaengig machen.
+  const bisher = Number(gameState.revision) || 0;
   Object.assign(gameState, createNewGame());
+  gameState.revision = bisher;
   saveProgress();
 }

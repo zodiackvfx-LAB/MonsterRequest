@@ -2131,3 +2131,19 @@
 .screen--start .scenery__deko {
   transform: translate(calc(var(--px, 0) * 16px), calc(var(--py, 0) * 6px));
 }
+
+/* Eine Einstellungszeile, deren Bedienelement unter die Beschriftung rutscht.
+   Gebraucht fuer das Eingabefeld des Uebertragungscodes: Feld und Knopf
+   nebeneinander lassen fuer den Text nur eine sehr schmale Spalte uebrig. */
+.setting-row--breit {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setting-row--breit .setting-row__label {
+  flex: 1 1 100%;
+}
+
+.setting-row--breit .eingabe-gruppe {
+  flex: 1 1 100%;
+}
