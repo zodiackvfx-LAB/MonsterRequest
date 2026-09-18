@@ -43,7 +43,7 @@ import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belo
 import { BOSS_TRUHE } from '../js/data/shop.js';
 import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
-import { MUSIK, MUSTER_LAENGE, getMusik } from '../js/data/musik.js';
+import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
   aufgabeAbholen,
   aufgabenFuerTag,
@@ -601,13 +601,14 @@ console.log('\nMusik');
   pruefe('Jede Welt hat eine Musikkategorie',
     WORLDS.every((welt) => Boolean(MUSIK[welt.music])));
   pruefe('Es gibt zusaetzlich Menuemusik', Boolean(MUSIK.menue));
-  pruefe(`Jedes Motiv ist ${MUSTER_LAENGE} Achtel lang`,
-    kategorien.every((m) => m.muster.length === MUSTER_LAENGE));
+  pruefe(`Jedes Motiv passt auf den Grundtakt von ${MUSTER_TAKT} Achteln`,
+    kategorien.every((m) => m.muster.length > 0 && m.muster.length % MUSTER_TAKT === 0));
   pruefe('Jedes Motiv hat mindestens 4 Toene',
     kategorien.every((m) => m.muster.filter((p) => p !== null).length >= 4));
-  // Ein Platz ausserhalb der Skala waere ein stiller Tippfehler.
-  pruefe('Jeder Motivton liegt in der Tonleiter',
-    kategorien.every((m) => m.muster.every((p) => p === null || (p >= 0 && p < m.skala.length))));
+  // Ein Platz oberhalb der Tonleiter geht eine Oktave hoeher weiter. Mehr als
+  // zwei Oktaven waere aber fast sicher ein Tippfehler.
+  pruefe('Jeder Motivton liegt in hoechstens zwei Oktaven',
+    kategorien.every((m) => m.muster.every((p) => p === null || (p >= 0 && p < m.skala.length * 2))));
   pruefe('Jeder Basston liegt in der Tonleiter',
     kategorien.every((m) => m.bassfolge.every((p) => p >= 0 && p < m.skala.length)));
   pruefe('Jede Bassfolge hat mindestens 2 Stufen',
@@ -618,6 +619,17 @@ console.log('\nMusik');
     kategorien.every((m) => m.grundton >= 60 && m.grundton <= 500));
   pruefe('Unbekannte Kategorie faellt auf die Menuemusik zurueck',
     getMusik('gibt-es-nicht') === MUSIK.menue);
+
+  // Das Titelthema soll sich vom Rest abheben.
+  const titel = MUSIK.menue;
+  pruefe('Das Titelthema ist laenger als ein Weltmotiv',
+    WORLDS.every((welt) => titel.muster.length > MUSIK[welt.music].muster.length));
+  pruefe('Das Titelthema hat mindestens 12 Toene',
+    titel.muster.filter((p) => p !== null).length >= 12);
+  pruefe('Das Titelthema endet auf dem Grundton',
+    titel.muster.filter((p) => p !== null).at(-1) === 0);
+  pruefe('Das Titelthema erreicht die Oktave',
+    Math.max(...titel.muster.filter((p) => p !== null)) >= titel.skala.length);
 
   // Keine zwei Welten sollen gleich klingen.
   const klangbilder = WORLDS.map((welt) => {

@@ -17,7 +17,7 @@
  */
 
 import { getKlang } from '../data/sounds.js';
-import { MUSTER_LAENGE, getMusik } from '../data/musik.js';
+import { MUSTER_TAKT, getMusik } from '../data/musik.js';
 import { gameState } from './state.js';
 
 /** Grundlautstärke. Bewusst niedrig - lieber zu leise als zu laut. */
@@ -402,8 +402,13 @@ export function musikStoppen({ merken = false } = {}) {
 
 /** Rechnet einen Platz in der Tonleiter in eine Frequenz um. */
 function tonhoehe(stil, platz, oktave = 1) {
-  const halbton = stil.skala[platz % stil.skala.length];
-  return stil.grundton * Math.pow(2, halbton / 12) * oktave;
+  const stufen = stil.skala.length;
+  // Ein Platz oberhalb der Tonleiter geht in die naechste Oktave weiter:
+  // bei sieben Stufen ist Platz 7 wieder der Grundton, nur eine Oktave hoeher.
+  // Nur so laesst sich eine Melodie schreiben, die mehr als eine Oktave umfasst.
+  const sprung = Math.floor(platz / stufen);
+  const halbton = stil.skala[platz % stufen];
+  return stil.grundton * Math.pow(2, halbton / 12) * Math.pow(2, sprung) * oktave;
 }
 
 /**
@@ -412,13 +417,15 @@ function tonhoehe(stil, platz, oktave = 1) {
  * Akkordfolge - dadurch klingt es nach Musik statt nach Zufall.
  */
 function schrittSpielen(stil, nummer, zeit) {
-  const imTakt = nummer % MUSTER_LAENGE;
-  const durchgang = Math.floor(nummer / MUSTER_LAENGE);
+  // Die Laenge steht im Muster selbst - so darf jede Welt eine kurze oder
+  // eine lange Melodie haben.
+  const laenge = stil.muster.length;
+  const imTakt = nummer % laenge;
+  const durchgang = Math.floor(nummer / laenge);
 
-  // Bass auf Schlag 1 und 3. Die Folge wechselt je Durchgang die Stufe.
-  if (imTakt === 0 || imTakt === 8) {
-    const haelfte = imTakt === 8 ? 1 : 0;
-    const platz = stil.bassfolge[(durchgang * 2 + haelfte) % stil.bassfolge.length];
+  // Ein Basston alle acht Achtel; die Folge geht dabei durch die Akkorde.
+  if (nummer % MUSTER_TAKT === 0) {
+    const platz = stil.bassfolge[Math.floor(nummer / MUSTER_TAKT) % stil.bassfolge.length];
     musikTon(stil.bassForm, tonhoehe(stil, platz) / 2, zeit, 0.9, 0.45);
   }
 

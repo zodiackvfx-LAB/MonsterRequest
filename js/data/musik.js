@@ -2,7 +2,8 @@
  * Hintergrundmusik - je Welt eine eigene Stimmung.
  *
  * Wie die Klänge wird auch die Musik im Browser berechnet, nicht geladen.
- * Jede Welt hat ein festes Motiv von 16 Achteln, das sich wiederholt. Dadurch
+ * Jede Welt hat ein festes Motiv, das sich wiederholt - die Welten 16 Achtel,
+ * das Titelthema 32. Dadurch
  * klingt es nach Musik und nicht nach Zufall. Für Abwechslung sorgt die
  * Basslinie, die einer kleinen Akkordfolge folgt, und jeder vierte Durchgang,
  * der eine Oktave höher spielt.
@@ -12,8 +13,10 @@
  * Felder:
  *   grundton    - Grundfrequenz in Hertz (tiefer = schwerer)
  *   skala       - Halbtonschritte über dem Grundton; bestimmt die Stimmung
- *   muster      - 16 Achtel. Eine Zahl ist ein Platz in der Skala,
- *                 null ist eine Pause.
+ *   muster      - die Achtel des Motivs (Vielfaches von MUSTER_TAKT).
+ *                 Eine Zahl ist ein Platz in der Tonleiter, null eine Pause.
+ *                 Ein Platz oberhalb der Tonleiter geht eine Oktave höher
+ *                 weiter: bei sieben Stufen ist 7 wieder der Grundton.
  *   bassfolge   - Plätze in der Skala; ein Basston auf Schlag 1 und 3
  *   tempo       - Schläge pro Minute
  *   form        - Klangfarbe der Melodie
@@ -98,21 +101,46 @@ export const MUSIK = {
     lautstaerke: 0.95,
   },
 
-  // Menü und Startbildschirm: ruhig, gehört zu keiner Welt
+  /*
+   * Das Titelthema von MonsterQuest.
+   *
+   * Es ist doppelt so lang wie die Weltmotive (32 Achtel), damit es eine
+   * richtige Melodie mit Frage und Antwort sein kann: Der erste Teil steigt
+   * bis zur Oktave hinauf, der zweite kommt Schritt für Schritt zum
+   * Grundton zurück.
+   *
+   * Tonleiter in G-Dur, Platz 0 bis 7:
+   *   0=G  1=A  2=H  3=C  4=D  5=E  6=Fis  7=G eine Oktave höher
+   *
+   * Darunter liegt die Akkordfolge G - D - Em - C. Die klingt nach
+   * Aufbruch, ohne aufdringlich zu sein.
+   */
   menue: {
-    grundton: 174.61, // F3
-    skala: [0, 2, 4, 7, 9],
-    muster: [0, null, null, 2, null, null, 4, null, null, 2, null, null, 3, null, null, null],
-    bassfolge: [0, 2, 3, 2],
-    tempo: 84,
-    form: 'sine',
+    grundton: 196.0, // G3
+    skala: [0, 2, 4, 5, 7, 9, 11], // Dur
+    muster: [
+      // "D - G - Fis - D" : hinauf zur Oktave
+      4, null, 7, null, 6, null, 4, null,
+      // "E - D - H" : erstes Zurücksinken
+      5, null, null, 4, 2, null, null, null,
+      // "H - E - D - H" : noch einmal Anlauf
+      2, null, 5, null, 4, null, 2, null,
+      // "A - H - G" : Ankunft auf dem Grundton
+      1, null, 2, null, 0, null, null, null,
+    ],
+    bassfolge: [0, 4, 5, 3], // G - D - Em - C
+    tempo: 92,
+    form: 'triangle', // wärmer als sine, trägt die Melodie besser
     bassForm: 'sine',
-    lautstaerke: 0.85,
+    lautstaerke: 0.9,
   },
 };
 
-/** Wie viele Achtel ein Motiv lang ist. */
-export const MUSTER_LAENGE = 16;
+/**
+ * Ein Basston alle acht Achtel - das ist der Grundtakt.
+ * Jedes Muster muss ein Vielfaches davon lang sein.
+ */
+export const MUSTER_TAKT = 8;
 
 export function getMusik(kategorie) {
   return MUSIK[kategorie] ?? MUSIK.menue;
