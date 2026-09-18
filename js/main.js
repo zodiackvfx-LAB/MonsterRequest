@@ -15,7 +15,7 @@ import { getSkin } from './data/items.js';
 import { getMonster, STARTER_MONSTER_ID } from './data/monsters.js';
 import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
 import { spieleKlang, tonFreischalten } from './core/audio.js';
-import { startScreen } from './screens/start.js';
+import { startScreen, MENU_BILDER } from './screens/start.js';
 import { worldsScreen } from './screens/worlds.js';
 import { mapScreen } from './screens/map.js';
 import { battleScreen } from './screens/battle.js';
@@ -45,6 +45,7 @@ bilderVorladen([
   ...(spielfigur.bildSchlag ?? []),
   ...(spielfigur.bildStrahl ?? []),
   ...(spielfigur.bildTreffer ?? []),
+  ...MENU_BILDER,
 ]);
 
 // Safari auf iPhone und iPad erlaubt Ton erst nach der ersten Berührung.

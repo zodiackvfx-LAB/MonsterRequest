@@ -13,13 +13,12 @@ import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
 const MENU = [
-  { icon: '🗺️', label: 'Welten', screen: 'worlds' },
-  // figur: true - dieser Knopf zeigt den echten Charakter statt eines Symbols.
-  { icon: '🧍', label: 'Figur', screen: 'monster', figur: true },
-  { icon: '🃏', label: 'Deck', screen: 'deck' },
-  { icon: '📖', label: 'Sammlung', screen: 'collection' },
-  { icon: '🏪', label: 'Shop', screen: 'shop' },
-  { icon: '⚙️', label: 'Einstellungen', screen: 'settings' },
+  { bild: 'bilder/menue/welten.png', label: 'Welten', screen: 'worlds' },
+  { bild: 'bilder/menue/figur.png', label: 'Figur', screen: 'monster' },
+  { bild: 'bilder/menue/deck.png', label: 'Deck', screen: 'deck' },
+  { bild: 'bilder/menue/sammlung.png', label: 'Sammlung', screen: 'collection' },
+  { bild: 'bilder/menue/shop.png', label: 'Shop', screen: 'shop' },
+  { bild: 'bilder/menue/einstellungen.png', label: 'Einstellungen', screen: 'settings' },
 ];
 
 /** Raeumt den Tiefeneffekt beim Verlassen der Lobby wieder weg. */
@@ -47,6 +46,9 @@ function funkenStreuen(knopf) {
     setTimeout(() => funke.remove(), 520);
   }
 }
+
+/** Die Adressen der Menuegrafiken - main.js laedt sie beim Start vor. */
+export const MENU_BILDER = MENU.map((eintrag) => eintrag.bild).filter(Boolean);
 
 export const startScreen = {
   mount(root) {
@@ -152,10 +154,15 @@ export const startScreen = {
       `;
 
       const kreis = button.querySelector('.icon-btn__circle');
-      if (entry.figur) {
-        // Wie beim Avatar oben links wird nur der Kopf gezeigt - ganzkoerpers
-        // waere Timo in dem kleinen Kreis nur ein schmaler Streifen.
-        kreis.appendChild(createSprite(starter));
+      if (entry.bild) {
+        // Die Grafik bringt ihren eigenen runden Rahmen mit - der Knopf
+        // zeichnet deshalb keinen zweiten (siehe .icon-btn__circle--bild).
+        kreis.classList.add('icon-btn__circle--bild');
+        const bild = document.createElement('img');
+        bild.src = entry.bild;
+        bild.alt = '';
+        bild.draggable = false;
+        kreis.appendChild(bild);
       } else {
         kreis.textContent = entry.icon;
       }
