@@ -573,11 +573,19 @@ console.log('\nSpielfigur');
   pruefe('Sie hat eine eigene Grafik statt einer gerechneten Figur',
     typeof SPIELFIGUR.image === 'string' && SPIELFIGUR.image.endsWith('.png'));
   pruefe('Sie hat ein eigenes Kampfbild', typeof SPIELFIGUR.bildKampf === 'string');
-  pruefe('Die Angriffsfolge hat mehrere Bilder',
-    Array.isArray(SPIELFIGUR.bildAngriff) && SPIELFIGUR.bildAngriff.length >= 4);
+
+  const folgen = { bildSchlag: 'Nahkampf', bildStrahl: 'Fernangriff', bildTreffer: 'Treffer' };
+  Object.entries(folgen).forEach(([feld, name]) => {
+    pruefe(`Bildfolge ${name} hat mindestens 3 Bilder`,
+      Array.isArray(SPIELFIGUR[feld]) && SPIELFIGUR[feld].length >= 3);
+  });
+
+  const alleBilder = [SPIELFIGUR.image, SPIELFIGUR.bildKampf,
+    ...Object.keys(folgen).flatMap((feld) => SPIELFIGUR[feld] ?? [])];
   pruefe('Alle Bildadressen zeigen in den Bilderordner',
-    [SPIELFIGUR.image, SPIELFIGUR.bildKampf, ...SPIELFIGUR.bildAngriff]
-      .every((b) => b.startsWith('bilder/')));
+    alleBilder.every((b) => b.startsWith('bilder/') && b.endsWith('.png')));
+  pruefe('Keine Bildadresse kommt doppelt vor',
+    new Set(alleBilder).size === alleBilder.length);
   pruefe('Sie ist als hohe Figur gekennzeichnet', SPIELFIGUR.hoch === true);
 
   // Skins muessen zur Figur passen, sonst waere der Skin-Bereich leer.

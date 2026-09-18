@@ -29,26 +29,39 @@ export const MONSTERS = {
     element: 'Feuer',
     /*
      * Timo hat als einzige Figur eigene Grafiken statt einer berechneten
-     * Pixelfigur. Die Felder:
-     *   image       - im Menü und in der Sammlung (Vorderansicht)
-     *   bildKampf   - im Kampf (Kampfhaltung, nach rechts gerichtet)
-     *   bildAngriff - die Bildfolge beim Angreifen
-     *   hoch        - Mensch statt Tier: schmal und hoch. Damit er im
-     *                 quadratischen Kasten nicht winzig wirkt, darf er
-     *                 darüber hinauswachsen (siehe .pixel-sprite--hoch).
+     * Pixelfigur. Sie stammen aus seinem Designblatt.
      *
-     * Eigene Grafiken für weitere Figuren gehören nach bilder/ und werden
-     * hier genauso eingetragen.
+     *   image       Vorderansicht - Menue, Sammlung, Avatar
+     *   bildKampf   Kampfhaltung von hinten. Im Kampf sieht man Timo von
+     *               hinten dem Gegner gegenueber, so ist das Blatt gezeichnet.
+     *   bildSchlag  Nahkampf: ausholen, schlagen, Hiebbogen, abfangen
+     *   bildStrahl  Fernangriff: Energiestrahl nach vorn
+     *   bildTreffer wenn Timo selbst getroffen wird
+     *   hoch        Mensch statt Tier: schmal und hoch. Der Kasten wird
+     *               dafuer hoeher (siehe .pixel-sprite--hoch in css/ui.css).
+     *
+     * Welche Angriffsfolge laeuft, entscheidet der XP-Preis der Attacke -
+     * siehe ANGRIFF_AB_XP in js/screens/battle.js.
      */
     image: 'bilder/timo/front.png',
-    bildKampf: 'bilder/timo/kampf.png',
-    bildAngriff: [
-      'bilder/timo/attacke-1.png',
-      'bilder/timo/attacke-2.png',
-      'bilder/timo/attacke-3.png',
-      'bilder/timo/attacke-4.png',
-      'bilder/timo/attacke-5.png',
-      'bilder/timo/attacke-6.png',
+    bildKampf: 'bilder/timo/stand.png',
+    bildSchlag: [
+      'bilder/timo/schlag-1.png',
+      'bilder/timo/schlag-2.png',
+      'bilder/timo/schlag-3.png',
+      'bilder/timo/schlag-4.png',
+    ],
+    bildStrahl: [
+      'bilder/timo/strahl-1.png',
+      'bilder/timo/strahl-2.png',
+      'bilder/timo/strahl-3.png',
+      'bilder/timo/strahl-4.png',
+    ],
+    bildTreffer: [
+      'bilder/timo/treffer-1.png',
+      'bilder/timo/treffer-2.png',
+      'bilder/timo/treffer-3.png',
+      'bilder/timo/treffer-4.png',
     ],
     hoch: true,
     text: 'Ein junger Kämpfer mit schneller Faust. Redet wenig, trifft dafür genau.',

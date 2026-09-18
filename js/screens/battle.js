@@ -38,6 +38,13 @@ let bildfolgeStoppen = () => {}; // bricht eine laufende Angriffsanimation ab
  */
 const ERGEBNIS_VERZOEGERUNG = 750;
 
+/**
+ * Ab diesem XP-Preis gilt eine Attacke als grosse Attacke: Timo schiesst
+ * dann einen Energiestrahl statt zuzuschlagen. Darunter gibt es den
+ * Nahkampf. Zahl aendern = Grenze verschieben.
+ */
+const ANGRIFF_AB_XP = 5;
+
 export const battleScreen = {
   // Jede Welt hat ihre eigene Musik.
   musik: (params) => getLevel(params.levelId)?.music ?? 'menue',
@@ -270,16 +277,21 @@ export const battleScreen = {
     }
 
     /* ---------- 4. Ereignisse: Log, Animationen, Zahlen ---------- */
+    /** Spielt eine Bildfolge auf Timo ab - die vorige wird abgebrochen. */
+    function spieleFolge(bilder) {
+      if (!bilder?.length) return;
+      bildfolgeStoppen();
+      bildfolgeStoppen = spieleBildfolge(ui.playerSprite, bilder);
+    }
+
     function handleEvent(event) {
       if (event.text) ui.log.textContent = event.text;
 
       switch (event.type) {
-        case 'player-attack':
-          // Hat die Figur eine Angriffsfolge, wird sie abgespielt.
-          if (basis.bildAngriff) {
-            bildfolgeStoppen();
-            bildfolgeStoppen = spieleBildfolge(ui.playerSprite, basis.bildAngriff);
-          }
+        case 'player-attack': {
+          // Kleine Attacke = Nahkampf, grosse Attacke = Energiestrahl.
+          const teuer = (event.attack?.cost ?? 0) >= ANGRIFF_AB_XP;
+          spieleFolge(teuer ? basis.bildStrahl : basis.bildSchlag);
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
           floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
@@ -289,11 +301,14 @@ export const battleScreen = {
           fortschrittMelden('attacke');
           fortschrittMelden('schaden', event.amount);
           break;
+        }
         case 'enemy-attack':
           flash(ui.enemySprite, 'lunge-left');
           flash(ui.playerSprite, 'hit');
           floatNumber(ui.playerSprite, `-${event.amount}`, 'damage');
           spieleTreffer(event.amount);
+          // Timo geht sichtbar in die Knie, wenn er einsteckt.
+          spieleFolge(basis.bildTreffer);
           break;
         case 'player-heal':
           flash(ui.playerSprite, 'heal');

@@ -39,7 +39,13 @@ setSkinNachschlag((monster) => {
 // Die Grafiken der Spielfigur im Voraus laden, damit die erste
 // Angriffsanimation nicht ruckelt.
 const spielfigur = getMonster(STARTER_MONSTER_ID);
-bilderVorladen([spielfigur.image, spielfigur.bildKampf, ...(spielfigur.bildAngriff ?? [])]);
+bilderVorladen([
+  spielfigur.image,
+  spielfigur.bildKampf,
+  ...(spielfigur.bildSchlag ?? []),
+  ...(spielfigur.bildStrahl ?? []),
+  ...(spielfigur.bildTreffer ?? []),
+]);
 
 // Safari auf iPhone und iPad erlaubt Ton erst nach der ersten Berührung.
 tonFreischalten();
