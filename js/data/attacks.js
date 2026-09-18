@@ -15,7 +15,7 @@
  *   seltenheit - 'gewoehnlich' | 'selten' | 'episch' | 'legendaer'
  *                (nur für die Anzeige in der Sammlung, siehe js/data/items.js)
  *
- * Hier stehen nur die Attacken des Spielers. Die Attacken der Gegner werden
+ * Hier stehen nur Timos Attacken. Die Attacken der Gegner werden
  * aus den Vorlagen der jeweiligen Welt erzeugt (js/data/worlds.js) und über
  * registerAttack() ergänzt.
  *
@@ -27,84 +27,92 @@
  */
 export const ATTACKS = {
   /* ===================================================================
-     Deck des Spielers (Glutwelpe) - die acht Platzhalter-Attacken.
-     Teurere Attacken sind pro XP etwas stärker. Das belohnt Sparen,
+     Timos Deck - die acht Attacken, mit denen er startet.
+
+     Bis 4 XP sind es Schlaege und Tritte, ab 5 XP gebuendelte Energie.
+     Das ist kein Zufall: genau bei 5 XP wechselt auch die Animation von
+     der Faust zum Energiestrahl (ANGRIFF_AB_XP in js/screens/battle.js).
+
+     Teurere Attacken sind pro XP etwas staerker. Das belohnt Sparen,
      ohne die billigen Karten nutzlos zu machen.
      =================================================================== */
-  krallenhieb: {
-    id: 'krallenhieb',
+
+  /* ---------- Nahkampf ---------- */
+  fausthieb: {
+    id: 'fausthieb',
     seltenheit: 'gewoehnlich',
-    name: 'Krallenhieb',
+    name: 'Fausthieb',
     cost: 2,
     damage: 11,
-    icon: '🐾',
-    text: 'Schneller Hieb mit scharfen Krallen.',
+    icon: '👊',
+    text: 'Ein schneller gerader Schlag. Sitzt fast immer.',
   },
-  biss: {
-    id: 'biss',
+  ellbogenstoss: {
+    id: 'ellbogenstoss',
     seltenheit: 'gewoehnlich',
-    name: 'Biss',
+    name: 'Ellbogenstoß',
     cost: 2,
     damage: 12,
-    icon: '🦷',
-    text: 'Beißt kräftig zu.',
+    icon: '🤜',
+    text: 'Aus der Drehung heraus - kurz, hart, aus naechster Naehe.',
   },
-  feuerball: {
-    id: 'feuerball',
+  wirbelkick: {
+    id: 'wirbelkick',
     seltenheit: 'selten',
-    name: 'Feuerball',
+    name: 'Wirbelkick',
     cost: 3,
     damage: 17,
-    icon: '🔥',
-    text: 'Eine kompakte Kugel aus Glut.',
+    icon: '🌀',
+    text: 'Timo dreht sich einmal um die eigene Achse und tritt zu.',
   },
-  flammenstoss: {
-    id: 'flammenstoss',
+  aufwaertshaken: {
+    id: 'aufwaertshaken',
     seltenheit: 'selten',
-    name: 'Flammenstoß',
+    name: 'Aufwärtshaken',
     cost: 4,
     damage: 23,
-    icon: '💥',
-    text: 'Ein gebündelter Flammenstrahl.',
+    icon: '🥊',
+    text: 'Von unten nach oben durch die Deckung.',
   },
-  schutzschild: {
-    id: 'schutzschild',
+  deckung: {
+    id: 'deckung',
     seltenheit: 'selten',
-    name: 'Schutzschild',
+    name: 'Deckung',
     cost: 4,
     damage: 0,
     shield: 26,
     icon: '🛡️',
-    text: 'Eine Barriere aus glühender Luft.',
-  },
-  feuersturm: {
-    id: 'feuersturm',
-    seltenheit: 'episch',
-    name: 'Feuersturm',
-    cost: 5,
-    damage: 30,
-    icon: '🌪️',
-    text: 'Ein Wirbel aus Feuer.',
-  },
-  lavabombe: {
-    id: 'lavabombe',
-    seltenheit: 'episch',
-    name: 'Lavabombe',
-    cost: 7,
-    damage: 45,
-    icon: '🌋',
-    text: 'Teuer, aber verheerend.',
-  },
-  meteor: {
-    id: 'meteor',
-    seltenheit: 'legendaer',
-    name: 'Meteor',
-    cost: 9,
-    damage: 62,
-    icon: '☄️',
-    text: 'Die stärkste Attacke - fast die gesamte Energie.',
+    text: 'Arme hoch und abwarten. Faengt den naechsten Treffer ab.',
   },
 
+  /* ---------- Energie ---------- */
+  energiestoss: {
+    id: 'energiestoss',
+    seltenheit: 'episch',
+    name: 'Energiestoß',
+    cost: 5,
+    damage: 30,
+    icon: '💥',
+    text: 'Gebuendelte Energie aus der Faust nach vorn.',
+  },
+  druckwelle: {
+    id: 'druckwelle',
+    seltenheit: 'episch',
+    name: 'Druckwelle',
+    cost: 7,
+    damage: 45,
+    icon: '💫',
+    text: 'Eine Wand aus Luft, die alles vor sich herschiebt.',
+  },
+  sturmfaust: {
+    id: 'sturmfaust',
+    seltenheit: 'legendaer',
+    name: 'Sturmfaust',
+    cost: 9,
+    damage: 62,
+    icon: '⚡',
+    text: 'Timos staerkster Schlag - fast seine gesamte Energie auf einmal.',
+  },
 };
 
 /**

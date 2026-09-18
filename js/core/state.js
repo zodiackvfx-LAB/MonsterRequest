@@ -79,6 +79,28 @@ const ALTE_FIGUR = 'glutwelpe';
 const NEUE_FIGUR = 'timo';
 
 /**
+ * Timos Attacken hiessen frueher anders - sie passten zu einem Tier, nicht
+ * zu einem Menschen. Werte und Kosten sind gleich geblieben, nur die Namen
+ * und ids haben gewechselt. Ohne diese Tabelle zeigte ein gespeichertes Deck
+ * auf Attacken, die es nicht mehr gibt.
+ */
+const ALTE_ATTACKEN = {
+  krallenhieb: 'fausthieb',
+  biss: 'ellbogenstoss',
+  feuerball: 'wirbelkick',
+  flammenstoss: 'aufwaertshaken',
+  schutzschild: 'deckung',
+  feuersturm: 'energiestoss',
+  lavabombe: 'druckwelle',
+  meteor: 'sturmfaust',
+};
+
+/** Uebersetzt eine Attacken-id, falls sie aus der alten Zeit stammt. */
+function attackeUmbenennen(id) {
+  return ALTE_ATTACKEN[id] ?? id;
+}
+
+/**
  * Zieht einen Eintrag von der alten auf die neue Figur um.
  * Betrifft alles, was nach Figur abgelegt ist: Deck, Charakterfortschritt
  * und der getragene Skin. Ein bereits umgezogener Spielstand bleibt, wie er ist.
@@ -103,9 +125,18 @@ function uebernehmen(saved) {
   gameState.activeSkin = figurUmbenennen(saved.activeSkin ?? {});
   // Die Spielerfigur hiess frueher "glutwelpe" und heisst jetzt "timo".
   // Alte Spielstaende werden umgezogen, damit Level, Deck und Skin bleiben.
-  gameState.decks = figurUmbenennen(saved.decks ?? {});
+  // Decks: erst die Figur umziehen, dann die Attacken darin uebersetzen.
+  gameState.decks = Object.fromEntries(
+    Object.entries(figurUmbenennen(saved.decks ?? {})).map(([figur, deck]) => [
+      figur,
+      Array.isArray(deck) ? deck.map(attackeUmbenennen) : deck,
+    ])
+  );
   gameState.characters = figurUmbenennen(saved.characters ?? {});
-  gameState.attackLevels = saved.attackLevels ?? {};
+  // Aufgewertete Attacken behalten ihr Level unter dem neuen Namen.
+  gameState.attackLevels = Object.fromEntries(
+    Object.entries(saved.attackLevels ?? {}).map(([id, level]) => [attackeUmbenennen(id), level])
+  );
   // Fehlt der Block in einem aelteren Spielstand, legt aufgaben.js ihn beim
   // ersten Blick auf die Aufgaben selbst an.
   gameState.dailies = {

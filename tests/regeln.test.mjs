@@ -293,11 +293,13 @@ console.log('\nAttacken-Level');
   gameState.coins = 100000;
   gameState.materials = 1000;
 
-  const grund = getAttack('feuerball');
-  pruefe('Attacke startet auf Level 1', getAttackenLevel('feuerball') === 1);
+  // Irgendeine Angriffsattacke aus dem Deck - so haengt der Test an keinem Namen.
+  const PROBE = SPIELFIGUR.deck.find((id) => getAttack(id).damage > 0);
+  const grund = getAttack(PROBE);
+  pruefe('Attacke startet auf Level 1', getAttackenLevel(PROBE) === 1);
 
-  attackeAufwerten('feuerball');
-  const stufe2 = attackeMitLevel(getAttack('feuerball'));
+  attackeAufwerten(PROBE);
+  const stufe2 = attackeMitLevel(getAttack(PROBE));
   pruefe('Nach dem Aufwerten macht sie mehr Schaden', stufe2.damage > grund.damage);
   pruefe('Die XP-Kosten bleiben gleich', stufe2.cost === grund.cost);
   pruefe(
@@ -305,10 +307,10 @@ console.log('\nAttacken-Level');
     [1, 2, 3].every((l) => attackenKosten(l).muenzen < attackenKosten(l + 1).muenzen)
   );
 
-  for (let i = 0; i < MAX_ATTACKEN_LEVEL + 3; i++) attackeAufwerten('feuerball');
+  for (let i = 0; i < MAX_ATTACKEN_LEVEL + 3; i++) attackeAufwerten(PROBE);
   pruefe(
     `Attacken enden bei Level ${MAX_ATTACKEN_LEVEL}`,
-    getAttackenLevel('feuerball') === MAX_ATTACKEN_LEVEL
+    getAttackenLevel(PROBE) === MAX_ATTACKEN_LEVEL
   );
 
   // Gegner duerfen davon nichts mitbekommen
@@ -335,7 +337,7 @@ console.log('\nDeck aendern');
 
   let abgelehnt = false;
   try {
-    setDeck(monster.id, ['krallenhieb', 'biss']);
+    setDeck(monster.id, SPIELFIGUR.deck.slice(0, 2));
   } catch {
     abgelehnt = true;
   }
@@ -605,6 +607,7 @@ console.log('\nSpielfigur');
     characters: { glutwelpe: { level: 9, xp: 42, upgrades: { hp: 2 } } },
     decks: { glutwelpe: ['biss', 'krallenhieb', 'feuerball', 'flammenstoss', 'schutzschild', 'feuersturm', 'lavabombe', 'meteor'] },
     activeSkin: { glutwelpe: 'skin-gold' },
+    attackLevels: { meteor: 3 },
   }));
   loadProgress();
   pruefe('Alter Spielstand: Level zieht auf die neue Figur um',
@@ -613,12 +616,52 @@ console.log('\nSpielfigur');
     gameState.characters[SPIELFIGUR.id]?.upgrades?.hp === 2);
   pruefe('Alter Spielstand: Deck zieht mit um',
     gameState.decks[SPIELFIGUR.id]?.length === 8);
+  pruefe('Alter Spielstand: alte Attackennamen werden uebersetzt',
+    gameState.decks[SPIELFIGUR.id]?.every((id) => ATTACKS[id]));
+  pruefe('Alter Spielstand: Attacken-Level wandert auf den neuen Namen',
+    getAttackenLevel('sturmfaust') === 3);
   pruefe('Alter Spielstand: getragener Skin bleibt',
     gameState.activeSkin[SPIELFIGUR.id] === 'skin-gold');
   pruefe('Alter Spielstand: Muenzen bleiben', gameState.coins === 777);
   pruefe('Der alte Name ist verschwunden',
     !('glutwelpe' in gameState.characters) && !('glutwelpe' in gameState.decks));
   resetProgress();
+}
+
+console.log('\nTimos Attacken');
+{
+  const deck = SPIELFIGUR.deck.map((id) => getAttack(id));
+
+  pruefe('Das Deck hat genau 8 Attacken', deck.length === 8);
+  pruefe('Genau eine Attacke gibt ein Schild',
+    deck.filter((a) => (a.shield ?? 0) > 0).length === 1);
+  pruefe('Alle anderen machen Schaden',
+    deck.filter((a) => a.damage > 0).length === 7);
+
+  // Die Werte muessen die gleichen geblieben sein - daran haengt die
+  // gesamte Balance bis zum Boss von Welt 6.
+  const erwartet = [[2,11],[2,12],[3,17],[4,23],[4,26],[5,30],[7,45],[9,62]];
+  const ist = deck.map((a) => [a.cost, a.damage || a.shield]).sort((x,y) => x[0]-y[0] || x[1]-y[1]);
+  pruefe('Kosten und Wirkung sind unveraendert',
+    JSON.stringify(ist) === JSON.stringify(erwartet.slice().sort((x,y) => x[0]-y[0] || x[1]-y[1])));
+
+  // Unter 5 XP schlaegt Timo zu, ab 5 XP schiesst er - die Namen sollen
+  // dazu passen, sonst wirkt die Animation falsch.
+  const guenstig = deck.filter((a) => a.cost < 5);
+  const teuer = deck.filter((a) => a.cost >= 5);
+  pruefe('5 Nahkampf-Attacken unter 5 XP', guenstig.length === 5);
+  pruefe('3 Energie-Attacken ab 5 XP', teuer.length === 3);
+
+  pruefe('Jede Attacke hat Symbol und Beschreibung',
+    deck.every((a) => a.icon && a.text && a.text.length > 10));
+  pruefe('Kein Symbol kommt doppelt vor',
+    new Set(deck.map((a) => a.icon)).size === deck.length);
+  pruefe('Kein Name kommt doppelt vor',
+    new Set(deck.map((a) => a.name)).size === deck.length);
+
+  // Keine Tier- oder Feuerbegriffe mehr - Timo ist ein Mensch.
+  const passtNicht = deck.filter((a) => /kralle|biss|feuer|flamme|lava|meteor|zahn|klaue/i.test(a.name));
+  pruefe('Keine Tier- oder Feuernamen mehr', passtNicht.length === 0);
 }
 
 console.log('\nKlaenge');

@@ -26,7 +26,7 @@ export const MONSTERS = {
     id: 'timo',
     name: 'Timo',
     icon: '🧑',
-    element: 'Feuer',
+    element: 'Energie',
     /*
      * Timo hat als einzige Figur eigene Grafiken statt einer berechneten
      * Pixelfigur. Sie stammen aus seinem Designblatt.
@@ -68,14 +68,14 @@ export const MONSTERS = {
     maxHp: 100,
     // Genau 8 Attacken - das ist die Regel für jedes Deck.
     deck: [
-      'krallenhieb',
-      'biss',
-      'feuerball',
-      'flammenstoss',
-      'schutzschild',
-      'feuersturm',
-      'lavabombe',
-      'meteor',
+      'fausthieb',
+      'ellbogenstoss',
+      'wirbelkick',
+      'aufwaertshaken',
+      'deckung',
+      'energiestoss',
+      'druckwelle',
+      'sturmfaust',
     ],
   },
 
