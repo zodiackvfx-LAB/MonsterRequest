@@ -8,6 +8,7 @@ import { createHud } from '../ui/hud.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { createSprite } from '../ui/sprite.js';
 import { parallaxAktivieren } from '../ui/parallax.js';
+import { LOGO_MONSTER, LOGO_QUEST } from '../ui/logo-pfade.js';
 import { gameState } from '../core/state.js';
 import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 
@@ -62,8 +63,19 @@ export const startScreen = {
 
     const content = document.createElement('div');
     content.className = 'start__logo';
-    // Das Logo ist ein SVG: nur dort liegt die dunkle Kontur sauber hinter
-    // der Farbfüllung (siehe .logo__text in css/ui.css).
+    /* Das Logo besteht aus festen Pfaden, nicht aus Schrift.
+       Grund: Die Buchstaben haben eine dicke Kontur, die sich mit der des
+       Nachbarn ueberschneidet. Welche Kontur dann obenauf liegt, entscheidet
+       jeder Browser anders - auf dem iPhone wurde aus dem Wort ein weisser
+       Klumpen. Mit Pfaden gibt es diese Frage nicht mehr.
+
+       Drei Lagen je Wort, von hinten nach vorn:
+         1. goldener Rand  (nur Strich, am breitesten)
+         2. dunkle Kontur  (Strich UND Fuellung - ergibt die Silhouette)
+         3. Farbfuellung   (ohne Strich - die Buchstaben bleiben getrennt,
+                            dazwischen sieht man die dunkle Kontur)
+
+       Die Pfade erzeugt werkzeuge/logo-bauen.py. */
     content.innerHTML = `
       <svg class="logo" viewBox="0 0 300 108" role="img" aria-label="MonsterQuest">
         <defs>
@@ -76,11 +88,12 @@ export const startScreen = {
             <stop offset="1" stop-color="#ff9e18" />
           </linearGradient>
         </defs>
-        <!-- Zuerst die goldene Kontur, darueber der eigentliche Schriftzug. -->
-        <text class="logo__text logo__text--monster logo__rand" x="150" y="40">MONSTER</text>
-        <text class="logo__text logo__text--quest logo__rand" x="150" y="94">QUEST</text>
-        <text class="logo__text logo__text--monster" x="150" y="40" fill="url(#logo-monster)">MONSTER</text>
-        <text class="logo__text logo__text--quest" x="150" y="94" fill="url(#logo-quest)">QUEST</text>
+        <path class="logo__rand" d="${LOGO_MONSTER}" />
+        <path class="logo__rand" d="${LOGO_QUEST}" />
+        <path class="logo__kontur" d="${LOGO_MONSTER}" />
+        <path class="logo__kontur" d="${LOGO_QUEST}" />
+        <path class="logo__fuellung" d="${LOGO_MONSTER}" fill="url(#logo-monster)" />
+        <path class="logo__fuellung" d="${LOGO_QUEST}" fill="url(#logo-quest)" />
       </svg>
       <p class="logo__claim">Kleine Monster. Große Abenteuer.</p>
     `;

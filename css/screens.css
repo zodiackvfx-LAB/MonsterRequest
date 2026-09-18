@@ -20,8 +20,14 @@
 .start__hero {
   flex: 1;
   display: grid;
-  place-items: center;
-  align-content: center;
+  /* Zwei Reihen: oben die Buehne mit der Figur, darunter das Namensschild.
+     minmax(0, 1fr) ist der entscheidende Teil - damit DARF die Buehne
+     schrumpfen. Vorher war sie immer so hoch wie die Figur; auf niedrigen
+     Bildschirmen (Safari blendet die Adressleiste ein) wuchs sie dann nach
+     oben aus dem Bereich heraus und lag ueber dem Schriftzug. */
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
   gap: 14px;
   min-height: 0;
 }
@@ -1740,6 +1746,62 @@
 }
 
 /* =========================================================
+   Niedrige Bildschirme im Hochformat
+   =========================================================
+   Wenn Safari die Adressleiste einblendet, bleiben von einem iPhone SE nur
+   rund 553 Pixel Hoehe uebrig. Kopfzeile, Schriftzug und die Knoepfe
+   brauchen davon fast alles - fuer die Figur bliebe ein Streifen von 20
+   Pixeln. Deshalb wird hier ueberall etwas Platz abgezwackt, damit die
+   Figur wieder ordentlich gross wird. Nichts verschwindet, alles behaelt
+   seinen Platz.
+   ========================================================= */
+@media (orientation: portrait) and (max-height: 700px) {
+  .start__logo {
+    margin-top: 2px;
+  }
+
+  .screen--start .logo {
+    max-width: 190px;
+  }
+
+  .screen--start .logo__claim {
+    margin-top: 2px;
+    font-size: 0.74rem;
+  }
+
+  .start__hero {
+    gap: 8px;
+  }
+
+  .start__hero-name {
+    padding: 4px 12px;
+    font-size: 0.78rem;
+  }
+
+  .start__actions {
+    gap: 9px;
+  }
+
+  .tagesbanner {
+    padding: 8px 12px;
+  }
+
+  .start__menu {
+    gap: 6px;
+  }
+
+  .screen--start .icon-btn__circle {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  .screen--start .icon-btn__label {
+    font-size: 0.56rem;
+  }
+}
+
+/* =========================================================
    Querformat auf dem Handy
    =========================================================
    Gedreht bleiben nur rund 390 Pixel Hoehe - untereinander passt der
@@ -1988,8 +2050,26 @@
 
 .hero-buehne {
   position: relative;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: end center;
+}
+
+/* Die Figur nimmt die Hoehe der Buehne an - hoechstens aber ihre
+   vorgesehene Groesse. Das Seitenverhaeltnis bleibt gleich (5:7), damit
+   sie beim Schrumpfen nicht gestaucht wird. */
+.hero-buehne .sprite {
+  height: 100%;
+  /* min-height: 0 ist noetig: Ein Rasterfeld ist von sich aus mindestens so
+     gross wie sein Inhalt - ohne diese Zeile wuerde die Figur die Buehne
+     wieder auseinanderdruecken. */
+  min-height: 0;
+  min-width: 0;
+  max-height: calc(var(--sprite-large, 150px) * 1.4);
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 5 / 7;
 }
 
 /* Der Schatten liegt unter den Fuessen und ist bewusst weich - ein harter

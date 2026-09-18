@@ -22,6 +22,8 @@ import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
 import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
 import { WORLDS, fightsInWorld } from '../js/data/worlds.js';
+import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
+import { readFileSync } from 'node:fs';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
   besitztAttacke,
@@ -759,6 +761,25 @@ console.log('\nMusik');
     return `${m.grundton}|${m.form}|${m.tempo}|${m.muster.join(',')}`;
   });
   pruefe('Keine zwei Welten klingen gleich', new Set(klangbilder).size === WORLDS.length);
+}
+
+console.log('\nLogo');
+{
+  /* Das Logo besteht aus festen Pfaden, nicht aus Schrift. Grund steht in
+     werkzeuge/logo-bauen.py: Bei echter Schrift ueberlappen sich die dicken
+     Konturen, und jeder Browser loest das anders auf - auf dem iPhone wurde
+     aus dem Schriftzug ein weisser Klumpen. */
+  const startCode = readFileSync(new URL('../js/screens/start.js', import.meta.url), 'utf8');
+
+  pruefe('Das Logo hat Pfade fuer beide Woerter',
+    LOGO_MONSTER.length > 500 && LOGO_QUEST.length > 500);
+  pruefe('Die Pfade beginnen mit einem Startpunkt',
+    LOGO_MONSTER.startsWith('M') && LOGO_QUEST.startsWith('M'));
+  pruefe('Das Logo benutzt keine Schrift mehr (kein <text> im SVG)',
+    !/<text[\s>]/.test(startCode));
+  pruefe('Jedes Wort liegt in drei Lagen: Rand, Kontur, Fuellung',
+    ['logo__rand', 'logo__kontur', 'logo__fuellung'].every(
+      (lage) => (startCode.match(new RegExp(lage, 'g')) || []).length === 2));
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

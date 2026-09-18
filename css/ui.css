@@ -17,18 +17,30 @@
   filter: drop-shadow(0 6px 10px rgba(10, 20, 60, 0.4));
 }
 
-.logo__text {
-  font-family: var(--font);
-  font-weight: 700;
-  text-anchor: middle;
+/* Die drei Lagen des Logos. Reihenfolge = Reihenfolge im SVG:
+   goldener Rand ganz hinten, dann die dunkle Kontur, vorn die Farbe.
+   Kein paint-order noetig - genau daran ist die alte Fassung auf dem
+   iPhone zerbrochen. */
+.logo__rand {
+  fill: none;
+  stroke: var(--fantasy-gold);
+  /* Nur wenig breiter als die dunkle Kontur (8), sonst laeuft das Gold in
+     die Innenraeume der Buchstaben - besonders beim Q. */
+  stroke-width: 11;
+  stroke-linejoin: round;
+  opacity: 0.75;
+}
+
+.logo__kontur {
+  fill: #16204f;
   stroke: #16204f;
   stroke-width: 8;
   stroke-linejoin: round;
-  paint-order: stroke fill;
 }
 
-.logo__text--monster { font-size: 40px; }
-.logo__text--quest { font-size: 52px; }
+.logo__fuellung {
+  stroke: none;
+}
 
 .logo__claim {
   margin-top: 6px;
@@ -974,13 +986,3 @@
   50%      { filter: drop-shadow(0 6px 10px rgba(10,20,60,0.45)) drop-shadow(0 0 18px rgba(255,205,90,0.45)); }
 }
 
-/* Die goldene Kontur des Logos (zweiter Textzug hinter dem eigentlichen). */
-.logo__rand {
-  fill: none;
-  stroke: var(--fantasy-gold);
-  /* Nur wenig breiter als die dunkle Kontur (8), sonst laeuft das Gold in
-     die Innenraeume der Buchstaben - besonders beim Q. */
-  stroke-width: 11;
-  stroke-linejoin: round;
-  opacity: 0.75;
-}
