@@ -12,6 +12,7 @@
 
 import { showScreen } from '../core/screens.js';
 import { getLevel } from '../data/levels.js';
+import { getWorld } from '../data/worlds.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
@@ -64,7 +65,7 @@ export const battleScreen = {
     /* ---------- 1. Grundgerüst bauen ---------- */
     const screen = document.createElement('div');
     screen.className = 'screen screen--battle';
-    applyRegion(screen, level.scenery);
+    applyRegion(screen, level.scenery, getWorld(level.worldId));
     // Nur Himmel: den Boden bringt die Arena mit.
     screen.appendChild(createScenery({ skyOnly: true }));
 

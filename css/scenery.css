@@ -129,73 +129,36 @@
 }
 
 /* ---------- Welt-Themen ----------
-   Die Klasse kommt auf den Bildschirm (nicht auf die Kulisse), damit
-   Kulisse UND Arena die Farben erben. Jede Welt bringt eigene Farben UND
-   eine eigene Form für die Bäume/Felsen mit (siehe weiter unten) - so
-   unterscheiden sich die Welten nicht nur durch einen Farbton. */
-.region--kristall {
-  --s-sky-top: #3a2f8f;
-  --s-sky-bottom: #b9c8ff;
-  --s-grass: #6f7bd6;
-  --s-grass-dark: #454b9e;
-  --s-grass-light: #9aa5f0;
-  --s-rock: #8a7ad0;
-  --s-rock-dark: #5b4f9e;
-  --s-tree: #7ce0ff;
-  --s-tree-dark: #3f7fd0;
-  --snow: #eaf2ff;
+   Die FARBEN einer Welt stehen in js/data/worlds.js und werden von dort
+   gesetzt (applyRegion in js/ui/scenery.js). Willst du eine Arena
+   umfaerben, aenderst du also die Datendatei - nicht dieses Stylesheet.
+
+   Hier unten stehen nur die FORMEN: die Silhouetten von Tannen,
+   Kristallen, Felsnadeln und Kakteen. Die Klasse kommt auf den Bildschirm
+   (nicht auf die Kulisse), damit Kulisse UND Arena sie erben. */
+
+/* ---------- Eigenes Hintergrundbild ----------
+   Traegt eine Welt das Feld "hintergrund", ersetzt dieses Bild die
+   gezeichnete Kulisse. Der Boden der Arena bleibt bestehen, damit die
+   Figuren immer sauber darauf stehen. */
+.region--eigenes-bild .scenery__sky {
+  background-image: var(--welt-bild);
+  background-size: cover;
+  background-position: center bottom;
 }
 
-.region--vulkan {
-  --s-sky-top: #6d2140;
-  --s-sky-bottom: #ffa45c;
-  --s-grass: #6b4636;
-  --s-grass-dark: #40261c;
-  --s-grass-light: #96634a;
-  --s-rock: #6b3a45;
-  --s-rock-dark: #43242c;
-  --s-tree: #d95b25;
-  --s-tree-dark: #7a2b12;
-  --snow: #ffd9a0;
+.region--eigenes-bild .scenery__sun,
+.region--eigenes-bild .scenery__cloud,
+.region--eigenes-bild .scenery__mountains,
+.region--eigenes-bild .scenery__hills {
+  display: none;
 }
 
-.region--eis {
-  --s-sky-top: #5aa7d6;
-  --s-sky-bottom: #e6f6ff;
-  --s-grass: #cfe8f7;
-  --s-grass-dark: #9dc3dd;
-  --s-grass-light: #f2fbff;
-  --s-rock: #9db6cc;
-  --s-rock-dark: #6f8aa3;
-  --s-tree: #4f9ea8;
-  --s-tree-dark: #2c6670;
-  --snow: #ffffff;
-}
-
-.region--schatten {
-  --s-sky-top: #1c1030;
-  --s-sky-bottom: #4b3570;
-  --s-grass: #3b2c55;
-  --s-grass-dark: #241a38;
-  --s-grass-light: #54406f;
-  --s-rock: #3a2b52;
-  --s-rock-dark: #241a38;
-  --s-tree: #6b4a8f;
-  --s-tree-dark: #33214a;
-  --snow: #c9b6e8;
-}
-
-.region--wueste {
-  --s-sky-top: #f0a05a;
-  --s-sky-bottom: #ffe6b8;
-  --s-grass: #e8c07a;
-  --s-grass-dark: #b98c4a;
-  --s-grass-light: #f7dda6;
-  --s-rock: #c99a63;
-  --s-rock-dark: #8f6a3f;
-  --s-tree: #77a05a;
-  --s-tree-dark: #4a6b36;
-  --snow: #fff3d6;
+/* In der Arena verschwinden Huegel und Baumreihen, damit das Bild wirkt.
+   Die Wiese bleibt - sie ist der Boden, auf dem gekaempft wird. */
+.region--eigenes-bild .arena__hills,
+.region--eigenes-bild .arena__treeline {
+  display: none;
 }
 
 /* Hinter einem Menue haben die Wolken nichts zu suchen: Unter dem

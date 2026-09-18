@@ -47,9 +47,49 @@ export function createScenery({ dimmed = false, skyOnly = false } = {}) {
  * @param {HTMLElement} screen
  * @param {string} region - 'wald' (Standard) | 'sumpf' | 'vulkan'
  */
-export function applyRegion(screen, region = 'wald') {
+export function applyRegion(screen, region = 'wald', welt = null) {
+  // Die Form der Kulisse (Tannen, Kristalle, Kakteen) kommt aus dem CSS.
   if (region && region !== 'wald') screen.classList.add(`region--${region}`);
+
+  if (!welt) return;
+
+  // Die Farben kommen aus js/data/worlds.js und werden hier gesetzt.
+  // So steht alles ueber eine Welt an einer Stelle.
+  if (welt.farben) {
+    Object.entries(FARB_NAMEN).forEach(([name, variable]) => {
+      const wert = welt.farben[name];
+      if (wert) screen.style.setProperty(variable, wert);
+    });
+  }
+
+  // Eigenes Hintergrundbild statt der gezeichneten Kulisse.
+  if (welt.hintergrund) {
+    // Die Adresse wird hier zur vollen Adresse gemacht. Grund: Ein url() in
+    // einer CSS-Variablen rechnet vom STYLESHEET aus, nicht von der Seite -
+    // 'bilder/welten/x.png' waere sonst 'css/bilder/welten/x.png' geworden.
+    const adresse = new URL(welt.hintergrund, document.baseURI).href;
+    screen.style.setProperty('--welt-bild', `url("${adresse}")`);
+    screen.classList.add('region--eigenes-bild');
+  }
 }
+
+/**
+ * Welcher Farbname aus worlds.js gehoert zu welcher CSS-Variablen.
+ * Die deutschen Namen stehen in der Datendatei, die CSS-Variablen im
+ * Stylesheet - hier treffen sich beide.
+ */
+const FARB_NAMEN = {
+  himmelOben: '--s-sky-top',
+  himmelUnten: '--s-sky-bottom',
+  wiese: '--s-grass',
+  wieseDunkel: '--s-grass-dark',
+  wieseHell: '--s-grass-light',
+  fels: '--s-rock',
+  felsDunkel: '--s-rock-dark',
+  baum: '--s-tree',
+  baumDunkel: '--s-tree-dark',
+  schnee: '--snow',
+};
 
 /**
  * Die Ebenen der Kampfarena: Hügel, Baumreihe, Wiese und Kampfplatz.

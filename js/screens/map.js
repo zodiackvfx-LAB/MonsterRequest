@@ -50,7 +50,7 @@ export const mapScreen = {
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--map';
-    applyRegion(screen, world.scenery);
+    applyRegion(screen, world.scenery, world);
     screen.appendChild(createScenery());
     screen.appendChild(createHud());
 

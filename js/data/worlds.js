@@ -11,7 +11,12 @@
  *   id          - fortlaufende Nummer
  *   name        - Anzeigename
  *   icon        - Symbol für die Weltauswahl
- *   scenery     - Kulisse/Farbwelt (siehe .region--... in css/scenery.css)
+ *   scenery     - Form der Kulisse: bestimmt die Silhouetten von Baeumen,
+ *                 Kristallen oder Kakteen (siehe .region--... in css/scenery.css)
+ *   farben      - die zehn Farben dieser Welt. HIER aenderst du das Aussehen
+ *                 einer Arena. Siehe ANLEITUNG.md
+ *   hintergrund - optional: eigenes Hintergrundbild statt der gezeichneten
+ *                 Kulisse, z. B. 'bilder/welten/vulkan.png'
  *   hueBase     - Grundfarbton der Kreaturen dieser Welt (0-360)
  *   text        - kurze Beschreibung
  *   music       - Klang-Kategorie (noch ohne Wirkung, für später vorgesehen)
@@ -37,6 +42,18 @@ export const WORLDS = [
     icon: '🌿',
     hueBase: 110, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'wald',
+    farben: {
+      himmelOben: '#3ba7e8',
+      himmelUnten: '#b6e8ff',
+      wiese: '#66c447',
+      wieseDunkel: '#3f8f2c',
+      wieseHell: '#8fdd63',
+      fels: '#7c8fb5',
+      felsDunkel: '#5a6c92',
+      baum: '#3b8f3a',
+      baumDunkel: '#23611f',
+      schnee: '#f2f8ff',
+    },
     text: 'Sonnige Wiesen und dichter Wald. Hier beginnt dein Abenteuer.',
     music: 'wald',
     powerPerXp: 3.4,
@@ -85,6 +102,18 @@ export const WORLDS = [
     icon: '💎',
     hueBase: 265, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'kristall',
+    farben: {
+      himmelOben: '#3a2f8f',
+      himmelUnten: '#b9c8ff',
+      wiese: '#6f7bd6',
+      wieseDunkel: '#454b9e',
+      wieseHell: '#9aa5f0',
+      fels: '#8a7ad0',
+      felsDunkel: '#5b4f9e',
+      baum: '#7ce0ff',
+      baumDunkel: '#3f7fd0',
+      schnee: '#eaf2ff',
+    },
     text: 'Funkelnde Stollen voller scharfkantiger Kristallwesen.',
     music: 'hoehle',
     powerPerXp: 3.7,
@@ -133,6 +162,18 @@ export const WORLDS = [
     icon: '🌋',
     hueBase: 14, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'vulkan',
+    farben: {
+      himmelOben: '#6d2140',
+      himmelUnten: '#ffa45c',
+      wiese: '#6b4636',
+      wieseDunkel: '#40261c',
+      wieseHell: '#96634a',
+      fels: '#6b3a45',
+      felsDunkel: '#43242c',
+      baum: '#d95b25',
+      baumDunkel: '#7a2b12',
+      schnee: '#ffd9a0',
+    },
     text: 'Glühende Asche, Lavaströme und Wesen aus Feuer.',
     music: 'vulkan',
     powerPerXp: 4.0,
@@ -181,6 +222,18 @@ export const WORLDS = [
     icon: '❄️',
     hueBase: 192, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'eis',
+    farben: {
+      himmelOben: '#5aa7d6',
+      himmelUnten: '#e6f6ff',
+      wiese: '#cfe8f7',
+      wieseDunkel: '#9dc3dd',
+      wieseHell: '#f2fbff',
+      fels: '#9db6cc',
+      felsDunkel: '#6f8aa3',
+      baum: '#4f9ea8',
+      baumDunkel: '#2c6670',
+      schnee: '#ffffff',
+    },
     text: 'Bittere Kälte, Schneestürme und alles, was darin überlebt.',
     music: 'eis',
     powerPerXp: 4.2,
@@ -229,6 +282,18 @@ export const WORLDS = [
     icon: '🌑',
     hueBase: 288, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'schatten',
+    farben: {
+      himmelOben: '#1c1030',
+      himmelUnten: '#4b3570',
+      wiese: '#3b2c55',
+      wieseDunkel: '#241a38',
+      wieseHell: '#54406f',
+      fels: '#3a2b52',
+      felsDunkel: '#241a38',
+      baum: '#6b4a8f',
+      baumDunkel: '#33214a',
+      schnee: '#c9b6e8',
+    },
     text: 'Ein Land ohne Sonne. Hier bewegt sich etwas in der Dunkelheit.',
     music: 'schatten',
     powerPerXp: 4.4,
@@ -277,6 +342,18 @@ export const WORLDS = [
     icon: '🏜️',
     hueBase: 38, // Grundfarbton der Kreaturen dieser Welt
     scenery: 'wueste',
+    farben: {
+      himmelOben: '#f0a05a',
+      himmelUnten: '#ffe6b8',
+      wiese: '#e8c07a',
+      wieseDunkel: '#b98c4a',
+      wieseHell: '#f7dda6',
+      fels: '#c99a63',
+      felsDunkel: '#8f6a3f',
+      baum: '#77a05a',
+      baumDunkel: '#4a6b36',
+      schnee: '#fff3d6',
+    },
     text: 'Endlose Dünen, alte Ruinen und alles, was im Sand wartet.',
     music: 'wueste',
     powerPerXp: 4.6,

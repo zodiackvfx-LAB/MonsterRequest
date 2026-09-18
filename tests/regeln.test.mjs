@@ -664,6 +664,26 @@ console.log('\nTimos Attacken');
   pruefe('Keine Tier- oder Feuernamen mehr', passtNicht.length === 0);
 }
 
+console.log('\nWelt-Farben');
+{
+  const FARBEN = ['himmelOben','himmelUnten','wiese','wieseDunkel','wieseHell',
+                  'fels','felsDunkel','baum','baumDunkel','schnee'];
+
+  pruefe('Jede Welt bringt ihre eigenen Farben mit',
+    WORLDS.every((w) => w.farben && typeof w.farben === 'object'));
+  pruefe('Jede Welt hat alle zehn Farben',
+    WORLDS.every((w) => FARBEN.every((f) => typeof w.farben[f] === 'string')));
+  // Ein Tippfehler im Farbwert wuerde sonst nur "irgendwie falsch" aussehen.
+  pruefe('Jeder Farbwert ist ein gueltiger Hex-Code',
+    WORLDS.every((w) => FARBEN.every((f) => /^#[0-9a-f]{6}$/i.test(w.farben[f]))));
+  pruefe('Keine zwei Welten haben denselben Himmel',
+    new Set(WORLDS.map((w) => w.farben.himmelOben)).size === WORLDS.length);
+  pruefe('Wiese und dunkle Wiese unterscheiden sich in jeder Welt',
+    WORLDS.every((w) => w.farben.wiese !== w.farben.wieseDunkel));
+  pruefe('Ein eigenes Hintergrundbild ist optional',
+    WORLDS.every((w) => w.hintergrund === undefined || typeof w.hintergrund === 'string'));
+}
+
 console.log('\nKlaenge');
 {
   const FORMEN_ERLAUBT = ['sine', 'square', 'triangle', 'sawtooth', 'rauschen'];
