@@ -77,22 +77,149 @@ function aufbauen() {
  * Schaltet den Ton bei der ersten Berührung frei.
  * Wird einmal beim Start aufgerufen (js/main.js).
  */
+const FREISCHALT_EREIGNISSE = ['pointerdown', 'touchend', 'click', 'keydown'];
+
 export function tonFreischalten() {
   if (freigeschaltet) return;
   freigeschaltet = true;
 
-  const einmal = () => {
-    if (!aufbauen()) return;
-    // Safari startet den Kontext angehalten - hier darf er laufen.
-    if (ctx.state === 'suspended') ctx.resume();
-    // Musik nachholen, falls ein Bildschirm sie schon angefordert hat.
+  // Bewusst OHNE { once: true }: klappt der erste Versuch nicht, muss der
+  // zweite Fingertipp es erneut probieren duerfen. Die Handler entfernen
+  // sich erst, wenn der Ton wirklich laeuft.
+  // In der Auffang-Phase (true): so ist der Ton schon bereit, wenn kurz
+  // darauf der Knopfklang gespielt wird.
+  FREISCHALT_EREIGNISSE.forEach((name) =>
+    document.addEventListener(name, freischaltVersuch, true)
+  );
+}
+
+function freischaltVersuch() {
+  // Schon frei? Dann nur noch aufraeumen.
+  if (ctx && ctx.state === 'running') {
+    FREISCHALT_EREIGNISSE.forEach((name) =>
+      document.removeEventListener(name, freischaltVersuch, true)
+    );
     if (gewuenschteMusik) musikStarten(gewuenschteMusik);
+    return;
+  }
+
+  if (!aufbauen()) return;
+
+  iosStummschalterUmgehen();
+
+  // Safari startet den Kontext angehalten - hier, in der Nutzeraktion, darf
+  // er laufen. Manche iOS-Versionen bleiben trotzdem stumm, bis einmal ein
+  // Puffer gespielt wurde - deshalb der stumme Anstoss.
+  anstossSpielen();
+  if (ctx.state === 'suspended') {
+    ctx.resume().then(() => {
+      if (gewuenschteMusik) musikStarten(gewuenschteMusik);
+    }, () => {});
+  } else if (gewuenschteMusik) {
+    musikStarten(gewuenschteMusik);
+  }
+}
+
+/** Ein Sample Stille - manche iOS-Versionen brauchen das zum Aufwachen. */
+function anstossSpielen() {
+  try {
+    const puffer = ctx.createBuffer(1, 1, 22050);
+    const quelle = ctx.createBufferSource();
+    quelle.buffer = puffer;
+    quelle.connect(ctx.destination);
+    quelle.start(0);
+  } catch (error) {
+    /* nicht schlimm - dann eben ohne Anstoss */
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Der Stummschalter von iPhone und iPad                              */
+/* ------------------------------------------------------------------ */
+
+let stilleSpur = null;
+
+/**
+ * Auf iPhone und iPad schaltet der Stummschalter (das Glockensymbol im
+ * Kontrollzentrum) den Web-Audio-Ton komplett ab - ein stummes Spiel,
+ * obwohl alles richtig programmiert ist. Musik und Videos sind davon nicht
+ * betroffen, weil sie in einer anderen Tonkategorie laufen.
+ *
+ * Wir schalten deshalb auf genau diese Kategorie um. Zwei Wege:
+ *   1. navigator.audioSession (Safari ab 16.4) - der saubere Weg
+ *   2. eine stumme, endlos laufende Tonspur - der Weg fuer aeltere Geraete
+ */
+function iosStummschalterUmgehen() {
+  // Weg 1
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = 'playback';
+  } catch (error) {
+    /* kennt der Browser nicht - dann Weg 2 */
+  }
+
+  // Weg 2
+  if (stilleSpur) {
+    if (stilleSpur.paused) stilleSpur.play().catch(() => {});
+    return;
+  }
+
+  try {
+    stilleSpur = new Audio(stilleWavAdresse());
+    stilleSpur.loop = true;
+    stilleSpur.volume = 0.001; // nicht 0 - manche Browser pausieren dann
+    stilleSpur.setAttribute('playsinline', '');
+    stilleSpur.play().catch(() => {});
+  } catch (error) {
+    stilleSpur = null;
+  }
+}
+
+/**
+ * Baut eine winzige stille WAV-Datei im Speicher.
+ * Bewusst im Code erzeugt statt als Datei mitgeliefert - so bleibt das
+ * Spiel ohne einzige Mediendatei.
+ */
+function stilleWavAdresse() {
+  const rate = 8000;
+  const samples = 800; // 0,1 Sekunden
+  const bytes = new Uint8Array(44 + samples);
+  const sicht = new DataView(bytes.buffer);
+
+  const text = (pos, wert) => {
+    for (let i = 0; i < wert.length; i++) sicht.setUint8(pos + i, wert.charCodeAt(i));
   };
 
-  // once: true - die Handler entfernen sich danach von selbst.
-  document.addEventListener('pointerdown', einmal, { once: true });
-  document.addEventListener('touchstart', einmal, { once: true });
-  document.addEventListener('keydown', einmal, { once: true });
+  text(0, 'RIFF');
+  sicht.setUint32(4, 36 + samples, true);
+  text(8, 'WAVE');
+  text(12, 'fmt ');
+  sicht.setUint32(16, 16, true); // Laenge des Formatblocks
+  sicht.setUint16(20, 1, true); // unkomprimiert
+  sicht.setUint16(22, 1, true); // ein Kanal
+  sicht.setUint32(24, rate, true);
+  sicht.setUint32(28, rate, true); // Bytes pro Sekunde
+  sicht.setUint16(32, 1, true); // Bytes pro Sample
+  sicht.setUint16(34, 8, true); // Bits pro Sample
+  text(36, 'data');
+  sicht.setUint32(40, samples, true);
+  bytes.fill(128, 44); // 128 ist bei 8 Bit die Null-Linie = Stille
+
+  return URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
+}
+
+/**
+ * Sagt, in welchem Zustand der Ton gerade ist.
+ * Wird vom Ton-Test in den Einstellungen benutzt.
+ */
+export function tonStatus() {
+  return {
+    moeglich: Boolean(window.AudioContext ?? window.webkitAudioContext),
+    aufgebaut: Boolean(ctx),
+    zustand: ctx ? ctx.state : 'noch nicht gestartet',
+    klaengeAn: gameState.settings.sound !== false,
+    musikAn: gameState.settings.musik !== false,
+    stummschalterUmgangen: Boolean(stilleSpur && !stilleSpur.paused),
+  };
 }
 
 /** Ist der Ton gerade erwünscht und benutzbar? */

@@ -7,7 +7,7 @@ import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
 import { gameState, getTotalStars, resetProgress, setSetting } from '../core/state.js';
 import { LEVELS } from '../data/levels.js';
-import { spieleKlang, tonEinstellungenAnwenden } from '../core/audio.js';
+import { spieleKlang, tonEinstellungenAnwenden, tonStatus } from '../core/audio.js';
 
 /** Die Schalter. Neue Einstellung = hier einen Eintrag ergänzen. */
 const TOGGLES = [
@@ -73,6 +73,33 @@ export const settingsScreen = {
       panel.appendChild(row);
     });
 
+    /* ---------- Ton-Test ---------- */
+    // Damit man unterscheiden kann: liegt es am Spiel oder am Geraet?
+    const testZeile = document.createElement('div');
+    testZeile.className = 'setting-row';
+    testZeile.innerHTML = `
+      <span class="setting-row__label">
+        <span class="setting-row__name">Ton testen</span>
+        <span class="setting-row__hint" id="ton-befund">Antippen - du solltest zwei Töne hören.</span>
+      </span>
+    `;
+
+    const testKnopf = document.createElement('button');
+    testKnopf.type = 'button';
+    testKnopf.className = 'btn btn--small';
+    testKnopf.textContent = '🔊 Test';
+    testKnopf.dataset.klang = 'keiner';
+    testKnopf.addEventListener('click', () => {
+      spieleKlang('bestaetigen');
+      // Kurz warten: der Tonkanal wacht erst mit dieser Berührung auf.
+      setTimeout(() => {
+        testZeile.querySelector('#ton-befund').innerHTML = befundText(tonStatus());
+      }, 250);
+    });
+
+    testZeile.appendChild(testKnopf);
+    panel.appendChild(testZeile);
+
     content.appendChild(panel);
 
     /* ---------- Fortschritt ---------- */
@@ -112,6 +139,22 @@ export const settingsScreen = {
     root.appendChild(screen);
   },
 };
+
+/**
+ * Sagt in einem Satz, warum man nichts hört.
+ * Der häufigste Grund ist der Stummschalter des Geräts - und genau den
+ * sieht man dem Spiel nicht an.
+ */
+function befundText(status) {
+  if (!status.moeglich) return 'Dieser Browser kann keinen Ton abspielen.';
+  if (!status.klaengeAn) return 'Die Klänge sind oben ausgeschaltet.';
+  if (!status.aufgebaut) return 'Der Ton ist noch nicht gestartet. Tippe noch einmal.';
+  if (status.zustand !== 'running') {
+    return `Der Ton ist angehalten (${status.zustand}). Tippe noch einmal.`;
+  }
+  return 'Der Ton läuft. Hörst du nichts, prüfe die Lautstärke und den '
+    + 'Stummschalter: Kontrollzentrum öffnen und das Glockensymbol ausschalten.';
+}
 
 /** Sicherheitsabfrage, damit niemand aus Versehen alles löscht. */
 function askReset(screen) {
