@@ -6,7 +6,7 @@
  * an sie weiter. Die Regeln selbst stehen alle in der Engine.
  *
  * Weil Spieler und Gegner nach denselben Regeln kämpfen, wird auch die
- * XP-Leiste des Gegners angezeigt - so siehst du, wann bei ihm etwas
+ * Energieleiste des Gegners angezeigt - so siehst du, wann bei ihm etwas
  * Großes kommt.
  */
 
@@ -15,7 +15,7 @@ import { getLevel } from '../data/levels.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
-import { createBattle, MAX_XP } from '../core/battle.js';
+import { createBattle, MAX_ENERGIE } from '../core/battle.js';
 import { calculateStars, getDeck } from '../core/state.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
@@ -39,11 +39,11 @@ let bildfolgeStoppen = () => {}; // bricht eine laufende Angriffsanimation ab
 const ERGEBNIS_VERZOEGERUNG = 750;
 
 /**
- * Ab diesem XP-Preis gilt eine Attacke als grosse Attacke: Timo schiesst
+ * Ab diesem Energiepreis gilt eine Attacke als grosse Attacke: Timo schiesst
  * dann einen Energiestrahl statt zuzuschlagen. Darunter gibt es den
  * Nahkampf. Zahl aendern = Grenze verschieben.
  */
-const ANGRIFF_AB_XP = 5;
+const ANGRIFF_AB_ENERGIE = 5;
 
 export const battleScreen = {
   // Jede Welt hat ihre eigene Musik.
@@ -83,9 +83,9 @@ export const battleScreen = {
           <span class="fighter-bar__hp" id="enemy-hp-text"></span>
         </div>
         <div class="bar" id="enemy-hp-bar"><div class="bar__fill" id="enemy-hp-fill"></div></div>
-        <div class="fighter-bar__xp">
-          <span class="fighter-bar__xp-label">XP</span>
-          <div class="pips pips--enemy pips--small" id="enemy-xp-pips"></div>
+        <div class="fighter-bar__energie">
+          <span class="fighter-bar__energie-label">ENERGIE</span>
+          <div class="pips pips--enemy pips--small" id="enemy-energie-pips"></div>
         </div>
         <div class="shield-badge" id="enemy-shield">🛡️ <span></span></div>
       </section>
@@ -115,12 +115,12 @@ export const battleScreen = {
         <div class="shield-badge" id="player-shield">🛡️ <span></span></div>
       </section>
 
-      <section class="xp-row">
-        <div class="xp-row__head">
-          <span class="xp-row__title">DEINE XP</span>
-          <span class="xp-row__value" id="xp-text">0 / ${MAX_XP}</span>
+      <section class="wert-leiste">
+        <div class="wert-leiste__kopf">
+          <span class="wert-leiste__titel">DEINE ENERGIE</span>
+          <span class="wert-leiste__wert" id="energie-text">0 / ${MAX_ENERGIE}</span>
         </div>
-        <div class="pips" id="xp-pips"></div>
+        <div class="pips" id="energie-pips"></div>
       </section>
 
       <section class="hand" id="hand"></section>
@@ -149,17 +149,17 @@ export const battleScreen = {
       playerSprite: screen.querySelector('#player-sprite'),
       playerShield: screen.querySelector('#player-shield'),
       log: screen.querySelector('#battle-log'),
-      xpText: screen.querySelector('#xp-text'),
+      energieText: screen.querySelector('#energie-text'),
       hand: screen.querySelector('#hand'),
     };
 
-    const playerPips = createPips(screen.querySelector('#xp-pips'));
-    const enemyPips = createPips(screen.querySelector('#enemy-xp-pips'));
+    const playerPips = createPips(screen.querySelector('#energie-pips'));
+    const enemyPips = createPips(screen.querySelector('#enemy-energie-pips'));
 
-    /** Legt MAX_XP Punkte in einem Container an und gibt sie als Array zurück. */
+    /** Legt MAX_ENERGIE Punkte in einem Container an und gibt sie als Array zurück. */
     function createPips(container) {
       const pips = [];
-      for (let i = 0; i < MAX_XP; i++) {
+      for (let i = 0; i < MAX_ENERGIE; i++) {
         const pip = document.createElement('span');
         pip.className = 'pip';
         container.appendChild(pip);
@@ -185,7 +185,7 @@ export const battleScreen = {
       renderFighter(ui.enemyHpBar, ui.enemyHpFill, ui.enemyHpText, ui.enemyShield, state.enemy);
       renderFighter(ui.playerHpBar, ui.playerHpFill, ui.playerHpText, ui.playerShield, state.player);
 
-      ui.xpText.textContent = `${state.player.xp} / ${MAX_XP}`;
+      ui.energieText.textContent = `${state.player.energie} / ${MAX_ENERGIE}`;
       renderPips(playerPips, state.player);
       renderPips(enemyPips, state.enemy);
 
@@ -198,7 +198,7 @@ export const battleScreen = {
       // Bezahlbarkeit jeder Karte laufend prüfen
       cardElements.forEach((card, index) => {
         const attack = kampfAttacke(state.player.hand[index]);
-        const affordable = attack.cost <= state.player.xp && !state.finished;
+        const affordable = attack.cost <= state.player.energie && !state.finished;
         card.classList.toggle('is-ready', affordable);
         card.classList.toggle('is-disabled', !affordable);
         card.disabled = !affordable;
@@ -231,15 +231,15 @@ export const battleScreen = {
       }
     }
 
-    /** Färbt die XP-Punkte eines Kämpfers passend zu seinen XP ein. */
+    /** Färbt die Energiepunkte eines Kämpfers passend zu seiner Energie ein. */
     function renderPips(pips, fighter) {
       pips.forEach((pip, index) => {
-        const filled = index < fighter.xp;
+        const filled = index < fighter.energie;
         // Der nächste Punkt füllt sich langsam - das macht das Warten sichtbar.
-        const isCharging = index === fighter.xp && fighter.xp < MAX_XP;
+        const isCharging = index === fighter.energie && fighter.energie < MAX_ENERGIE;
         pip.classList.toggle('is-filled', filled);
         pip.classList.toggle('is-charging', isCharging);
-        pip.style.setProperty('--charge', isCharging ? fighter.xpProgress : 0);
+        pip.style.setProperty('--charge', isCharging ? fighter.energieFortschritt : 0);
       });
     }
 
@@ -267,7 +267,7 @@ export const battleScreen = {
 
         card.addEventListener('click', () => {
           const played = battle.playCard(index);
-          // Nicht genug XP: kurzes Wackeln als Rückmeldung.
+          // Nicht genug Energie: kurzes Wackeln als Rückmeldung.
           if (!played) flash(card, 'shake');
         });
 
@@ -290,7 +290,7 @@ export const battleScreen = {
       switch (event.type) {
         case 'player-attack': {
           // Kleine Attacke = Nahkampf, grosse Attacke = Energiestrahl.
-          const teuer = (event.attack?.cost ?? 0) >= ANGRIFF_AB_XP;
+          const teuer = (event.attack?.cost ?? 0) >= ANGRIFF_AB_ENERGIE;
           spieleFolge(teuer ? basis.bildStrahl : basis.bildSchlag);
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');

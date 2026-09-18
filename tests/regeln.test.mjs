@@ -16,7 +16,7 @@ globalThis.localStorage = {
 };
 
 import { createDeck, DECK_SIZE, HAND_SIZE } from '../js/core/deck.js';
-import { createFighter, MAX_XP, START_XP } from '../js/core/fighter.js';
+import { createFighter, MAX_ENERGIE, START_ENERGIE } from '../js/core/fighter.js';
 import { MONSTERS, STARTER_MONSTER_ID, getMonster } from '../js/data/monsters.js';
 import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
@@ -94,8 +94,8 @@ for (const monster of Object.values(MONSTERS)) {
     monster.deck.every((id) => Boolean(ATTACKS[id]))
   );
   pruefe(
-    `${monster.name}: keine Attacke kostet mehr als ${MAX_XP} XP`,
-    monster.deck.every((id) => getAttack(id).cost <= MAX_XP)
+    `${monster.name}: keine Attacke kostet mehr als ${MAX_ENERGIE} Energie`,
+    monster.deck.every((id) => getAttack(id).cost <= MAX_ENERGIE)
   );
 }
 
@@ -251,7 +251,7 @@ console.log('\nCharakter-Level');
   pruefe('Hoeheres Level bedeutet mehr Lebenspunkte', werteHoch.maxHp > werteNiedrig.maxHp);
   pruefe('Hoeheres Level bedeutet mehr Angriff', werteHoch.damageFactor > werteNiedrig.damageFactor);
   pruefe('Verteidigung bleibt unter 50 Prozent', werteHoch.defense < 0.5);
-  pruefe('Tempo bleibt hoechstens beim Anderthalbfachen', werteHoch.xpPerSecond <= 1.5);
+  pruefe('Tempo bleibt hoechstens beim Anderthalbfachen', werteHoch.energieProSekunde <= 1.5);
 
   // Das Charakter-Level haengt NICHT am Weltfortschritt
   completeLevel('1-1', { stars: 3, reward: 10 });
@@ -301,7 +301,7 @@ console.log('\nAttacken-Level');
   attackeAufwerten(PROBE);
   const stufe2 = attackeMitLevel(getAttack(PROBE));
   pruefe('Nach dem Aufwerten macht sie mehr Schaden', stufe2.damage > grund.damage);
-  pruefe('Die XP-Kosten bleiben gleich', stufe2.cost === grund.cost);
+  pruefe('Die Energiekosten bleiben gleich', stufe2.cost === grund.cost);
   pruefe(
     'Jede Attacken-Stufe kostet mehr',
     [1, 2, 3].every((l) => attackenKosten(l).muenzen < attackenKosten(l + 1).muenzen)
@@ -364,13 +364,13 @@ console.log('\nDeck und Hand');
   );
 }
 
-console.log('\nXP-System');
+console.log('\nEnergie-System');
 {
   const kaempfer = createFighter(SPIELFIGUR);
-  pruefe(`Startet mit ${START_XP} XP`, kaempfer.state.xp === START_XP);
+  pruefe(`Startet mit ${START_ENERGIE} Energie`, kaempfer.state.energie === START_ENERGIE);
 
-  kaempfer.gainXp(100); // 100 Sekunden auf einmal
-  pruefe(`XP steigen nie über ${MAX_XP}`, kaempfer.state.xp === MAX_XP);
+  kaempfer.energieAufladen(100); // 100 Sekunden auf einmal
+  pruefe(`Energie steigt nie über ${MAX_ENERGIE}`, kaempfer.state.energie === MAX_ENERGIE);
 
   // Alles ausgeben, was geht
   for (let i = 0; i < 30; i++) {
@@ -378,12 +378,12 @@ console.log('\nXP-System');
     if (bezahlbar === -1) break;
     kaempfer.useCard(bezahlbar);
   }
-  pruefe('XP fallen nie unter 0', kaempfer.state.xp >= 0);
+  pruefe('Energie faellt nie unter 0', kaempfer.state.energie >= 0);
 
   const teuer = createFighter(SPIELFIGUR);
   const teuerste = teuer.handAttacks().reduce((a, b) => (a.cost > b.cost ? a : b));
   const index = teuer.state.hand.indexOf(teuerste.id);
-  const darf = teuerste.cost <= teuer.state.xp;
+  const darf = teuerste.cost <= teuer.state.energie;
   const ergebnis = teuer.useCard(index);
   pruefe(
     'Zu teure Attacke wird abgelehnt',
@@ -645,12 +645,12 @@ console.log('\nTimos Attacken');
   pruefe('Kosten und Wirkung sind unveraendert',
     JSON.stringify(ist) === JSON.stringify(erwartet.slice().sort((x,y) => x[0]-y[0] || x[1]-y[1])));
 
-  // Unter 5 XP schlaegt Timo zu, ab 5 XP schiesst er - die Namen sollen
+  // Unter 5 Energie schlaegt Timo zu, darueber schiesst er - die Namen sollen
   // dazu passen, sonst wirkt die Animation falsch.
   const guenstig = deck.filter((a) => a.cost < 5);
   const teuer = deck.filter((a) => a.cost >= 5);
-  pruefe('5 Nahkampf-Attacken unter 5 XP', guenstig.length === 5);
-  pruefe('3 Energie-Attacken ab 5 XP', teuer.length === 3);
+  pruefe('5 Nahkampf-Attacken unter 5 Energie', guenstig.length === 5);
+  pruefe('3 Energie-Attacken ab 5 Energie', teuer.length === 3);
 
   pruefe('Jede Attacke hat Symbol und Beschreibung',
     deck.every((a) => a.icon && a.text && a.text.length > 10));

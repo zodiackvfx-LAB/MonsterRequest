@@ -3,7 +3,7 @@
  *
  * Die Regel bleibt: genau 8 Karten im Deck, im Kampf 4 auf der Hand.
  * Neu ist, dass jede Attacke ein eigenes Level hat (siehe progression.js):
- * Schaden, Heilung und Schild steigen, die XP-Kosten bleiben gleich.
+ * Schaden, Heilung und Schild steigen, die Energiekosten bleiben gleich.
  */
 
 import { showScreen } from '../core/screens.js';
@@ -51,7 +51,7 @@ export const deckScreen = {
         <p class="map__info-text">
           Genau ${deck.length} Attacken, im Kampf ${HAND_SIZE} auf der Hand.
           <strong>Antippen</strong> zum Tauschen, <strong>Aufwerten</strong> macht
-          eine Attacke stärker - die XP-Kosten bleiben gleich.
+          eine Attacke stärker - die Energiekosten bleiben gleich.
           <br>${MUENZE} ${gameState.coins} · 💠 ${gameState.materials}
         </p>
       `;

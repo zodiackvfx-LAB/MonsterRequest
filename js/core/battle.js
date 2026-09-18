@@ -5,15 +5,15 @@
  * Der Kampfbildschirm (js/screens/battle.js) zeigt an, was hier passiert.
  *
  * Spieler und Gegner sind gleich aufgebaut (siehe js/core/fighter.js):
- * beide haben ein Deck aus 8 Attacken, 4 Karten auf der Hand, maximal 10 XP
- * und bekommen 1 XP pro Sekunde. Der einzige Unterschied ist, wer entscheidet:
+ * beide haben ein Deck aus 8 Attacken, 4 Karten auf der Hand, maximal 10 Energie
+ * und bekommen 1 Energie pro Sekunde. Der einzige Unterschied ist, wer entscheidet:
  * du per Tipp, der Gegner per KI (weiter unten in dieser Datei).
  */
 
-import { createFighter, MAX_XP, XP_PER_SECOND, START_XP } from './fighter.js';
+import { createFighter, MAX_ENERGIE, ENERGIE_PRO_SEKUNDE, START_ENERGIE } from './fighter.js';
 
 // Weiterreichen, damit andere Dateien nur diese eine Datei importieren müssen.
-export { MAX_XP, XP_PER_SECOND, START_XP };
+export { MAX_ENERGIE, ENERGIE_PRO_SEKUNDE, START_ENERGIE };
 
 /** Standardwerte, falls ein Gegner keine eigenen KI-Werte mitbringt. */
 const DEFAULT_REACTION_TIME = 1.0;
@@ -46,7 +46,7 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
   };
 
   let thinkTimer = reactionTime; // Sekunden, bis der Gegner das nächste Mal überlegt
-  let savingFromXp = null; // XP-Stand, ab dem der Gegner gerade spart (null = spart nicht)
+  let sparenAb = null; // Energiestand, ab dem der Gegner gerade spart (null = spart nicht)
   let rafId = null;
   let lastTimestamp = 0;
 
@@ -192,32 +192,32 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
       }
     });
 
-    // Gemessen wird ab dem XP-Stand, bei dem er angefangen hat zu sparen.
+    // Gemessen wird ab dem Energiestand, bei dem er angefangen hat zu sparen.
     // Sonst würde er sich Stufe für Stufe immer weiter hochsparen und
     // am Ende doch ewig warten.
-    const startXp = savingFromXp ?? state.enemy.xp;
+    const startEnergie = sparenAb ?? state.enemy.energie;
 
     // Lohnt sich Warten? (bald bezahlbar UND wertvoller als alles Bezahlbare)
     const worthWaiting = hand.some(
       (attack) =>
         !enemy.canAfford(attack.cost) &&
-        attack.cost <= startXp + patience &&
+        attack.cost <= startEnergie + patience &&
         valueOf(attack) > bestValue
     );
 
     if (worthWaiting) {
-      if (savingFromXp === null) savingFromXp = state.enemy.xp;
+      if (sparenAb === null) sparenAb = state.enemy.energie;
       return -1;
     }
 
-    savingFromXp = null;
+    sparenAb = null;
     return bestIndex;
   }
 
   /** Der Gegner überlegt und spielt gegebenenfalls eine Karte. */
   function enemyTurn() {
     const handIndex = chooseCard();
-    if (handIndex < 0) return; // spart noch XP
+    if (handIndex < 0) return; // spart noch Energie
 
     const attack = enemy.useCard(handIndex);
     if (!attack) return;
@@ -231,9 +231,9 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
 
   /** Ein Schritt der Spielzeit. deltaSeconds = vergangene Zeit seit dem letzten Frame. */
   function tick(deltaSeconds) {
-    // XP-Regeneration - für beide Seiten gleich
-    player.gainXp(deltaSeconds);
-    enemy.gainXp(deltaSeconds);
+    // Energie-Nachschub - für beide Seiten gleich
+    player.energieAufladen(deltaSeconds);
+    enemy.energieAufladen(deltaSeconds);
 
     // Der Gegner überlegt nur in festen Abständen, statt in jedem Frame.
     // Das ist seine "Reaktionszeit" und ersetzt das Dauerfeuer.

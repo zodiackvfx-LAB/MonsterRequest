@@ -15,12 +15,12 @@
  *   hueBase     - Grundfarbton der Kreaturen dieser Welt (0-360)
  *   text        - kurze Beschreibung
  *   music       - Klang-Kategorie (noch ohne Wirkung, für später vorgesehen)
- *   powerPerXp  - wie viel Schaden die Gegner pro XP austeilen (Schwierigkeit)
+ *   powerPerXp  - wie viel Schaden die Gegner pro Energie austeilen (Schwierigkeit)
  *   baseHp      - Lebenspunkte des ersten Gegners der Welt
  *   hpGrowth    - wie stark die Lebenspunkte von Kampf zu Kampf steigen
  *   reward      - Münzen für den ersten Sieg im ersten Kampf
  *   attacks     - 8 Attacken-Vorlagen für die normalen Gegner der Welt
- *                 (n = Name, i = Symbol, c = XP-Kosten; der Schaden wird
+ *                 (n = Name, i = Symbol, c = Energiekosten; der Schaden wird
  *                  aus den Kosten und powerPerXp berechnet)
  *   bossAttacks - 8 Attacken-Vorlagen für den Boss
  *   enemies     - 11 normale Gegner (n = Name, i = Platzhalter-Symbol)

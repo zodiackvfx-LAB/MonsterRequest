@@ -7,7 +7,7 @@
  *
  * Spieler und Gegner sind gleich aufgebaut: Jeder hat ein Deck aus GENAU
  * 8 Attacken, 4 davon liegen im Kampf auf der Hand, und beide bekommen
- * 1 XP pro Sekunde (maximal 10).
+ * 1 Energie pro Sekunde (maximal 10).
  *
  * Felder:
  *   id            - eindeutiger Schlüssel
@@ -40,8 +40,8 @@ export const MONSTERS = {
      *   hoch        Mensch statt Tier: schmal und hoch. Der Kasten wird
      *               dafuer hoeher (siehe .pixel-sprite--hoch in css/ui.css).
      *
-     * Welche Angriffsfolge laeuft, entscheidet der XP-Preis der Attacke -
-     * siehe ANGRIFF_AB_XP in js/screens/battle.js.
+     * Welche Angriffsfolge laeuft, entscheidet der Energiepreis der Attacke -
+     * siehe ANGRIFF_AB_ENERGIE in js/screens/battle.js.
      */
     image: 'bilder/timo/front.png',
     bildKampf: 'bilder/timo/stand.png',

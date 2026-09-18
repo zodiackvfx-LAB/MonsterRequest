@@ -8,21 +8,21 @@
  *
  * Regeln (für beide gleich):
  *   - Deck aus genau 8 Attacken, davon immer 4 auf der Hand
- *   - maximal 10 XP, niemals mehr und niemals weniger als 0
- *   - 1 XP pro Sekunde, automatisch
- *   - jede Attacke kostet XP und kann nur bezahlt gespielt werden
+ *   - maximal 10 Energie, niemals mehr und niemals weniger als 0
+ *   - 1 Energie pro Sekunde, automatisch
+ *   - jede Attacke kostet Energie und kann nur bezahlt gespielt werden
  */
 
 import { getAttack } from '../data/attacks.js';
 import { createDeck } from './deck.js';
 import { attackeMitLevel } from './progression.js';
 
-/** Maximale XP eines Kämpfers. */
-export const MAX_XP = 10;
-/** XP, die pro Sekunde automatisch dazukommen. */
-export const XP_PER_SECOND = 1;
-/** XP zu Kampfbeginn (0 = zäher Start, höher = schnellerer Einstieg). */
-export const START_XP = 3;
+/** Maximale Energie eines Kämpfers. */
+export const MAX_ENERGIE = 10;
+/** Energie, die pro Sekunde automatisch dazukommen. */
+export const ENERGIE_PRO_SEKUNDE = 1;
+/** Energie zu Kampfbeginn (0 = zäher Start, höher = schnellerer Einstieg). */
+export const START_ENERGIE = 3;
 
 /**
  * Erzeugt einen Kämpfer aus einem Monster (js/data/monsters.js).
@@ -32,7 +32,7 @@ export function createFighter(monster) {
 
   // Werte aus dem Fortschritt. Wer nichts mitbringt, kämpft mit den
   // Grundwerten - so bleiben Gegner unverändert.
-  const xpProSekunde = monster.xpPerSecond ?? XP_PER_SECOND;
+  const energieProSekunde = monster.energieProSekunde ?? ENERGIE_PRO_SEKUNDE;
 
   /** Der sichtbare Zustand - den liest der Kampfbildschirm aus. */
   const state = {
@@ -41,34 +41,35 @@ export function createFighter(monster) {
     hp: monster.maxHp,
     maxHp: monster.maxHp,
     shield: 0, // fängt Schaden ab, bevor Lebenspunkte verloren gehen
-    xp: START_XP, // ganze XP, die ausgegeben werden können
-    xpProgress: 0, // 0..1 Fortschritt zum nächsten XP-Punkt (nur für die Anzeige)
+    energie: START_ENERGIE, // ganze Energie, die ausgegeben werden kann
+    energieFortschritt: 0, // 0..1 Fortschritt zum nächsten Energiepunkt (nur für die Anzeige)
     hand: deck.hand, // Array mit 4 Attacken-ids
     handVersion: 0, // zählt hoch, sobald sich die Hand ändert
     // Kampfwerte aus dem Charakterfortschritt (siehe js/core/progression.js)
     damageFactor: monster.damageFactor ?? 1,
     defense: monster.defense ?? 0,
-    xpPerSecond: xpProSekunde,
+    energieProSekunde: energieProSekunde,
   };
 
-  let exactXp = START_XP; // XP mit Nachkommastellen (wächst kontinuierlich)
+  let genaueEnergie = START_ENERGIE; // Energie mit Nachkommastellen (wächst kontinuierlich)
 
   /** Überträgt die internen Nachkommastellen in die Anzeige-Werte. */
   function syncXp() {
-    exactXp = Math.max(0, Math.min(MAX_XP, exactXp));
-    state.xp = Math.floor(exactXp);
-    state.xpProgress = state.xp >= MAX_XP ? 1 : exactXp - state.xp;
+    genaueEnergie = Math.max(0, Math.min(MAX_ENERGIE, genaueEnergie));
+    state.energie = Math.floor(genaueEnergie);
+    state.energieFortschritt =
+      state.energie >= MAX_ENERGIE ? 1 : genaueEnergie - state.energie;
   }
 
-  /** XP-Regeneration für die vergangene Zeit. */
-  function gainXp(seconds) {
-    exactXp += seconds * xpProSekunde;
+  /** Energie-Nachschub für die vergangene Zeit. */
+  function energieAufladen(seconds) {
+    genaueEnergie += seconds * energieProSekunde;
     syncXp();
   }
 
-  /** Reicht die XP für diese Kosten? */
+  /** Reicht die Energie für diese Kosten? */
   function canAfford(cost) {
-    return cost <= state.xp;
+    return cost <= state.energie;
   }
 
   /**
@@ -80,7 +81,7 @@ export function createFighter(monster) {
   }
 
   /**
-   * Benutzt die Karte an dieser Handposition: XP bezahlen, Karte ablegen,
+   * Benutzt die Karte an dieser Handposition: Energie bezahlen, Karte ablegen,
    * sofort nachziehen. Gibt die Attacke zurück - oder null, wenn sie nicht
    * bezahlbar ist.
    */
@@ -91,7 +92,7 @@ export function createFighter(monster) {
     const attack = attackeMitLevel(getAttack(cardId));
     if (!canAfford(attack.cost)) return null;
 
-    exactXp -= attack.cost;
+    genaueEnergie -= attack.cost;
     syncXp();
 
     deck.play(handIndex);
@@ -129,7 +130,7 @@ export function createFighter(monster) {
 
   return {
     state,
-    gainXp,
+    energieAufladen,
     canAfford,
     handAttacks,
     useCard,

@@ -6,7 +6,7 @@
  * Felder:
  *   id      - eindeutiger Schlüssel (muss mit dem Objekt-Schlüssel übereinstimmen)
  *   name    - Anzeigename auf der Karte
- *   cost    - XP-Kosten (1 bis 10, siehe MAX_XP in js/core/fighter.js)
+ *   cost    - Energiekosten (1 bis 10, siehe MAX_ENERGIE in js/core/fighter.js)
  *   damage  - Schaden am Gegenüber (0, wenn die Attacke nur heilt)
  *   heal    - Heilung für sich selbst (optional)
  *   shield  - Schild, das kommenden Schaden abfängt (optional)
@@ -20,20 +20,20 @@
  * registerAttack() ergänzt.
  *
  * Faustregel fürs Balancing: Schaden geteilt durch Kosten ergibt die
- * "Stärke pro XP". Weil beide Seiten 1 XP pro Sekunde bekommen, entscheidet
+ * "Stärke pro Energie". Weil beide Seiten 1 Energie pro Sekunde bekommen, entscheidet
  * dieser Wert darüber, wie hart eine Seite austeilt.
- *   Spieler  ca. 5,5 bis 6,9 (je teurer, desto stärker pro XP)
+ *   Spieler  ca. 5,5 bis 6,9 (je teurer, desto stärker pro Energie)
  *   Gegner   3,4 in Welt 1 bis 4,6 in Welt 6 (powerPerXp in worlds.js)
  */
 export const ATTACKS = {
   /* ===================================================================
      Timos Deck - die acht Attacken, mit denen er startet.
 
-     Bis 4 XP sind es Schlaege und Tritte, ab 5 XP gebuendelte Energie.
-     Das ist kein Zufall: genau bei 5 XP wechselt auch die Animation von
-     der Faust zum Energiestrahl (ANGRIFF_AB_XP in js/screens/battle.js).
+     Bis 4 Energie sind es Schlaege und Tritte, ab 5 gebuendelte Energie.
+     Das ist kein Zufall: genau bei 5 wechselt auch die Animation von
+     der Faust zum Energiestrahl (ANGRIFF_AB_ENERGIE in js/screens/battle.js).
 
-     Teurere Attacken sind pro XP etwas staerker. Das belohnt Sparen,
+     Teurere Attacken sind pro Energie etwas staerker. Das belohnt Sparen,
      ohne die billigen Karten nutzlos zu machen.
      =================================================================== */
 

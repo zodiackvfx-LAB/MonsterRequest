@@ -139,8 +139,8 @@ export function charakterWerte(monster) {
     damageFactor: 1 + (level - 1) * 0.045 + up.angriff * 0.06,
     // Verteidigung: 0,5 % je Level, 2 % je Stufe - höchstens 45 %
     defense: Math.min(0.45, (level - 1) * 0.005 + up.verteidigung * 0.02),
-    // Tempo: mehr XP pro Sekunde, höchstens das Anderthalbfache
-    xpPerSecond: Math.min(1.5, 1 + (level - 1) * 0.01 + up.tempo * 0.02),
+    // Tempo: mehr Energie pro Sekunde, höchstens das Anderthalbfache
+    energieProSekunde: Math.min(1.5, 1 + (level - 1) * 0.01 + up.tempo * 0.02),
   };
 }
 
@@ -152,7 +152,7 @@ export function monsterMitFortschritt(monster) {
     maxHp: werte.maxHp,
     damageFactor: werte.damageFactor,
     defense: werte.defense,
-    xpPerSecond: werte.xpPerSecond,
+    energieProSekunde: werte.energieProSekunde,
   };
 }
 
@@ -200,7 +200,7 @@ export function attackeAufwerten(attackId) {
 
 /**
  * Eine Attacke mit ihrem aktuellen Level: Schaden, Heilung und Schild
- * steigen um 20 Prozent je Stufe. Die XP-Kosten bleiben gleich - sonst
+ * steigen um 20 Prozent je Stufe. Die Energiekosten bleiben gleich - sonst
  * würde eine aufgewertete Attacke im Kampf langsamer statt stärker.
  */
 export function attackeMitLevel(attacke) {

@@ -310,7 +310,7 @@
   left: 8%;
 }
 
-/* Infozeile eines Kämpfers (Name, Lebenspunkte, XP) */
+/* Infozeile eines Kämpfers (Name, Lebenspunkte, Energie) */
 .fighter-bar {
   flex: 0 0 auto;
   display: grid;
@@ -341,19 +341,19 @@
   white-space: nowrap;
 }
 
-.fighter-bar__xp {
+.fighter-bar__energie {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.fighter-bar__xp-label {
+.fighter-bar__energie-label {
   font-size: 0.58rem;
   font-weight: 700;
   color: var(--danger);
 }
 
-.fighter-bar__xp .pips {
+.fighter-bar__energie .pips {
   flex: 1;
 }
 
@@ -384,8 +384,8 @@
   text-shadow: 0 2px 4px rgba(12, 18, 48, 0.9);
 }
 
-/* XP-Leiste des Spielers */
-.xp-row {
+/* Energieleiste des Spielers */
+.wert-leiste {
   flex: 0 0 auto;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
@@ -393,21 +393,21 @@
   border: 2px solid var(--panel-border);
 }
 
-.xp-row__head {
+.wert-leiste__kopf {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 6px;
 }
 
-.xp-row__title {
+.wert-leiste__titel {
   font-size: 0.78rem;
   font-weight: 700;
   color: #6fd4ff;
   letter-spacing: 0.04em;
 }
 
-.xp-row__value {
+.wert-leiste__wert {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-dim);
@@ -1369,7 +1369,7 @@
   color: var(--text-dim);
 }
 
-/* Der XP-Preis rechts - gleiche Optik wie die Zahl auf der Kampfkarte. */
+/* Der Energiepreis rechts - gleiche Optik wie die Zahl auf der Kampfkarte. */
 .katalog-item__cost {
   flex: 0 0 auto;
   width: 30px;
@@ -1669,7 +1669,7 @@
 
   /* ---- Kampf ----
      Gedreht muss die ganze Kampfanzeige in rund 390 Pixel Hoehe passen:
-     Kopfzeile, zwei Kaempferleisten, die Arena, die XP-Leiste und vier
+     Kopfzeile, zwei Kaempferleisten, die Arena, die Energieleiste und vier
      Karten. Deshalb ist hier alles eine Nummer kleiner. Die Karten stehen
      ohnehin schon nebeneinander, weil der Bildschirm breit genug ist. */
   .screen--battle {
@@ -1709,11 +1709,11 @@
     font-size: 0.74rem;
   }
 
-  .xp-row {
+  .wert-leiste {
     padding: 5px 10px;
   }
 
-  .xp-row__head {
+  .wert-leiste__kopf {
     margin-bottom: 4px;
   }
 

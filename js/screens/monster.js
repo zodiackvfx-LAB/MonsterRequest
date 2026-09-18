@@ -68,10 +68,10 @@ export const monsterScreen = {
         <div class="monster-head__name">${monster.name}</div>
         <div class="start__hero-name">${monster.element} · Level ${werte.level}</div>
         <p class="map__info-text">${monster.text}</p>
-        <div class="xp-row" style="width:100%">
-          <div class="xp-row__head">
-            <span class="xp-row__title">ERFAHRUNG</span>
-            <span class="xp-row__value">${
+        <div class="wert-leiste" style="width:100%">
+          <div class="wert-leiste__kopf">
+            <span class="wert-leiste__titel">ERFAHRUNG</span>
+            <span class="wert-leiste__wert">${
               xpNoetig === Infinity ? 'Höchstlevel' : `${charakter.xp} / ${xpNoetig}`
             }</span>
           </div>
@@ -89,7 +89,7 @@ export const monsterScreen = {
         ${zeile('❤️ Lebenspunkte', werte.maxHp)}
         ${zeile('⚔️ Angriff', `${Math.round(werte.damageFactor * 100)} %`)}
         ${zeile('🛡️ Verteidigung', `${Math.round(werte.defense * 100)} % weniger Schaden`)}
-        ${zeile('⚡ Tempo', `${werte.xpPerSecond.toFixed(2)} XP pro Sekunde`)}
+        ${zeile('⚡ Tempo', `${werte.energieProSekunde.toFixed(2)} Energie pro Sekunde`)}
         ${zeile('🃏 Stärkste Attacke', `${staerkste.icon} ${staerkste.name}`)}
       `;
       content.appendChild(werteBlock);
