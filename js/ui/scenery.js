@@ -13,20 +13,24 @@
  *        Boden mit, und zwei Horizonte würden sich beißen.
  * @returns {HTMLElement}
  */
-export function createScenery({ dimmed = false, skyOnly = false } = {}) {
+export function createScenery({ dimmed = false, skyOnly = false, deko = false } = {}) {
   const scenery = document.createElement('div');
   scenery.className = 'scenery';
   if (dimmed) scenery.classList.add('scenery--gedimmt');
 
   const himmel = `
     <div class="scenery__sky"></div>
+    <div class="scenery__strahlen"></div>
     <div class="scenery__sun"></div>
     <div class="scenery__cloud"></div>
     <div class="scenery__cloud"></div>
     <div class="scenery__cloud"></div>
   `;
 
+  // Zwei Bergreihen statt einer: die hintere ist heller und etwas versetzt.
+  // Das gibt Tiefe, ohne dass die Berge auffälliger werden.
   const landschaft = `
+    <div class="scenery__mountains scenery__mountains--fern"></div>
     <div class="scenery__mountains"></div>
     <div class="scenery__hills"></div>
     <div class="scenery__hills scenery__hills--second"></div>
@@ -34,7 +38,74 @@ export function createScenery({ dimmed = false, skyOnly = false } = {}) {
   `;
 
   scenery.innerHTML = skyOnly ? himmel : himmel + landschaft;
+  if (deko && !skyOnly) scenery.appendChild(wiesenDeko());
+
   return scenery;
+}
+
+/**
+ * Die Verzierung der "Verzauberten Wiese": Grasbüschel, Blumen, Steine,
+ * ein paar Kristalle und schwebende Lichtpunkte.
+ *
+ * Die Plätze sind FEST eingetragen und nicht gewürfelt. Zwei Gründe:
+ * Die Wiese soll aufgeräumt aussehen statt zufällig, und der Bereich in der
+ * Mitte bleibt frei - dort steht die Figur, und nichts darf sie verdecken.
+ *
+ * Jeder Eintrag: [Klasse, Abstand von links in %, Abstand von unten in %, Größe]
+ *
+ * Die Zahlen sind auf die Lobby abgestimmt: Die Wiese ist nur zwischen
+ * 40 und 48 Prozent Hoehe frei - darunter liegen Aufgabenbanner, Startknopf
+ * und Menue, darueber beginnt der Himmel.
+ */
+const WIESE = [
+  // Links neben Timo. Die Hoehe folgt der Kuppe des Huegels: aussen
+  // liegt sie tiefer, zur Mitte hin hoeher.
+  ['gras', 6, 43.6, 1.15],
+  ['kristall', 11, 44.9, 0.9],
+  ['blume', 16, 45.7, 1],
+  ['gras', 21, 46.3, 0.95],
+  ['stein', 26, 46.8, 0.9],
+  // Rechts gespiegelt.
+  ['gras', 94, 43.6, 1.15],
+  ['kristall', 89, 44.9, 0.9],
+  ['blume', 84, 45.7, 1],
+  ['gras', 79, 46.3, 0.95],
+  ['stein', 74, 46.8, 0.9],
+];
+
+/**
+ * Schwebende Lichtpunkte, [von links %, von unten %].
+ *
+ * Nur am linken und rechten Rand: Timo steht zwischen 28 und 72 Prozent,
+ * und vor seinem Gesicht soll nichts schweben.
+ */
+const FUNKEN = [
+  [6, 52], [14, 58], [22, 55], [11, 65],
+  [94, 52], [86, 58], [78, 55], [89, 65],
+];
+
+function wiesenDeko() {
+  const deko = document.createElement('div');
+  deko.className = 'scenery__deko';
+
+  // Zwei Zusatzklassen, damit enge Bildschirme einzelne Stuecke ausblenden
+  // koennen: "rechts" (im Querformat liegt dort die Knopfspalte) und
+  // "aussen" (die untersten Stuecke, die auf kurzen Bildschirmen hinter
+  // dem Aufgabenbanner verschwinden wuerden).
+  deko.innerHTML =
+    WIESE.map(([art, links, unten, groesse], i) => {
+      const seite = links > 50 ? ' deko--rechts' : '';
+      const aussen = links < 8 || links > 92 ? ' deko--aussen' : '';
+      return `<span class="deko deko--${art}${seite}${aussen}" style="left:${links}%; bottom:${unten}%; --gr:${groesse}"></span>`;
+    }).join('') +
+    FUNKEN.map(
+      ([links, unten], i) =>
+        `<span class="funke${links > 50 ? ' funke--rechts' : ''}" style="left:${links}%; bottom:${unten}%; animation-delay:${i * 0.9}s"></span>`
+    ).join('') +
+    // Zwei Blätter, die gemächlich vorbeiziehen.
+    '<span class="blatt blatt--1"></span><span class="blatt blatt--2"></span>';
+
+  return deko;
 }
 
 /**

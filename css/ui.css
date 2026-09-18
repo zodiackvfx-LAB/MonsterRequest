@@ -711,3 +711,127 @@
 .float-number--damage { color: #ffd76a; }
 .float-number--heal { color: var(--green-1); }
 .float-number--shield { color: #8fe3ff; }
+
+/* =========================================================================
+   Fantasy-Designsystem der Lobby
+   ---------------------------------------------------------------------
+   Vier Farben, ueberall dieselben: Dunkelblau, Blau, Weiss, Gold.
+   Gold ist immer nur AKZENT - eine Kante, ein Ring, ein Punkt. Nie Flaeche.
+   ========================================================================= */
+:root {
+  --fantasy-tief: #1b2a63;   /* dunkelblau, Grundflaeche */
+  --fantasy-blau: #3c5fd0;   /* blau, Oberseite */
+  --fantasy-hell: #6d92ff;   /* Lichtkante oben */
+  --fantasy-gold: #ffc53d;   /* Akzentkante */
+  --fantasy-gold-tief: #a8721a;
+}
+
+/* ---------- Der grosse Abenteuer-Knopf ----------
+   Eigene Klasse statt .btn--big umzubauen: die anderen grossen Knoepfe im
+   Spiel (Kaempfen, Weiter) sind gruen und bleiben unveraendert. */
+.btn--abenteuer {
+  /* Bezugspunkt fuer die Funken, die beim Antippen wegfliegen. */
+  position: relative;
+  color: #fff;
+  background: linear-gradient(180deg, var(--fantasy-hell) 0%, var(--fantasy-blau) 45%, var(--fantasy-tief) 100%);
+  border: 2px solid var(--fantasy-gold);
+  text-shadow: 0 2px 3px rgba(8, 14, 40, 0.75);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(8, 14, 40, 0.35),
+    0 5px 0 var(--fantasy-gold-tief),
+    0 10px 20px rgba(10, 16, 44, 0.45);
+  animation: abenteuer-pulsieren 3.4s ease-in-out infinite;
+}
+
+.btn--abenteuer:active {
+  transform: translateY(4px) scale(0.98);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    0 1px 0 var(--fantasy-gold-tief);
+}
+
+/* Ganz leichtes Atmen - der Knopf soll einladen, nicht blinken. */
+@keyframes abenteuer-pulsieren {
+  0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.35),
+                         0 5px 0 var(--fantasy-gold-tief), 0 10px 20px rgba(10,16,44,0.45); }
+  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.35),
+                         0 5px 0 var(--fantasy-gold-tief), 0 10px 26px rgba(120, 170, 255, 0.5); }
+}
+
+/* Beim Antippen kurz aufleuchten. */
+.btn--abenteuer.is-gestartet {
+  animation: none;
+  filter: brightness(1.7) saturate(0.7);
+  transform: translateY(4px) scale(0.97);
+}
+
+/* Die Funken, die dabei wegfliegen. */
+.startfunke {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fantasy-gold);
+  box-shadow: 0 0 8px rgba(255, 205, 90, 0.9);
+  pointer-events: none;
+  animation: startfunke-fliegen 0.5s ease-out forwards;
+}
+
+@keyframes startfunke-fliegen {
+  from { opacity: 1; transform: translate(0, 0) scale(1); }
+  to   { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(0.3); }
+}
+
+/* ---------- Runde Menueknoepfe ---------- */
+.icon-btn__circle {
+  background: linear-gradient(180deg, #2c3f83 0%, var(--fantasy-tief) 60%, #141f4d 100%);
+  border: 2px solid rgba(255, 197, 61, 0.55);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(8, 14, 40, 0.4),
+    0 5px 0 #0f1838,
+    0 8px 16px rgba(10, 16, 44, 0.45);
+}
+
+.icon-btn__label {
+  color: #eaf0ff;
+}
+
+/* ---------- Spielerleiste und Muenzen ---------- */
+.hud__player,
+.hud__coins {
+  border-color: rgba(255, 197, 61, 0.45);
+  background: linear-gradient(180deg, #2a3c7d 0%, var(--fantasy-tief) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 10px rgba(10, 16, 44, 0.4);
+}
+
+.hud__avatar {
+  border-color: var(--fantasy-gold);
+  box-shadow: 0 0 0 1px rgba(8, 14, 40, 0.5);
+}
+
+/* ---------- Logo ----------
+   Der dunkle Umriss bleibt. Dazu kommt ein weicher goldener Schein - das
+   Logo selbst wird nicht neu gezeichnet. */
+.logo {
+  filter: drop-shadow(0 6px 10px rgba(10, 20, 60, 0.45))
+    drop-shadow(0 0 12px rgba(255, 205, 90, 0.3));
+  animation: logo-schimmern 6s ease-in-out infinite;
+}
+
+@keyframes logo-schimmern {
+  0%, 100% { filter: drop-shadow(0 6px 10px rgba(10,20,60,0.45)) drop-shadow(0 0 10px rgba(255,205,90,0.22)); }
+  50%      { filter: drop-shadow(0 6px 10px rgba(10,20,60,0.45)) drop-shadow(0 0 18px rgba(255,205,90,0.45)); }
+}
+
+/* Die goldene Kontur des Logos (zweiter Textzug hinter dem eigentlichen). */
+.logo__rand {
+  fill: none;
+  stroke: var(--fantasy-gold);
+  /* Nur wenig breiter als die dunkle Kontur (8), sonst laeuft das Gold in
+     die Innenraeume der Buchstaben - besonders beim Q. */
+  stroke-width: 11;
+  stroke-linejoin: round;
+  opacity: 0.75;
+}

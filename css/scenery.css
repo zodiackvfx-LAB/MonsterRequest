@@ -22,6 +22,23 @@
   background: linear-gradient(180deg, var(--s-sky-top) 0%, var(--s-sky-bottom) 62%);
 }
 
+/* Weiche Lichtstrahlen von oben rechts - sehr dezent, nur ein Hauch.
+   Sie liegen hinter der Sonne und geben dem Himmel Tiefe. */
+.scenery__strahlen {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background: repeating-linear-gradient(
+    114deg,
+    rgba(255, 252, 226, 0) 0 34px,
+    rgba(255, 252, 226, 0.22) 34px 48px,
+    rgba(255, 252, 226, 0) 48px 92px
+  );
+  /* Nach unten hin ausblenden, damit die Wiese sauber bleibt. */
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 38%, transparent 62%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 38%, transparent 62%);
+}
+
 .scenery__sun {
   position: absolute;
   top: -70px;
@@ -71,6 +88,29 @@
     58% 78%, 68% 38%, 79% 68%, 88% 50%, 100% 88%, 100% 100%
   );
   opacity: 0.85;
+}
+
+/* Die hintere Bergreihe: heller, kleiner, leicht versetzt. Mehr braucht es
+   nicht, damit der Hintergrund Tiefe bekommt. */
+.scenery__mountains--fern {
+  bottom: 38%;
+  height: 24%;
+  left: -18%;
+  right: -2%;
+  opacity: 0.45;
+  filter: brightness(1.25);
+}
+
+.scenery__mountains--fern::after {
+  display: none; /* keine Schneekappen in der Ferne */
+}
+
+/* Sonnenseite der Berge: ein heller Streifen an der rechten Flanke. */
+.scenery__mountains::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 52%, rgba(255, 255, 255, 0.16) 100%);
 }
 
 .scenery__mountains::after {
@@ -441,4 +481,199 @@
   width: 14px;
   height: 8px;
   border-radius: 50%;
+}
+
+/* =========================================================================
+   Die verzauberte Wiese
+   ---------------------------------------------------------------------
+   Grasbueschel, Blumen, Steine, Kristalle, Lichtpunkte und Blaetter.
+   Alle benutzen die Weltfarben (--s-...), damit sie auch in einer anderen
+   Welt stimmig aussehen.
+
+   Die Plaetze stehen in js/ui/scenery.js. Die Mitte bleibt bewusst frei -
+   dort steht die Figur.
+   ========================================================================= */
+.scenery__deko {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.deko {
+  position: absolute;
+  /* --gr skaliert das einzelne Stueck, ohne die Position zu verschieben. */
+  transform: translateX(-50%) scale(var(--gr, 1));
+  transform-origin: bottom center;
+}
+
+/* ---------- Grasbueschel ----------
+   Drei Halme aus einem Element: der mittlere ist das Element selbst,
+   die beiden aeusseren sind seine Pseudo-Elemente. */
+.deko--gras {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px 2px 0 0;
+  background: var(--s-grass-dark);
+  animation: halm-wiegen 3.8s ease-in-out infinite;
+}
+
+.deko--gras::before,
+.deko--gras::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--s-grass-dark);
+}
+
+.deko--gras::before {
+  left: -6px;
+  height: 12px;
+  transform: rotate(-16deg);
+  transform-origin: bottom center;
+}
+
+.deko--gras::after {
+  left: 6px;
+  height: 14px;
+  transform: rotate(15deg);
+  transform-origin: bottom center;
+  opacity: 0.85;
+}
+
+@keyframes halm-wiegen {
+  0%, 100% { transform: translateX(-50%) scale(var(--gr, 1)) rotate(-3deg); }
+  50%      { transform: translateX(-50%) scale(var(--gr, 1)) rotate(3deg); }
+}
+
+/* ---------- Blumen ----------
+   Ein heller Kopf mit einem gelben Kern auf einem kurzen Stiel. Sie
+   leuchten ganz leicht - das ist der magische Teil der Wiese. */
+.deko--blume {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, var(--gold-1) 0 34%, #fff4fb 35% 100%);
+  box-shadow: 0 0 6px rgba(255, 240, 200, 0.55);
+  animation: blume-atmen 4.5s ease-in-out infinite;
+}
+
+.deko--blume::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 2px;
+  height: 10px;
+  transform: translateX(-50%);
+  background: var(--s-grass-dark);
+}
+
+@keyframes blume-atmen {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 240, 200, 0.4); }
+  50%      { box-shadow: 0 0 9px rgba(255, 240, 200, 0.75); }
+}
+
+/* ---------- Steine ---------- */
+.deko--stein {
+  width: 18px;
+  height: 10px;
+  border-radius: 50% 50% 40% 40%;
+  background: linear-gradient(180deg, var(--s-rock) 0 55%, var(--s-rock-dark) 56% 100%);
+  box-shadow: 0 2px 0 rgba(10, 20, 40, 0.18);
+}
+
+/* ---------- Kristalle ----------
+   Zwei Stueck, je einer links und rechts. Sie sind das deutlichste
+   Fantasy-Element und deshalb bewusst klein. */
+.deko--kristall {
+  width: 12px;
+  height: 27px;
+  background: linear-gradient(160deg, #cdf3ff 0%, #6fd0ff 45%, #3a8fd0 100%);
+  clip-path: polygon(50% 0%, 100% 34%, 78% 100%, 22% 100%, 0% 34%);
+  box-shadow: 0 0 10px rgba(120, 215, 255, 0.5);
+  animation: kristall-glimmen 5.2s ease-in-out infinite;
+}
+
+@keyframes kristall-glimmen {
+  0%, 100% { box-shadow: 0 0 7px rgba(120, 215, 255, 0.35); }
+  50%      { box-shadow: 0 0 13px rgba(120, 215, 255, 0.7); }
+}
+
+/* ---------- Schwebende Lichtpunkte ---------- */
+.funke {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff8dc;
+  box-shadow: 0 0 8px rgba(255, 245, 200, 0.9);
+  opacity: 0;
+  animation: funke-schweben 7s ease-in-out infinite;
+}
+
+@keyframes funke-schweben {
+  0%       { opacity: 0; transform: translateY(0) scale(0.6); }
+  25%      { opacity: 0.85; }
+  60%      { opacity: 0.5; }
+  100%     { opacity: 0; transform: translateY(-46px) scale(1.1); }
+}
+
+/* ---------- Blaetter, die vorbeiziehen ---------- */
+.blatt {
+  position: absolute;
+  width: 11px;
+  height: 7px;
+  border-radius: 0 70% 0 70%;
+  background: var(--s-tree);
+  opacity: 0.75;
+}
+
+.blatt--1 {
+  top: 53%;
+  animation: blatt-fliegen 17s linear infinite;
+}
+
+.blatt--2 {
+  top: 57%;
+  animation: blatt-fliegen 23s linear infinite;
+  animation-delay: -9s;
+  transform: scale(0.8);
+}
+
+@keyframes blatt-fliegen {
+  0%   { left: -6%; transform: translateY(0) rotate(0deg); }
+  50%  { transform: translateY(-16px) rotate(180deg); }
+  100% { left: 106%; transform: translateY(6px) rotate(360deg); }
+}
+
+/* Hinter einem Menue bleibt die Wiese leer - dort zaehlt nur die Lesbarkeit. */
+.scenery--gedimmt .scenery__deko,
+.scenery--gedimmt .scenery__strahlen {
+  display: none;
+}
+
+/* Eigenes Hintergrundbild: die gezeichnete Deko wuerde sich damit beissen. */
+.region--eigenes-bild .scenery__deko,
+.region--eigenes-bild .scenery__strahlen {
+  display: none;
+}
+
+/* Auf kurzen Bildschirmen (kleines iPhone) ist das freie Wiesenband so
+   schmal, dass die aeussersten Stuecke hinter dem Aufgabenbanner
+   verschwinden wuerden. Dann lieber weglassen. */
+@media (max-height: 700px) {
+  .deko--aussen {
+    display: none;
+  }
+}
+
+/* Im Querformat liegt rechts die Knopfspalte. Dort wuerde die Deko nur
+   hinter der UI hervorlugen - also bleibt nur die linke Wiesenhaelfte. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .deko--rechts,
+  .funke--rechts {
+    display: none;
+  }
 }

@@ -1447,14 +1447,19 @@
   width: 100%;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  border: 2px solid var(--panel-border);
-  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid rgba(255, 197, 61, 0.4);
+  /* Goldene Kante nur links - ein Akzent, keine Flaeche. */
+  border-left: 5px solid var(--fantasy-gold);
+  background: linear-gradient(180deg, #2a3c7d 0%, var(--fantasy-tief) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 5px 14px rgba(10, 16, 44, 0.4);
   text-align: left;
   cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .tagesbanner:active {
   transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 6px rgba(10, 16, 44, 0.4);
 }
 
 /* Liegt eine Belohnung bereit, faellt das Banner auf. */
@@ -1810,4 +1815,77 @@
 .overlay__box {
   max-height: calc(100% - 16px);
   overflow-y: auto;
+}
+
+/* =========================================================
+   Timo in der Lobby
+   =========================================================
+   Der Charakter ist das Zentrum: ein sauberer Schatten setzt ihn auf den
+   Boden, ein warmer Schimmer hebt ihn vom Himmel ab, und er atmet ruhig.
+   ========================================================= */
+
+.hero-buehne {
+  position: relative;
+  display: grid;
+  place-items: end center;
+}
+
+/* Der Schatten liegt unter den Fuessen und ist bewusst weich - ein harter
+   Schatten wuerde die Pixelkanten der Figur stoeren. */
+.hero-schatten {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 62%;
+  height: 16px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(22, 48, 20, 0.42) 0 45%, rgba(22, 48, 20, 0) 72%);
+  animation: schatten-atmen 4.2s ease-in-out infinite;
+}
+
+/* Die Figur atmet: eine sehr kleine Hebung, viel ruhiger als das Wippen
+   im Kampf. Der Schatten wird dabei minimal kleiner - das verbindet beide. */
+.hero-atmen {
+  animation: atmen 4.2s ease-in-out infinite;
+  /* Warmer Schimmer von der Sonne oben rechts plus ein weicher Bodenschatten. */
+  filter: drop-shadow(-1px -1px 0 rgba(255, 244, 214, 0.5))
+    drop-shadow(0 0 7px rgba(255, 240, 200, 0.28))
+    drop-shadow(0 6px 6px rgba(14, 32, 56, 0.35));
+}
+
+@keyframes atmen {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+@keyframes schatten-atmen {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  50%      { transform: translateX(-50%) scale(0.93); opacity: 0.85; }
+}
+
+/* =========================================================
+   Tiefeneffekt der Lobby
+   =========================================================
+   --px und --py kommen aus js/ui/parallax.js und laufen von -1 bis +1.
+   Je weiter vorn eine Ebene liegt, desto weiter wandert sie. Die Zahlen
+   sind bewusst klein - es soll Tiefe entstehen, kein Wackeln.
+
+   Der Charakter bewegt sich NICHT mit. Er ist der ruhende Punkt, an dem
+   sich das Auge festhaelt. */
+.screen--start .scenery__sky,
+.screen--start .scenery__strahlen {
+  transform: translate(calc(var(--px, 0) * 3px), calc(var(--py, 0) * 2px));
+}
+
+.screen--start .scenery__mountains--fern {
+  transform: translate(calc(var(--px, 0) * 5px), calc(var(--py, 0) * 3px));
+}
+
+.screen--start .scenery__mountains {
+  transform: translate(calc(var(--px, 0) * 9px), calc(var(--py, 0) * 4px));
+}
+
+.screen--start .scenery__deko {
+  transform: translate(calc(var(--px, 0) * 16px), calc(var(--py, 0) * 6px));
 }

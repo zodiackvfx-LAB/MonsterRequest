@@ -7,6 +7,7 @@ import { createScenery } from '../ui/scenery.js';
 import { createHud } from '../ui/hud.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { createSprite } from '../ui/sprite.js';
+import { parallaxAktivieren } from '../ui/parallax.js';
 import { gameState } from '../core/state.js';
 import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 
@@ -20,13 +21,40 @@ const MENU = [
   { icon: '⚙️', label: 'Einstellungen', screen: 'settings' },
 ];
 
+/** Raeumt den Tiefeneffekt beim Verlassen der Lobby wieder weg. */
+let parallaxAus = () => {};
+
+/** Wie lange der Aufleucht-Effekt dauert, bevor die Karte kommt (ms). */
+const START_EFFEKT = 240;
+
+/**
+ * Streut kleine Funken aus dem Knopf. Sie raeumen sich selbst wieder weg,
+ * damit nichts liegenbleibt.
+ */
+function funkenStreuen(knopf) {
+  const anzahl = 10;
+  for (let i = 0; i < anzahl; i++) {
+    const winkel = (Math.PI * 2 * i) / anzahl;
+    const weite = 34 + Math.random() * 22;
+    const funke = document.createElement('span');
+    funke.className = 'startfunke';
+    funke.style.left = `${20 + Math.random() * 60}%`;
+    funke.style.top = '50%';
+    funke.style.setProperty('--fx', `${Math.cos(winkel) * weite}px`);
+    funke.style.setProperty('--fy', `${Math.sin(winkel) * weite}px`);
+    knopf.appendChild(funke);
+    setTimeout(() => funke.remove(), 520);
+  }
+}
+
 export const startScreen = {
   mount(root) {
     const starter = getMonster(STARTER_MONSTER_ID);
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--start';
-    screen.appendChild(createScenery());
+    // deko: true - nur die Lobby bekommt die verzauberte Wiese.
+    screen.appendChild(createScenery({ deko: true }));
     screen.appendChild(createHud());
 
     const content = document.createElement('div');
@@ -45,6 +73,9 @@ export const startScreen = {
             <stop offset="1" stop-color="#ff9e18" />
           </linearGradient>
         </defs>
+        <!-- Zuerst die goldene Kontur, darueber der eigentliche Schriftzug. -->
+        <text class="logo__text logo__text--monster logo__rand" x="150" y="40">MONSTER</text>
+        <text class="logo__text logo__text--quest logo__rand" x="150" y="94">QUEST</text>
         <text class="logo__text logo__text--monster" x="150" y="40" fill="url(#logo-monster)">MONSTER</text>
         <text class="logo__text logo__text--quest" x="150" y="94" fill="url(#logo-quest)">QUEST</text>
       </svg>
@@ -55,7 +86,10 @@ export const startScreen = {
     const hero = document.createElement('div');
     hero.className = 'start__hero';
     hero.innerHTML = `
-      <div class="sprite sprite--large idle-bob" id="hero-sprite"></div>
+      <div class="hero-buehne">
+        <span class="hero-schatten"></span>
+        <div class="sprite sprite--large hero-atmen" id="hero-sprite"></div>
+      </div>
       <p class="start__hero-name">Deine Figur: ${starter.name}</p>
     `;
     hero.querySelector('#hero-sprite').appendChild(createSprite(starter));
@@ -89,14 +123,20 @@ export const startScreen = {
     actions.appendChild(aufgabenKnopf);
 
     const startButton = document.createElement('button');
-    startButton.className = 'btn btn--big';
+    startButton.className = 'btn btn--big btn--abenteuer';
     startButton.type = 'button';
     startButton.textContent = '▶  SPIEL STARTEN';
     // Direkt in die zuletzt freigeschaltete Welt - die Weltauswahl
     // erreicht man von der Karte aus.
-    startButton.addEventListener('click', () =>
-      showScreen('map', { worldId: gameState.unlockedWorld })
-    );
+    startButton.addEventListener('click', () => {
+      // Kurz aufleuchten, Funken streuen, dann wie bisher die Karte oeffnen.
+      startButton.classList.add('is-gestartet');
+      funkenStreuen(startButton);
+      setTimeout(
+        () => showScreen('map', { worldId: gameState.unlockedWorld }),
+        START_EFFEKT
+      );
+    });
     actions.appendChild(startButton);
 
     const menu = document.createElement('div');
@@ -116,5 +156,13 @@ export const startScreen = {
 
     screen.appendChild(actions);
     root.appendChild(screen);
+
+    // Leichter Tiefeneffekt beim Wischen. Wird beim Verlassen abgeschaltet.
+    parallaxAus = parallaxAktivieren(screen);
+  },
+
+  unmount() {
+    parallaxAus();
+    parallaxAus = () => {};
   },
 };
