@@ -1,5 +1,10 @@
 /**
- * Monster-Bildschirm: Werte, Level, Aufwertungen und Skins.
+ * Figur-Bildschirm - in vier Reitern, wie die Sammlung.
+ *
+ *   Werte      Steckbrief (Bild, Level, Erfahrung) und die Kampfwerte
+ *   Aufwerten  Lebenspunkte, Angriff usw. mit Münzen und Material stärken
+ *   Aussehen   die Skins der Figur
+ *   Kräfte     die getragene Boss-Kraft wählen
  *
  * Wichtig für das Verständnis: Es gibt zwei getrennte Systeme.
  *   1. Das Charakter-LEVEL steigt durch Erfahrung aus Kämpfen.
@@ -37,7 +42,7 @@ import {
 } from '../core/progression.js';
 
 export const monsterScreen = {
-  mount(root) {
+  mount(root, params = {}) {
     const monster = getMonster(STARTER_MONSTER_ID);
 
     const screen = document.createElement('div');
@@ -46,23 +51,56 @@ export const monsterScreen = {
     screen.appendChild(createTopbar('Deine Figur', () => showScreen('start')));
     screen.appendChild(createHud());
 
+    const reiterLeiste = document.createElement('div');
+    reiterLeiste.className = 'tabs';
+    screen.appendChild(reiterLeiste);
+
     const content = document.createElement('div');
     content.className = 'page__content';
     screen.appendChild(content);
     root.appendChild(screen);
 
-    zeichnen();
+    const REITER = [
+      { id: 'werte', label: 'Werte', bauen: baueWerte },
+      { id: 'aufwerten', label: 'Aufwerten', bauen: baueAufwerten },
+      { id: 'aussehen', label: 'Aussehen', bauen: baueAussehen },
+      { id: 'kraefte', label: 'Kräfte', bauen: baueKraefte },
+    ];
+    let aktiv = REITER.some((r) => r.id === params.tab) ? params.tab : 'werte';
 
-    /** Baut den Inhalt neu auf - nach jeder Aufwertung. */
-    function zeichnen() {
+    function zeichne() {
+      reiterLeiste.innerHTML = '';
+      REITER.forEach((reiter) => {
+        const knopf = document.createElement('button');
+        knopf.className = `tab${reiter.id === aktiv ? ' is-active' : ''}`;
+        knopf.type = 'button';
+        knopf.textContent = reiter.label;
+        knopf.addEventListener('click', () => {
+          if (aktiv === reiter.id) return;
+          aktiv = reiter.id;
+          zeichne();
+        });
+        reiterLeiste.appendChild(knopf);
+      });
+
+      content.innerHTML = '';
+      REITER.find((reiter) => reiter.id === aktiv).bauen(content);
+      content.scrollTop = 0;
+    }
+
+    zeichne();
+
+    /* ------------------------------------------------------------------ */
+    /*  Reiter 1: Werte                                                    */
+    /* ------------------------------------------------------------------ */
+
+    function baueWerte(content) {
       const charakter = getCharakter(monster.id);
       const werte = charakterWerte(monster);
       const deck = getDeck(monster).map(getAttack);
       const staerkste = deck.reduce((best, a) => (a.damage > best.damage ? a : best));
       const xpNoetig = xpFuerNaechstesLevel(charakter.level);
       const xpAnteil = xpNoetig === Infinity ? 1 : charakter.xp / xpNoetig;
-
-      content.innerHTML = '';
 
       /* ---------- Steckbrief ---------- */
       const kopf = document.createElement('div');
@@ -98,7 +136,21 @@ export const monsterScreen = {
       `;
       content.appendChild(werteBlock);
 
-      /* ---------- Aufwertungen ---------- */
+      const deckKnopf = document.createElement('button');
+      deckKnopf.className = 'btn btn--ghost';
+      deckKnopf.type = 'button';
+      deckKnopf.textContent = 'Deck und Attacken';
+      deckKnopf.addEventListener('click', () => showScreen('deck'));
+      content.appendChild(deckKnopf);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Reiter 2: Aufwerten                                                */
+    /* ------------------------------------------------------------------ */
+
+    function baueAufwerten(content) {
+      const charakter = getCharakter(monster.id);
+
       const upgrade = document.createElement('div');
       upgrade.className = 'panel';
       upgrade.innerHTML = `
@@ -137,7 +189,7 @@ export const monsterScreen = {
         knopf.addEventListener('click', () => {
           if (wertAufwerten(monster.id, schluessel)) {
             spieleKlang('kauf');
-            zeichnen();
+            zeichne();
           } else {
             spieleKlang('gesperrt');
           }
@@ -148,8 +200,54 @@ export const monsterScreen = {
       });
 
       content.appendChild(upgrade);
+    }
 
-      /* ---------- Boss-Kräfte ---------- */
+    /* ------------------------------------------------------------------ */
+    /*  Reiter 3: Aussehen (Skins)                                         */
+    /* ------------------------------------------------------------------ */
+
+    function baueAussehen(content) {
+      const skinBlock = document.createElement('div');
+      skinBlock.className = 'panel';
+      skinBlock.innerHTML = '<div class="panel__title">Skins</div>';
+
+      const skinListe = document.createElement('div');
+      skinListe.className = 'skin-list';
+
+      SKINS.filter((skin) => skin.monsterId === monster.id).forEach((skin) => {
+        const besitzt = besitztSkin(skin.id);
+        const aktiv = (getAktiverSkin(monster.id) ?? 'skin-standard') === skin.id;
+        const seltenheit = SELTENHEITEN[skin.seltenheit];
+
+        const knopf = document.createElement('button');
+        knopf.type = 'button';
+        knopf.className = `skin-chip${aktiv ? ' is-active' : ''}${besitzt ? '' : ' is-locked'}`;
+        knopf.disabled = !besitzt;
+        knopf.style.setProperty('--rarity', seltenheit.farbe);
+        knopf.innerHTML = `
+          <span class="skin-chip__vorschau"></span>
+          <span class="skin-chip__name">${besitzt ? skin.name : '🔒 ' + skin.name}</span>
+        `;
+        // Die Vorschau zeigt genau diesen Skin, nicht den getragenen.
+        knopf.querySelector('.skin-chip__vorschau').appendChild(createSprite(monster, { skin }));
+        knopf.addEventListener('click', () => {
+          setAktiverSkin(monster.id, skin.id);
+          spritesNeuZeichnen();
+          zeichne();
+        });
+
+        skinListe.appendChild(knopf);
+      });
+
+      skinBlock.appendChild(skinListe);
+      content.appendChild(skinBlock);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Reiter 4: Boss-Kräfte                                              */
+    /* ------------------------------------------------------------------ */
+
+    function baueKraefte(content) {
       const kraftBlock = document.createElement('div');
       kraftBlock.className = 'panel';
       kraftBlock.innerHTML =
@@ -180,57 +278,13 @@ export const monsterScreen = {
           knopf.addEventListener('click', () => {
             // Tippt man die getragene Kraft an, legt man sie ab.
             setBossKraft(getragen ? null : kraft.id);
-            zeichnen();
+            zeichne();
           });
         }
         kraftBlock.appendChild(knopf);
       });
 
       content.appendChild(kraftBlock);
-
-      /* ---------- Skins ---------- */
-      const skinBlock = document.createElement('div');
-      skinBlock.className = 'panel';
-      skinBlock.innerHTML = '<div class="panel__title">Skins</div>';
-
-      const skinListe = document.createElement('div');
-      skinListe.className = 'skin-list';
-
-      SKINS.filter((skin) => skin.monsterId === monster.id).forEach((skin) => {
-        const besitzt = besitztSkin(skin.id);
-        const aktiv = (getAktiverSkin(monster.id) ?? 'skin-standard') === skin.id;
-        const seltenheit = SELTENHEITEN[skin.seltenheit];
-
-        const knopf = document.createElement('button');
-        knopf.type = 'button';
-        knopf.className = `skin-chip${aktiv ? ' is-active' : ''}${besitzt ? '' : ' is-locked'}`;
-        knopf.disabled = !besitzt;
-        knopf.style.setProperty('--rarity', seltenheit.farbe);
-        knopf.innerHTML = `
-          <span class="skin-chip__vorschau"></span>
-          <span class="skin-chip__name">${besitzt ? skin.name : '🔒 ' + skin.name}</span>
-        `;
-        // Die Vorschau zeigt genau diesen Skin, nicht den getragenen.
-        knopf.querySelector('.skin-chip__vorschau').appendChild(createSprite(monster, { skin }));
-        knopf.addEventListener('click', () => {
-          setAktiverSkin(monster.id, skin.id);
-          spritesNeuZeichnen();
-          zeichnen();
-        });
-
-        skinListe.appendChild(knopf);
-      });
-
-      skinBlock.appendChild(skinListe);
-      content.appendChild(skinBlock);
-
-      const deckKnopf = document.createElement('button');
-      deckKnopf.className = 'btn btn--ghost';
-      deckKnopf.type = 'button';
-      deckKnopf.textContent = 'Deck und Attacken';
-      deckKnopf.addEventListener('click', () => showScreen('deck'));
-      content.appendChild(deckKnopf);
-
     }
   },
 };
