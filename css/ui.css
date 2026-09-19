@@ -1067,3 +1067,144 @@
   font-size: 0.74rem;
   color: var(--text-dim);
 }
+
+/* =========================================================================
+   Extra-Effekte (Kampf und Bildschirmwechsel)
+   -------------------------------------------------------------------------
+   Alles hier laeuft ueber @keyframes. Damit schaltet der Schalter
+   "Animationen" (body.no-animations) und die Systemeinstellung "weniger
+   Bewegung" es automatisch mit ab - siehe css/base.css.
+   ========================================================================= */
+
+/* ---------- Sanfter Auftritt bei jedem Bildschirmwechsel ---------- */
+@keyframes screen-rein {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.screen {
+  animation: screen-rein 0.24s ease-out;
+}
+
+/* ---------- Bildschirm-Beben bei einem Treffer ----------
+   Drei Staerken. Der Kampf waehlt die passende nach Schadenshoehe. */
+@keyframes beben-klein {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(-2px, 1px); }
+  70% { transform: translate(2px, -1px); }
+}
+@keyframes beben-mittel {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  20% { transform: translate(-4px, 2px) rotate(-0.3deg); }
+  50% { transform: translate(4px, -2px) rotate(0.3deg); }
+  80% { transform: translate(-3px, 1px) rotate(-0.2deg); }
+}
+@keyframes beben-gross {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  15% { transform: translate(-7px, 3px) rotate(-0.6deg); }
+  35% { transform: translate(7px, -3px) rotate(0.6deg); }
+  55% { transform: translate(-6px, 4px) rotate(-0.5deg); }
+  75% { transform: translate(5px, -2px) rotate(0.4deg); }
+}
+.beben-klein  { animation: beben-klein  0.22s ease-in-out; }
+.beben-mittel { animation: beben-mittel 0.30s ease-in-out; }
+.beben-gross  { animation: beben-gross  0.40s ease-in-out; }
+
+/* ---------- Aufprall-Funken am getroffenen Monster ---------- */
+.impakt {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Der Lichtring, der nach aussen aufplatzt. */
+.impakt__ring {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--impakt-farbe, #ffd76a);
+  box-shadow: 0 0 14px var(--impakt-farbe, #ffd76a);
+  animation: impakt-ring 0.42s ease-out forwards;
+}
+@keyframes impakt-ring {
+  0%   { transform: scale(0.3); opacity: 0.95; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* Die einzelnen Splitter, die wegfliegen. --dx/--dy setzt das Skript. */
+.impakt__splitter {
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--impakt-farbe, #ffd76a);
+  box-shadow: 0 0 8px var(--impakt-farbe, #ffd76a);
+  animation: impakt-splitter 0.5s ease-out forwards;
+}
+@keyframes impakt-splitter {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+/* ---------- Saftigere Schadenszahlen ----------
+   Ersetzt das schlichte float-up: erst aufploppen, dann aufsteigen und
+   leicht zur Seite treiben. */
+@keyframes float-pop {
+  0%   { transform: translate(0, 6px) scale(0.5); opacity: 0; }
+  25%  { transform: translate(var(--drift, 0), -6px) scale(1.18); opacity: 1; }
+  100% { transform: translate(var(--drift, 0), -52px) scale(1); opacity: 0; }
+}
+
+.float-number {
+  animation: float-pop 0.95s cubic-bezier(0.2, 1.2, 0.4, 1) forwards;
+}
+
+/* Ein harter Treffer: groesser, rot-orange, mit kraeftigerem Schatten. */
+.float-number--gross {
+  font-size: 2.1rem;
+  color: #ff7a3c;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.85), 0 0 16px rgba(255, 90, 40, 0.7);
+}
+
+/* ---------- Volle Energie: der Balken schimmert golden ---------- */
+.wert-leiste.is-voll {
+  border-color: var(--fantasy-gold);
+  animation: energie-voll 1.6s ease-in-out infinite;
+}
+@keyframes energie-voll {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+  50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 16px rgba(255, 197, 61, 0.5); }
+}
+
+/* ---------- Konfetti im Siegesfenster ---------- */
+.konfetti {
+  position: absolute;
+  top: -12px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  z-index: 6;
+  pointer-events: none;
+  animation: konfetti-fall 1.5s ease-in forwards;
+}
+@keyframes konfetti-fall {
+  0%   { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(var(--fall, 320px)) rotate(var(--dreh, 540deg)); opacity: 0; }
+}
+
+/* ---------- Eine Karte springt kurz an, wenn sie spielbar wird ---------- */
+@keyframes karte-bereit {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-4px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+.karte-bereit { animation: karte-bereit 0.32s ease-out; }

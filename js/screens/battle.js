@@ -26,6 +26,7 @@ import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
 import { createSprite, spieleBildfolge } from '../ui/sprite.js';
+import { bildschirmBeben, konfetti, trefferFunke } from '../ui/effekte.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
@@ -151,6 +152,8 @@ export const battleScreen = {
       playerShield: screen.querySelector('#player-shield'),
       log: screen.querySelector('#battle-log'),
       energieText: screen.querySelector('#energie-text'),
+      energieLeiste: screen.querySelector('.wert-leiste'),
+      arena: screen.querySelector('#arena'),
       hand: screen.querySelector('#hand'),
     };
 
@@ -172,6 +175,9 @@ export const battleScreen = {
     /* ---------- 2. Kampf starten ---------- */
     let renderedHandVersion = -1;
     const cardElements = [];
+    // Merkt sich je Handplatz, ob die Karte zuletzt spielbar war - fuer den
+    // kurzen Effekt, wenn sie es GERADE wird.
+    const warBereit = [];
 
     battle = createBattle({
       playerMonster,
@@ -189,6 +195,11 @@ export const battleScreen = {
       ui.energieText.textContent = `${state.player.energie} / ${MAX_ENERGIE}`;
       renderPips(playerPips, state.player);
       renderPips(enemyPips, state.enemy);
+      // Volle Energie sichtbar machen: der Balken schimmert golden.
+      ui.energieLeiste.classList.toggle(
+        'is-voll',
+        state.player.energie >= MAX_ENERGIE && !state.finished
+      );
 
       // Hand nur neu bauen, wenn sich die Karten geändert haben
       if (state.player.handVersion !== renderedHandVersion) {
@@ -200,6 +211,10 @@ export const battleScreen = {
       cardElements.forEach((card, index) => {
         const attack = kampfAttacke(state.player.hand[index]);
         const affordable = attack.cost <= state.player.energie && !state.finished;
+        // Genau in dem Moment, in dem eine Karte spielbar wird, springt sie
+        // kurz an - so sieht man sofort, was man jetzt einsetzen kann.
+        if (affordable && warBereit[index] === false) flash(card, 'karte-bereit');
+        warBereit[index] = affordable;
         card.classList.toggle('is-ready', affordable);
         card.classList.toggle('is-disabled', !affordable);
         card.disabled = !affordable;
@@ -248,6 +263,9 @@ export const battleScreen = {
     function buildHand(state) {
       ui.hand.innerHTML = '';
       cardElements.length = 0;
+      // Neue Karten: der "wird spielbar"-Effekt startet frisch, damit er nicht
+      // gleich beim Nachziehen fuer alle Karten auf einmal losgeht.
+      warBereit.length = 0;
 
       state.player.hand.forEach((attackId, index) => {
         const attack = kampfAttacke(attackId);
@@ -295,7 +313,10 @@ export const battleScreen = {
           spieleFolge(teuer ? basis.bildStrahl : basis.bildSchlag);
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
-          floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
+          const anteilG = event.amount / (battle.state.enemy.maxHp || 1);
+          floatNumber(ui.enemySprite, `-${event.amount}`, 'damage', anteilG);
+          trefferFunke(ui.enemySprite, '#ffd76a');
+          bildschirmBeben(ui.arena, anteilG);
           spieleKlang('karte');
           spieleTreffer(event.amount);
           // Zaehlt fuer die Tagesaufgaben.
@@ -303,14 +324,18 @@ export const battleScreen = {
           fortschrittMelden('schaden', event.amount);
           break;
         }
-        case 'enemy-attack':
+        case 'enemy-attack': {
           flash(ui.enemySprite, 'lunge-left');
           flash(ui.playerSprite, 'hit');
-          floatNumber(ui.playerSprite, `-${event.amount}`, 'damage');
+          const anteilP = event.amount / (battle.state.player.maxHp || 1);
+          floatNumber(ui.playerSprite, `-${event.amount}`, 'damage', anteilP);
+          trefferFunke(ui.playerSprite, '#ff6a6a');
+          bildschirmBeben(ui.arena, anteilP);
           spieleTreffer(event.amount);
           // Timo geht sichtbar in die Knie, wenn er einsteckt.
           spieleFolge(basis.bildTreffer);
           break;
+        }
         case 'player-heal':
           flash(ui.playerSprite, 'heal');
           floatNumber(ui.playerSprite, `+${event.amount}`, 'heal');
@@ -342,13 +367,22 @@ export const battleScreen = {
       setTimeout(() => element.classList.remove(className), 450);
     }
 
-    /** Lässt eine Zahl über dem Monster aufsteigen. */
-    function floatNumber(sprite, text, kind) {
+    /**
+     * Lässt eine Zahl über dem Monster aufsteigen.
+     *
+     * @param {number} [anteil] - Schadensanteil (0-1). Grosse Treffer werden
+     *        groesser und rot-orange dargestellt.
+     */
+    function floatNumber(sprite, text, kind, anteil = 0) {
       const number = document.createElement('span');
-      number.className = `float-number float-number--${kind}`;
+      const gross = kind === 'damage' && anteil >= 0.2 ? ' float-number--gross' : '';
+      number.className = `float-number float-number--${kind}${gross}`;
+      // Jede Zahl driftet ein Stueck zufaellig zur Seite, damit sich mehrere
+      // nicht genau uebereinander stapeln.
+      number.style.setProperty('--drift', `${(Math.random() * 2 - 1) * 16}px`);
       number.textContent = text;
       sprite.parentElement.appendChild(number);
-      setTimeout(() => number.remove(), 900);
+      setTimeout(() => number.remove(), 1000);
     }
 
     /* ---------- 5. Kampfende ---------- */
@@ -405,6 +439,8 @@ export const battleScreen = {
         const box = overlay.querySelector('.overlay__box');
         box.insertBefore(createStars(stars), box.querySelector('.overlay__text'));
         fuelleBelohnung(overlay.querySelector('#belohnung'), belohnung.stuecke);
+        // Konfetti zum Feiern - erst, wenn das Fenster steht.
+        setTimeout(() => konfetti(box), 120);
       }
 
       // Erst die Fanfare, danach Aufstieg bzw. neue Welt - nicht alles auf einmal.
