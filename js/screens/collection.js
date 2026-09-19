@@ -4,6 +4,7 @@
  *   Monster   alle Kreaturen, nach Welten sortiert
  *   Attacken  die acht Startattacken und alle Beute-Attacken
  *   Skins     alle Aussehen für dein Monster
+ *   Kräfte    die Boss-Kräfte - je Welt eine, beim Boss-Sieg freigeschaltet
  *
  * Ein Gegner gilt als entdeckt, sobald sein Kampf gewonnen wurde. Noch nicht
  * Entdecktes bleibt verdeckt - man sieht nur, dass es das gibt.
@@ -16,12 +17,16 @@ import { LEVELS } from '../data/levels.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack, START_ATTACKEN } from '../data/attacks.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../data/items.js';
+import { BOSS_KRAEFTE } from '../data/kraefte.js';
+import { getWorld } from '../data/worlds.js';
 import { createScenery } from '../ui/scenery.js';
 import { createTopbar } from '../ui/hud.js';
 import { createSprite } from '../ui/sprite.js';
 import {
   besitztAttacke,
+  besitztKraft,
   besitztSkin,
+  gameState,
   getAktiverSkin,
   isLevelCleared,
   isWorldUnlocked,
@@ -32,6 +37,7 @@ import { attackeMitLevel, getAttackenLevel, charakterWerte } from '../core/progr
 const REITER = [
   { id: 'monster', label: '🐾 Monster', bauen: baueMonster },
   { id: 'attacken', label: '🃏 Attacken', bauen: baueAttacken },
+  { id: 'kraefte', label: '⚡ Kräfte', bauen: baueKraefte },
   { id: 'skins', label: '🎨 Skins', bauen: baueSkins },
 ];
 
@@ -210,6 +216,62 @@ function wirkungsText(attacke) {
   if (attacke.heal > 0) return `heilt ${attacke.heal} LP`;
   if (attacke.shield > 0) return `fängt ${attacke.shield} Schaden ab`;
   return `${attacke.damage} Schaden`;
+}
+
+/* ====================================================================
+   Reiter: Boss-Kräfte
+   ==================================================================== */
+
+/** Kurzname der Wirkung - und die Farbe des Streifens links. */
+const KRAFT_ART = {
+  schild: { label: 'Schild', farbe: '#8fe3ff' },
+  schildbruch: { label: 'Durchbruch', farbe: '#c77dff' },
+  brand: { label: 'Brand', farbe: '#ff7a3c' },
+  frost: { label: 'Eis', farbe: '#6fd4ff' },
+  lebensraub: { label: 'Lebensraub', farbe: '#b06dff' },
+  energiesturm: { label: 'Energie', farbe: '#ffc53d' },
+};
+
+function baueKraefte(content) {
+  const frei = BOSS_KRAEFTE.filter((k) => besitztKraft(k.id)).length;
+
+  content.appendChild(
+    zaehler(`Freigeschaltet: <strong>${frei} von ${BOSS_KRAEFTE.length}</strong> Boss-Kräften.
+      Besiege den Boss einer Welt, um seine Kraft zu erhalten. Anlegen kannst du sie unter „Figur“.`)
+  );
+
+  const block = document.createElement('div');
+  block.className = 'panel';
+  block.innerHTML = `<div class="panel__title">Boss-Kräfte <span class="panel__count">${frei}/${BOSS_KRAEFTE.length}</span></div>`;
+
+  const liste = document.createElement('div');
+  liste.className = 'katalog';
+
+  BOSS_KRAEFTE.forEach((kraft) => {
+    const hat = besitztKraft(kraft.id);
+    const getragen = gameState.bossPower === kraft.id;
+    const welt = getWorld(kraft.welt);
+    const art = KRAFT_ART[kraft.art] ?? { label: '', farbe: 'var(--panel-border)' };
+
+    const zeile = document.createElement('div');
+    zeile.className = `katalog-item${hat ? '' : ' is-locked'}`;
+    zeile.style.setProperty('--seltenheit', hat ? art.farbe : 'var(--panel-border)');
+    zeile.innerHTML = `
+      <span class="katalog-item__icon">${hat ? kraft.icon : '🔒'}</span>
+      <span class="katalog-item__body">
+        <span class="katalog-item__name">
+          ${kraft.name}
+          ${getragen ? '<span class="deck-item__level">✓&nbsp;Getragen</span>' : ''}
+        </span>
+        <span class="katalog-item__text">${hat ? kraft.text : `🔒 Besiege ${kraft.boss}`}</span>
+        <span class="katalog-item__rarity">Welt ${kraft.welt} · ${welt?.name ?? ''} · ${art.label}</span>
+      </span>
+    `;
+    liste.appendChild(zeile);
+  });
+
+  block.appendChild(liste);
+  content.appendChild(block);
 }
 
 /* ====================================================================
