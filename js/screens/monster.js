@@ -11,16 +11,20 @@ import { showScreen } from '../core/screens.js';
 import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
 import { MUENZE, SELTENHEITEN, SKINS } from '../data/items.js';
+import { BOSS_KRAEFTE } from '../data/kraefte.js';
+import { getWorld } from '../data/worlds.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { createSprite, spritesNeuZeichnen } from '../ui/sprite.js';
 import { spieleKlang } from '../core/audio.js';
 import {
+  besitztKraft,
   besitztSkin,
   gameState,
   getAktiverSkin,
   getDeck,
   setAktiverSkin,
+  setBossKraft,
 } from '../core/state.js';
 import {
   MAX_STUFE,
@@ -144,6 +148,45 @@ export const monsterScreen = {
       });
 
       content.appendChild(upgrade);
+
+      /* ---------- Boss-Kräfte ---------- */
+      const kraftBlock = document.createElement('div');
+      kraftBlock.className = 'panel';
+      kraftBlock.innerHTML =
+        '<div class="panel__title">Boss-Kräfte</div>' +
+        '<p class="setting-row__hint" style="margin-bottom:10px">' +
+        'Besiege einen Boss, um seine Kraft freizuschalten. Du trägst eine davon in den Kampf.</p>';
+
+      BOSS_KRAEFTE.forEach((kraft) => {
+        const hat = besitztKraft(kraft.id);
+        const getragen = gameState.bossPower === kraft.id;
+        const welt = getWorld(kraft.welt);
+
+        const knopf = document.createElement('button');
+        knopf.type = 'button';
+        knopf.className = `kraft-item${getragen ? ' is-active' : ''}${hat ? '' : ' is-locked'}`;
+        knopf.disabled = !hat;
+        knopf.innerHTML = `
+          <span class="kraft-item__icon">${hat ? kraft.icon : '🔒'}</span>
+          <span class="kraft-item__body">
+            <span class="kraft-item__name">${kraft.name}</span>
+            <span class="kraft-item__text">${
+              hat ? kraft.text : `Besiege ${kraft.boss} in Welt ${kraft.welt} · ${welt?.name ?? ''}`
+            }</span>
+          </span>
+          <span class="kraft-item__stand">${getragen ? '✓ Getragen' : hat ? 'Anlegen' : ''}</span>
+        `;
+        if (hat) {
+          knopf.addEventListener('click', () => {
+            // Tippt man die getragene Kraft an, legt man sie ab.
+            setBossKraft(getragen ? null : kraft.id);
+            zeichnen();
+          });
+        }
+        kraftBlock.appendChild(knopf);
+      });
+
+      content.appendChild(kraftBlock);
 
       /* ---------- Skins ---------- */
       const skinBlock = document.createElement('div');

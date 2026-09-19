@@ -27,10 +27,13 @@ import { readFileSync } from 'node:fs';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
   besitztAttacke,
+  besitztKraft,
   beuteGutschreiben,
   bezahlen,
+  bossKraftFreischalten,
   completeLevel,
   gameState,
+  getBossKraft,
   getDeck,
   isLevelUnlocked,
   isWorldUnlocked,
@@ -38,11 +41,13 @@ import {
   nextLevelOf,
   loadProgress,
   resetProgress,
+  setBossKraft,
   setDeck,
 } from '../js/core/state.js';
 import { TRUHEN } from '../js/data/shop.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
 import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belohnung.js';
+import { BOSS_KRAEFTE, getKraft, kraftFuerWelt } from '../js/data/kraefte.js';
 import { BOSS_TRUHE } from '../js/data/shop.js';
 import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
@@ -780,6 +785,55 @@ console.log('\nLogo');
   pruefe('Jedes Wort liegt in drei Lagen: Rand, Kontur, Fuellung',
     ['logo__rand', 'logo__kontur', 'logo__fuellung'].every(
       (lage) => (startCode.match(new RegExp(lage, 'g')) || []).length === 2));
+}
+
+console.log('\nBoss-Kräfte');
+{
+  resetProgress();
+
+  const ARTEN = ['schild', 'schildbruch', 'brand', 'frost', 'lebensraub', 'energiesturm'];
+
+  pruefe('Es gibt für jede der 6 Welten eine Boss-Kraft',
+    BOSS_KRAEFTE.length === 6 && [1, 2, 3, 4, 5, 6].every((w) => kraftFuerWelt(w)));
+  pruefe('Jede Kraft-id ist einmalig',
+    new Set(BOSS_KRAEFTE.map((k) => k.id)).size === 6);
+  pruefe('Jede Kraft hat eine bekannte Wirkung',
+    BOSS_KRAEFTE.every((k) => ARTEN.includes(k.art)));
+  pruefe('Jede Kraft hat Name, Symbol und Beschreibung',
+    BOSS_KRAEFTE.every((k) => k.name && k.icon && k.text && k.boss));
+
+  pruefe('Am Anfang ist keine Kraft freigeschaltet',
+    BOSS_KRAEFTE.every((k) => !besitztKraft(k.id)) && getBossKraft() === null);
+
+  // Welt-1-Boss besiegen: die erste Kraft muss aufgehen und gleich getragen sein.
+  const kraft1 = bossKraftFreischalten(1);
+  pruefe('Der erste Boss schaltet seine Kraft frei', kraft1?.id === kraftFuerWelt(1).id);
+  pruefe('Die erste Kraft wird sofort getragen', getBossKraft()?.id === kraft1.id);
+  pruefe('Ein zweiter Sieg schaltet nichts Neues frei', bossKraftFreischalten(1) === null);
+
+  // Eine zweite Kraft freischalten: die erste bleibt getragen (kein Wechsel).
+  bossKraftFreischalten(2);
+  pruefe('Eine weitere Kraft wechselt die getragene nicht',
+    getBossKraft()?.id === kraftFuerWelt(1).id && besitztKraft(kraftFuerWelt(2).id));
+
+  // Umrüsten und ablegen.
+  setBossKraft(kraftFuerWelt(2).id);
+  pruefe('Man kann auf eine andere Kraft umrüsten', getBossKraft()?.id === kraftFuerWelt(2).id);
+  setBossKraft(null);
+  pruefe('Man kann die Kraft ablegen', getBossKraft() === null);
+  setBossKraft('gibtsnicht');
+  pruefe('Eine unbekannte Kraft lässt sich nicht anlegen', getBossKraft() === null);
+
+  // Nur der ERSTE Boss-Sieg gibt die Kraft - über die Belohnung geprüft.
+  resetProgress();
+  const bossLevel = bossLevelOf(1);
+  const erste = siegBelohnung(bossLevel, 3, 'timo', () => 0.5);
+  pruefe('Der Boss-Sieg liefert die neue Kraft in der Belohnung',
+    erste.neueKraft?.id === kraftFuerWelt(1).id);
+  const zweite = siegBelohnung(bossLevel, 3, 'timo', () => 0.5);
+  pruefe('Ein Wiederholungssieg liefert keine neue Kraft', zweite.neueKraft === null);
+
+  resetProgress();
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

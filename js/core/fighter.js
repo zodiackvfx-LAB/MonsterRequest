@@ -119,6 +119,17 @@ export function createFighter(monster) {
     state.shield = Math.max(state.shield, amount);
   }
 
+  /** Entfernt das Schild ganz - genutzt von der Boss-Kraft "Prismabrecher". */
+  function entferneSchild() {
+    state.shield = 0;
+  }
+
+  /** Füllt die Energie sofort auf das Maximum - Boss-Kraft "Sandsturm". */
+  function energieVoll() {
+    genaueEnergie = MAX_ENERGIE;
+    syncXp();
+  }
+
   function heal(amount) {
     state.hp = Math.min(state.maxHp, state.hp + amount);
   }
@@ -136,6 +147,8 @@ export function createFighter(monster) {
     useCard,
     takeDamage,
     addShield,
+    entferneSchild,
+    energieVoll,
     heal,
     missingHp,
   };

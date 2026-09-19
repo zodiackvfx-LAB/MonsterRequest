@@ -56,6 +56,7 @@ js/
     attacks.js          Katalog aller Attacken (Kosten, Schaden, Heilung, Schild)
     monsters.js         Spielermonster und Gegner samt Decks
     levels.js           Level der Weltkarte inkl. Position auf der Karte
+    kraefte.js          Boss-Kräfte – je Welt eine, beim Boss-Sieg freigeschaltet
 
   core/                 NUR Logik – kennt kein HTML
     screens.js          Bildschirmverwaltung

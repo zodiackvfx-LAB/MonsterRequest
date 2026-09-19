@@ -460,6 +460,85 @@
   color: var(--text-dim);
 }
 
+/* Energiepunkte und der Kraft-Knopf stehen nebeneinander in einer Reihe. */
+.wert-leiste__reihe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wert-leiste__reihe .pips {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- Boss-Kraft-Knopf ----------
+   Rund, mit dem Symbol der Kraft. Der Ring aussenrum zeigt, wie voll die
+   Kraft-Leiste ist (--kraft von 0 bis 1). Erst wenn sie voll ist, leuchtet
+   der Knopf und lässt sich drücken. */
+.kraft-knopf {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 38%, #2c3f83, #141f4d 78%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 3px 8px rgba(8, 14, 40, 0.5);
+  /* Solange nicht bereit: gedämpft. */
+  filter: saturate(0.6) brightness(0.85);
+  transition: filter 0.2s ease, transform 0.08s ease;
+}
+
+/* Der Ladering: goldener Bogen nach Füllstand, Rest dunkel. */
+.kraft-knopf__ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--fantasy-gold) calc(var(--kraft, 0) * 360deg),
+    rgba(12, 18, 48, 0.65) 0
+  );
+  /* Nur den äußeren Rand als Ring zeigen (Mitte ausstanzen). */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+}
+
+.kraft-knopf__icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 3px rgba(8, 14, 40, 0.6));
+}
+
+/* Bereit: volle Farbe, goldener Schein, ruhiges Pulsieren. */
+.kraft-knopf.is-bereit {
+  filter: none;
+  animation: kraft-bereit 1.3s ease-in-out infinite;
+}
+
+.kraft-knopf.is-bereit:active {
+  transform: scale(0.92);
+}
+
+.kraft-knopf:disabled {
+  cursor: default;
+}
+
+@keyframes kraft-bereit {
+  0%, 100% { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 197, 61, 0.5); }
+  50% { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 197, 61, 0.9); }
+}
+
+/* Eingefrorener Gegner (Boss-Kraft "Frostbann"): blau getönt, kein Wippen. */
+.ist-gefroren {
+  animation: none !important;
+  filter: brightness(1.1) saturate(1.3)
+    drop-shadow(0 0 10px rgba(140, 227, 255, 0.9)) hue-rotate(-12deg);
+}
+
 /* Die vier Handkarten */
 .hand {
   flex: 0 0 auto;
@@ -2146,4 +2225,87 @@
 
 .setting-row--breit .eingabe-gruppe {
   flex: 1 1 100%;
+}
+
+/* =========================================================================
+   Boss-Kräfte im Figur-Bildschirm
+   ========================================================================= */
+.kraft-item {
+  position: relative;
+  font: inherit;
+  color: var(--text);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 0 rgba(8, 14, 40, 0.3);
+}
+
+.kraft-item + .kraft-item {
+  margin-top: 8px;
+}
+
+.kraft-item:not(:disabled):active {
+  transform: translateY(2px);
+}
+
+/* Die getragene Kraft: goldener Rand und Schein. */
+.kraft-item.is-active {
+  border-color: var(--gold-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 0 14px rgba(255, 197, 61, 0.35);
+}
+
+/* Noch nicht freigeschaltet: gedämpft. */
+.kraft-item.is-locked {
+  cursor: not-allowed;
+  filter: grayscale(0.6) brightness(0.8);
+}
+
+.kraft-item__icon {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #445bb0, #182048 75%);
+  border: 2px solid rgba(255, 197, 61, 0.45);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.kraft-item__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.kraft-item__name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.kraft-item__text {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.kraft-item__stand {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold-1);
+}
+
+.kraft-item.is-active .kraft-item__stand {
+  color: var(--gold-1);
 }

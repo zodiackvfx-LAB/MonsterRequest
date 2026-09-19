@@ -22,7 +22,7 @@
 import { MATERIAL_BEUTE, MUENZE } from '../data/items.js';
 import { BOSS_TRUHE } from '../data/shop.js';
 import { truheOeffnen } from './loot.js';
-import { beuteGutschreiben, completeLevel, isLevelCleared } from './state.js';
+import { beuteGutschreiben, bossKraftFreischalten, completeLevel, isLevelCleared } from './state.js';
 import { xpGutschreiben } from './progression.js';
 
 /** Wie oft ein normaler Kampf Material abwirft. */
@@ -85,7 +85,10 @@ export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) 
   nochBuchen.push(...truhenBeute);
   nochBuchen.forEach((eintrag) => beuteGutschreiben(eintrag));
 
-  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal };
+  // Beim ERSTEN Boss-Sieg gibt es die Boss-Kraft dieser Welt.
+  const neueKraft = level.isBoss && erstesMal ? bossKraftFreischalten(level.worldId) : null;
+
+  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft };
 }
 
 /** Wie viel Material dieser Kampf abwirft (0, wenn keins). */

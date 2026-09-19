@@ -29,7 +29,7 @@ const DEFAULT_PATIENCE = 2;
  * @param {function} [options.onEvent]   - Kampfereignisse (für Log und Animationen)
  * @param {function} [options.onEnd]     - 'win' oder 'lose'
  */
-export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, onEnd }) {
+export function createBattle({ playerMonster, enemyMonster, bossPower = null, onUpdate, onEvent, onEnd }) {
   const player = createFighter(playerMonster);
   const enemy = createFighter(enemyMonster);
 
@@ -40,10 +40,29 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
   const state = {
     player: player.state,
     enemy: enemy.state,
+    bossPower, // die getragene Boss-Kraft (oder null) - nur der Spieler hat eine
+    kraft: 0, // 0..1: wie voll die Kraft-Leiste ist
+    kraftBereit: false, // true, sobald die Kraft einsatzbereit ist
     running: false,
     finished: false,
     result: null, // 'win' | 'lose'
   };
+
+  /* Die Kraft-Leiste füllt sich mit "Ladepunkten": für gespielte Karten und
+     für eingesteckte Treffer. Ist KRAFT_MAX erreicht, ist die Kraft bereit. */
+  const KRAFT_MAX = 16;
+  let kraftPunkte = 0;
+
+  function ladeKraft(punkte) {
+    if (!bossPower || state.finished) return;
+    kraftPunkte = Math.min(KRAFT_MAX, kraftPunkte + punkte);
+    state.kraft = kraftPunkte / KRAFT_MAX;
+    state.kraftBereit = kraftPunkte >= KRAFT_MAX;
+  }
+
+  // Brand (Schaden über Zeit) und Vereisung des Gegners - von Boss-Kräften.
+  let brand = null; // { rest, tick, timer }
+  let frostRest = 0; // Sekunden, die der Gegner noch eingefroren ist
 
   let thinkTimer = reactionTime; // Sekunden, bis der Gegner das nächste Mal überlegt
   let sparenAb = null; // Energiestand, ab dem der Gegner gerade spart (null = spart nicht)
@@ -90,6 +109,8 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
     if (attack.damage > 0) {
       const schaden = schadenBerechnen(attacker, defender, attack.damage);
       const applied = defender.takeDamage(schaden);
+      // Steckt der Spieler einen Treffer ein, lädt sich seine Kraft ein Stück.
+      if (side === 'enemy') ladeKraft(2);
       emit({
         type: `${side}-attack`,
         attack,
@@ -145,7 +166,80 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
     const attack = player.useCard(handIndex);
     if (!attack) return false;
 
+    // Für jede gespielte Karte lädt die Kraft-Leiste um die Energiekosten.
+    ladeKraft(attack.cost);
     useAttack(player, enemy, attack, 'player');
+    return true;
+  }
+
+  /** Boss-Kraft-Schaden geht durch dieselbe Rechnung wie eine Attacke. */
+  function bossSchaden(roh) {
+    return schadenBerechnen(player, enemy, roh);
+  }
+
+  /**
+   * Löst die getragene Boss-Kraft aus - wenn die Leiste voll ist.
+   * @returns {boolean} true, wenn die Kraft ausgelöst wurde
+   */
+  function useBossPower() {
+    if (!state.running || state.finished) return false;
+    if (!bossPower || kraftPunkte < KRAFT_MAX) return false;
+
+    // Sofort leeren, damit ein Doppeltipp nicht doppelt auslöst.
+    kraftPunkte = 0;
+    state.kraft = 0;
+    state.kraftBereit = false;
+
+    // Ansage zuerst - der Bildschirm zeigt darauf den grossen Effekt.
+    emit({ type: 'kraft', power: bossPower, text: `${state.player.name} setzt ${bossPower.name} ein!` });
+
+    switch (bossPower.art) {
+      case 'schild': {
+        const menge = Math.round(state.player.maxHp * bossPower.wert);
+        player.addShield(menge);
+        emit({ type: 'player-shield', amount: menge, kraft: true, text: `${bossPower.name}: Schild ${menge}.` });
+        break;
+      }
+      case 'schildbruch': {
+        enemy.entferneSchild();
+        const dmg = bossSchaden(bossPower.wert);
+        enemy.takeDamage(dmg);
+        emit({ type: 'player-attack', amount: dmg, kraft: true, text: `${bossPower.name} zerschlägt das Schild: ${dmg} Schaden!` });
+        break;
+      }
+      case 'lebensraub': {
+        const dmg = bossSchaden(bossPower.wert);
+        enemy.takeDamage(dmg);
+        player.heal(dmg);
+        emit({ type: 'player-attack', amount: dmg, kraft: true, text: `${bossPower.name}: ${dmg} Schaden - und ${dmg} LP zurück!` });
+        emit({ type: 'player-heal', amount: dmg });
+        break;
+      }
+      case 'energiesturm': {
+        player.energieVoll();
+        const dmg = bossSchaden(bossPower.wert);
+        enemy.takeDamage(dmg);
+        emit({ type: 'player-attack', amount: dmg, kraft: true, text: `${bossPower.name}: volle Energie und ${dmg} Schaden!` });
+        break;
+      }
+      case 'brand': {
+        const sofort = bossSchaden(bossPower.wert.sofort);
+        enemy.takeDamage(sofort);
+        emit({ type: 'player-attack', amount: sofort, kraft: true, text: `${bossPower.name}: ${sofort} Schaden - der Gegner brennt!` });
+        // Der Rest kommt tickweise in der Schleife.
+        brand = { rest: bossPower.wert.male, tick: bossPower.wert.tick, timer: 0.6 };
+        break;
+      }
+      case 'frost': {
+        frostRest = bossPower.wert;
+        emit({ type: 'frost', dauer: bossPower.wert, text: `${bossPower.name}: Der Gegner ist eingefroren!` });
+        break;
+      }
+      default:
+        break;
+    }
+
+    checkEnd();
     return true;
   }
 
@@ -231,16 +325,36 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
 
   /** Ein Schritt der Spielzeit. deltaSeconds = vergangene Zeit seit dem letzten Frame. */
   function tick(deltaSeconds) {
-    // Energie-Nachschub - für beide Seiten gleich
+    // Energie-Nachschub für den Spieler - läuft immer.
     player.energieAufladen(deltaSeconds);
-    enemy.energieAufladen(deltaSeconds);
 
-    // Der Gegner überlegt nur in festen Abständen, statt in jedem Frame.
-    // Das ist seine "Reaktionszeit" und ersetzt das Dauerfeuer.
-    thinkTimer -= deltaSeconds;
-    if (thinkTimer <= 0 && !state.finished) {
-      thinkTimer = reactionTime;
-      enemyTurn();
+    if (frostRest > 0) {
+      // Eingefroren (Boss-Kraft "Frostbann"): der Gegner lädt keine Energie
+      // und greift nicht an, bis die Vereisung vorbei ist.
+      frostRest = Math.max(0, frostRest - deltaSeconds);
+    } else {
+      enemy.energieAufladen(deltaSeconds);
+      // Der Gegner überlegt nur in festen Abständen, statt in jedem Frame.
+      // Das ist seine "Reaktionszeit" und ersetzt das Dauerfeuer.
+      thinkTimer -= deltaSeconds;
+      if (thinkTimer <= 0 && !state.finished) {
+        thinkTimer = reactionTime;
+        enemyTurn();
+      }
+    }
+
+    // Brand (Boss-Kraft "Inferno"): in Abständen weiter Schaden.
+    if (brand && !state.finished) {
+      brand.timer -= deltaSeconds;
+      while (brand && brand.timer <= 0 && brand.rest > 0 && !state.finished) {
+        const dmg = bossSchaden(brand.tick);
+        enemy.takeDamage(dmg);
+        emit({ type: 'brand', amount: dmg, text: `Der Gegner brennt: ${dmg} Schaden.` });
+        brand.rest -= 1;
+        brand.timer += 0.6;
+        checkEnd();
+      }
+      if (brand && brand.rest <= 0) brand = null;
     }
   }
 
@@ -278,5 +392,5 @@ export function createBattle({ playerMonster, enemyMonster, onUpdate, onEvent, o
     }
   }
 
-  return { state, start, stop, playCard, canPlay };
+  return { state, start, stop, playCard, canPlay, useBossPower };
 }

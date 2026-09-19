@@ -9,6 +9,7 @@
 
 import { LEVELS, bossLevelOf } from '../data/levels.js';
 import { WORLDS } from '../data/worlds.js';
+import { getKraft, kraftFuerWelt } from '../data/kraefte.js';
 import { cloudMerken } from './cloud.js';
 
 const STORAGE_KEY = 'monsterquest.save.v3';
@@ -28,6 +29,8 @@ function createNewGame() {
     coins: 0,
     materials: 0, // für spätere Aufwertungen
     ownedAttacks: [], // aus Truhen freigeschaltete Attacken
+    bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
+    bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
     activeSkin: {}, // { monsterId: skinId }
     decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
@@ -137,6 +140,13 @@ function uebernehmen(saved) {
   gameState.coins = Number(saved.coins) || 0;
   gameState.materials = Number(saved.materials) || 0;
   gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
+  // Nur bekannte Kraft-ids übernehmen, damit ein alter Spielstand keine
+  // Geister-Kraft einschleppt.
+  gameState.bossPowers = Array.isArray(saved.bossPowers)
+    ? saved.bossPowers.filter((id) => getKraft(id))
+    : [];
+  gameState.bossPower =
+    saved.bossPower && gameState.bossPowers.includes(saved.bossPower) ? saved.bossPower : null;
   gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ['skin-standard'];
   gameState.activeSkin = figurUmbenennen(saved.activeSkin ?? {});
   // Die Spielerfigur hiess frueher "glutwelpe" und heisst jetzt "timo".
@@ -397,6 +407,53 @@ export function getAktiverSkin(monsterId) {
 export function setAktiverSkin(monsterId, skinId) {
   gameState.activeSkin[monsterId] = skinId;
   saveProgress();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Boss-Kräfte                                                        */
+/* ------------------------------------------------------------------ */
+
+/** Ist diese Boss-Kraft freigeschaltet? */
+export function besitztKraft(id) {
+  return gameState.bossPowers.includes(id);
+}
+
+/**
+ * Schaltet die Boss-Kraft einer Welt frei - wird nach dem ersten Sieg über
+ * ihren Boss aufgerufen (siehe js/core/belohnung.js).
+ *
+ * Trägt der Spieler noch keine Kraft, wird die neue gleich angelegt - so hat
+ * man sie sofort im nächsten Kampf dabei, ohne sie erst auszuwählen.
+ *
+ * @returns {object|null} die neu freigeschaltete Kraft, oder null wenn es
+ *   für die Welt keine gibt oder sie schon da war
+ */
+export function bossKraftFreischalten(worldId) {
+  const kraft = kraftFuerWelt(worldId);
+  if (!kraft || besitztKraft(kraft.id)) return null;
+
+  gameState.bossPowers.push(kraft.id);
+  if (!gameState.bossPower) gameState.bossPower = kraft.id;
+  saveProgress();
+  return kraft;
+}
+
+/** Die getragene Boss-Kraft als Objekt - oder null. */
+export function getBossKraft() {
+  return gameState.bossPower && besitztKraft(gameState.bossPower)
+    ? getKraft(gameState.bossPower)
+    : null;
+}
+
+/**
+ * Legt die getragene Boss-Kraft fest. null = keine tragen. Nur eine
+ * freigeschaltete Kraft (oder null) wird angenommen.
+ */
+export function setBossKraft(id) {
+  if (id === null || besitztKraft(id)) {
+    gameState.bossPower = id;
+    saveProgress();
+  }
 }
 
 /** Eine Einstellung ändern (z. B. Ton an/aus). */

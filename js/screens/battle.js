@@ -17,7 +17,7 @@ import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_ENERGIE } from '../core/battle.js';
-import { calculateStars, getDeck } from '../core/state.js';
+import { calculateStars, getBossKraft, getDeck } from '../core/state.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
@@ -62,6 +62,8 @@ export const battleScreen = {
     const basis = getMonster(STARTER_MONSTER_ID);
     const playerMonster = { ...monsterMitFortschritt(basis), deck: getDeck(basis) };
     const enemyMonster = getEnemy(level.enemyId);
+    // Die getragene Boss-Kraft (oder null) - siehe js/data/kraefte.js.
+    const bossKraft = getBossKraft();
 
     /* ---------- 1. Grundgerüst bauen ---------- */
     const screen = document.createElement('div');
@@ -122,7 +124,9 @@ export const battleScreen = {
           <span class="wert-leiste__titel">DEINE ENERGIE</span>
           <span class="wert-leiste__wert" id="energie-text">0 / ${MAX_ENERGIE}</span>
         </div>
-        <div class="pips" id="energie-pips"></div>
+        <div class="wert-leiste__reihe">
+          <div class="pips" id="energie-pips"></div>
+        </div>
       </section>
 
       <section class="hand" id="hand"></section>
@@ -160,6 +164,25 @@ export const battleScreen = {
     const playerPips = createPips(screen.querySelector('#energie-pips'));
     const enemyPips = createPips(screen.querySelector('#enemy-energie-pips'));
 
+    // Der Kraft-Knopf erscheint nur, wenn eine Boss-Kraft getragen wird.
+    // Der Ring um ihn zeigt, wie voll die Kraft-Leiste ist (--kraft von 0..1).
+    let kraftKnopf = null;
+    if (bossKraft) {
+      kraftKnopf = document.createElement('button');
+      kraftKnopf.className = 'kraft-knopf';
+      kraftKnopf.type = 'button';
+      kraftKnopf.disabled = true;
+      kraftKnopf.dataset.klang = 'keiner';
+      kraftKnopf.setAttribute('aria-label', `${bossKraft.name}: ${bossKraft.text}`);
+      kraftKnopf.innerHTML = `
+        <span class="kraft-knopf__ring"></span>
+        <span class="kraft-knopf__icon">${bossKraft.icon}</span>
+      `;
+      kraftKnopf.addEventListener('click', () => battle.useBossPower());
+      screen.querySelector('.wert-leiste__reihe').appendChild(kraftKnopf);
+      ui.energieLeiste.classList.add('hat-kraft');
+    }
+
     /** Legt MAX_ENERGIE Punkte in einem Container an und gibt sie als Array zurück. */
     function createPips(container) {
       const pips = [];
@@ -182,6 +205,7 @@ export const battleScreen = {
     battle = createBattle({
       playerMonster,
       enemyMonster,
+      bossPower: bossKraft,
       onUpdate: render,
       onEvent: handleEvent,
       onEnd: showResult,
@@ -219,6 +243,14 @@ export const battleScreen = {
         card.classList.toggle('is-disabled', !affordable);
         card.disabled = !affordable;
       });
+
+      // Kraft-Leiste: Ring fuellen, Knopf freigeben sobald sie voll ist.
+      if (kraftKnopf) {
+        kraftKnopf.style.setProperty('--kraft', state.kraft);
+        const bereit = state.kraftBereit && !state.finished;
+        kraftKnopf.classList.toggle('is-bereit', bereit);
+        kraftKnopf.disabled = !bereit;
+      }
     }
 
     /**
@@ -348,8 +380,33 @@ export const battleScreen = {
           break;
         case 'player-shield':
           floatNumber(ui.playerSprite, `🛡️ ${event.amount}`, 'shield');
+          if (event.kraft) trefferFunke(ui.playerSprite, '#8fe3ff', 8);
           spieleKlang('schild');
           break;
+
+        // ---------- Boss-Kräfte ----------
+        case 'kraft': {
+          // Die Ansage: Timo leuchtet auf, goldene Funken, der Platz bebt.
+          flash(ui.playerSprite, 'heal');
+          trefferFunke(ui.playerSprite, '#ffd76a', 10);
+          bildschirmBeben(ui.arena, 0.3);
+          spieleKlang('levelauf');
+          break;
+        }
+        case 'brand': {
+          // Ein Brand-Tick: kleine orange Zahl, ein paar Funken, kein Beben.
+          floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
+          trefferFunke(ui.enemySprite, '#ff7a3c', 4);
+          break;
+        }
+        case 'frost': {
+          // Der Gegner friert sichtbar ein - blau getönt und ohne Wippen.
+          trefferFunke(ui.enemySprite, '#8fe3ff', 8);
+          ui.enemySprite.classList.add('ist-gefroren');
+          setTimeout(() => ui.enemySprite.classList.remove('ist-gefroren'), (event.dauer ?? 3) * 1000);
+          spieleKlang('schild');
+          break;
+        }
         case 'enemy-shield':
           floatNumber(ui.enemySprite, `🛡️ ${event.amount}`, 'shield');
           spieleKlang('schild');
@@ -426,6 +483,9 @@ export const battleScreen = {
           ${result === 'win' ? '<div class="belohnung" id="belohnung"></div>' : ''}
           ${belohnung?.xpErgebnis?.aufgestiegen
             ? `<p class="overlay__unlock">🌟 <strong>Level ${belohnung.xpErgebnis.levelNachher} erreicht!</strong></p>`
+            : ''}
+          ${belohnung?.neueKraft
+            ? `<p class="overlay__unlock overlay__unlock--kraft">${belohnung.neueKraft.icon} <strong>Neue Boss-Kraft: ${belohnung.neueKraft.name}!</strong><br>${belohnung.neueKraft.text}<br><small>Ausrüsten unter „Figur“.</small></p>`
             : ''}
           ${newWorld ? `<p class="overlay__unlock">🎉 Neue Welt freigeschaltet:<br><strong>${newWorld.icon} ${newWorld.name}</strong></p>` : ''}
           <div class="overlay__actions">
