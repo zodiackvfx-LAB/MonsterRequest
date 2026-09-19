@@ -1,0 +1,679 @@
+/* =========================================================================
+   MonsterQuest · scenery.css
+   Die Spielwelt-Kulissen: Himmel, Sonne, Wolken, Berge, Hügel, Boden.
+   Alles reines CSS - spaeter kannst du einzelne Ebenen durch eigene
+   Grafiken ersetzen, ohne den Rest anzufassen:
+       .scenery__hills { background-image: url('../bilder/huegel.png'); }
+   Aufbau (von hinten nach vorn): sky → sun → clouds → mountains → hills → ground
+   ========================================================================= */
+
+/* Die Farben (--s-...) stehen in css/base.css, damit Kulisse und Arena
+   dieselben benutzen. Eine Region überschreibt sie weiter unten. */
+.scenery {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.scenery__sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--s-sky-top) 0%, var(--s-sky-bottom) 62%);
+}
+
+/* Weiche Lichtstrahlen von oben rechts - sehr dezent, nur ein Hauch.
+   Sie liegen hinter der Sonne und geben dem Himmel Tiefe. */
+.scenery__strahlen {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background: repeating-linear-gradient(
+    114deg,
+    rgba(255, 252, 226, 0) 0 34px,
+    rgba(255, 252, 226, 0.22) 34px 48px,
+    rgba(255, 252, 226, 0) 48px 92px
+  );
+  /* Nach unten hin ausblenden, damit die Wiese sauber bleibt. */
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 38%, transparent 62%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 38%, transparent 62%);
+}
+
+.scenery__sun {
+  position: absolute;
+  top: -70px;
+  right: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 249, 214, 0.95) 0%,
+    rgba(255, 233, 150, 0.55) 38%,
+    rgba(255, 233, 150, 0) 70%
+  );
+}
+
+/* ---------- Wolken ---------- */
+.scenery__cloud {
+  position: absolute;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  /* Die Beulen der Wolke sind Schatten desselben Elements - spart Markup. */
+  box-shadow: 26px -14px 0 -2px rgba(255, 255, 255, 0.92),
+    58px -4px 0 -6px rgba(255, 255, 255, 0.92), 0 12px 18px rgba(80, 140, 190, 0.18);
+  animation: drift 26s linear infinite;
+}
+
+.scenery__cloud:nth-child(1) { top: 9%;  left: -30%; width: 96px; animation-duration: 34s; }
+.scenery__cloud:nth-child(2) { top: 18%; left: -55%; width: 74px; animation-duration: 46s; animation-delay: -12s; }
+.scenery__cloud:nth-child(3) { top: 5%;  left: -80%; width: 120px; animation-duration: 58s; animation-delay: -30s; }
+
+@keyframes drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(260%); }
+}
+
+/* ---------- Berge im Hintergrund ---------- */
+.scenery__mountains {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 34%;
+  height: 32%;
+  background: var(--s-rock-dark);
+  clip-path: polygon(
+    0% 100%, 8% 52%, 16% 72%, 27% 26%, 38% 66%, 47% 44%,
+    58% 78%, 68% 38%, 79% 68%, 88% 50%, 100% 88%, 100% 100%
+  );
+  opacity: 0.85;
+}
+
+/* Die hintere Bergreihe: heller, kleiner, leicht versetzt. Mehr braucht es
+   nicht, damit der Hintergrund Tiefe bekommt. */
+.scenery__mountains--fern {
+  bottom: 38%;
+  height: 24%;
+  left: -18%;
+  right: -2%;
+  opacity: 0.45;
+  filter: brightness(1.25);
+}
+
+.scenery__mountains--fern::after {
+  display: none; /* keine Schneekappen in der Ferne */
+}
+
+/* Sonnenseite der Berge: ein heller Streifen an der rechten Flanke. */
+.scenery__mountains::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 52%, rgba(255, 255, 255, 0.16) 100%);
+}
+
+.scenery__mountains::after {
+  /* Schneekappen: dieselbe Silhouette, nur oben abgeschnitten */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--snow);
+  clip-path: polygon(
+    22% 34%, 27% 26%, 33% 40%, 30% 38%, 27% 33%, 24% 37%,
+    63% 46%, 68% 38%, 74% 52%, 71% 49%, 68% 45%, 65% 49%
+  );
+  opacity: 0.9;
+}
+
+/* ---------- Hügel ---------- */
+.scenery__hills {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 22%;
+  height: 26%;
+  background: var(--s-grass-dark);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transform: scaleX(1.6);
+}
+
+.scenery__hills--second {
+  bottom: 18%;
+  height: 20%;
+  background: var(--s-grass);
+  transform: scaleX(1.9) translateX(-8%);
+}
+
+/* ---------- Boden ---------- */
+.scenery__ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24%;
+  background: linear-gradient(180deg, var(--s-grass-light) 0%, var(--s-grass) 40%, var(--s-grass-dark) 100%);
+}
+
+.scenery__ground::before {
+  /* Angedeutete Grasbüschel als weiche Wellenlinie */
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 22px;
+  background: radial-gradient(circle at 50% 100%, var(--s-grass-light) 55%, transparent 56%);
+  background-size: 34px 22px;
+  background-repeat: repeat-x;
+}
+
+/* ---------- Welt-Themen ----------
+   Die FARBEN einer Welt stehen in js/data/worlds.js und werden von dort
+   gesetzt (applyRegion in js/ui/scenery.js). Willst du eine Arena
+   umfaerben, aenderst du also die Datendatei - nicht dieses Stylesheet.
+
+   Hier unten stehen nur die FORMEN: die Silhouetten von Tannen,
+   Kristallen, Felsnadeln und Kakteen. Die Klasse kommt auf den Bildschirm
+   (nicht auf die Kulisse), damit Kulisse UND Arena sie erben. */
+
+/* ---------- Eigenes Hintergrundbild ----------
+   Traegt eine Welt das Feld "hintergrund", ersetzt dieses Bild die
+   gezeichnete Kulisse. Der Boden der Arena bleibt bestehen, damit die
+   Figuren immer sauber darauf stehen. */
+.region--eigenes-bild .scenery__sky {
+  background-image: var(--welt-bild);
+  background-size: cover;
+  background-position: center bottom;
+}
+
+.region--eigenes-bild .scenery__sun,
+.region--eigenes-bild .scenery__cloud,
+.region--eigenes-bild .scenery__mountains,
+.region--eigenes-bild .scenery__hills {
+  display: none;
+}
+
+/* In der Arena verschwinden Huegel und Baumreihen, damit das Bild wirkt.
+   Die Wiese bleibt - sie ist der Boden, auf dem gekaempft wird. */
+.region--eigenes-bild .arena__hills,
+.region--eigenes-bild .arena__treeline {
+  display: none;
+}
+
+/* Hinter einem Menue haben die Wolken nichts zu suchen: Unter dem
+   Abdunkel-Schleier bleibt von einer weissen Wolke nur ein grauer Fleck
+   uebrig, der wie ein Anzeigefehler aussieht - besonders am oberen Rand. */
+.scenery--gedimmt .scenery__cloud {
+  display: none;
+}
+
+/* Abgedunkelte Kulisse, damit Menues darauf lesbar bleiben */
+.scenery--gedimmt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 16, 44, 0.55), rgba(10, 16, 44, 0.78));
+}
+
+/* =========================================================================
+   Die Kampfarena
+   ---------------------------------------------------------------------
+   Im Kampf zeigt die Kulisse nur Himmel, Sonne und Wolken (skyOnly).
+   Alles andere gehört zur Arena: Hügel, Baumreihe, Wiese und Kampfplatz.
+   Dadurch gibt es genau EINEN Horizont, und beide Monster stehen sicher
+   darauf - egal wie hoch der Bildschirm ist.
+
+   Die Arena ist in der Höhe begrenzt und wird mittig gesetzt, damit die
+   Monster auch auf dem iPad dicht beieinander stehen.
+   ========================================================================= */
+.arena {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: 400px;
+  /* Die Wiese reicht absichtlich über die Arena hinaus. */
+  overflow: visible;
+}
+
+/* Hügel hinter dem Horizont */
+.arena__hills {
+  position: absolute;
+  left: -25%;
+  right: -25%;
+  top: 26%;
+  height: 30%;
+  background: var(--s-grass-dark);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+/* Baumreihe direkt am Horizont */
+/* ---------- Baumreihen am Horizont ----------
+   Es gibt zwei Reihen, damit die Tiefe stimmt:
+
+     "fern"  - kleine, leicht aufgehellte Tannen direkt am Horizont.
+               Sie werden VOR der Wiese gezeichnet, deshalb verdeckt das
+               Gras ihre Stämme - genau wie bei echten weit entfernten Bäumen.
+     "nah"   - wenige große Tannen, die etwas tiefer stehen und NACH der
+               Wiese gezeichnet werden. Sie stehen also sichtbar auf dem
+               Gras, mit vollem Stamm und Schatten.
+
+   Die Größe steuert eine einzige Variable je Baum: --h (Gesamthöhe).
+   Krone, Stamm und Breite rechnen sich daraus aus. */
+.arena__treeline {
+  position: absolute;
+  left: -3%;
+  right: -3%;
+  top: 52%;
+  transform: translateY(-100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 1%;
+}
+
+.arena__tree {
+  --h: 86px;
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(var(--h) * 0.62);
+  height: var(--h);
+}
+
+/* Der Stamm liegt hinter der Krone und ragt unten heraus. */
+.arena__tree-trunk {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--h) * 0.11);
+  height: calc(var(--h) * 0.26);
+  border-radius: 2px;
+  background: linear-gradient(90deg, #8a6340 0%, #6b4a2f 55%, #4e3521 100%);
+}
+
+/* Die Krone: die Tannenform entsteht durch clip-path (drei Etagen und eine
+   Spitze). Wichtig: das clip-path gehört NUR auf die Krone - liegt es auf
+   dem ganzen Baum, schneidet es den Stamm mit weg.
+   Willst du eine andere Baumform, änderst du nur diese Punkte. */
+.arena__tree-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(var(--h) * 0.84);
+  background: linear-gradient(170deg, var(--s-tree) 0%, var(--s-tree-dark) 100%);
+  clip-path: polygon(
+    50% 0%,
+    68% 30%, 58% 30%,
+    80% 62%, 68% 62%,
+    93% 100%, 7% 100%,
+    32% 62%, 20% 62%,
+    42% 30%, 32% 30%
+  );
+}
+
+/* ---------- Ferne Reihe ---------- */
+.arena__treeline--fern .arena__tree {
+  --h: 60px;
+  /* Dunst in der Ferne: heller, blasser, leicht bläulich - dadurch wirkt
+     die Reihe weiter weg als die großen Tannen davor. */
+  filter: brightness(1.22) saturate(0.6) hue-rotate(-6deg);
+  opacity: 0.88;
+}
+
+.arena__treeline--fern .arena__tree:nth-child(2n) { --h: 48px; }
+.arena__treeline--fern .arena__tree:nth-child(3n) { --h: 72px; }
+.arena__treeline--fern .arena__tree:nth-child(5n) { --h: 42px; }
+
+/* ---------- Nahe Reihe ----------
+   Diese Bäume sitzen einzeln an festen Stellen am linken und rechten Rand,
+   damit sie die Monster in der Mitte nicht verdecken. */
+.arena__treeline--nah {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 0;
+}
+
+.arena__treeline--nah .arena__tree {
+  position: absolute;
+  bottom: 0;
+  /* Vorn kräftigere Farbe und ein Schatten auf der Wiese */
+  filter: saturate(1.12) brightness(0.94) drop-shadow(0 8px 7px rgba(20, 50, 15, 0.35));
+}
+
+/* left = Position, margin-bottom = wie weit der Baum vor dem Horizont steht.
+   Je größer und je tiefer, desto näher wirkt der Baum. */
+.arena__treeline--nah .arena__tree:nth-child(1) { --h: 156px; left: -3%; margin-bottom: -58px; }
+.arena__treeline--nah .arena__tree:nth-child(2) { --h: 112px; left: 12%; margin-bottom: -22px; }
+.arena__treeline--nah .arena__tree:nth-child(3) { --h: 142px; left: 92%; margin-bottom: -46px; }
+
+/* Die Wiese: beginnt am Horizont und läuft bis zum unteren Bildschirmrand */
+.arena__ground {
+  position: absolute;
+  left: -50vw;
+  right: -50vw;
+  top: 52%;
+  bottom: -100vh;
+  background: linear-gradient(
+    180deg,
+    var(--s-grass-light) 0%,
+    var(--s-grass) 14%,
+    var(--s-grass-dark) 100%
+  );
+}
+
+/* Angedeutete Grasbüschel an der Kante */
+.arena__ground::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: radial-gradient(circle at 50% 100%, var(--s-grass-light) 55%, transparent 56%);
+  background-size: 30px 20px;
+  background-repeat: repeat-x;
+}
+
+/* Heller Kampfplatz, auf dem die beiden stehen */
+.arena__ring {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  transform: translateX(-50%);
+  width: 96%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 249, 214, 0.3) 0%,
+    rgba(255, 249, 214, 0.1) 55%,
+    rgba(255, 249, 214, 0) 72%
+  );
+}
+
+/* Ein paar Blumen, damit die Wiese nicht wie eine leere Fläche wirkt */
+.arena__flower {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff6c9;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+  opacity: 0.85;
+}
+
+.arena__flower:nth-of-type(2n) {
+  background: #ffd9ec;
+}
+
+.arena__flower:nth-of-type(1) { left: 32%; top: 66%; }
+.arena__flower:nth-of-type(2) { left: 72%; top: 80%; }
+.arena__flower:nth-of-type(3) { left: 18%; top: 88%; }
+.arena__flower:nth-of-type(4) { left: 58%; top: 94%; }
+.arena__flower:nth-of-type(5) { left: 88%; top: 70%; }
+
+/* ---------- Eigene Pflanzen und Felsen je Welt ----------
+   Alle Welten nutzen dieselben Bausteine (.arena__tree), nur die Silhouette
+   wechselt. Dadurch sieht jede Welt anders aus, ohne neuen Code. */
+
+/* Kristallhöhlen: aufragende Kristallsplitter, kein Stamm */
+.region--kristall .arena__tree-top {
+  clip-path: polygon(50% 0%, 78% 36%, 70% 100%, 30% 100%, 22% 36%);
+}
+
+.region--kristall .arena__tree-trunk {
+  background: linear-gradient(90deg, #6f7bd6, #454b9e);
+}
+
+/* Vulkanlande: zackige Felsnadeln */
+.region--vulkan .arena__tree-top {
+  clip-path: polygon(50% 0%, 64% 38%, 56% 42%, 74% 100%, 26% 100%, 44% 42%, 36% 38%);
+}
+
+.region--vulkan .arena__tree-trunk {
+  background: linear-gradient(90deg, #6b4636, #40261c);
+}
+
+/* Eisgebirge: Tannen mit Schneekappe */
+.region--eis .arena__tree-top::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--snow) 0%, rgba(255, 255, 255, 0) 42%);
+}
+
+/* Schattenreich: kahle, krumme Bäume */
+.region--schatten .arena__tree-top {
+  clip-path: polygon(
+    44% 0%, 56% 0%, 56% 34%, 80% 14%, 86% 24%, 56% 50%,
+    56% 100%, 44% 100%, 44% 58%, 14% 30%, 20% 20%, 44% 40%
+  );
+}
+
+/* Wüstenreich: Kakteen */
+.region--wueste .arena__tree-top {
+  clip-path: polygon(
+    40% 14%, 60% 14%, 60% 44%, 76% 44%, 76% 28%, 88% 28%, 88% 60%,
+    60% 60%, 60% 100%, 40% 100%, 40% 68%, 12% 68%, 12% 36%, 24% 36%, 24% 52%, 40% 52%
+  );
+}
+
+.region--wueste .arena__tree-trunk,
+.region--kristall .arena__tree-trunk {
+  height: calc(var(--h) * 0.12);
+}
+
+/* In Vulkan, Schatten und Wüste wächst nichts, was blüht. */
+.region--vulkan .arena__flower,
+.region--schatten .arena__flower,
+.region--wueste .arena__flower {
+  display: none;
+}
+
+/* Im Eis liegen statt Blumen Schneeflecken. */
+.region--eis .arena__flower {
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+  width: 14px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* =========================================================================
+   Die verzauberte Wiese
+   ---------------------------------------------------------------------
+   Grasbueschel, Blumen, Steine, Kristalle, Lichtpunkte und Blaetter.
+   Alle benutzen die Weltfarben (--s-...), damit sie auch in einer anderen
+   Welt stimmig aussehen.
+
+   Die Plaetze stehen in js/ui/scenery.js. Die Mitte bleibt bewusst frei -
+   dort steht die Figur.
+   ========================================================================= */
+.scenery__deko {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.deko {
+  position: absolute;
+  /* --gr skaliert das einzelne Stueck, ohne die Position zu verschieben. */
+  transform: translateX(-50%) scale(var(--gr, 1));
+  transform-origin: bottom center;
+}
+
+/* ---------- Grasbueschel ----------
+   Drei Halme aus einem Element: der mittlere ist das Element selbst,
+   die beiden aeusseren sind seine Pseudo-Elemente. */
+.deko--gras {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px 2px 0 0;
+  background: var(--s-grass-dark);
+  animation: halm-wiegen 3.8s ease-in-out infinite;
+}
+
+.deko--gras::before,
+.deko--gras::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--s-grass-dark);
+}
+
+.deko--gras::before {
+  left: -6px;
+  height: 12px;
+  transform: rotate(-16deg);
+  transform-origin: bottom center;
+}
+
+.deko--gras::after {
+  left: 6px;
+  height: 14px;
+  transform: rotate(15deg);
+  transform-origin: bottom center;
+  opacity: 0.85;
+}
+
+@keyframes halm-wiegen {
+  0%, 100% { transform: translateX(-50%) scale(var(--gr, 1)) rotate(-3deg); }
+  50%      { transform: translateX(-50%) scale(var(--gr, 1)) rotate(3deg); }
+}
+
+/* ---------- Blumen ----------
+   Ein heller Kopf mit einem gelben Kern auf einem kurzen Stiel. Sie
+   leuchten ganz leicht - das ist der magische Teil der Wiese. */
+.deko--blume {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, var(--gold-1) 0 34%, #fff4fb 35% 100%);
+  box-shadow: 0 0 6px rgba(255, 240, 200, 0.55);
+  animation: blume-atmen 4.5s ease-in-out infinite;
+}
+
+.deko--blume::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 2px;
+  height: 10px;
+  transform: translateX(-50%);
+  background: var(--s-grass-dark);
+}
+
+@keyframes blume-atmen {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 240, 200, 0.4); }
+  50%      { box-shadow: 0 0 9px rgba(255, 240, 200, 0.75); }
+}
+
+/* ---------- Steine ---------- */
+.deko--stein {
+  width: 18px;
+  height: 10px;
+  border-radius: 50% 50% 40% 40%;
+  background: linear-gradient(180deg, var(--s-rock) 0 55%, var(--s-rock-dark) 56% 100%);
+  box-shadow: 0 2px 0 rgba(10, 20, 40, 0.18);
+}
+
+/* ---------- Kristalle ----------
+   Zwei Stueck, je einer links und rechts. Sie sind das deutlichste
+   Fantasy-Element und deshalb bewusst klein. */
+.deko--kristall {
+  width: 12px;
+  height: 27px;
+  background: linear-gradient(160deg, #cdf3ff 0%, #6fd0ff 45%, #3a8fd0 100%);
+  clip-path: polygon(50% 0%, 100% 34%, 78% 100%, 22% 100%, 0% 34%);
+  box-shadow: 0 0 10px rgba(120, 215, 255, 0.5);
+  animation: kristall-glimmen 5.2s ease-in-out infinite;
+}
+
+@keyframes kristall-glimmen {
+  0%, 100% { box-shadow: 0 0 7px rgba(120, 215, 255, 0.35); }
+  50%      { box-shadow: 0 0 13px rgba(120, 215, 255, 0.7); }
+}
+
+/* ---------- Schwebende Lichtpunkte ---------- */
+.funke {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff8dc;
+  box-shadow: 0 0 8px rgba(255, 245, 200, 0.9);
+  opacity: 0;
+  animation: funke-schweben 7s ease-in-out infinite;
+}
+
+@keyframes funke-schweben {
+  0%       { opacity: 0; transform: translateY(0) scale(0.6); }
+  25%      { opacity: 0.85; }
+  60%      { opacity: 0.5; }
+  100%     { opacity: 0; transform: translateY(-46px) scale(1.1); }
+}
+
+/* ---------- Blaetter, die vorbeiziehen ---------- */
+.blatt {
+  position: absolute;
+  width: 11px;
+  height: 7px;
+  border-radius: 0 70% 0 70%;
+  background: var(--s-tree);
+  opacity: 0.75;
+}
+
+.blatt--1 {
+  top: 53%;
+  animation: blatt-fliegen 17s linear infinite;
+}
+
+.blatt--2 {
+  top: 57%;
+  animation: blatt-fliegen 23s linear infinite;
+  animation-delay: -9s;
+  transform: scale(0.8);
+}
+
+@keyframes blatt-fliegen {
+  0%   { left: -6%; transform: translateY(0) rotate(0deg); }
+  50%  { transform: translateY(-16px) rotate(180deg); }
+  100% { left: 106%; transform: translateY(6px) rotate(360deg); }
+}
+
+/* Hinter einem Menue bleibt die Wiese leer - dort zaehlt nur die Lesbarkeit. */
+.scenery--gedimmt .scenery__deko,
+.scenery--gedimmt .scenery__strahlen {
+  display: none;
+}
+
+/* Eigenes Hintergrundbild: die gezeichnete Deko wuerde sich damit beissen. */
+.region--eigenes-bild .scenery__deko,
+.region--eigenes-bild .scenery__strahlen {
+  display: none;
+}
+
+/* Auf kurzen Bildschirmen (kleines iPhone) ist das freie Wiesenband so
+   schmal, dass die aeussersten Stuecke hinter dem Aufgabenbanner
+   verschwinden wuerden. Dann lieber weglassen. */
+@media (max-height: 700px) {
+  .deko--aussen {
+    display: none;
+  }
+}
+
+/* Im Querformat liegt rechts die Knopfspalte. Dort wuerde die Deko nur
+   hinter der UI hervorlugen - also bleibt nur die linke Wiesenhaelfte. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .deko--rechts,
+  .funke--rechts {
+    display: none;
+  }
+}

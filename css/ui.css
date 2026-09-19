@@ -1,0 +1,1210 @@
+/* =========================================================================
+   MonsterQuest · ui.css
+   Wiederverwendbare Bausteine: Logo, Buttons, Panels, Balken, Karten, HUD.
+   Diese Klassen gelten auf allen Bildschirmen.
+   ========================================================================= */
+
+/* ---------- Logo ----------
+   Als SVG gebaut, weil nur dort die dunkle Kontur sauber HINTER der
+   Farbfuellung liegt (paint-order). In reinem HTML-Text würde die Kontur
+   die Füllung überdecken. */
+.logo {
+  display: block;
+  width: 100%;
+  max-width: 330px;
+  margin: 0 auto;
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgba(10, 20, 60, 0.4));
+}
+
+/* Die drei Lagen des Logos. Reihenfolge = Reihenfolge im SVG:
+   goldener Rand ganz hinten, dann die dunkle Kontur, vorn die Farbe.
+   Kein paint-order noetig - genau daran ist die alte Fassung auf dem
+   iPhone zerbrochen. */
+.logo__rand {
+  fill: none;
+  stroke: var(--fantasy-gold);
+  /* Nur wenig breiter als die dunkle Kontur (8), sonst laeuft das Gold in
+     die Innenraeume der Buchstaben - besonders beim Q. */
+  stroke-width: 11;
+  stroke-linejoin: round;
+  opacity: 0.75;
+}
+
+.logo__kontur {
+  fill: #16204f;
+  stroke: #16204f;
+  stroke-width: 8;
+  stroke-linejoin: round;
+}
+
+.logo__fuellung {
+  stroke: none;
+}
+
+.logo__claim {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #ffffff;
+  text-shadow: 0 2px 3px rgba(12, 18, 48, 0.8);
+}
+
+/* ---------- Buttons ---------- */
+/*
+ * Knoepfe.
+ *
+ * Alle sind gleich gebaut: Verlauf von hell nach dunkel, Lichtkante oben,
+ * Schattenkante unten und ein Sockel darunter, der sie beim Druecken
+ * einsinken laesst. Die FARBE behaelt ihre Bedeutung:
+ *   Gold  = kostet Muenzen
+ *   Gruen = weiter, bestaetigen
+ *   Blau  = Abenteuer, Hauptaktion
+ *   Grau  = zurueck, abbrechen
+ *   Rot   = loeschen
+ */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border: 2px solid rgba(12, 18, 48, 0.45);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, #ffe9a8 0%, var(--gold-1) 38%, var(--gold-2) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -3px 0 rgba(140, 80, 10, 0.35),
+    0 5px 0 var(--gold-3), 0 10px 18px rgba(10, 16, 44, 0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.btn:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 1px 0 var(--gold-3),
+    0 4px 10px rgba(10, 16, 44, 0.3);
+}
+
+.btn--big {
+  width: 100%;
+  min-height: 62px;
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+}
+
+.btn--green {
+  color: #0f2a08;
+  border-color: rgba(255, 197, 61, 0.55);
+  background: linear-gradient(180deg, #b6f07a 0%, var(--green-1) 38%, var(--green-2) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -3px 0 rgba(20, 70, 10, 0.35),
+    0 5px 0 var(--green-3), 0 10px 18px rgba(10, 16, 44, 0.4);
+}
+
+.btn--green:active {
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 1px 0 var(--green-3);
+}
+
+.btn--ghost {
+  color: var(--text);
+  border-color: rgba(255, 197, 61, 0.3);
+  background: linear-gradient(180deg, #33457f 0%, var(--panel-solid) 55%, #16204a 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(8, 14, 40, 0.5),
+    0 4px 0 #101838, 0 8px 16px rgba(10, 16, 44, 0.4);
+}
+
+.btn--ghost:active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 0 #101838;
+}
+
+.btn--small {
+  min-height: 42px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.btn--danger {
+  color: #fff;
+  border-color: rgba(12, 18, 48, 0.4);
+  background: linear-gradient(180deg, #ffb0b6 0%, #ff8a93 38%, var(--danger) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(120, 20, 30, 0.35),
+    0 5px 0 var(--danger-dark), 0 10px 18px rgba(10, 16, 44, 0.4);
+}
+
+.btn:disabled {
+  filter: grayscale(0.7) brightness(0.8);
+  cursor: not-allowed;
+}
+
+/* Runde Symbol-Buttons (Monster, Deck, Sammlung, Einstellungen) */
+.icon-btn {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  background: none;
+  color: var(--text);
+  padding: 0;
+}
+
+.icon-btn__circle {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  border-radius: 50%;
+  /* Damit der Charakter im Knopf "Figur" rund beschnitten wird. */
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--panel-light), var(--panel-solid));
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 5px 0 #101838,
+    0 8px 16px rgba(10, 16, 44, 0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.icon-btn:active .icon-btn__circle {
+  transform: translateY(4px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.15), 0 1px 0 #101838;
+}
+
+.icon-btn__label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.7);
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  position: relative;
+  /* Verlauf statt einer flachen Flaeche: oben etwas heller, unten tiefer.
+     Das laesst die Tafel wie ein Stueck Material wirken. */
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 55%, #16204a 100%);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 0 rgba(8, 14, 40, 0.4);
+  padding: 14px;
+  /* Kein overflow:hidden! Eine Box mit overflow:hidden darf im Raster auf
+     0 schrumpfen - dann wuerde der Inhalt abgeschnitten. */
+}
+
+/* Feiner goldener Lichtstrich an der Oberkante - der Akzent, der alle
+   Tafeln im Spiel zusammenhaelt. */
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 197, 61, 0.7), transparent);
+}
+
+.panel--tight {
+  padding: 10px 12px;
+}
+
+.panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+}
+
+/* Goldener Strich vor der Ueberschrift - wie eine kleine Wappenmarke. */
+.panel__title::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  box-shadow: 0 0 6px rgba(255, 197, 61, 0.5);
+}
+
+/* ---------- Kopfleiste ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.topbar__title {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  padding-bottom: 7px;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8), 0 0 12px rgba(120, 170, 255, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Goldener Zierstrich unter dem Titel - derselbe Akzent wie auf den Tafeln. */
+.topbar__title::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 58px;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-2), transparent);
+}
+
+.topbar__spacer {
+  width: 84px;
+  flex: 0 0 auto;
+}
+
+/* ---------- Spieler-Anzeige (Avatar, Stufe, Muenzen) ---------- */
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.hud__player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 5px 5px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.hud__avatar {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 1.3rem;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  border: 2px solid #fff;
+}
+
+.hud__level {
+  display: grid;
+  gap: 3px;
+}
+
+/* Der Spielername - nur da, wenn einer gewählt wurde. Er darf die schmale
+   Leiste nicht sprengen: zu lange Namen werden mit … abgeschnitten. */
+.hud__name {
+  max-width: 118px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud__level-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-dim);
+}
+
+.hud__level-bar {
+  width: 68px;
+  height: 7px;
+  border-radius: 999px;
+  background: #0d1430;
+  overflow: hidden;
+}
+
+.hud__level-fill {
+  /* display: block ist noetig - als inline-Element haette das span
+     weder Breite noch Hoehe und der Balken bliebe leer. */
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--fuellung, 1));
+  background: linear-gradient(180deg, var(--green-1), var(--green-2));
+  transition: transform 0.3s ease;
+}
+
+/*
+ * Die gezeichnete Muenze.
+ *
+ * Statt des Emojis 🪙, das je nach Geraet anders aussieht - auf dem iPhone
+ * silbergrau, sonst golden. Gezeichnet passt sie ueberall zur Goldfarbe des
+ * Spiels. Sie waechst mit der Schriftgroesse (em statt px).
+ */
+.muenze {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  /* Lichtpunkt oben links, dunkler Rand unten rechts - das macht rund. */
+  background: radial-gradient(circle at 34% 28%, #ffeda6 0%, var(--gold-1) 42%, var(--gold-2) 100%);
+  border: 0.09em solid #a86c14;
+  box-shadow: inset 0 -0.1em 0.12em rgba(120, 66, 8, 0.45);
+  vertical-align: -0.13em;
+}
+
+/* Auf einem goldenen Knopf ginge Gold auf Gold unter - ein heller Ring
+   hebt die Muenze ab. */
+.btn .muenze {
+  border-color: #6d4408;
+  box-shadow: inset 0 -0.1em 0.12em rgba(120, 66, 8, 0.45),
+    0 0 0 0.07em rgba(255, 255, 255, 0.6);
+}
+
+.hud__coins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.hud__coin-icon {
+  font-size: 1rem;
+}
+
+/* ---------- Lebens- und Energieanzeigen ---------- */
+.bar {
+  position: relative;
+  display: block;
+  height: 14px;
+  background: linear-gradient(180deg, #0b1230 0%, #16204a 100%);
+  border: 2px solid rgba(12, 18, 48, 0.85);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Glanzstreifen auf der oberen Haelfte - laesst den Balken gewoelbt wirken. */
+.bar::after {
+  content: '';
+  position: absolute;
+  inset: 1px 1px auto 1px;
+  height: 40%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent);
+  pointer-events: none;
+}
+
+/*
+ * Der Balken wird ueber transform: scaleX gestaucht, nicht ueber width.
+ * Grund: Safari auf dem iPad liess beim Ueberblenden von "width" den alten,
+ * breiteren Anstrich stehen - der Balken sah voller aus als die Lebenszahl.
+ * scaleX laeuft im Compositor und zeichnet zuverlaessig neu.
+ */
+.bar__fill {
+  /* display: block, weil der Balken auch als <span> gebaut wird (z. B. bei
+     den Tagesaufgaben) - ein inline-Element haette weder Breite noch Hoehe. */
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--fuellung, 1));
+  background: linear-gradient(180deg, var(--green-1), var(--green-2));
+  transition: transform 0.2s ease-out;
+}
+
+.bar.is-low .bar__fill {
+  background: linear-gradient(180deg, #ff8f97, var(--danger));
+}
+
+/* Das Warnblinken liegt auf dem Rahmen, nicht auf der Fuellung: zwei
+   Animationen auf demselben Element haben den Neuzeichen-Fehler ausgeloest. */
+.bar.is-low {
+  animation: bar-warnung 0.9s ease-in-out infinite;
+}
+
+@keyframes bar-warnung {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 95, 109, 0); }
+  50% { box-shadow: 0 0 9px 2px rgba(255, 95, 109, 0.6); }
+}
+
+.pips {
+  --pip-color: #49c7ff;
+  --pip-charge: rgba(73, 199, 255, 0.5);
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.pips--enemy {
+  --pip-color: var(--danger);
+  --pip-charge: rgba(255, 95, 109, 0.5);
+}
+
+.pips--small {
+  gap: 3px;
+}
+
+.pip {
+  position: relative;
+  height: 13px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0b1230, #16204a);
+  border: 2px solid rgba(12, 18, 48, 0.85);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Derselbe Glanz wie auf den Balken, damit alle Anzeigen zusammenpassen. */
+.pip::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 45%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent);
+  pointer-events: none;
+}
+
+.pips--small .pip {
+  height: 8px;
+  border-width: 1px;
+  border-radius: 3px;
+}
+
+.pip.is-filled {
+  background: var(--pip-color);
+  border-color: var(--pip-color);
+}
+
+.pip.is-charging::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  transform: scaleX(var(--charge, 0));
+  background: var(--pip-charge);
+}
+
+/* ---------- Angriffskarten ---------- */
+.card {
+  font: inherit;
+  color: var(--text);
+  position: relative;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  align-content: center;
+  padding: 12px 6px 10px;
+  min-height: 96px;
+  cursor: pointer;
+  /* KEIN overflow: hidden - das Energie-Abzeichen ragt absichtlich ueber
+     die Ecke hinaus und wuerde sonst abgeschnitten. */
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #34457f 0%, var(--panel-solid) 50%, #141e4a 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -2px 0 rgba(8, 14, 40, 0.5),
+    0 5px 0 #101838, 0 8px 14px rgba(10, 16, 44, 0.45);
+  transition: transform 0.1s ease, opacity 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Schraeger Lichtschein ueber der Karte - wie der Glanz auf einer echten
+   Sammelkarte. Liegt hinter Symbol und Text (z-index der Kinder in base.css). */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Der Glanz beschneidet sich selbst rund - so bleibt die Karte offen
+     fuer das ueberstehende Abzeichen. */
+  border-radius: inherit;
+  background: linear-gradient(118deg, transparent 38%, rgba(255, 255, 255, 0.1) 50%, transparent 62%);
+  pointer-events: none;
+}
+
+.card.is-ready {
+  border-color: var(--gold-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(8, 14, 40, 0.5),
+    0 5px 0 var(--gold-3), 0 0 18px rgba(255, 190, 60, 0.45);
+}
+
+.card.is-ready:active {
+  transform: translateY(4px) scale(0.97);
+}
+
+/* Nicht bezahlbare Karte: abgedunkelt statt durchsichtig - sonst scheint
+   der helle Hintergrund durch und die Karte wird unleserlich. */
+.card.is-disabled {
+  filter: grayscale(0.55) brightness(0.6);
+  cursor: not-allowed;
+}
+
+.card__cost {
+  position: absolute;
+  top: -11px;
+  left: -8px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #06234a;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b4eeff 0%, #6fd0ff 40%, #2b8fd0 100%);
+  border: 2px solid #0d1430;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 1px rgba(255, 197, 61, 0.45), 0 2px 5px rgba(8, 14, 40, 0.5);
+}
+
+.card__icon {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.card__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.card__effect {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Monster-Darstellung ---------- */
+.platform {
+  width: 110px;
+  height: 22px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.35), rgba(20, 60, 15, 0.35));
+  box-shadow: 0 6px 14px rgba(12, 30, 10, 0.35);
+}
+
+/* Behälter für eine Pixel-Figur. Die Größe steht in --sprite und wird
+   weiter unten je nach Bildschirm angepasst. */
+.sprite {
+  width: var(--sprite, 96px);
+  height: var(--sprite, 96px);
+  display: grid;
+  place-items: end center;
+  filter: drop-shadow(0 8px 8px rgba(10, 20, 40, 0.4));
+}
+
+.sprite--large {
+  width: var(--sprite-large, 150px);
+  height: var(--sprite-large, 150px);
+}
+
+/* Bosse werden größer dargestellt als normale Gegner. */
+.sprite--boss {
+  width: calc(var(--sprite, 96px) * 1.35);
+  height: calc(var(--sprite, 96px) * 1.35);
+}
+
+/* Im runden Avatar bekommt die Figur etwas Luft, damit sie nicht am Rand
+   klebt. */
+.hud__avatar .pixel-sprite {
+  width: 84%;
+  height: 84%;
+}
+
+/* Die Figur selbst: hart skaliert, damit die Pixel scharf bleiben. */
+.pixel-sprite {
+  width: 100%;
+  height: 100%;
+  /* min-*: 0 ist noetig, weil ein Bild in einem Gitter von sich aus eine
+     Mindestgroesse aus seinen Originalmassen bekommt. Die ueberstimmt sonst
+     die Vorgaben hier - die Figur wurde dadurch viel zu gross. */
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/*
+ * Menschen statt Tiere.
+ *
+ * Eine menschliche Figur ist etwa doppelt so hoch wie breit. In einem
+ * quadratischen Kasten waere sie winzig - also darf sie nach oben darueber
+ * hinauswachsen. Weil der Kasten seine Kinder unten ausrichtet, bleiben die
+ * Fuesse dabei genau auf dem Boden stehen.
+ */
+/* Der Kasten selbst wird hoeher, statt dass die Figur darueber hinauswaechst.
+   Nur so rechnet das Layout mit ihrer Hoehe - sonst ragt sie in die Zeile
+   darueber hinein. :has() fragt: "enthaelt dieser Kasten eine hohe Figur?" */
+.sprite:has(.pixel-sprite--hoch) {
+  height: calc(var(--sprite, 96px) * 1.5);
+}
+
+.sprite--large:has(.pixel-sprite--hoch) {
+  height: calc(var(--sprite-large, 150px) * 1.4);
+}
+
+.pixel-sprite--hoch {
+  align-self: end;
+}
+
+/* Im runden Avatar wird nur der Kopf gezeigt - ganzkoerpers waere die Figur
+   dort nur ein Streifen. */
+.hud__avatar .pixel-sprite--hoch {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 6%;
+}
+
+/* ---------- Overlay (Sieg/Niederlage/Dialoge) ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  /* Der Hintergrund wird weichgezeichnet, damit das Fenster im Vordergrund steht. */
+  background: rgba(8, 12, 30, 0.55);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+  animation: fade-in 0.2s ease-out;
+}
+
+.overlay__box {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+  padding: 22px 20px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #33468c 0%, var(--panel-solid) 55%, #141d45 100%);
+  border: 3px solid var(--gold-2);
+  box-shadow: var(--shadow-panel), 0 0 22px rgba(255, 197, 61, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: pop-in 0.25s cubic-bezier(0.2, 1.4, 0.5, 1);
+}
+
+/* feiner goldener Lichtstrich an der Oberkante des Fensters */
+.overlay__box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 220, 140, 0.8), transparent);
+}
+
+.overlay__icon {
+  font-size: 3.4rem;
+  filter: drop-shadow(0 4px 6px rgba(8, 14, 40, 0.5));
+}
+
+.overlay__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(8, 14, 40, 0.55), 0 0 14px rgba(255, 197, 61, 0.35);
+}
+
+.overlay__text {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.overlay__actions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.overlay__actions .btn {
+  width: 100%;
+}
+
+/* ---------- Sterne ---------- */
+.stars {
+  display: flex;
+  gap: 3px;
+  font-size: 1.1rem;
+}
+
+.star {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.star.is-earned {
+  filter: none;
+  animation: star-pop 0.4s backwards cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.star.is-earned:nth-child(2) { animation-delay: 0.15s; }
+.star.is-earned:nth-child(3) { animation-delay: 0.3s; }
+
+/* ---------- Animationen ---------- */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* Treffer: das Monster zuckt und leuchtet kurz rot auf. Früher wurde es
+   dabei komplett weiß - das sah aus wie ein Darstellungsfehler. */
+@keyframes hit {
+  0%, 100% {
+    transform: translateX(0) scale(1);
+    filter: drop-shadow(0 8px 8px rgba(10, 20, 40, 0.4));
+  }
+  20% {
+    transform: translateX(-10px) scale(0.95);
+    filter: brightness(1.35) drop-shadow(0 0 12px rgba(255, 70, 70, 0.95));
+  }
+  60% {
+    transform: translateX(10px) scale(1.05);
+    filter: brightness(1.35) drop-shadow(0 0 12px rgba(255, 70, 70, 0.95));
+  }
+}
+
+@keyframes lunge-right {
+  0%, 100% { transform: translate(0, 0); }
+  40% { transform: translate(26px, -14px) scale(1.06); }
+}
+
+@keyframes lunge-left {
+  0%, 100% { transform: translate(0, 0); }
+  40% { transform: translate(-26px, 14px) scale(1.06); }
+}
+
+@keyframes heal-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); filter: drop-shadow(0 0 14px var(--green-1)); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes star-pop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@keyframes float-up {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-46px); opacity: 0; }
+}
+
+.idle-bob { animation: bob 2.6s ease-in-out infinite; }
+.hit { animation: hit 0.4s ease-in-out; }
+.lunge-right { animation: lunge-right 0.35s ease-out; }
+.lunge-left { animation: lunge-left 0.35s ease-out; }
+.heal { animation: heal-pulse 0.45s ease-in-out; }
+.shake { animation: shake 0.25s ease-in-out; }
+
+/* Schadenszahlen, die vom Monster aufsteigen */
+.float-number {
+  position: absolute;
+  z-index: 3;
+  font-size: 1.5rem;
+  font-weight: 700;
+  pointer-events: none;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8);
+  animation: float-up 0.9s ease-out forwards;
+}
+
+.float-number--damage { color: #ffd76a; }
+.float-number--heal { color: var(--green-1); }
+.float-number--shield { color: #8fe3ff; }
+
+/* =========================================================================
+   Fantasy-Designsystem der Lobby
+   ---------------------------------------------------------------------
+   Vier Farben, ueberall dieselben: Dunkelblau, Blau, Weiss, Gold.
+   Gold ist immer nur AKZENT - eine Kante, ein Ring, ein Punkt. Nie Flaeche.
+   ========================================================================= */
+:root {
+  --fantasy-tief: #1b2a63;   /* dunkelblau, Grundflaeche */
+  --fantasy-blau: #3c5fd0;   /* blau, Oberseite */
+  --fantasy-hell: #6d92ff;   /* Lichtkante oben */
+  --fantasy-gold: #ffc53d;   /* Akzentkante */
+  --fantasy-gold-tief: #a8721a;
+}
+
+/* ---------- Der grosse Abenteuer-Knopf ----------
+   Eigene Klasse statt .btn--big umzubauen: die anderen grossen Knoepfe im
+   Spiel (Kaempfen, Weiter) sind gruen und bleiben unveraendert. */
+.btn--abenteuer {
+  /* Bezugspunkt fuer die Funken, die beim Antippen wegfliegen. */
+  position: relative;
+  color: #fff;
+  background: linear-gradient(180deg, var(--fantasy-hell) 0%, var(--fantasy-blau) 45%, var(--fantasy-tief) 100%);
+  border: 2px solid var(--fantasy-gold);
+  text-shadow: 0 2px 3px rgba(8, 14, 40, 0.75);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(8, 14, 40, 0.35),
+    0 5px 0 var(--fantasy-gold-tief),
+    0 10px 20px rgba(10, 16, 44, 0.45);
+  animation: abenteuer-pulsieren 3.4s ease-in-out infinite;
+}
+
+.btn--abenteuer:active {
+  transform: translateY(4px) scale(0.98);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    0 1px 0 var(--fantasy-gold-tief);
+}
+
+/* Ganz leichtes Atmen - der Knopf soll einladen, nicht blinken. */
+@keyframes abenteuer-pulsieren {
+  0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.35),
+                         0 5px 0 var(--fantasy-gold-tief), 0 10px 20px rgba(10,16,44,0.45); }
+  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.35),
+                         0 5px 0 var(--fantasy-gold-tief), 0 10px 26px rgba(120, 170, 255, 0.5); }
+}
+
+/* Beim Antippen kurz aufleuchten. */
+.btn--abenteuer.is-gestartet {
+  animation: none;
+  filter: brightness(1.7) saturate(0.7);
+  transform: translateY(4px) scale(0.97);
+}
+
+/* Die Funken, die dabei wegfliegen. */
+.startfunke {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fantasy-gold);
+  box-shadow: 0 0 8px rgba(255, 205, 90, 0.9);
+  pointer-events: none;
+  animation: startfunke-fliegen 0.5s ease-out forwards;
+}
+
+@keyframes startfunke-fliegen {
+  from { opacity: 1; transform: translate(0, 0) scale(1); }
+  to   { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(0.3); }
+}
+
+/* ---------- Runde Menueknoepfe ---------- */
+.icon-btn__circle {
+  background: linear-gradient(180deg, #2c3f83 0%, var(--fantasy-tief) 60%, #141f4d 100%);
+  border: 2px solid rgba(255, 197, 61, 0.55);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(8, 14, 40, 0.4),
+    0 5px 0 #0f1838,
+    0 8px 16px rgba(10, 16, 44, 0.45);
+}
+
+.icon-btn__label {
+  color: #eaf0ff;
+}
+
+/* Menuepunkte mit eigener Grafik.
+   Der Knopf behaelt seinen runden Rahmen mit der goldenen Kante - er
+   beschneidet die Grafik kreisrund.
+
+   118 Prozent: Die Vorlage hatte die Beschriftung im unteren Teil des
+   Kreises stehen. Ausgeschnitten wurde deshalb nur der schriftfreie Teil,
+   und dessen gerade Unterkante wuerde man sonst sehen. Durch das leichte
+   Vergroessern liegt sie ausserhalb des sichtbaren Kreises. */
+.icon-btn__circle--bild img {
+  width: 118%;
+  height: 118%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ---------- Spielerleiste und Muenzen ---------- */
+.hud__player,
+.hud__coins {
+  border-color: rgba(255, 197, 61, 0.45);
+  background: linear-gradient(180deg, #2a3c7d 0%, var(--fantasy-tief) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 10px rgba(10, 16, 44, 0.4);
+}
+
+.hud__avatar {
+  border-color: var(--fantasy-gold);
+  box-shadow: 0 0 0 1px rgba(8, 14, 40, 0.5);
+}
+
+/* ---------- Logo ----------
+   Der dunkle Umriss bleibt. Dazu kommt ein weicher goldener Schein - das
+   Logo selbst wird nicht neu gezeichnet. */
+.logo {
+  filter: drop-shadow(0 6px 10px rgba(10, 20, 60, 0.45))
+    drop-shadow(0 0 12px rgba(255, 205, 90, 0.3));
+  animation: logo-schimmern 6s ease-in-out infinite;
+}
+
+@keyframes logo-schimmern {
+  0%, 100% { filter: drop-shadow(0 6px 10px rgba(10,20,60,0.45)) drop-shadow(0 0 10px rgba(255,205,90,0.22)); }
+  50%      { filter: drop-shadow(0 6px 10px rgba(10,20,60,0.45)) drop-shadow(0 0 18px rgba(255,205,90,0.45)); }
+}
+
+
+/* ---------- Eingabefelder ----------
+   Bisher kam das Spiel ohne aus. Gebraucht wird eines fuer den
+   Uebertragungscode des Spielstands.
+
+   16px ist Pflicht: Bei kleinerer Schrift zoomt Safari auf dem iPhone beim
+   Antippen in die Seite hinein und kommt nicht wieder heraus. */
+.eingabe {
+  font: inherit;
+  font-size: 16px;
+  min-width: 0;
+  padding: 8px 10px;
+  color: var(--text);
+  background: linear-gradient(180deg, #0f1737, #16204a);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.eingabe:focus {
+  outline: none;
+  border-color: var(--fantasy-gold);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(255, 197, 61, 0.28);
+}
+
+.eingabe::placeholder {
+  color: rgba(214, 226, 255, 0.4);
+}
+
+/* Der Code wird abgetippt - deshalb weite Buchstabenabstaende. */
+.eingabe--code {
+  width: 8.5em;
+  text-align: center;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.eingabe-gruppe {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Der erzeugte Code im Text darunter. */
+.spielstand-code {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 1rem;
+  letter-spacing: 0.16em;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+}
+
+/* ---------- Willkommens-Pop-up (erster Start) ---------- */
+.willkommen__feld {
+  width: 100%;
+  text-align: center;
+  font-size: 16px; /* unter 16px zoomt Safari beim Antippen hinein */
+  letter-spacing: 0.01em;
+}
+
+.willkommen__hinweis {
+  margin-top: -2px;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+/* =========================================================================
+   Extra-Effekte (Kampf und Bildschirmwechsel)
+   -------------------------------------------------------------------------
+   Alles hier laeuft ueber @keyframes. Damit schaltet der Schalter
+   "Animationen" (body.no-animations) und die Systemeinstellung "weniger
+   Bewegung" es automatisch mit ab - siehe css/base.css.
+   ========================================================================= */
+
+/* ---------- Sanfter Auftritt bei jedem Bildschirmwechsel ---------- */
+@keyframes screen-rein {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.screen {
+  animation: screen-rein 0.24s ease-out;
+}
+
+/* ---------- Bildschirm-Beben bei einem Treffer ----------
+   Drei Staerken. Der Kampf waehlt die passende nach Schadenshoehe. */
+@keyframes beben-klein {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(-2px, 1px); }
+  70% { transform: translate(2px, -1px); }
+}
+@keyframes beben-mittel {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  20% { transform: translate(-4px, 2px) rotate(-0.3deg); }
+  50% { transform: translate(4px, -2px) rotate(0.3deg); }
+  80% { transform: translate(-3px, 1px) rotate(-0.2deg); }
+}
+@keyframes beben-gross {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  15% { transform: translate(-7px, 3px) rotate(-0.6deg); }
+  35% { transform: translate(7px, -3px) rotate(0.6deg); }
+  55% { transform: translate(-6px, 4px) rotate(-0.5deg); }
+  75% { transform: translate(5px, -2px) rotate(0.4deg); }
+}
+.beben-klein  { animation: beben-klein  0.22s ease-in-out; }
+.beben-mittel { animation: beben-mittel 0.30s ease-in-out; }
+.beben-gross  { animation: beben-gross  0.40s ease-in-out; }
+
+/* ---------- Aufprall-Funken am getroffenen Monster ---------- */
+.impakt {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Der Lichtring, der nach aussen aufplatzt. */
+.impakt__ring {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--impakt-farbe, #ffd76a);
+  box-shadow: 0 0 14px var(--impakt-farbe, #ffd76a);
+  animation: impakt-ring 0.42s ease-out forwards;
+}
+@keyframes impakt-ring {
+  0%   { transform: scale(0.3); opacity: 0.95; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* Die einzelnen Splitter, die wegfliegen. --dx/--dy setzt das Skript. */
+.impakt__splitter {
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--impakt-farbe, #ffd76a);
+  box-shadow: 0 0 8px var(--impakt-farbe, #ffd76a);
+  animation: impakt-splitter 0.5s ease-out forwards;
+}
+@keyframes impakt-splitter {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+/* ---------- Saftigere Schadenszahlen ----------
+   Ersetzt das schlichte float-up: erst aufploppen, dann aufsteigen und
+   leicht zur Seite treiben. */
+@keyframes float-pop {
+  0%   { transform: translate(0, 6px) scale(0.5); opacity: 0; }
+  25%  { transform: translate(var(--drift, 0), -6px) scale(1.18); opacity: 1; }
+  100% { transform: translate(var(--drift, 0), -52px) scale(1); opacity: 0; }
+}
+
+.float-number {
+  animation: float-pop 0.95s cubic-bezier(0.2, 1.2, 0.4, 1) forwards;
+}
+
+/* Ein harter Treffer: groesser, rot-orange, mit kraeftigerem Schatten. */
+.float-number--gross {
+  font-size: 2.1rem;
+  color: #ff7a3c;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.85), 0 0 16px rgba(255, 90, 40, 0.7);
+}
+
+/* ---------- Volle Energie: der Balken schimmert golden ---------- */
+.wert-leiste.is-voll {
+  border-color: var(--fantasy-gold);
+  animation: energie-voll 1.6s ease-in-out infinite;
+}
+@keyframes energie-voll {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+  50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 16px rgba(255, 197, 61, 0.5); }
+}
+
+/* ---------- Konfetti im Siegesfenster ---------- */
+.konfetti {
+  position: absolute;
+  top: -12px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  z-index: 6;
+  pointer-events: none;
+  animation: konfetti-fall 1.5s ease-in forwards;
+}
+@keyframes konfetti-fall {
+  0%   { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(var(--fall, 320px)) rotate(var(--dreh, 540deg)); opacity: 0; }
+}
+
+/* ---------- Eine Karte springt kurz an, wenn sie spielbar wird ---------- */
+@keyframes karte-bereit {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-4px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+.karte-bereit { animation: karte-bereit 0.32s ease-out; }
