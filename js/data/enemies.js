@@ -18,6 +18,7 @@
 
 import { registerAttack } from './attacks.js';
 import { WORLDS } from './worlds.js';
+import { GEGNER_ARTEN, standardArt } from './gegnerarten.js';
 import { BOSS_FORMEN, FORM_NAMEN } from '../ui/sprite.js';
 
 /** Aus "Moosgnubbel" wird "moosgnubbel", aus "Knospenstoß" wird "knospenstoss". */
@@ -70,6 +71,13 @@ function buildEnemies() {
 
     world.enemies.forEach((entry, index) => {
       const id = `w${world.id}-${slug(entry.n)}`;
+
+      // Variante: entweder im Gegner selbst genannt (entry.art) oder
+      // automatisch verteilt. Sie verschiebt nur ein paar Werte.
+      const artId = GEGNER_ARTEN[entry.art] ? entry.art : standardArt(index);
+      const art = GEGNER_ARTEN[artId];
+      const grundHp = world.baseHp + index * world.hpGrowth;
+
       ENEMIES[id] = {
         // Aussehen: Form und Farbe werden der Reihe nach vergeben. Dadurch
         // sieht innerhalb einer Welt garantiert kein Gegner aus wie ein
@@ -86,11 +94,15 @@ function buildEnemies() {
         icon: entry.i,
         element: world.name,
         worldId: world.id,
+        art: artId,
+        variante: art.name, // Anzeigename der Variante oder null
         text: `Ein Bewohner der Welt ${world.name}.`,
-        maxHp: world.baseHp + index * world.hpGrowth,
+        maxHp: Math.max(1, Math.round(grundHp * art.hp)),
         deck: normalDeck,
-        // Der Gegner wird im Verlauf der Welt wacher und geduldiger.
-        reactionTime: Number((1.25 - index * 0.03).toFixed(2)),
+        defense: art.defense,
+        damageFactor: art.angriff,
+        // Der Gegner wird im Verlauf der Welt wacher; die Variante ändert das Tempo.
+        reactionTime: Number(Math.max(0.4, (1.25 - index * 0.03) * art.reaktion).toFixed(2)),
         patience: index < 4 ? 1 : 2,
       };
     });

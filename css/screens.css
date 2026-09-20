@@ -2309,3 +2309,20 @@
 .kraft-item.is-active .kraft-item__stand {
   color: var(--gold-1);
 }
+
+/* Kleiner Chip für die Gegner-Variante (Flink/Panzer/Wütend) */
+.map__variante,
+.fighter-bar__variante {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  vertical-align: middle;
+}
+
+.fighter-bar__variante {
+  margin-left: 6px;
+}

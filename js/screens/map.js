@@ -154,7 +154,7 @@ export const mapScreen = {
       info.innerHTML = `
         <span class="map__info-sprite"></span>
         <span class="map__info-title">${level.isBoss ? '👑 ' : ''}Kampf ${level.number} von ${levels.length}</span>
-        <span class="map__info-text"><strong>${enemy.name}</strong> · ${enemy.maxHp} LP</span>
+        <span class="map__info-text"><strong>${enemy.name}</strong>${enemy.variante ? ` · <span class="map__variante">${enemy.variante}</span>` : ''} · ${enemy.maxHp} LP</span>
         <span class="map__info-text">Belohnung: ${MUENZE} ${level.reward}</span>
       `;
       info.querySelector('.map__info-sprite').appendChild(createSprite(enemy));

@@ -84,7 +84,7 @@ export const battleScreen = {
 
       <section class="fighter-bar">
         <div class="fighter-bar__head">
-          <span class="fighter-bar__name">${enemyMonster.name}</span>
+          <span class="fighter-bar__name">${enemyMonster.name}${enemyMonster.variante ? ` <span class="fighter-bar__variante">${enemyMonster.variante}</span>` : ''}</span>
           <span class="fighter-bar__hp" id="enemy-hp-text"></span>
         </div>
         <div class="bar" id="enemy-hp-bar"><div class="bar__fill" id="enemy-hp-fill"></div></div>

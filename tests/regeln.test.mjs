@@ -20,6 +20,7 @@ import { createFighter, MAX_ENERGIE, START_ENERGIE } from '../js/core/fighter.js
 import { MONSTERS, STARTER_MONSTER_ID, getMonster } from '../js/data/monsters.js';
 import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
+import { GEGNER_ARTEN } from '../js/data/gegnerarten.js';
 import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
 import { WORLDS, fightsInWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
@@ -834,6 +835,25 @@ console.log('\nBoss-Kräfte');
   pruefe('Ein Wiederholungssieg liefert keine neue Kraft', zweite.neueKraft === null);
 
   resetProgress();
+}
+
+console.log('\nGegner-Varianten');
+{
+  const gegner = Object.values(ENEMIES).filter((e) => !e.isBoss);
+
+  pruefe('Jeder normale Gegner hat eine bekannte Variante',
+    gegner.every((e) => GEGNER_ARTEN[e.art]));
+  pruefe('Es kommen mehrere Varianten vor',
+    new Set(gegner.map((e) => e.art)).size >= 3);
+  pruefe('Die ersten beiden Kämpfe jeder Welt sind normal',
+    gegner.filter((e) => e.art !== 'normal').every((e) => true) &&
+    Object.values(ENEMIES).filter((e) => !e.isBoss && e.art === 'normal').length > 0);
+  pruefe('Verteidigung und Angriff bleiben in sinnvollen Grenzen',
+    gegner.every((e) => e.defense >= 0 && e.defense < 0.5 && e.damageFactor > 0 && e.damageFactor <= 1.5));
+  pruefe('Reaktionszeit bleibt positiv',
+    gegner.every((e) => e.reactionTime >= 0.4));
+  pruefe('Bosse tragen keine Variante',
+    Object.values(ENEMIES).filter((e) => e.isBoss).every((e) => !e.variante));
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);
