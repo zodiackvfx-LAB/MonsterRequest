@@ -267,6 +267,13 @@ export function createBattle({
         emit({ type: `${seite}-attack`, amount: dmg, kraft: true, text: `${kraft.name}: volle Energie und ${dmg} Schaden!` });
         break;
       }
+      case 'energieraub': {
+        const dmg = schadenBerechnen(angreifer, verteidiger, kraft.wert);
+        verteidiger.takeDamage(dmg);
+        verteidiger.energieLeeren();
+        emit({ type: `${seite}-attack`, amount: dmg, kraft: true, text: `${kraft.name}: ${dmg} Schaden - und die ganze Energie entladen!` });
+        break;
+      }
       case 'brand': {
         const sofort = schadenBerechnen(angreifer, verteidiger, kraft.wert.sofort);
         verteidiger.takeDamage(sofort);

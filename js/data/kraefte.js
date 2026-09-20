@@ -27,7 +27,7 @@
  *   name  - Anzeigename der Kraft
  *   text  - was sie tut, in einem Satz
  *   art   - die Wirkung (siehe battle.js): 'schild' | 'schildbruch' |
- *           'brand' | 'frost' | 'lebensraub' | 'energiesturm'
+ *           'brand' | 'frost' | 'lebensraub' | 'energiesturm' | 'energieraub'
  *   wert  - die Zahl(en) zur Wirkung
  *   gegnerLadung - wie viele Ladepunkte der BOSS sammeln muss, bis er die
  *           Kraft im Kampf einsetzt (fehlt = Standard 24). Niedrig = kommt
@@ -102,6 +102,17 @@ export const BOSS_KRAEFTE = [
     art: 'energiesturm',
     wert: 22, // Grundschaden
     gegnerLadung: 24,
+  },
+  {
+    id: 'gewittersturm',
+    welt: 7,
+    boss: 'Sturmfürst',
+    icon: '⚡',
+    name: 'Gewittersturm',
+    text: 'Trifft den Gegner und entlädt seine gesamte Energie.',
+    art: 'energieraub',
+    wert: 34, // Grundschaden; zusätzlich fällt die Energie des Getroffenen auf 0
+    gegnerLadung: 26,
   },
 ];
 

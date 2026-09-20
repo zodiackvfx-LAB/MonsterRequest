@@ -130,6 +130,12 @@ export function createFighter(monster) {
     syncXp();
   }
 
+  /** Entlädt die gesamte Energie auf 0 - Boss-Kraft "Gewittersturm". */
+  function energieLeeren() {
+    genaueEnergie = 0;
+    syncXp();
+  }
+
   function heal(amount) {
     state.hp = Math.min(state.maxHp, state.hp + amount);
   }
@@ -149,6 +155,7 @@ export function createFighter(monster) {
     addShield,
     entferneSchild,
     energieVoll,
+    energieLeeren,
     heal,
     missingHp,
   };

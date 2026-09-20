@@ -101,6 +101,18 @@ export const MUSIK = {
     lautstaerke: 0.95,
   },
 
+  // Himmelsinseln: licht und schwebend, hoch und offen - Pentatonik
+  himmel: {
+    grundton: 293.66, // D4 - hell und luftig
+    skala: [0, 2, 4, 7, 9],
+    muster: [0, null, 4, null, 7, null, 4, null, 5, null, 4, null, 2, null, null, null],
+    bassfolge: [0, 4, 2, 3],
+    tempo: 104,
+    form: 'triangle',
+    bassForm: 'sine',
+    lautstaerke: 0.95,
+  },
+
   /*
    * Das Titelthema von MonsterQuest.
    *

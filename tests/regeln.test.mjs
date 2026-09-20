@@ -22,7 +22,7 @@ import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
 import { GEGNER_ARTEN } from '../js/data/gegnerarten.js';
 import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
-import { WORLDS, fightsInWorld } from '../js/data/worlds.js';
+import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
 import { readFileSync } from 'node:fs';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
@@ -792,16 +792,20 @@ console.log('\nBoss-Kräfte');
 {
   resetProgress();
 
-  const ARTEN = ['schild', 'schildbruch', 'brand', 'frost', 'lebensraub', 'energiesturm'];
+  const ARTEN = ['schild', 'schildbruch', 'brand', 'frost', 'lebensraub', 'energiesturm', 'energieraub'];
 
-  pruefe('Es gibt für jede der 6 Welten eine Boss-Kraft',
-    BOSS_KRAEFTE.length === 6 && [1, 2, 3, 4, 5, 6].every((w) => kraftFuerWelt(w)));
+  pruefe('Es gibt für jede Welt genau eine Boss-Kraft',
+    BOSS_KRAEFTE.length === WORLDS.length && WORLDS.every((w) => kraftFuerWelt(w.id)));
   pruefe('Jede Kraft-id ist einmalig',
-    new Set(BOSS_KRAEFTE.map((k) => k.id)).size === 6);
+    new Set(BOSS_KRAEFTE.map((k) => k.id)).size === BOSS_KRAEFTE.length);
   pruefe('Jede Kraft hat eine bekannte Wirkung',
     BOSS_KRAEFTE.every((k) => ARTEN.includes(k.art)));
   pruefe('Jede Kraft hat Name, Symbol und Beschreibung',
     BOSS_KRAEFTE.every((k) => k.name && k.icon && k.text && k.boss));
+  pruefe('Der Boss-Name jeder Kraft passt zur Welt',
+    BOSS_KRAEFTE.every((k) => getWorld(k.welt)?.boss.n === k.boss));
+  pruefe('Jede Kraft-Ladung (falls gesetzt) ist eine sinnvolle Zahl',
+    BOSS_KRAEFTE.every((k) => k.gegnerLadung === undefined || (k.gegnerLadung >= 8 && k.gegnerLadung <= 60)));
 
   pruefe('Am Anfang ist keine Kraft freigeschaltet',
     BOSS_KRAEFTE.every((k) => !besitztKraft(k.id)) && getBossKraft() === null);
