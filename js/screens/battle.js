@@ -17,6 +17,7 @@ import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_ENERGIE } from '../core/battle.js';
+import { kraftFuerWelt } from '../data/kraefte.js';
 import { calculateStars, getBossKraft, getDeck } from '../core/state.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
@@ -65,6 +66,9 @@ export const battleScreen = {
     const enemyMonster = getEnemy(level.enemyId);
     // Die getragene Boss-Kraft (oder null) - siehe js/data/kraefte.js.
     const bossKraft = getBossKraft();
+    // Ist der Gegner ein Boss, setzt er im Kampf seine eigene Signatur-Kraft
+    // ein - dieselbe, die man beim Sieg über ihn freischaltet.
+    const gegnerKraft = enemyMonster.isBoss ? kraftFuerWelt(enemyMonster.worldId) ?? null : null;
 
     /* ---------- 1. Grundgerüst bauen ---------- */
     const screen = document.createElement('div');
@@ -92,6 +96,12 @@ export const battleScreen = {
           <span class="fighter-bar__energie-label">ENERGIE</span>
           <div class="pips pips--enemy pips--small" id="enemy-energie-pips"></div>
         </div>
+        ${gegnerKraft
+          ? `<div class="kraft-warnung" id="enemy-kraft" title="${gegnerKraft.name}: ${gegnerKraft.text}">
+               <span class="kraft-warnung__label">${gegnerKraft.icon} ${gegnerKraft.name}</span>
+               <div class="kraft-warnung__bar"><div class="kraft-warnung__fill" id="enemy-kraft-fill"></div></div>
+             </div>`
+          : ''}
         <div class="shield-badge" id="enemy-shield">🛡️ <span></span></div>
       </section>
 
@@ -150,6 +160,8 @@ export const battleScreen = {
       enemyHpBar: screen.querySelector('#enemy-hp-bar'),
       enemySprite: screen.querySelector('#enemy-sprite'),
       enemyShield: screen.querySelector('#enemy-shield'),
+      enemyKraft: screen.querySelector('#enemy-kraft'),
+      enemyKraftFill: screen.querySelector('#enemy-kraft-fill'),
       playerHpFill: screen.querySelector('#player-hp-fill'),
       playerHpText: screen.querySelector('#player-hp-text'),
       playerHpBar: screen.querySelector('#player-hp-bar'),
@@ -216,6 +228,9 @@ export const battleScreen = {
     let cacheFinished = null;
     let cacheKraft = -1;
     let cacheKraftBereit = null;
+    let cacheGegnerKraft = -1;
+    let cacheFrozen = null; // für die Vereisung des Spieler-Sprites
+    let cacheKartenFrozen = null; // für die Kartensperre bei Vereisung
 
     /* Kurze Sperre nach dem Kartenspiel: verhindert, dass ein zweiter, schneller
        Tap (Doppeltap) versehentlich die gerade nachgezogene Karte mitspielt. */
@@ -228,6 +243,7 @@ export const battleScreen = {
       playerMonster,
       enemyMonster,
       bossPower: bossKraft,
+      enemyBossPower: gegnerKraft,
       onUpdate: render,
       onEvent: handleEvent,
       onEnd: showResult,
@@ -261,11 +277,22 @@ export const battleScreen = {
         cacheKartenEnergie = -1; // neue Karten einmal bewerten
       }
 
-      // Bezahlbarkeit nur neu prüfen, wenn sich die Spielerenergie geändert hat.
-      if (state.player.energie !== cacheKartenEnergie || state.finished !== cacheFinished) {
+      // Der Spieler-Sprite zeigt die Vereisung an, solange sie anhält.
+      if (state.playerFrozen !== cacheFrozen) {
+        ui.playerSprite.classList.toggle('ist-gefroren', state.playerFrozen);
+        cacheFrozen = state.playerFrozen;
+      }
+
+      // Bezahlbarkeit nur neu prüfen, wenn sich die Spielerenergie geändert hat
+      // (oder das Ende bzw. die Vereisung - dann sind Karten gesperrt).
+      if (
+        state.player.energie !== cacheKartenEnergie ||
+        state.finished !== cacheFinished ||
+        state.playerFrozen !== cacheKartenFrozen
+      ) {
         cardElements.forEach((card, index) => {
           const attack = kampfAttacke(state.player.hand[index]);
-          const affordable = attack.cost <= state.player.energie && !state.finished;
+          const affordable = attack.cost <= state.player.energie && !state.finished && !state.playerFrozen;
           // Genau in dem Moment, in dem eine Karte spielbar wird, springt sie
           // kurz an - so sieht man sofort, was man jetzt einsetzen kann.
           if (affordable && warBereit[index] === false) flash(card, 'karte-bereit');
@@ -276,6 +303,14 @@ export const battleScreen = {
         });
         cacheKartenEnergie = state.player.energie;
         cacheFinished = state.finished;
+        cacheKartenFrozen = state.playerFrozen;
+      }
+
+      // Warnleiste des Gegners: zeigt, wie nah sein Spezial ist.
+      if (ui.enemyKraftFill && state.gegnerKraft !== cacheGegnerKraft) {
+        ui.enemyKraftFill.style.width = `${Math.round(state.gegnerKraft * 100)}%`;
+        ui.enemyKraft.classList.toggle('is-voll', state.gegnerKraft >= 1);
+        cacheGegnerKraft = state.gegnerKraft;
       }
 
       // Kraft-Leiste: Ring fuellen, Knopf freigeben sobald sie voll ist.
@@ -471,24 +506,34 @@ export const battleScreen = {
 
         // ---------- Boss-Kräfte ----------
         case 'kraft': {
-          // Die Ansage: Timo leuchtet auf, goldene Funken, der Platz bebt.
-          flash(ui.playerSprite, 'heal');
-          trefferFunke(ui.playerSprite, '#ffd76a', 10);
-          bildschirmBeben(ui.arena, 0.3);
+          // Die Ansage: die einsetzende Figur leuchtet auf, Funken, der Platz bebt.
+          // Beim Gegner rot-violett (bedrohlich), beim Spieler golden.
+          const gegner = event.seite === 'enemy';
+          const sprite = gegner ? ui.enemySprite : ui.playerSprite;
+          flash(sprite, 'heal');
+          trefferFunke(sprite, gegner ? '#ff5ad0' : '#ffd76a', 12);
+          bildschirmBeben(ui.arena, gegner ? 0.34 : 0.3);
           spieleKlang('levelauf');
           break;
         }
         case 'brand': {
-          // Ein Brand-Tick: kleine orange Zahl, ein paar Funken, kein Beben.
-          floatNumber(ui.enemySprite, `-${event.amount}`, 'damage');
-          trefferFunke(ui.enemySprite, '#ff7a3c', 4);
+          // Ein Brand-Tick: kleine orange Zahl, ein paar Funken, kein Beben -
+          // auf der Figur, die gerade brennt.
+          const sprite = event.seite === 'player' ? ui.playerSprite : ui.enemySprite;
+          floatNumber(sprite, `-${event.amount}`, 'damage');
+          trefferFunke(sprite, '#ff7a3c', 4);
           break;
         }
         case 'frost': {
-          // Der Gegner friert sichtbar ein - blau getönt und ohne Wippen.
-          trefferFunke(ui.enemySprite, '#8fe3ff', 8);
-          ui.enemySprite.classList.add('ist-gefroren');
-          setTimeout(() => ui.enemySprite.classList.remove('ist-gefroren'), (event.dauer ?? 3) * 1000);
+          // Die getroffene Figur friert sichtbar ein - blau getönt, ohne Wippen.
+          const sprite = event.seite === 'player' ? ui.playerSprite : ui.enemySprite;
+          trefferFunke(sprite, '#8fe3ff', 8);
+          // Die Vereisung des SPIELERS steuert render() über state.playerFrozen;
+          // die des GEGNERS gibt es nur hier, also per Timer wieder auftauen.
+          if (event.seite === 'enemy') {
+            sprite.classList.add('ist-gefroren');
+            setTimeout(() => sprite.classList.remove('ist-gefroren'), (event.dauer ?? 3) * 1000);
+          }
           spieleKlang('schild');
           break;
         }

@@ -74,7 +74,7 @@ export const WORLDS = [
       { n: 'Splitterschlag', i: '🪵', c: 1 },
       { n: 'Asthieb', i: '🪓', c: 2 },
       { n: 'Borkenfaust', i: '🪨', c: 2 },
-      { n: 'Rindenpanzer', i: '🧱', c: 2, heal: true },
+      { n: 'Rindenbalsam', i: '🧴', c: 2, heal: true },
       { n: 'Wurzelschlag', i: '🌲', c: 3 },
       { n: 'Dornenhagel', i: '🌵', c: 3 },
       { n: 'Stammstoß', i: '🌰', c: 4 },
@@ -198,7 +198,7 @@ export const WORLDS = [
       { n: 'Magmaregen', i: '☄️', c: 3 },
       { n: 'Schwefelstoß', i: '🟡', c: 4 },
       { n: 'Lavasturz', i: '🌋', c: 4 },
-      { n: 'Inferno', i: '💥', c: 5 },
+      { n: 'Feuersturm', i: '💥', c: 5 },
     ],
     enemies: [
       { n: 'Glutwicht', i: '🔥' },
