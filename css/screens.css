@@ -1530,12 +1530,24 @@
   display: flex;
   gap: 8px;
   padding: 0 var(--gap) 10px;
+  /* Passen mehr Reiter nicht nebeneinander (z. B. fünf in der Sammlung),
+     lässt sich die Leiste seitlich schieben, statt dass etwas abgeschnitten
+     wird oder die Seite überbreit wird. Passen sie, füllen sie die Breite. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
   position: relative;
   font: inherit;
-  flex: 1;
+  /* wachsen, um die Breite zu füllen, aber nie unter die eigene Textbreite
+     schrumpfen - sonst würde der Reiter-Text abgeschnitten. */
+  flex: 1 0 auto;
   padding: 10px 6px;
   border: 2px solid var(--panel-border);
   border-radius: var(--radius-sm);

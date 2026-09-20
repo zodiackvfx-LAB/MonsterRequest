@@ -39,6 +39,17 @@ function createNewGame() {
     // Einmal-Hinweise (z. B. das Kampf-Tutorial), die nur beim ersten Mal
     // erscheinen. Schlüssel = Hinweis-id, Wert = true, sobald gesehen.
     gesehen: {},
+    // Statistik und Erfolge - siehe js/core/statistik.js und js/data/erfolge.js.
+    statistik: {
+      kaempfe: 0,
+      siege: 0,
+      niederlagen: 0,
+      krits: 0,
+      schaden: 0,
+      karten: 0,
+      bosse: 0,
+      erfolge: [], // ids der freigeschalteten Erfolge
+    },
     // Tagesaufgaben - siehe js/core/aufgaben.js
     dailies: {
       datum: null, // "JJJJ-MM-TT" des Tages, fuer den die Aufgaben gelten
@@ -176,6 +187,18 @@ function uebernehmen(saved) {
     abgeholt: Array.isArray(saved.dailies?.abgeholt) ? saved.dailies.abgeholt : [],
   };
   gameState.gesehen = saved.gesehen && typeof saved.gesehen === 'object' ? { ...saved.gesehen } : {};
+  // Statistik: fehlende Zähler bekommen 0, damit ein alter Stand nicht bricht.
+  const st = saved.statistik && typeof saved.statistik === 'object' ? saved.statistik : {};
+  gameState.statistik = {
+    kaempfe: Number(st.kaempfe) || 0,
+    siege: Number(st.siege) || 0,
+    niederlagen: Number(st.niederlagen) || 0,
+    krits: Number(st.krits) || 0,
+    schaden: Number(st.schaden) || 0,
+    karten: Number(st.karten) || 0,
+    bosse: Number(st.bosse) || 0,
+    erfolge: Array.isArray(st.erfolge) ? st.erfolge.map(String) : [],
+  };
   gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
 }
 

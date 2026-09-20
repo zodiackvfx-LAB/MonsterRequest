@@ -15,6 +15,8 @@ import { truheOeffnen } from '../core/loot.js';
 import { bezahlen, beuteGutschreiben, gameState, kannBezahlen } from '../core/state.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
 import { spieleBeute, spieleKlang } from '../core/audio.js';
+import { pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
+import { zeigeErfolgToast } from '../ui/toast.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
@@ -221,6 +223,12 @@ function oeffnungZeigen(screen, truhe) {
     // Ein Skin kann das Aussehen ändern - die gezeichneten Figuren neu bauen.
     spritesNeuZeichnen();
     overlay.remove();
+    // Neue Attacken/Skins können einen Sammel-Erfolg auslösen.
+    const neueErfolge = pruefeNeueErfolge();
+    if (neueErfolge.length) {
+      statistikSpeichern();
+      zeigeErfolgToast(neueErfolge);
+    }
     showScreen('shop');
   });
 }

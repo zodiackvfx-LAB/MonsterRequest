@@ -49,6 +49,8 @@ import { TRUHEN } from '../js/data/shop.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
 import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belohnung.js';
 import { BOSS_KRAEFTE, getKraft, kraftFuerWelt } from '../js/data/kraefte.js';
+import { ERFOLGE } from '../js/data/erfolge.js';
+import { statErhoehen, pruefeNeueErfolge, erfolgFrei, erfolgErreicht } from '../js/core/statistik.js';
 import { BOSS_TRUHE } from '../js/data/shop.js';
 import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
@@ -859,6 +861,38 @@ console.log('\nGegner-Varianten');
     gegner.every((e) => e.reactionTime >= 0.4));
   pruefe('Bosse tragen keine Variante',
     Object.values(ENEMIES).filter((e) => e.isBoss).every((e) => !e.variante));
+}
+
+console.log('\nErfolge und Statistik');
+{
+  resetProgress();
+
+  pruefe('Jede Erfolg-id ist einmalig',
+    new Set(ERFOLGE.map((e) => e.id)).size === ERFOLGE.length);
+  pruefe('Jeder Erfolg hat Name, Symbol, Text, Ziel und Wert-Funktion',
+    ERFOLGE.every((e) => e.name && e.icon && e.text && e.ziel > 0 && typeof e.wert === 'function'));
+  pruefe('Am Anfang ist kein Erfolg freigeschaltet',
+    ERFOLGE.every((e) => !erfolgFrei(e.id)));
+
+  // Ein Sieg zählt hoch und schaltet "Erster Sieg" frei.
+  statErhoehen('siege', 1);
+  const ersterSieg = ERFOLGE.find((e) => e.id === 'erster-sieg');
+  pruefe('Nach dem ersten Sieg ist der Fortschritt erreicht', erfolgErreicht(ersterSieg));
+  const neu = pruefeNeueErfolge();
+  pruefe('pruefeNeueErfolge meldet den neuen Erfolg', neu.some((e) => e.id === 'erster-sieg'));
+  pruefe('Der Erfolg gilt jetzt als freigeschaltet', erfolgFrei('erster-sieg'));
+  pruefe('Ein zweiter Aufruf meldet nichts Neues', pruefeNeueErfolge().length === 0);
+
+  // Statistik-Zähler lassen sich hochzählen.
+  statErhoehen('krits', 3);
+  statErhoehen('schaden', 250);
+  pruefe('Statistik-Zähler steigen', gameState.statistik.krits === 3 && gameState.statistik.schaden === 250);
+  pruefe('Ein unbekannter Zähler wird ignoriert',
+    (statErhoehen('gibtsnicht', 5), gameState.statistik.gibtsnicht === undefined));
+
+  resetProgress();
+  pruefe('Zurücksetzen leert die Erfolge wieder',
+    gameState.statistik.siege === 0 && gameState.statistik.erfolge.length === 0);
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

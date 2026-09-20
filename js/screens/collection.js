@@ -32,13 +32,16 @@ import {
   isWorldUnlocked,
 } from '../core/state.js';
 import { attackeMitLevel, getAttackenLevel, charakterWerte } from '../core/progression.js';
+import { ERFOLGE } from '../data/erfolge.js';
+import { erfolgErreicht, erfolgFrei, pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 
-/** Die drei Reiter. Ein neuer Reiter = hier einen Eintrag ergänzen. */
+/** Die Reiter. Ein neuer Reiter = hier einen Eintrag ergänzen. */
 const REITER = [
   { id: 'monster', label: '🐾 Monster', bauen: baueMonster },
   { id: 'attacken', label: '🃏 Attacken', bauen: baueAttacken },
   { id: 'kraefte', label: '⚡ Kräfte', bauen: baueKraefte },
   { id: 'skins', label: '🎨 Skins', bauen: baueSkins },
+  { id: 'erfolge', label: '🏆 Erfolge', bauen: baueErfolge },
 ];
 
 export const collectionScreen = {
@@ -72,6 +75,10 @@ export const collectionScreen = {
         });
         reiterLeiste.appendChild(knopf);
       });
+
+      // Den aktiven Reiter ins Sichtfeld schieben, falls die Leiste (bei fünf
+      // Reitern auf schmalen Handys) seitlich scrollt.
+      reiterLeiste.querySelector('.is-active')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 
       content.innerHTML = '';
       REITER.find((reiter) => reiter.id === aktiv).bauen(content);
@@ -230,6 +237,7 @@ const KRAFT_ART = {
   frost: { label: 'Eis', farbe: '#6fd4ff' },
   lebensraub: { label: 'Lebensraub', farbe: '#b06dff' },
   energiesturm: { label: 'Energie', farbe: '#ffc53d' },
+  energieraub: { label: 'Entladung', farbe: '#ff5ad0' },
 };
 
 function baueKraefte(content) {
@@ -318,6 +326,85 @@ function baueSkins(content) {
   });
 
   block.appendChild(grid);
+  content.appendChild(block);
+}
+
+/* ====================================================================
+   Reiter: Erfolge (und Statistik)
+   ==================================================================== */
+
+function baueErfolge(content) {
+  // Bereits erfüllte, aber noch nicht vermerkte Erfolge hier nachtragen -
+  // dann stimmen Zähler und Häkchen immer überein.
+  if (pruefeNeueErfolge().length) statistikSpeichern();
+
+  const frei = ERFOLGE.filter((e) => erfolgFrei(e.id)).length;
+  const st = gameState.statistik;
+
+  content.appendChild(
+    zaehler(`Freigeschaltet: <strong>${frei} von ${ERFOLGE.length}</strong> Erfolgen.
+      Kämpfe, sammle und werde zum Champion.`)
+  );
+
+  /* ---------- Statistik auf einen Blick ---------- */
+  const statPanel = document.createElement('div');
+  statPanel.className = 'panel';
+  const zeilen = [
+    ['Kämpfe', st.kaempfe],
+    ['Siege', st.siege],
+    ['Niederlagen', st.niederlagen],
+    ['Bosse besiegt', st.bosse],
+    ['Kritische Treffer', st.krits],
+    ['Schaden insgesamt', st.schaden],
+    ['Karten gespielt', st.karten],
+  ];
+  statPanel.innerHTML =
+    '<div class="panel__title">Statistik</div>' +
+    zeilen
+      .map(
+        ([label, wert]) => `
+      <div class="stat-row">
+        <span class="stat-row__label">${label}</span>
+        <span class="stat-row__value">${Number(wert).toLocaleString('de-DE')}</span>
+      </div>`
+      )
+      .join('');
+  content.appendChild(statPanel);
+
+  /* ---------- Die Erfolge ---------- */
+  const block = document.createElement('div');
+  block.className = 'panel';
+  block.innerHTML = `<div class="panel__title">Erfolge <span class="panel__count">${frei}/${ERFOLGE.length}</span></div>`;
+
+  const liste = document.createElement('div');
+  liste.className = 'katalog';
+
+  ERFOLGE.forEach((erfolg) => {
+    const geschafft = erfolgFrei(erfolg.id) || erfolgErreicht(erfolg);
+    const wert = Math.min(erfolg.wert(), erfolg.ziel);
+    const anteil = Math.round((wert / erfolg.ziel) * 100);
+
+    const zeile = document.createElement('div');
+    zeile.className = `katalog-item${geschafft ? ' is-erreicht' : ''}`;
+    zeile.style.setProperty('--seltenheit', geschafft ? 'var(--gold)' : 'var(--panel-border)');
+    zeile.innerHTML = `
+      <span class="katalog-item__icon">${geschafft ? erfolg.icon : '🔒'}</span>
+      <span class="katalog-item__body">
+        <span class="katalog-item__name">
+          ${erfolg.name}
+          ${geschafft ? '<span class="deck-item__level">✓ Geschafft</span>' : ''}
+        </span>
+        <span class="katalog-item__text">${erfolg.text}</span>
+        <span class="erfolg-fortschritt">
+          <span class="erfolg-fortschritt__balken"><span class="erfolg-fortschritt__fuell" style="width:${anteil}%"></span></span>
+          <span class="erfolg-fortschritt__zahl">${wert.toLocaleString('de-DE')} / ${erfolg.ziel.toLocaleString('de-DE')}</span>
+        </span>
+      </span>
+    `;
+    liste.appendChild(zeile);
+  });
+
+  block.appendChild(liste);
   content.appendChild(block);
 }
 

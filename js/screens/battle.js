@@ -20,6 +20,7 @@ import { createBattle, MAX_ENERGIE } from '../core/battle.js';
 import { kraftFuerWelt } from '../data/kraefte.js';
 import { calculateStars, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
 import { zeigeKampfTutorial } from '../ui/tutorial.js';
+import { statErhoehen, pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
@@ -437,6 +438,7 @@ export const battleScreen = {
             return;
           }
 
+          statErhoehen('karten');
           // Die getippte Karte fliegt als Klon aus der Hand ...
           karteWeg(card);
           // ... und sofort neu zeichnen: das Original verschwindet auf der
@@ -488,6 +490,9 @@ export const battleScreen = {
           // Zaehlt fuer die Tagesaufgaben.
           fortschrittMelden('attacke');
           fortschrittMelden('schaden', event.amount);
+          // ... und für die Statistik/Erfolge.
+          statErhoehen('schaden', event.amount);
+          if (event.krit) statErhoehen('krits');
           break;
         }
         case 'enemy-attack': {
@@ -603,6 +608,9 @@ export const battleScreen = {
       let stars = 0;
       let belohnung = null;
 
+      // Statistik: jeder Kampf zählt.
+      statErhoehen('kaempfe');
+
       if (result === 'win') {
         stars = calculateStars(state.player.hp, state.player.maxHp);
         // Berechnet und bucht Münzen, Erfahrung, Material und die Bosstruhe.
@@ -612,17 +620,27 @@ export const battleScreen = {
         fortschrittMelden('sieg');
         if (stars >= 3) fortschrittMelden('dreiSterne');
         if (level.isBoss) fortschrittMelden('boss');
+
+        // Statistik: Siege und besiegte Bosse.
+        statErhoehen('siege');
+        if (level.isBoss) statErhoehen('bosse');
+      } else {
+        statErhoehen('niederlagen');
       }
+
+      // Neu erreichte Erfolge ermitteln und den Fortschritt sichern.
+      const neueErfolge = pruefeNeueErfolge();
+      statistikSpeichern();
 
       // Kurz warten, damit der letzte Treffer, die Schadenszahl und der
       // leerlaufende Lebensbalken noch zu sehen sind.
       resultTimer = setTimeout(
-        () => buildResultOverlay(result, stars, belohnung),
+        () => buildResultOverlay(result, stars, belohnung, neueErfolge),
         ERGEBNIS_VERZOEGERUNG
       );
     }
 
-    function buildResultOverlay(result, stars, belohnung) {
+    function buildResultOverlay(result, stars, belohnung, neueErfolge = []) {
       const newWorld = belohnung?.newWorld ?? null;
       const overlay = document.createElement('div');
       overlay.className = 'overlay';
@@ -643,6 +661,7 @@ export const battleScreen = {
             ? `<p class="overlay__unlock overlay__unlock--kraft">${belohnung.neueKraft.icon} <strong>Neue Boss-Kraft: ${belohnung.neueKraft.name}!</strong><br>${belohnung.neueKraft.text}<br><small>Ausrüsten unter „Figur“.</small></p>`
             : ''}
           ${newWorld ? `<p class="overlay__unlock">🎉 Neue Welt freigeschaltet:<br><strong>${newWorld.icon} ${newWorld.name}</strong></p>` : ''}
+          ${neueErfolge.map((e) => `<p class="overlay__unlock overlay__unlock--erfolg">🏆 <strong>Erfolg: ${e.name}!</strong><br><small>${e.text}</small></p>`).join('')}
           <div class="overlay__actions">
             <button class="btn btn--big btn--green" id="btn-next" type="button"></button>
             <button class="btn btn--ghost" id="btn-map" type="button">Zur Karte</button>
