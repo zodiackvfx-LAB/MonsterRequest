@@ -62,6 +62,7 @@ function createNewGame() {
       musik: true, // Hintergrundmusik
       animations: true,
       vibration: true, // kurzes Vibrieren bei Treffern (nur wo das Gerät es kann)
+      schwierigkeit: 'normal', // 'leicht' | 'normal' | 'schwer' (siehe js/data/schwierigkeit.js)
     },
   };
 }

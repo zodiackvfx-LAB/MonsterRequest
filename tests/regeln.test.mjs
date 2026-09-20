@@ -50,6 +50,7 @@ import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
 import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belohnung.js';
 import { BOSS_KRAEFTE, getKraft, kraftFuerWelt } from '../js/data/kraefte.js';
 import { ERFOLGE } from '../js/data/erfolge.js';
+import { getSchwierigkeit } from '../js/data/schwierigkeit.js';
 import { statErhoehen, pruefeNeueErfolge, erfolgFrei, erfolgErreicht } from '../js/core/statistik.js';
 import { BOSS_TRUHE } from '../js/data/shop.js';
 import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
@@ -893,6 +894,19 @@ console.log('\nErfolge und Statistik');
   resetProgress();
   pruefe('Zurücksetzen leert die Erfolge wieder',
     gameState.statistik.siege === 0 && gameState.statistik.erfolge.length === 0);
+}
+
+console.log('\nSchwierigkeitsgrade');
+{
+  pruefe('Es gibt mindestens Leicht, Normal und Schwer',
+    ['leicht', 'normal', 'schwer'].every((id) => getSchwierigkeit(id)?.id === id));
+  pruefe('Normal ändert nichts (Faktor 1)',
+    getSchwierigkeit('normal').hp === 1 && getSchwierigkeit('normal').schaden === 1);
+  pruefe('Leicht schwächt, Schwer verstärkt die Gegner',
+    getSchwierigkeit('leicht').hp < 1 && getSchwierigkeit('schwer').hp > 1 &&
+    getSchwierigkeit('leicht').schaden < 1 && getSchwierigkeit('schwer').schaden > 1);
+  pruefe('Ein unbekannter Grad fällt auf Normal zurück',
+    getSchwierigkeit('gibtsnicht').id === 'normal');
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

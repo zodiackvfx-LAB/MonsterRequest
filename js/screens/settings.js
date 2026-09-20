@@ -24,6 +24,7 @@ import {
   cloudCodeErstellen,
 } from '../core/cloud.js';
 import { spielstandUebernehmenVonCode } from '../core/sync.js';
+import { SCHWIERIGKEITEN } from '../data/schwierigkeit.js';
 import { LEVELS } from '../data/levels.js';
 import { spieleKlang, tonEinstellungenAnwenden, tonStatus } from '../core/audio.js';
 import { MUENZE } from '../data/items.js';
@@ -153,6 +154,35 @@ function baueSpiel(content, screen) {
     row.appendChild(button);
     panel.appendChild(row);
   });
+
+  /* ---------- Schwierigkeitsgrad ---------- */
+  const gradRow = document.createElement('div');
+  gradRow.className = 'setting-row setting-row--breit';
+  gradRow.innerHTML = `
+    <span class="setting-row__label">
+      <span class="setting-row__name">Schwierigkeit</span>
+      <span class="setting-row__hint">Wie stark die Gegner sind. Belohnungen bleiben gleich.</span>
+    </span>
+  `;
+  const gradWahl = document.createElement('div');
+  gradWahl.className = 'grad-wahl';
+  const aktuell = gameState.settings.schwierigkeit ?? 'normal';
+  SCHWIERIGKEITEN.forEach((grad) => {
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.className = `grad-knopf${grad.id === aktuell ? ' is-active' : ''}`;
+    knopf.dataset.klang = 'keiner';
+    knopf.innerHTML = `<span class="grad-knopf__icon">${grad.icon}</span>${grad.name}`;
+    knopf.addEventListener('click', () => {
+      setSetting('schwierigkeit', grad.id);
+      gradWahl.querySelectorAll('.grad-knopf').forEach((k) => k.classList.remove('is-active'));
+      knopf.classList.add('is-active');
+      spieleKlang('tipp');
+    });
+    gradWahl.appendChild(knopf);
+  });
+  gradRow.appendChild(gradWahl);
+  panel.appendChild(gradRow);
 
   /* ---------- Ton-Test ---------- */
   // Damit man unterscheiden kann: liegt es am Spiel oder am Geraet?

@@ -18,7 +18,8 @@ import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_ENERGIE } from '../core/battle.js';
 import { kraftFuerWelt } from '../data/kraefte.js';
-import { calculateStars, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
+import { getSchwierigkeit } from '../data/schwierigkeit.js';
+import { calculateStars, gameState, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
 import { zeigeKampfTutorial } from '../ui/tutorial.js';
 import { statErhoehen, pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
@@ -80,7 +81,15 @@ export const battleScreen = {
     // seinem Fortschritt (Level und gekaufte Aufwertungen).
     const basis = getMonster(STARTER_MONSTER_ID);
     const playerMonster = { ...monsterMitFortschritt(basis), deck: getDeck(basis) };
-    const enemyMonster = getEnemy(level.enemyId);
+    // Gegner als Kopie, damit der Schwierigkeitsgrad nur DIESEN Kampf ändert
+    // und nicht die Vorlage in ENEMIES (die für die Karte/Sammlung gilt).
+    const grad = getSchwierigkeit(gameState.settings.schwierigkeit);
+    const vorlage = getEnemy(level.enemyId);
+    const enemyMonster = {
+      ...vorlage,
+      maxHp: Math.max(1, Math.round(vorlage.maxHp * grad.hp)),
+      damageFactor: (vorlage.damageFactor ?? 1) * grad.schaden,
+    };
     // Die getragene Boss-Kraft (oder null) - siehe js/data/kraefte.js.
     const bossKraft = getBossKraft();
     // Ist der Gegner ein Boss, setzt er im Kampf seine eigene Signatur-Kraft

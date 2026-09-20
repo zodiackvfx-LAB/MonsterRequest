@@ -902,6 +902,47 @@
   background: #fff;
 }
 
+/* Schwierigkeitswahl: drei Knöpfe nebeneinander */
+.grad-wahl {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.grad-knopf {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 9px 4px;
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #232e62, #18224e);
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.grad-knopf__icon {
+  font-size: 1rem;
+}
+
+.grad-knopf.is-active {
+  border-color: var(--gold-2);
+  color: var(--text);
+  background: linear-gradient(180deg, #3d4f97, #232e5e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 10px rgba(255, 197, 61, 0.22);
+}
+
+.grad-knopf:not(.is-active):active {
+  transform: translateY(2px);
+}
+
 /* =========================================================
    Anpassungen an die Bildschirmgroesse
    ========================================================= */
