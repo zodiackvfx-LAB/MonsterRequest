@@ -74,11 +74,13 @@ export function createBattle({
 
   /* Die Kraft-Leiste füllt sich mit "Ladepunkten": für gespielte Karten und
      für eingesteckte Treffer. Ist das Maximum erreicht, ist die Kraft bereit.
-     Der Gegner lädt langsamer (höheres Maximum), damit sein Spezial nicht
-     zu oft kommt - es soll ein Höhepunkt bleiben, keine Dauerbelastung. */
+     Der Gegner lädt langsamer, damit sein Spezial nicht zu oft kommt - es soll
+     ein Höhepunkt bleiben, keine Dauerbelastung. Wie viele Punkte er braucht,
+     steht bei jeder Kraft selbst (gegnerLadung, siehe js/data/kraefte.js) -
+     so kommen milde Kräfte früh und harte (Frost, Inferno) seltener. */
   const KRAFT_MAX = 16;
   let kraftPunkte = 0;
-  const GEGNER_KRAFT_MAX = 24;
+  const GEGNER_KRAFT_MAX = enemyBossPower?.gegnerLadung ?? 24;
   let gegnerKraftPunkte = 0;
 
   function ladeKraft(punkte) {

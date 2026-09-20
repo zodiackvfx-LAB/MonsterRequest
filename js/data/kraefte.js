@@ -29,6 +29,12 @@
  *   art   - die Wirkung (siehe battle.js): 'schild' | 'schildbruch' |
  *           'brand' | 'frost' | 'lebensraub' | 'energiesturm'
  *   wert  - die Zahl(en) zur Wirkung
+ *   gegnerLadung - wie viele Ladepunkte der BOSS sammeln muss, bis er die
+ *           Kraft im Kampf einsetzt (fehlt = Standard 24). Niedrig = kommt
+ *           oft, hoch = seltener. So kommen milde Kräfte früh und harte
+ *           (Frost, Inferno) seltener. Der Spieler löst seine getragene
+ *           Kraft weiterhin selbst per Knopf aus - diese Zahl gilt nur
+ *           für den Boss.
  */
 export const BOSS_KRAEFTE = [
   {
@@ -40,6 +46,7 @@ export const BOSS_KRAEFTE = [
     text: 'Stellt sofort ein Schild in Höhe von 45 % deiner Lebenspunkte auf.',
     art: 'schild',
     wert: 0.45, // Anteil der maximalen Lebenspunkte
+    gegnerLadung: 20, // erster Boss, mildes Schild - darf ruhig oft kommen
   },
   {
     id: 'prismabrecher',
@@ -50,6 +57,7 @@ export const BOSS_KRAEFTE = [
     text: 'Zerschlägt das Schild des Gegners und trifft ihn hart.',
     art: 'schildbruch',
     wert: 55, // Grundschaden (wächst mit deinem Angriff)
+    gegnerLadung: 24,
   },
   {
     id: 'inferno',
@@ -60,6 +68,7 @@ export const BOSS_KRAEFTE = [
     text: 'Schaden sofort - danach brennt der Gegner mehrere Sekunden weiter.',
     art: 'brand',
     wert: { sofort: 28, tick: 9, male: 4 }, // 28 sofort, dann 4× 9 im Abstand
+    gegnerLadung: 28, // starker Dauerbrand - kommt seltener
   },
   {
     id: 'frostbann',
@@ -70,6 +79,7 @@ export const BOSS_KRAEFTE = [
     text: 'Friert den Gegner ein - er kann einige Sekunden nicht angreifen.',
     art: 'frost',
     wert: 3.5, // Sekunden
+    gegnerLadung: 32, // sperrt den Spieler komplett aus - bewusst am seltensten
   },
   {
     id: 'seelenraub',
@@ -80,6 +90,7 @@ export const BOSS_KRAEFTE = [
     text: 'Trifft den Gegner - und heilt dich um denselben Betrag.',
     art: 'lebensraub',
     wert: 38, // Grundschaden (= Heilung)
+    gegnerLadung: 26,
   },
   {
     id: 'sandsturm',
@@ -90,6 +101,7 @@ export const BOSS_KRAEFTE = [
     text: 'Füllt deine Energie sofort voll auf und trifft den Gegner.',
     art: 'energiesturm',
     wert: 22, // Grundschaden
+    gegnerLadung: 24,
   },
 ];
 
