@@ -41,6 +41,10 @@ export const BEUTE_ATTACKEN = [
   { id: 'donnerwelle', name: 'Donnerwelle', icon: '🌩️', cost: 6, damage: 39, seltenheit: 'episch', text: 'Der Boden bebt.' },
   { id: 'urknall', name: 'Urknall', icon: '💫', cost: 8, damage: 56, seltenheit: 'legendaer', text: 'Alles auf einmal.' },
   { id: 'drachenzorn', name: 'Drachenzorn', icon: '🐲', cost: 9, damage: 64, seltenheit: 'legendaer', text: 'Der Zorn eines Drachen.' },
+  { id: 'orkanhieb', name: 'Orkanhieb', icon: '🌪️', cost: 4, damage: 27, seltenheit: 'selten', text: 'Ein Hieb wie ein Wirbelsturm.' },
+  { id: 'bollwerk', name: 'Bollwerk', icon: '🏯', cost: 5, damage: 0, shield: 40, seltenheit: 'episch', text: 'Eine Mauer aus reiner Willenskraft.' },
+  { id: 'lebensquell', name: 'Lebensquell', icon: '💚', cost: 5, damage: 0, heal: 40, seltenheit: 'episch', text: 'Frisches Leben strömt zurück.' },
+  { id: 'sonnenstrahl', name: 'Sonnenstrahl', icon: '☀️', cost: 7, damage: 46, seltenheit: 'episch', text: 'Gebündeltes Sonnenlicht.' },
 ];
 
 /**
@@ -91,6 +95,21 @@ export const SKINS = [
     id: 'skin-kosmisch', name: 'Kosmisch', monsterId: 'timo', seltenheit: 'legendaer',
     look: { hue: 255, sattheit: 85, akzentHue: 180 },
     filter: 'hue-rotate(250deg) saturate(2.2) contrast(1.12)',
+  },
+  {
+    id: 'skin-natur', name: 'Natur', monsterId: 'timo', seltenheit: 'gewoehnlich',
+    look: { hue: 100, sattheit: 70, akzentHue: 135 },
+    filter: 'hue-rotate(70deg) saturate(1.4) brightness(1.06)',
+  },
+  {
+    id: 'skin-sturm', name: 'Sturm', monsterId: 'timo', seltenheit: 'selten',
+    look: { hue: 210, sattheit: 82, akzentHue: 190 },
+    filter: 'hue-rotate(200deg) saturate(1.7) brightness(1.12)',
+  },
+  {
+    id: 'skin-glut', name: 'Glut', monsterId: 'timo', seltenheit: 'episch',
+    look: { hue: 15, sattheit: 95, akzentHue: 40 },
+    filter: 'saturate(2.3) brightness(1.08) contrast(1.12) hue-rotate(-10deg)',
   },
 ];
 

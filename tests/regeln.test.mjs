@@ -438,7 +438,8 @@ console.log('\nSammlung');
 
   // Die Sammlung zeigt Start- und Beuteattacken zusammen.
   const sammelbar = START_ATTACKEN.length + BEUTE_ATTACKEN.length;
-  pruefe('Sammlung umfasst 18 Attacken', sammelbar === 18);
+  pruefe(`Sammlung umfasst alle ${sammelbar} Attacken (8 Start + Beute)`,
+    sammelbar === 8 + BEUTE_ATTACKEN.length && sammelbar >= 18);
 
   // Jede sammelbare Attacke muss im Katalog stehen.
   const fehlend = [...START_ATTACKEN, ...BEUTE_ATTACKEN.map((a) => a.id)].filter((id) => !ATTACKS[id]);
