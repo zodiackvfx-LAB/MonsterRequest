@@ -80,6 +80,62 @@ export const KLAENGE = {
     ton('triangle', 392, 784, 0.26, 0.16, { anstieg: 0.03 }),
   ],
 
+  /* ---------- Boss-Kräfte ----------
+   * Jede Boss-Kraft hat ihren eigenen Signatur-Klang statt des früher
+   * geliehenen Levelauf-Tons. Gespielt wird der passende beim Auslösen
+   * (siehe js/screens/battle.js, Ereignis 'kraft'). Der Name richtet sich
+   * nach der "art" der Kraft (js/data/kraefte.js): kraft<Art>. */
+
+  // Schild (Rindenpanzer): schwerer, tiefer Aufbau mit metallischem Ring.
+  kraftSchild: [
+    ton('sine', 130, 262, 0.36, 0.42, { anstieg: 0.02 }),
+    ton('triangle', 330, 660, 0.42, 0.22, { anstieg: 0.03 }),
+    ton('rauschen', 0, 0, 0.3, 0.16, { filter: { typ: 'bandpass', von: 500, bis: 2200 } }),
+  ],
+
+  // Schildbruch (Prismabrecher): ein splitterndes Zerbrechen aus Glas.
+  kraftSchildbruch: [
+    ton('rauschen', 0, 0, 0.3, 0.4, { anstieg: 0.001, filter: { typ: 'highpass', von: 5000, bis: 1200 } }),
+    ton('square', 1568, 220, 0.22, 0.2, { anstieg: 0.001 }),
+    ton('sine', 2637, 1760, 0.3, 0.12, { start: 0.02, anstieg: 0.01 }),
+  ],
+
+  // Brand (Inferno): ein anschwellendes Feuer-Rauschen mit tiefem Grollen.
+  kraftBrand: [
+    ton('rauschen', 0, 0, 0.5, 0.34, { anstieg: 0.08, filter: { typ: 'lowpass', von: 400, bis: 3000 } }),
+    ton('sawtooth', 90, 160, 0.5, 0.16, { anstieg: 0.05, filter: { typ: 'lowpass', von: 1200, bis: 600 } }),
+    ton('sine', 220, 110, 0.4, 0.14, { anstieg: 0.02 }),
+  ],
+
+  // Frost (Frostbann): ein absteigendes, kristallines Glitzern - eiskalt.
+  kraftFrost: [
+    ton('sine', 1760, 880, 0.45, 0.2, { anstieg: 0.02 }),
+    ton('triangle', 1319, 659, 0.4, 0.14, { start: 0.05, anstieg: 0.03 }),
+    ton('rauschen', 0, 0, 0.4, 0.13, { filter: { typ: 'highpass', von: 6000, bis: 3000 } }),
+  ],
+
+  // Lebensraub (Seelenraub): erst dunkel absinkend (Kraft geht), dann
+  // hell aufsteigend (Kraft kommt zurück).
+  kraftLebensraub: [
+    ton('sawtooth', 440, 220, 0.4, 0.18, { anstieg: 0.03, filter: { typ: 'lowpass', von: 1800, bis: 700 } }),
+    ton('sine', 330, 494, 0.45, 0.16, { start: 0.1, anstieg: 0.06 }),
+    ton('sine', 660, 990, 0.35, 0.1, { start: 0.18, anstieg: 0.05 }),
+  ],
+
+  // Energiesturm (Sandsturm): ein wirbelnder Bö-Sog mit aufsteigendem Pfeifen.
+  kraftEnergiesturm: [
+    ton('rauschen', 0, 0, 0.5, 0.3, { anstieg: 0.06, filter: { typ: 'bandpass', von: 800, bis: 4000, q: 3 } }),
+    ton('triangle', 330, 990, 0.45, 0.14, { anstieg: 0.05 }),
+  ],
+
+  // Energieraub (Gewittersturm, Welt 7): ein Donnerschlag und eine
+  // absinkende Entladung - die Energie des Gegners bricht weg.
+  kraftEnergieraub: [
+    ton('rauschen', 0, 0, 0.32, 0.4, { anstieg: 0.001, filter: { typ: 'lowpass', von: 4000, bis: 200 } }),
+    ton('sawtooth', 880, 60, 0.3, 0.2, { anstieg: 0.001, filter: { typ: 'lowpass', von: 3000, bis: 400 } }),
+    ton('square', 1319, 330, 0.18, 0.12, { start: 0.03 }),
+  ],
+
   /* ---------- Ergebnis ---------- */
 
   // Sieg: C - E - G - C aufwärts.

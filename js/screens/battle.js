@@ -49,6 +49,20 @@ const ERGEBNIS_VERZOEGERUNG = 750;
  */
 const ANGRIFF_AB_ENERGIE = 5;
 
+/**
+ * Welcher Klang gehört zu welcher Boss-Kraft-Art? Die Klänge stehen in
+ * js/data/sounds.js. Eine unbekannte Art fällt auf den Levelauf-Ton zurück.
+ */
+const KRAFT_KLANG = {
+  schild: 'kraftSchild',
+  schildbruch: 'kraftSchildbruch',
+  brand: 'kraftBrand',
+  frost: 'kraftFrost',
+  lebensraub: 'kraftLebensraub',
+  energiesturm: 'kraftEnergiesturm',
+  energieraub: 'kraftEnergieraub',
+};
+
 export const battleScreen = {
   // Jede Welt hat ihre eigene Musik.
   musik: (params) => getLevel(params.levelId)?.music ?? 'menue',
@@ -513,7 +527,8 @@ export const battleScreen = {
           flash(sprite, 'heal');
           trefferFunke(sprite, gegner ? '#ff5ad0' : '#ffd76a', 12);
           bildschirmBeben(ui.arena, gegner ? 0.34 : 0.3);
-          spieleKlang('levelauf');
+          // Jede Kraft hat ihren eigenen Klang (nach ihrer "art").
+          spieleKlang(KRAFT_KLANG[event.power?.art] ?? 'levelauf');
           break;
         }
         case 'brand': {
