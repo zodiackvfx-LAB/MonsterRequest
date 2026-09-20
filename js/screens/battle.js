@@ -32,6 +32,7 @@ let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
 const klangTimer = []; // geplante Klaenge, damit sie beim Verlassen verstummen
 let bildfolgeStoppen = () => {}; // bricht eine laufende Angriffsanimation ab
+let handSperreTimer = null; // Doppeltap-Sperre nach dem Kartenspiel
 
 /**
  * Wartezeit zwischen dem letzten Treffer und dem Ergebnisfenster.
@@ -202,6 +203,27 @@ export const battleScreen = {
     // kurzen Effekt, wenn sie es GERADE wird.
     const warBereit = [];
 
+    /* Zwischenspeicher fuer render(): Die Kampfschleife laeuft mit 60 Bildern
+       pro Sekunde. Ohne diese Speicher wuerde jeder Frame Texte, 20 Energie-
+       punkte und alle Karten neu ins DOM schreiben - auch wenn sich nichts
+       geaendert hat. Wir schreiben nur noch, was sich wirklich aendert. */
+    const cacheEnemy = { hp: -1, maxHp: -1, shield: -1, low: null };
+    const cachePlayer = { hp: -1, maxHp: -1, shield: -1, low: null };
+    const cacheEnergie = { player: -1, enemy: -1 };
+    let cacheEnergieText = '';
+    let cacheVoll = null;
+    let cacheKartenEnergie = -1;
+    let cacheFinished = null;
+    let cacheKraft = -1;
+    let cacheKraftBereit = null;
+
+    /* Kurze Sperre nach dem Kartenspiel: verhindert, dass ein zweiter, schneller
+       Tap (Doppeltap) versehentlich die gerade nachgezogene Karte mitspielt. */
+    const HAND_SPERRE = 220;
+    let handGesperrt = false;
+    // handSperreTimer liegt auf Modulebene, damit unmount() ihn löschen kann.
+    handSperreTimer = null;
+
     battle = createBattle({
       playerMonster,
       enemyMonster,
@@ -213,43 +235,61 @@ export const battleScreen = {
 
     /* ---------- 3. Anzeige aktualisieren ---------- */
     function render(state) {
-      renderFighter(ui.enemyHpBar, ui.enemyHpFill, ui.enemyHpText, ui.enemyShield, state.enemy);
-      renderFighter(ui.playerHpBar, ui.playerHpFill, ui.playerHpText, ui.playerShield, state.player);
+      renderFighter(ui.enemyHpBar, ui.enemyHpFill, ui.enemyHpText, ui.enemyShield, state.enemy, cacheEnemy);
+      renderFighter(ui.playerHpBar, ui.playerHpFill, ui.playerHpText, ui.playerShield, state.player, cachePlayer);
 
-      ui.energieText.textContent = `${state.player.energie} / ${MAX_ENERGIE}`;
-      renderPips(playerPips, state.player);
-      renderPips(enemyPips, state.enemy);
+      const energieText = `${state.player.energie} / ${MAX_ENERGIE}`;
+      if (energieText !== cacheEnergieText) {
+        ui.energieText.textContent = energieText;
+        cacheEnergieText = energieText;
+      }
+
+      renderPips(playerPips, state.player, cacheEnergie, 'player');
+      renderPips(enemyPips, state.enemy, cacheEnergie, 'enemy');
+
       // Volle Energie sichtbar machen: der Balken schimmert golden.
-      ui.energieLeiste.classList.toggle(
-        'is-voll',
-        state.player.energie >= MAX_ENERGIE && !state.finished
-      );
+      const voll = state.player.energie >= MAX_ENERGIE && !state.finished;
+      if (voll !== cacheVoll) {
+        ui.energieLeiste.classList.toggle('is-voll', voll);
+        cacheVoll = voll;
+      }
 
       // Hand nur neu bauen, wenn sich die Karten geändert haben
       if (state.player.handVersion !== renderedHandVersion) {
         renderedHandVersion = state.player.handVersion;
         buildHand(state);
+        cacheKartenEnergie = -1; // neue Karten einmal bewerten
       }
 
-      // Bezahlbarkeit jeder Karte laufend prüfen
-      cardElements.forEach((card, index) => {
-        const attack = kampfAttacke(state.player.hand[index]);
-        const affordable = attack.cost <= state.player.energie && !state.finished;
-        // Genau in dem Moment, in dem eine Karte spielbar wird, springt sie
-        // kurz an - so sieht man sofort, was man jetzt einsetzen kann.
-        if (affordable && warBereit[index] === false) flash(card, 'karte-bereit');
-        warBereit[index] = affordable;
-        card.classList.toggle('is-ready', affordable);
-        card.classList.toggle('is-disabled', !affordable);
-        card.disabled = !affordable;
-      });
+      // Bezahlbarkeit nur neu prüfen, wenn sich die Spielerenergie geändert hat.
+      if (state.player.energie !== cacheKartenEnergie || state.finished !== cacheFinished) {
+        cardElements.forEach((card, index) => {
+          const attack = kampfAttacke(state.player.hand[index]);
+          const affordable = attack.cost <= state.player.energie && !state.finished;
+          // Genau in dem Moment, in dem eine Karte spielbar wird, springt sie
+          // kurz an - so sieht man sofort, was man jetzt einsetzen kann.
+          if (affordable && warBereit[index] === false) flash(card, 'karte-bereit');
+          warBereit[index] = affordable;
+          card.classList.toggle('is-ready', affordable);
+          card.classList.toggle('is-disabled', !affordable);
+          card.disabled = !affordable;
+        });
+        cacheKartenEnergie = state.player.energie;
+        cacheFinished = state.finished;
+      }
 
       // Kraft-Leiste: Ring fuellen, Knopf freigeben sobald sie voll ist.
       if (kraftKnopf) {
-        kraftKnopf.style.setProperty('--kraft', state.kraft);
+        if (state.kraft !== cacheKraft) {
+          kraftKnopf.style.setProperty('--kraft', state.kraft);
+          cacheKraft = state.kraft;
+        }
         const bereit = state.kraftBereit && !state.finished;
-        kraftKnopf.classList.toggle('is-bereit', bereit);
-        kraftKnopf.disabled = !bereit;
+        if (bereit !== cacheKraftBereit) {
+          kraftKnopf.classList.toggle('is-bereit', bereit);
+          kraftKnopf.disabled = !bereit;
+          cacheKraftBereit = bereit;
+        }
       }
     }
 
@@ -266,29 +306,47 @@ export const battleScreen = {
       };
     }
 
-    /** Lebensbalken, Zahl und Schildanzeige eines Kämpfers. */
-    function renderFighter(bar, fill, text, shieldBadge, fighter) {
-      const share = fighter.hp / fighter.maxHp;
-      balkenFuellen(fill, share);
-      text.textContent = `${fighter.hp} / ${fighter.maxHp}`;
-      bar.classList.toggle('is-low', share <= 0.3);
+    /** Lebensbalken, Zahl und Schildanzeige eines Kämpfers - nur bei Änderung. */
+    function renderFighter(bar, fill, text, shieldBadge, fighter, cache) {
+      if (fighter.hp !== cache.hp || fighter.maxHp !== cache.maxHp) {
+        const share = fighter.hp / fighter.maxHp;
+        balkenFuellen(fill, share);
+        text.textContent = `${fighter.hp} / ${fighter.maxHp}`;
+        const low = share <= 0.3;
+        if (low !== cache.low) {
+          bar.classList.toggle('is-low', low);
+          cache.low = low;
+        }
+        cache.hp = fighter.hp;
+        cache.maxHp = fighter.maxHp;
+      }
 
-      shieldBadge.classList.toggle('is-active', fighter.shield > 0);
-      if (fighter.shield > 0) {
-        shieldBadge.querySelector('span').textContent = fighter.shield;
+      if (fighter.shield !== cache.shield) {
+        const hat = fighter.shield > 0;
+        shieldBadge.classList.toggle('is-active', hat);
+        if (hat) shieldBadge.querySelector('span').textContent = fighter.shield;
+        cache.shield = fighter.shield;
       }
     }
 
-    /** Färbt die Energiepunkte eines Kämpfers passend zu seiner Energie ein. */
-    function renderPips(pips, fighter) {
-      pips.forEach((pip, index) => {
-        const filled = index < fighter.energie;
-        // Der nächste Punkt füllt sich langsam - das macht das Warten sichtbar.
-        const isCharging = index === fighter.energie && fighter.energie < MAX_ENERGIE;
-        pip.classList.toggle('is-filled', filled);
-        pip.classList.toggle('is-charging', isCharging);
-        pip.style.setProperty('--charge', isCharging ? fighter.energieFortschritt : 0);
-      });
+    /**
+     * Färbt die Energiepunkte eines Kämpfers.
+     *
+     * Die Klassen (voll/lädt) werden nur neu gesetzt, wenn sich die ganze
+     * Energie geändert hat. Nur der EINE ladende Punkt bekommt jeden Frame
+     * seinen Füllstand - das ist die einzige laufende Änderung.
+     */
+    function renderPips(pips, fighter, cache, key) {
+      if (fighter.energie !== cache[key]) {
+        pips.forEach((pip, index) => {
+          pip.classList.toggle('is-filled', index < fighter.energie);
+          pip.classList.toggle('is-charging', index === fighter.energie && fighter.energie < MAX_ENERGIE);
+        });
+        cache[key] = fighter.energie;
+      }
+      if (fighter.energie < MAX_ENERGIE) {
+        pips[fighter.energie].style.setProperty('--charge', fighter.energieFortschritt);
+      }
     }
 
     /** Baut die 4 Handkarten neu auf. */
@@ -317,9 +375,26 @@ export const battleScreen = {
         `;
 
         card.addEventListener('click', () => {
+          // Kurz nach einem Kartenspiel gesperrt - so löst ein versehentlicher
+          // Doppeltap nicht gleich die nachgezogene Karte mit aus.
+          if (handGesperrt) return;
+
           const played = battle.playCard(index);
-          // Nicht genug Energie: kurzes Wackeln als Rückmeldung.
-          if (!played) flash(card, 'shake');
+          if (!played) {
+            // Nicht genug Energie: kurzes Wackeln als Rückmeldung.
+            flash(card, 'shake');
+            return;
+          }
+
+          // Sofort neu zeichnen: Die getippte Karte verschwindet auf der
+          // Stelle, die neue rückt nach - das fühlt sich direkt an und
+          // schließt die Lücke, in der ein Doppeltap zuschlagen könnte.
+          handGesperrt = true;
+          render(battle.state);
+          handSperreTimer = setTimeout(() => {
+            handGesperrt = false;
+            handSperreTimer = null;
+          }, HAND_SPERRE);
         });
 
         ui.hand.appendChild(card);
@@ -577,6 +652,11 @@ export const battleScreen = {
     // Sonst erklaenge die Fanfare noch auf dem naechsten Bildschirm.
     klangTimer.forEach((timer) => clearTimeout(timer));
     klangTimer.length = 0;
+    // Die Handsperre nicht in den nächsten Kampf mitnehmen.
+    if (handSperreTimer !== null) {
+      clearTimeout(handSperreTimer);
+      handSperreTimer = null;
+    }
     bildfolgeStoppen();
     bildfolgeStoppen = () => {};
   },
