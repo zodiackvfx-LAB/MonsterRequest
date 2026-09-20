@@ -134,3 +134,19 @@ cloudStart(() => {
   });
   showScreen('start');
 });
+
+/*
+ * Als App installierbar ("Zum Home-Bildschirm") und offline spielbar machen.
+ * Die eigentliche Arbeit erledigt der Service Worker (siehe sw.js): Er legt
+ * das Spiel beim ersten Besuch in einen Cache, sodass es danach auch ohne
+ * Internet startet. Erst NACH dem Laden registrieren, damit der erste Start
+ * nicht ausgebremst wird. Ohne HTTPS (oder localhost) lehnt der Browser ab -
+ * dann läuft das Spiel eben wie bisher, nur ohne Offline-Funktion.
+ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      /* Kein Service Worker möglich (z. B. privater Modus) - kein Problem. */
+    });
+  });
+}
