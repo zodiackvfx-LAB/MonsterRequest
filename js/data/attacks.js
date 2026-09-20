@@ -10,6 +10,10 @@
  *   damage  - Schaden am Gegenüber (0, wenn die Attacke nur heilt)
  *   heal    - Heilung für sich selbst (optional)
  *   shield  - Schild, das kommenden Schaden abfängt (optional)
+ *   gift    - Gift beim Gegenüber (optional): { tick, male, intervall } -
+ *             male-mal je intervall Sekunden tick Schaden (siehe battle.js)
+ *   stun    - Betäubung des Gegenübers in Sekunden (optional): es kann so
+ *             lange nicht handeln (nutzt dieselbe Sperre wie Frost)
  *   icon    - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
  *   text    - kurze Beschreibung für die Karte
  *   seltenheit - 'gewoehnlich' | 'selten' | 'episch' | 'legendaer'

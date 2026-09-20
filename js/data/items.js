@@ -45,6 +45,9 @@ export const BEUTE_ATTACKEN = [
   { id: 'bollwerk', name: 'Bollwerk', icon: '🏯', cost: 5, damage: 0, shield: 40, seltenheit: 'episch', text: 'Eine Mauer aus reiner Willenskraft.' },
   { id: 'lebensquell', name: 'Lebensquell', icon: '💚', cost: 5, damage: 0, heal: 40, seltenheit: 'episch', text: 'Frisches Leben strömt zurück.' },
   { id: 'sonnenstrahl', name: 'Sonnenstrahl', icon: '☀️', cost: 7, damage: 46, seltenheit: 'episch', text: 'Gebündeltes Sonnenlicht.' },
+  // Status-Attacken: wirken über den Sofortschaden hinaus weiter.
+  { id: 'giftstachel', name: 'Giftstachel', icon: '🐍', cost: 3, damage: 8, gift: { tick: 5, male: 4, intervall: 1 }, seltenheit: 'selten', text: 'Ein Stich, der lange nachwirkt: Gift über mehrere Sekunden.' },
+  { id: 'frostschock', name: 'Frostschock', icon: '❄️', cost: 4, damage: 14, stun: 1.4, seltenheit: 'episch', text: 'Ein eisiger Schlag - der Gegner erstarrt kurz und kann nicht handeln.' },
 ];
 
 /**

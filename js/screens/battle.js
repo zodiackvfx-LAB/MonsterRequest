@@ -424,6 +424,9 @@ export const battleScreen = {
         let effect = `${attack.damage} SCH`;
         if (attack.heal > 0) effect = `+${attack.heal} LP`;
         if (attack.shield > 0) effect = `${attack.shield} Schild`;
+        // Status-Attacken bekommen ein kleines Zeichen: Gift ☠️, Betäubung 💫.
+        if (attack.gift) effect += ' ☠️';
+        if (attack.stun) effect += ' 💫';
 
         const card = document.createElement('button');
         card.className = 'card';
@@ -570,6 +573,31 @@ export const battleScreen = {
             setTimeout(() => sprite.classList.remove('ist-gefroren'), (event.dauer ?? 3) * 1000);
           }
           spieleKlang('schild');
+          break;
+        }
+        case 'gift': {
+          // Gift-Attacke: grüne Zahlen und Funken auf der vergifteten Figur.
+          const sprite = event.seite === 'player' ? ui.playerSprite : ui.enemySprite;
+          if (event.amount != null) {
+            floatNumber(sprite, `-${event.amount}`, 'gift');
+            trefferFunke(sprite, '#7ee081', 4);
+          } else {
+            trefferFunke(sprite, '#7ee081', 9);
+            spieleKlang('karte');
+          }
+          break;
+        }
+        case 'betaeubung': {
+          // Betäubung: die getroffene Figur erstarrt kurz (gelb), kann nicht handeln.
+          const sprite = event.seite === 'player' ? ui.playerSprite : ui.enemySprite;
+          trefferFunke(sprite, '#ffe08a', 9);
+          // Beim SPIELER steuert render() das Erstarren über state.playerFrozen;
+          // beim GEGNER gibt es das nur hier, also per Timer beenden.
+          if (event.seite === 'enemy') {
+            sprite.classList.add('ist-betaeubt');
+            setTimeout(() => sprite.classList.remove('ist-betaeubt'), (event.dauer ?? 1.5) * 1000);
+          }
+          spieleKlang('gesperrt');
           break;
         }
         case 'enemy-shield':

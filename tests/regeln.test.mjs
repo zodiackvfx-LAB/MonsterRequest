@@ -896,6 +896,20 @@ console.log('\nErfolge und Statistik');
     gameState.statistik.siege === 0 && gameState.statistik.erfolge.length === 0);
 }
 
+console.log('\nStatus-Attacken');
+{
+  const gift = BEUTE_ATTACKEN.find((a) => a.gift);
+  const stun = BEUTE_ATTACKEN.find((a) => a.stun);
+  pruefe('Es gibt eine Gift-Attacke', Boolean(gift));
+  pruefe('Die Gift-Attacke ist sinnvoll aufgebaut',
+    gift && gift.gift.tick > 0 && gift.gift.male > 0 && gift.damage >= 0);
+  pruefe('Es gibt eine Betäubungs-Attacke', Boolean(stun));
+  pruefe('Die Betäubung dauert eine sinnvolle Zeit',
+    stun && stun.stun > 0 && stun.stun <= 3);
+  pruefe('Status-Attacken stehen im Katalog',
+    [gift, stun].every((a) => a && ATTACKS[a.id]));
+}
+
 console.log('\nSchwierigkeitsgrade');
 {
   pruefe('Es gibt mindestens Leicht, Normal und Schwer',

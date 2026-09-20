@@ -188,6 +188,31 @@ export function createBattle({
       });
     }
 
+    // Status-Effekte mancher Attacken treffen das Gegenüber.
+    const zielSeite = side === 'player' ? 'enemy' : 'player';
+
+    // Gift: Schaden über Zeit (nutzt dieselbe Maschinerie wie der Boss-Brand).
+    if (attack.gift) {
+      const intervall = attack.gift.intervall ?? 1.0;
+      brand[zielSeite] = {
+        rest: attack.gift.male,
+        tick: attack.gift.tick,
+        timer: intervall,
+        intervall,
+        angreifer: attacker,
+        verteidiger: defender,
+        typ: 'gift',
+      };
+      emit({ type: 'gift', seite: zielSeite, text: `${defender.state.name} ist vergiftet!` });
+    }
+
+    // Betäubung: das Gegenüber kann kurz nicht handeln (wie Frost).
+    if (attack.stun) {
+      frostRest[zielSeite] = attack.stun;
+      if (zielSeite === 'player') state.playerFrozen = true;
+      emit({ type: 'betaeubung', seite: zielSeite, dauer: attack.stun, text: `${defender.state.name} ist betäubt!` });
+    }
+
     checkEnd();
   }
 
@@ -279,7 +304,7 @@ export function createBattle({
         verteidiger.takeDamage(sofort);
         emit({ type: `${seite}-attack`, amount: sofort, kraft: true, text: `${kraft.name}: ${sofort} Schaden - Feuer!` });
         // Der Rest kommt tickweise in der Schleife - auf der getroffenen Seite.
-        brand[gegenseite] = { rest: kraft.wert.male, tick: kraft.wert.tick, timer: 0.6, angreifer, verteidiger };
+        brand[gegenseite] = { rest: kraft.wert.male, tick: kraft.wert.tick, timer: 0.6, intervall: 0.6, angreifer, verteidiger, typ: 'brand' };
         break;
       }
       case 'frost': {
@@ -429,8 +454,8 @@ export function createBattle({
       }
     }
 
-    // Brand (Boss-Kraft "Inferno"): auf jeder Seite, die gerade brennt, kommt
-    // in Abständen weiter Schaden.
+    // Brand (Boss-Kraft "Inferno") und Gift (Attacken): auf jeder Seite, die
+    // gerade brennt bzw. vergiftet ist, kommt in Abständen weiter Schaden.
     for (const seite of ['player', 'enemy']) {
       const b = brand[seite];
       if (!b || state.finished) continue;
@@ -438,9 +463,15 @@ export function createBattle({
       while (b.timer <= 0 && b.rest > 0 && !state.finished) {
         const dmg = schadenBerechnen(b.angreifer, b.verteidiger, b.tick);
         b.verteidiger.takeDamage(dmg);
-        emit({ type: 'brand', seite, amount: dmg, text: `${b.verteidiger.state.name} brennt: ${dmg} Schaden.` });
+        const gift = b.typ === 'gift';
+        emit({
+          type: gift ? 'gift' : 'brand',
+          seite,
+          amount: dmg,
+          text: `${b.verteidiger.state.name} ${gift ? 'erleidet Gift' : 'brennt'}: ${dmg} Schaden.`,
+        });
         b.rest -= 1;
-        b.timer += 0.6;
+        b.timer += b.intervall ?? 0.6;
         checkEnd();
       }
       if (b.rest <= 0) brand[seite] = null;

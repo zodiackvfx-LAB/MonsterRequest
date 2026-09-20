@@ -996,6 +996,7 @@
 .float-number--damage { color: #ffd76a; }
 .float-number--heal { color: var(--green-1); }
 .float-number--shield { color: #8fe3ff; }
+.float-number--gift { color: #7ee081; }
 
 /* =========================================================================
    Fantasy-Designsystem der Lobby

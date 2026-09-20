@@ -218,11 +218,14 @@ function attackenBlock(titel, attacken, istBesessen) {
   return block;
 }
 
-/** "17 Schaden" / "heilt 22" / "fängt 26 Schaden ab" */
+/** "17 Schaden" / "heilt 22" / "fängt 26 Schaden ab" (+ Status) */
 function wirkungsText(attacke) {
   if (attacke.heal > 0) return `heilt ${attacke.heal} LP`;
   if (attacke.shield > 0) return `fängt ${attacke.shield} Schaden ab`;
-  return `${attacke.damage} Schaden`;
+  let text = `${attacke.damage} Schaden`;
+  if (attacke.gift) text += ' · vergiftet';
+  if (attacke.stun) text += ' · betäubt';
+  return text;
 }
 
 /* ====================================================================
