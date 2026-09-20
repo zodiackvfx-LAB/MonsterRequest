@@ -46,6 +46,11 @@ const TOGGLES = [
     name: 'Musik',
     hint: 'Ruhige Hintergrundmusik, je Welt eine andere',
   },
+  {
+    key: 'vibration',
+    name: 'Vibration',
+    hint: 'Kurzes Vibrieren bei Treffern (nur auf Geräten, die das können)',
+  },
 ];
 
 /** Die beiden Reiter. */

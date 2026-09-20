@@ -17,7 +17,7 @@
  *   werden dann alle alten Caches gelöscht.
  */
 
-const CACHE = 'monsterquest-v1';
+const CACHE = 'monsterquest-v2';
 
 // Das komplette Spiel, das schon beim ersten Besuch fest in den Cache soll -
 // alle Seiten, Daten, Bilder. So läuft es auch offline vollständig, sobald die
@@ -41,6 +41,7 @@ const SCHALE = [
   'js/core/cloud.js',
   'js/core/deck.js',
   'js/core/fighter.js',
+  'js/core/haptik.js',
   'js/core/loot.js',
   'js/core/progression.js',
   'js/core/screens.js',

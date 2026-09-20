@@ -47,6 +47,7 @@ function createNewGame() {
       sound: true, // Klänge im Spiel
       musik: true, // Hintergrundmusik
       animations: true,
+      vibration: true, // kurzes Vibrieren bei Treffern (nur wo das Gerät es kann)
     },
   };
 }

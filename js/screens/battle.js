@@ -23,6 +23,7 @@ import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
 import { spieleBeute, spieleKlang, spieleTreffer } from '../core/audio.js';
+import { vibriere } from '../core/haptik.js';
 import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
@@ -481,6 +482,8 @@ export const battleScreen = {
           spieleKlang('karte');
           if (event.krit) spieleKlang('trefferStark');
           else spieleTreffer(event.amount);
+          // Ein kurzes Vibrieren macht den Treffer fühlbar (Krit kräftiger).
+          vibriere(event.krit ? 'krit' : 'treffer');
           // Zaehlt fuer die Tagesaufgaben.
           fortschrittMelden('attacke');
           fortschrittMelden('schaden', event.amount);
@@ -498,6 +501,7 @@ export const battleScreen = {
           bildschirmBeben(ui.arena, event.krit ? Math.max(anteilP, 0.3) : anteilP);
           if (event.krit) spieleKlang('trefferStark');
           else spieleTreffer(event.amount);
+          vibriere(event.krit ? 'krit' : 'treffer');
           // Timo geht sichtbar in die Knie, wenn er einsteckt.
           spieleFolge(basis.bildTreffer);
           break;
@@ -529,6 +533,7 @@ export const battleScreen = {
           bildschirmBeben(ui.arena, gegner ? 0.34 : 0.3);
           // Jede Kraft hat ihren eigenen Klang (nach ihrer "art").
           spieleKlang(KRAFT_KLANG[event.power?.art] ?? 'levelauf');
+          vibriere('kraft');
           break;
         }
         case 'brand': {
@@ -592,6 +597,8 @@ export const battleScreen = {
     /* ---------- 5. Kampfende ---------- */
     function showResult(result) {
       const state = battle.state;
+      // Ein fühlbarer Abschluss: Fanfare bei Sieg, dumpfes Brummen bei Niederlage.
+      vibriere(result === 'win' ? 'sieg' : 'niederlage');
       let stars = 0;
       let belohnung = null;
 
