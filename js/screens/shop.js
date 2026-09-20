@@ -1,5 +1,8 @@
 /**
- * Shop: Truhen kaufen und öffnen.
+ * Shop - in zwei Reitern, wie die Sammlung.
+ *
+ *   Truhen  Truhen kaufen und öffnen
+ *   Besitz  Münzen, Material, gefundene Attacken und Skins auf einen Blick
  *
  * Bezahlt wird nur mit Münzen aus Kämpfen. Beim Öffnen erscheinen genau
  * fünf Beutestücke, die nacheinander aufgedeckt werden.
@@ -20,81 +23,118 @@ import { spritesNeuZeichnen } from '../ui/sprite.js';
 const AUFDECK_TAKT = 520;
 
 export const shopScreen = {
-  mount(root) {
+  mount(root, params = {}) {
     const screen = document.createElement('div');
     screen.className = 'screen screen--page';
     screen.appendChild(createScenery({ dimmed: true }));
     screen.appendChild(createTopbar('Shop', () => showScreen('start')));
     screen.appendChild(createHud());
 
+    const reiterLeiste = document.createElement('div');
+    reiterLeiste.className = 'tabs';
+    screen.appendChild(reiterLeiste);
+
     const content = document.createElement('div');
     content.className = 'page__content';
-
-    const hinweis = document.createElement('div');
-    hinweis.className = 'panel panel--tight';
-    hinweis.innerHTML = `
-      <p class="map__info-text">
-        Münzen verdienst du in Kämpfen. Jede Truhe enthält
-        <strong>5 Beutestücke</strong>: Münzen, Material, Attacken oder Skins.
-        Was du schon besitzt, wird in Münzen umgewandelt.
-      </p>
-    `;
-    content.appendChild(hinweis);
-
-    TRUHEN.forEach((truhe) => {
-      const karte = document.createElement('div');
-      karte.className = 'chest-card';
-      karte.innerHTML = `
-        <div class="chest-card__icon">${truhe.icon}</div>
-        <div class="chest-card__body">
-          <div class="chest-card__name">${truhe.name}</div>
-          <div class="chest-card__text">${truhe.text}</div>
-          <div class="chest-card__odds">${chancenText(truhe)}</div>
-        </div>
-      `;
-
-      const kaufen = document.createElement('button');
-      kaufen.className = 'btn btn--small chest-card__buy';
-      kaufen.type = 'button';
-      kaufen.innerHTML = `${MUENZE} ${truhe.preis}`;
-      kaufen.disabled = !kannBezahlen(truhe.preis);
-      kaufen.addEventListener('click', () => {
-        if (!bezahlen(truhe.preis)) {
-          spieleKlang('gesperrt');
-          return;
-        }
-        oeffnungZeigen(screen, truhe);
-      });
-
-      karte.appendChild(kaufen);
-      content.appendChild(karte);
-    });
-
-    const besitz = document.createElement('div');
-    besitz.className = 'panel';
-    besitz.innerHTML = `
-      <div class="panel__title">Dein Besitz</div>
-      <div class="stat-row">
-        <span class="stat-row__label">Münzen</span>
-        <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-row__label">Material</span>
-        <span class="stat-row__value">💠 ${gameState.materials}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-row__label">Attacken aus Truhen</span>
-        <span class="stat-row__value">${gameState.ownedAttacks.length}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-row__label">Skins</span>
-        <span class="stat-row__value">${gameState.ownedSkins.length}</span>
-      </div>
-    `;
-    content.appendChild(besitz);
-
     screen.appendChild(content);
     root.appendChild(screen);
+
+    const REITER = [
+      { id: 'truhen', label: 'Truhen', bauen: baueTruhen },
+      { id: 'besitz', label: 'Besitz', bauen: baueBesitz },
+    ];
+    let aktiv = REITER.some((r) => r.id === params.tab) ? params.tab : 'truhen';
+
+    function zeichne() {
+      reiterLeiste.innerHTML = '';
+      REITER.forEach((reiter) => {
+        const knopf = document.createElement('button');
+        knopf.className = `tab${reiter.id === aktiv ? ' is-active' : ''}`;
+        knopf.type = 'button';
+        knopf.textContent = reiter.label;
+        knopf.addEventListener('click', () => {
+          if (aktiv === reiter.id) return;
+          aktiv = reiter.id;
+          zeichne();
+        });
+        reiterLeiste.appendChild(knopf);
+      });
+
+      content.innerHTML = '';
+      REITER.find((reiter) => reiter.id === aktiv).bauen(content);
+      content.scrollTop = 0;
+    }
+
+    zeichne();
+
+    /* ---------- Reiter 1: Truhen ---------- */
+    function baueTruhen(content) {
+      const hinweis = document.createElement('div');
+      hinweis.className = 'panel panel--tight';
+      hinweis.innerHTML = `
+        <p class="map__info-text">
+          Münzen verdienst du in Kämpfen. Jede Truhe enthält
+          <strong>5 Beutestücke</strong>: Münzen, Material, Attacken oder Skins.
+          Was du schon besitzt, wird in Münzen umgewandelt.
+        </p>
+      `;
+      content.appendChild(hinweis);
+
+      TRUHEN.forEach((truhe) => {
+        const karte = document.createElement('div');
+        karte.className = 'chest-card';
+        karte.innerHTML = `
+          <div class="chest-card__icon">${truhe.icon}</div>
+          <div class="chest-card__body">
+            <div class="chest-card__name">${truhe.name}</div>
+            <div class="chest-card__text">${truhe.text}</div>
+            <div class="chest-card__odds">${chancenText(truhe)}</div>
+          </div>
+        `;
+
+        const kaufen = document.createElement('button');
+        kaufen.className = 'btn btn--small chest-card__buy';
+        kaufen.type = 'button';
+        kaufen.innerHTML = `${MUENZE} ${truhe.preis}`;
+        kaufen.disabled = !kannBezahlen(truhe.preis);
+        kaufen.addEventListener('click', () => {
+          if (!bezahlen(truhe.preis)) {
+            spieleKlang('gesperrt');
+            return;
+          }
+          oeffnungZeigen(screen, truhe);
+        });
+
+        karte.appendChild(kaufen);
+        content.appendChild(karte);
+      });
+    }
+
+    /* ---------- Reiter 2: Besitz ---------- */
+    function baueBesitz(content) {
+      const besitz = document.createElement('div');
+      besitz.className = 'panel';
+      besitz.innerHTML = `
+        <div class="panel__title">Dein Besitz</div>
+        <div class="stat-row">
+          <span class="stat-row__label">Münzen</span>
+          <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row__label">Material</span>
+          <span class="stat-row__value">💠 ${gameState.materials}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row__label">Attacken aus Truhen</span>
+          <span class="stat-row__value">${gameState.ownedAttacks.length}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row__label">Skins</span>
+          <span class="stat-row__value">${gameState.ownedSkins.length}</span>
+        </div>
+      `;
+      content.appendChild(besitz);
+    }
   },
 };
 
