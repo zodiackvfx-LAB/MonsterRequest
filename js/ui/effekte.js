@@ -70,6 +70,36 @@ export function trefferFunke(sprite, farbe = '#ffd76a', splitter = 7) {
 }
 
 /**
+ * Lässt eine gespielte Karte kurz aus der Hand fliegen.
+ *
+ * Es fliegt ein KLON der Karte - das Original wird sofort durch die
+ * nachgezogene Karte ersetzt. So sieht man beides gleichzeitig: die alte
+ * Karte verlässt die Hand, die neue rückt nach.
+ *
+ * @param {HTMLElement} karte - das angetippte Kartenelement
+ */
+export function karteWeg(karte) {
+  if (!karte || !animationenAn()) return;
+
+  const r = karte.getBoundingClientRect();
+  const klon = karte.cloneNode(true);
+  klon.classList.add('karte-flieg');
+  klon.classList.remove('is-ready', 'is-disabled');
+  Object.assign(klon.style, {
+    position: 'fixed',
+    left: `${r.left}px`,
+    top: `${r.top}px`,
+    width: `${r.width}px`,
+    height: `${r.height}px`,
+    margin: '0',
+    zIndex: '20',
+    pointerEvents: 'none',
+  });
+  document.body.appendChild(klon);
+  setTimeout(() => klon.remove(), 420);
+}
+
+/**
  * Streut Konfetti über ein Element - zum Feiern im Siegesfenster.
  *
  * @param {HTMLElement} box - der Kasten, in den es fällt

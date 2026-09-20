@@ -26,7 +26,7 @@ import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
 import { createSprite, spieleBildfolge } from '../ui/sprite.js';
-import { bildschirmBeben, konfetti, trefferFunke } from '../ui/effekte.js';
+import { bildschirmBeben, karteWeg, konfetti, trefferFunke } from '../ui/effekte.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
@@ -386,8 +386,10 @@ export const battleScreen = {
             return;
           }
 
-          // Sofort neu zeichnen: Die getippte Karte verschwindet auf der
-          // Stelle, die neue rückt nach - das fühlt sich direkt an und
+          // Die getippte Karte fliegt als Klon aus der Hand ...
+          karteWeg(card);
+          // ... und sofort neu zeichnen: das Original verschwindet auf der
+          // Stelle, die neue Karte rückt nach. Das fühlt sich direkt an und
           // schließt die Lücke, in der ein Doppeltap zuschlagen könnte.
           handGesperrt = true;
           render(battle.state);

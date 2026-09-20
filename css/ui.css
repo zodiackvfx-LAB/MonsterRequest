@@ -1208,3 +1208,11 @@
   100% { transform: translateY(0) scale(1); }
 }
 .karte-bereit { animation: karte-bereit 0.32s ease-out; }
+
+/* Eine gespielte Karte fliegt kurz nach oben aus der Hand (ein Klon, siehe
+   js/ui/effekte.js). Gibt dem Kartenspiel ein spürbares "ab dafür". */
+@keyframes karte-flieg {
+  0%   { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+  100% { transform: translateY(-46px) scale(1.16) rotate(-3deg); opacity: 0; }
+}
+.karte-flieg { animation: karte-flieg 0.4s cubic-bezier(0.3, 0, 0.5, 1) forwards; }
