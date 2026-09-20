@@ -36,6 +36,9 @@ function createNewGame() {
     decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     characters: {}, // { monsterId: { level, xp, upgrades } } - siehe progression.js
     attackLevels: {}, // { attackId: level }
+    // Einmal-Hinweise (z. B. das Kampf-Tutorial), die nur beim ersten Mal
+    // erscheinen. Schlüssel = Hinweis-id, Wert = true, sobald gesehen.
+    gesehen: {},
     // Tagesaufgaben - siehe js/core/aufgaben.js
     dailies: {
       datum: null, // "JJJJ-MM-TT" des Tages, fuer den die Aufgaben gelten
@@ -172,7 +175,19 @@ function uebernehmen(saved) {
     fortschritt: saved.dailies?.fortschritt ?? {},
     abgeholt: Array.isArray(saved.dailies?.abgeholt) ? saved.dailies.abgeholt : [],
   };
+  gameState.gesehen = saved.gesehen && typeof saved.gesehen === 'object' ? { ...saved.gesehen } : {};
   gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
+}
+
+/** Wurde dieser Einmal-Hinweis schon gezeigt? */
+export function hinweisGesehen(id) {
+  return gameState.gesehen[id] === true;
+}
+
+/** Merkt sich, dass ein Einmal-Hinweis gezeigt wurde. */
+export function merkeHinweis(id) {
+  gameState.gesehen[id] = true;
+  saveProgress();
 }
 
 /**

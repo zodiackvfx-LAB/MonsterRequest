@@ -731,6 +731,47 @@
   background: linear-gradient(90deg, transparent, rgba(255, 220, 140, 0.8), transparent);
 }
 
+/* Kampf-Tutorial: drei kurze Schritte im Ergebnis-Fenster-Stil */
+.tutorial-liste {
+  list-style: none;
+  margin: 6px 0 2px;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.tutorial-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.tutorial-step__icon {
+  font-size: 1.7rem;
+  line-height: 1.1;
+  flex: 0 0 auto;
+  width: 34px;
+  text-align: center;
+}
+
+.tutorial-step__body {
+  display: grid;
+  gap: 2px;
+}
+
+.tutorial-step__title {
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.tutorial-step__text {
+  font-size: 0.84rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
 .overlay__icon {
   font-size: 3.4rem;
   filter: drop-shadow(0 4px 6px rgba(8, 14, 40, 0.5));

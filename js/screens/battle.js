@@ -18,7 +18,8 @@ import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_ENERGIE } from '../core/battle.js';
 import { kraftFuerWelt } from '../data/kraefte.js';
-import { calculateStars, getBossKraft, getDeck } from '../core/state.js';
+import { calculateStars, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
+import { zeigeKampfTutorial } from '../ui/tutorial.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung } from '../core/belohnung.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
@@ -714,7 +715,17 @@ export const battleScreen = {
     root.appendChild(screen);
 
     render(battle.state); // einmal zeichnen, bevor der erste Frame läuft
-    battle.start();
+
+    // Beim allerersten Kampf ein kurzes Tutorial zeigen und den Kampf erst
+    // danach starten - so hat der Spieler in Ruhe Zeit, die Regeln zu lesen.
+    if (!hinweisGesehen('kampf')) {
+      zeigeKampfTutorial(screen, () => {
+        merkeHinweis('kampf');
+        battle.start();
+      });
+    } else {
+      battle.start();
+    }
   },
 
   /** Wichtig: die Spielschleife stoppen, wenn der Bildschirm verlassen wird. */
