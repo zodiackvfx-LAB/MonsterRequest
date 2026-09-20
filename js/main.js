@@ -17,7 +17,7 @@ import { getSkin } from './data/items.js';
 import { getMonster, STARTER_MONSTER_ID } from './data/monsters.js';
 import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
 import { spieleKlang, tonFreischalten } from './core/audio.js';
-import { startScreen, MENU_BILDER } from './screens/start.js';
+import { startScreen } from './screens/start.js';
 import { worldsScreen } from './screens/worlds.js';
 import { mapScreen } from './screens/map.js';
 import { battleScreen } from './screens/battle.js';
@@ -38,17 +38,27 @@ setSkinNachschlag((monster) => {
   return skinId ? getSkin(skinId) : null;
 });
 
-// Die Grafiken der Spielfigur im Voraus laden, damit die erste
-// Angriffsanimation nicht ruckelt.
+// Die KAMPF-Grafiken (Schlag, Strahl, Treffer) werden erst gebraucht, wenn
+// ein Kampf beginnt. Deshalb laden wir sie NICHT sofort - das würde nur mit
+// den Startbild-Grafiken um die Leitung streiten -, sondern im Leerlauf,
+// sobald der Browser Luft hat. Der Startbildschirm erscheint dadurch
+// schneller; die erste Angriffsanimation ruckelt trotzdem nicht, weil die
+// Bilder bis dahin längst da sind. Die Grafiken von Held und Menü lädt der
+// Startbildschirm selbst, sobald er sie zeigt.
 const spielfigur = getMonster(STARTER_MONSTER_ID);
-bilderVorladen([
-  spielfigur.image,
-  spielfigur.bildKampf,
-  ...(spielfigur.bildSchlag ?? []),
-  ...(spielfigur.bildStrahl ?? []),
-  ...(spielfigur.bildTreffer ?? []),
-  ...MENU_BILDER,
-]);
+function kampfgrafikenVorladen() {
+  bilderVorladen([
+    spielfigur.bildKampf,
+    ...(spielfigur.bildSchlag ?? []),
+    ...(spielfigur.bildStrahl ?? []),
+    ...(spielfigur.bildTreffer ?? []),
+  ]);
+}
+if (typeof requestIdleCallback === 'function') {
+  requestIdleCallback(kampfgrafikenVorladen, { timeout: 3000 });
+} else {
+  setTimeout(kampfgrafikenVorladen, 1200);
+}
 
 // Safari auf iPhone und iPad erlaubt Ton erst nach der ersten Berührung.
 tonFreischalten();
