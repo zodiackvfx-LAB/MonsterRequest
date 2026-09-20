@@ -100,6 +100,47 @@ export function karteWeg(karte) {
 }
 
 /**
+ * Schießt einen Energiestrahl von einer Figur zur anderen - quer über die
+ * Arena. Für teure Fern-Attacken (Energiestrahl statt Nahkampf).
+ *
+ * Der Strahl ist ein kurzer Blitz auf der Verbindungslinie beider Figuren:
+ * er zeigt ihre Position beim Erzeugen und blitzt 0,24 s auf. Rein
+ * gestalterisch - der Schaden wurde von der Engine schon verrechnet.
+ *
+ * @param {HTMLElement} vonEl - Angreifer
+ * @param {HTMLElement} zuEl - Getroffener
+ * @param {string} [farbe]
+ */
+export function energiestrahl(vonEl, zuEl, farbe = '#8fd0ff') {
+  if (!vonEl || !zuEl || !animationenAn()) return;
+
+  const a = vonEl.getBoundingClientRect();
+  const z = zuEl.getBoundingClientRect();
+  const x1 = a.left + a.width * 0.55;
+  const y1 = a.top + a.height * 0.42;
+  const x2 = z.left + z.width * 0.5;
+  const y2 = z.top + z.height * 0.5;
+  const laenge = Math.hypot(x2 - x1, y2 - y1);
+  const winkel = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+
+  const strahl = document.createElement('span');
+  strahl.className = 'energiestrahl';
+  strahl.style.setProperty('--strahl-farbe', farbe);
+  Object.assign(strahl.style, {
+    position: 'fixed',
+    left: `${x1}px`,
+    top: `${y1}px`,
+    width: `${laenge}px`,
+    // Der rotate-Wert bleibt statisch - die Animation rührt transform nicht an.
+    transform: `translateY(-50%) rotate(${winkel}deg)`,
+    zIndex: '15',
+    pointerEvents: 'none',
+  });
+  document.body.appendChild(strahl);
+  setTimeout(() => strahl.remove(), 280);
+}
+
+/**
  * Streut Konfetti über ein Element - zum Feiern im Siegesfenster.
  *
  * @param {HTMLElement} box - der Kasten, in den es fällt

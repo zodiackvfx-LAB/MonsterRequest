@@ -26,7 +26,7 @@ import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
 import { createSprite, spieleBildfolge } from '../ui/sprite.js';
-import { bildschirmBeben, karteWeg, konfetti, trefferFunke } from '../ui/effekte.js';
+import { bildschirmBeben, energiestrahl, karteWeg, konfetti, trefferFunke } from '../ui/effekte.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
@@ -420,6 +420,8 @@ export const battleScreen = {
           // Kleine Attacke = Nahkampf, grosse Attacke = Energiestrahl.
           const teuer = (event.attack?.cost ?? 0) >= ANGRIFF_AB_ENERGIE;
           spieleFolge(teuer ? basis.bildStrahl : basis.bildSchlag);
+          // Teure Attacken schießen einen Energiestrahl quer über die Arena.
+          if (teuer) energiestrahl(ui.playerSprite, ui.enemySprite, '#8fd0ff');
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
           const anteilG = event.amount / (battle.state.enemy.maxHp || 1);
@@ -436,6 +438,9 @@ export const battleScreen = {
           break;
         }
         case 'enemy-attack': {
+          if ((event.attack?.cost ?? 0) >= ANGRIFF_AB_ENERGIE) {
+            energiestrahl(ui.enemySprite, ui.playerSprite, '#ff8a5a');
+          }
           flash(ui.enemySprite, 'lunge-left');
           flash(ui.playerSprite, 'hit');
           const anteilP = event.amount / (battle.state.player.maxHp || 1);

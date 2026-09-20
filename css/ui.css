@@ -1230,3 +1230,19 @@
   100% { transform: translateY(-46px) scale(1.16) rotate(-3deg); opacity: 0; }
 }
 .karte-flieg { animation: karte-flieg 0.4s cubic-bezier(0.3, 0, 0.5, 1) forwards; }
+
+/* Energiestrahl quer über die Arena (siehe js/ui/effekte.js).
+   transform-origin links, damit die Länge vom Angreifer weg zeigt. */
+.energiestrahl {
+  height: 6px;
+  transform-origin: left center;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), var(--strahl-farbe, #8fd0ff) 45%, #ffffff);
+  box-shadow: 0 0 14px var(--strahl-farbe, #8fd0ff);
+  animation: strahl-blitz 0.24s ease-out forwards;
+}
+@keyframes strahl-blitz {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  100% { opacity: 0; }
+}
