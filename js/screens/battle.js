@@ -423,11 +423,13 @@ export const battleScreen = {
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
           const anteilG = event.amount / (battle.state.enemy.maxHp || 1);
-          floatNumber(ui.enemySprite, `-${event.amount}`, 'damage', anteilG);
-          trefferFunke(ui.enemySprite, '#ffd76a');
-          bildschirmBeben(ui.arena, anteilG);
+          floatNumber(ui.enemySprite, `-${event.amount}`, 'damage', anteilG, event.krit);
+          // Ein Krit spritzt mehr Funken und lässt den Platz kräftiger beben.
+          trefferFunke(ui.enemySprite, event.krit ? '#ff5a2c' : '#ffd76a', event.krit ? 12 : 7);
+          bildschirmBeben(ui.arena, event.krit ? Math.max(anteilG, 0.3) : anteilG);
           spieleKlang('karte');
-          spieleTreffer(event.amount);
+          if (event.krit) spieleKlang('trefferStark');
+          else spieleTreffer(event.amount);
           // Zaehlt fuer die Tagesaufgaben.
           fortschrittMelden('attacke');
           fortschrittMelden('schaden', event.amount);
@@ -437,10 +439,11 @@ export const battleScreen = {
           flash(ui.enemySprite, 'lunge-left');
           flash(ui.playerSprite, 'hit');
           const anteilP = event.amount / (battle.state.player.maxHp || 1);
-          floatNumber(ui.playerSprite, `-${event.amount}`, 'damage', anteilP);
-          trefferFunke(ui.playerSprite, '#ff6a6a');
-          bildschirmBeben(ui.arena, anteilP);
-          spieleTreffer(event.amount);
+          floatNumber(ui.playerSprite, `-${event.amount}`, 'damage', anteilP, event.krit);
+          trefferFunke(ui.playerSprite, '#ff6a6a', event.krit ? 12 : 7);
+          bildschirmBeben(ui.arena, event.krit ? Math.max(anteilP, 0.3) : anteilP);
+          if (event.krit) spieleKlang('trefferStark');
+          else spieleTreffer(event.amount);
           // Timo geht sichtbar in die Knie, wenn er einsteckt.
           spieleFolge(basis.bildTreffer);
           break;
@@ -506,15 +509,17 @@ export const battleScreen = {
      *
      * @param {number} [anteil] - Schadensanteil (0-1). Grosse Treffer werden
      *        groesser und rot-orange dargestellt.
+     * @param {boolean} [krit] - kritischer Treffer: immer gross, mit "KRIT!".
      */
-    function floatNumber(sprite, text, kind, anteil = 0) {
+    function floatNumber(sprite, text, kind, anteil = 0, krit = false) {
       const number = document.createElement('span');
-      const gross = kind === 'damage' && anteil >= 0.2 ? ' float-number--gross' : '';
-      number.className = `float-number float-number--${kind}${gross}`;
+      const gross = krit || (kind === 'damage' && anteil >= 0.2) ? ' float-number--gross' : '';
+      const kritKlasse = krit ? ' float-number--krit' : '';
+      number.className = `float-number float-number--${kind}${gross}${kritKlasse}`;
       // Jede Zahl driftet ein Stueck zufaellig zur Seite, damit sich mehrere
       // nicht genau uebereinander stapeln.
       number.style.setProperty('--drift', `${(Math.random() * 2 - 1) * 16}px`);
-      number.textContent = text;
+      number.textContent = krit ? `KRIT! ${text}` : text;
       sprite.parentElement.appendChild(number);
       setTimeout(() => number.remove(), 1000);
     }

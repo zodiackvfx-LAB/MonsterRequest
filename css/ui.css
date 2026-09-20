@@ -1175,6 +1175,20 @@
   text-shadow: 0 2px 0 rgba(12, 18, 48, 0.85), 0 0 16px rgba(255, 90, 40, 0.7);
 }
 
+/* Kritischer Treffer: noch groesser, goldgelb, mit kurzem Aufblitz-Puls. */
+.float-number--krit {
+  font-size: 2.4rem;
+  color: #ffdb3b;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.9), 0 0 20px rgba(255, 120, 40, 0.9);
+  animation: float-pop 0.95s cubic-bezier(0.2, 1.2, 0.4, 1) forwards,
+    krit-blitz 0.28s ease-out;
+}
+@keyframes krit-blitz {
+  0% { filter: brightness(2.4); }
+  100% { filter: brightness(1); }
+}
+
 /* ---------- Volle Energie: der Balken schimmert golden ---------- */
 .wert-leiste.is-voll {
   border-color: var(--fantasy-gold);

@@ -20,6 +20,17 @@ const DEFAULT_REACTION_TIME = 1.0;
 const DEFAULT_PATIENCE = 2;
 
 /**
+ * Kritische Treffer.
+ *
+ * Mit dieser Wahrscheinlichkeit trifft eine Schadensattacke besonders hart
+ * und macht das FAKTOR-fache. Gilt für beide Seiten gleich - das bringt
+ * Spannung in jede Karte, ohne die Grundwerte zu verschieben.
+ * Zahlen ändern = Krits häufiger/stärker.
+ */
+export const KRIT_CHANCE = 0.12;
+export const KRIT_FAKTOR = 1.5;
+
+/**
  * Startet einen Kampf.
  *
  * @param {object} options
@@ -107,7 +118,11 @@ export function createBattle({ playerMonster, enemyMonster, bossPower = null, on
 
   function useAttack(attacker, defender, attack, side) {
     if (attack.damage > 0) {
-      const schaden = schadenBerechnen(attacker, defender, attack.damage);
+      let schaden = schadenBerechnen(attacker, defender, attack.damage);
+      // Kritischer Treffer: seltener, dafür deutlich härter.
+      const krit = Math.random() < KRIT_CHANCE;
+      if (krit) schaden = Math.round(schaden * KRIT_FAKTOR);
+
       const applied = defender.takeDamage(schaden);
       // Steckt der Spieler einen Treffer ein, lädt sich seine Kraft ein Stück.
       if (side === 'enemy') ladeKraft(2);
@@ -115,10 +130,13 @@ export function createBattle({ playerMonster, enemyMonster, bossPower = null, on
         type: `${side}-attack`,
         attack,
         amount: schaden,
+        krit,
         absorbed: applied.shield, // vom Schild abgefangener Anteil
-        text: applied.shield > 0
-          ? `${attack.name}: ${schaden} Schaden - das Schild fängt ${applied.shield} ab!`
-          : `${attacker.state.name} setzt ${attack.name} ein: ${schaden} Schaden!`,
+        text: krit
+          ? `Kritischer Treffer! ${attack.name}: ${schaden} Schaden!`
+          : applied.shield > 0
+            ? `${attack.name}: ${schaden} Schaden - das Schild fängt ${applied.shield} ab!`
+            : `${attacker.state.name} setzt ${attack.name} ein: ${schaden} Schaden!`,
       });
     }
 
