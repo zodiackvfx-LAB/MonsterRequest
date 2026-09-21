@@ -709,18 +709,16 @@ export const battleScreen = {
         statErhoehen('niederlagen');
       }
 
-      // Bei einer Niederlage steht der Endstand fest: die Zahl der überstandenen
-      // Runden (die verlorene zählt nicht mit).
-      let best = gameState.statistik.arenaBest ?? 0;
-      let neuerRekord = false;
-      if (result === 'lose') {
-        const score = runde - 1;
-        if (score > best) {
-          best = score;
-          gameState.statistik.arenaBest = best;
-          neuerRekord = true;
-        }
-      }
+      // "Bester Lauf" = am weitesten gekommene Runde. Ein Sieg in Runde N heißt
+      // N geschaffte Runden, eine Niederlage in Runde N heißt N-1. Der Bestwert
+      // wächst also schon WÄHREND des Laufs mit (nach jedem Sieg) - nicht erst
+      // am Ende. So aktualisiert er sich sichtbar und bleibt auch dann erhalten,
+      // wenn man mittendrin flieht.
+      const geschafft = result === 'win' ? runde : runde - 1;
+      const vorher = gameState.statistik.arenaBest ?? 0;
+      const neuerRekord = geschafft > vorher;
+      if (neuerRekord) gameState.statistik.arenaBest = geschafft;
+      const best = gameState.statistik.arenaBest;
 
       const neueErfolge = pruefeNeueErfolge();
       statistikSpeichern();
@@ -752,8 +750,8 @@ export const battleScreen = {
               ? 'Weiter geht’s - der nächste Gegner wartet.'
               : `Du hast <strong>${ueberstanden}</strong> ${ueberstanden === 1 ? 'Runde' : 'Runden'} überstanden.`}
           </p>
-          ${!gewonnen && neuerRekord ? '<p class="overlay__unlock">🏆 <strong>Neuer Rekord!</strong></p>' : ''}
-          ${!gewonnen ? `<p class="overlay__text">Bester Lauf: <strong>${best}</strong> ${best === 1 ? 'Runde' : 'Runden'}</p>` : ''}
+          ${neuerRekord ? '<p class="overlay__unlock">🏆 <strong>Neuer Bestwert!</strong></p>' : ''}
+          <p class="overlay__text">Bester Lauf: <strong>${best}</strong> ${best === 1 ? 'Runde' : 'Runden'}</p>
           ${neueErfolge.map((e) => `<p class="overlay__unlock overlay__unlock--erfolg">🏆 <strong>Erfolg: ${e.name}!</strong></p>`).join('')}
           <div class="overlay__actions">
             <button class="btn btn--big btn--green" id="btn-arena-next" type="button">${gewonnen ? 'Weiter' : 'Nochmal'}</button>
