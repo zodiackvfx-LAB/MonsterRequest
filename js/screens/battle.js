@@ -13,14 +13,14 @@
 import { showScreen } from '../core/screens.js';
 import { getLevel } from '../data/levels.js';
 import { getWorld } from '../data/worlds.js';
-import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { getMonster } from '../data/monsters.js';
 import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_ENERGIE } from '../core/battle.js';
 import { kraftFuerWelt } from '../data/kraefte.js';
 import { arenaLevel } from '../data/arena.js';
 import { getSchwierigkeit } from '../data/schwierigkeit.js';
-import { calculateStars, gameState, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
+import { calculateStars, gameState, getAktiveFigur, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
 import { zeigeKampfTutorial } from '../ui/tutorial.js';
 import { statErhoehen, pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
@@ -84,7 +84,7 @@ export const battleScreen = {
 
     // Das Monster kämpft mit dem gewählten Deck und mit allen Werten aus
     // seinem Fortschritt (Level und gekaufte Aufwertungen).
-    const basis = getMonster(STARTER_MONSTER_ID);
+    const basis = getMonster(getAktiveFigur());
     const playerMonster = { ...monsterMitFortschritt(basis), deck: getDeck(basis) };
     // Gegner als Kopie, damit der Schwierigkeitsgrad nur DIESEN Kampf ändert
     // und nicht die Vorlage in ENEMIES (die für die Karte/Sammlung gilt). In

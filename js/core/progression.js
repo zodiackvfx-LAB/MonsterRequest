@@ -131,16 +131,22 @@ export function charakterWerte(monster) {
   const level = charakter.level;
   const up = charakter.upgrades;
 
+  // Grundwerte je Figur. Timo lässt sie weg (Standard), eine andere Figur wie
+  // Rocco verschiebt damit Angriff, Verteidigung und Tempo (siehe monsters.js).
+  const angriffBasis = monster.damageBasis ?? 1;
+  const verteidigungBasis = monster.defenseBasis ?? 0;
+  const tempoBasis = monster.tempoBasis ?? 1;
+
   return {
     level,
     // Lebenspunkte: 8 je Level, 12 je gekaufter Stufe
     maxHp: monster.maxHp + (level - 1) * 8 + up.hp * WERTE.hp.proStufe,
     // Angriff: 4,5 % je Level, 6 % je Stufe
-    damageFactor: 1 + (level - 1) * 0.045 + up.angriff * 0.06,
+    damageFactor: angriffBasis + (level - 1) * 0.045 + up.angriff * 0.06,
     // Verteidigung: 0,5 % je Level, 2 % je Stufe - höchstens 45 %
-    defense: Math.min(0.45, (level - 1) * 0.005 + up.verteidigung * 0.02),
+    defense: Math.min(0.45, verteidigungBasis + (level - 1) * 0.005 + up.verteidigung * 0.02),
     // Tempo: mehr Energie pro Sekunde, höchstens das Anderthalbfache
-    energieProSekunde: Math.min(1.5, 1 + (level - 1) * 0.01 + up.tempo * 0.02),
+    energieProSekunde: Math.min(1.5, tempoBasis + (level - 1) * 0.01 + up.tempo * 0.02),
   };
 }
 

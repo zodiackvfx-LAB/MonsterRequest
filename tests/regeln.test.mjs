@@ -17,7 +17,7 @@ globalThis.localStorage = {
 
 import { createDeck, DECK_SIZE, HAND_SIZE } from '../js/core/deck.js';
 import { createFighter, MAX_ENERGIE, START_ENERGIE } from '../js/core/fighter.js';
-import { MONSTERS, STARTER_MONSTER_ID, getMonster } from '../js/data/monsters.js';
+import { MONSTERS, SPIELER_FIGUREN, STARTER_MONSTER_ID, getMonster } from '../js/data/monsters.js';
 import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
 import { GEGNER_ARTEN } from '../js/data/gegnerarten.js';
@@ -33,6 +33,9 @@ import {
   bezahlen,
   bossKraftFreischalten,
   completeLevel,
+  figurFrei,
+  getAktiveFigur,
+  setAktiveFigur,
   gameState,
   getBossKraft,
   getDeck,
@@ -922,6 +925,36 @@ console.log('\nSchwierigkeitsgrade');
     getSchwierigkeit('leicht').schaden < 1 && getSchwierigkeit('schwer').schaden > 1);
   pruefe('Ein unbekannter Grad fällt auf Normal zurück',
     getSchwierigkeit('gibtsnicht').id === 'normal');
+}
+
+console.log('\nZweite Spielfigur');
+{
+  resetProgress();
+
+  pruefe('Es gibt mindestens zwei Spielfiguren', SPIELER_FIGUREN.length >= 2);
+  pruefe('Timo ist von Anfang an frei', figurFrei('timo'));
+  pruefe('Rocco ist am Anfang gesperrt', !figurFrei('rocco'));
+  pruefe('Zu Beginn ist Timo die aktive Figur', getAktiveFigur() === 'timo');
+  pruefe('Eine gesperrte Figur lässt sich nicht wählen',
+    setAktiveFigur('rocco') === false && getAktiveFigur() === 'timo');
+
+  // Nach dem Sieg über den Boss von Welt 1 wird Rocco frei.
+  completeLevel(bossLevelOf(1).id, { stars: 3 });
+  pruefe('Nach dem ersten Boss ist Rocco frei', figurFrei('rocco'));
+  pruefe('Rocco lässt sich jetzt wählen',
+    setAktiveFigur('rocco') === true && getAktiveFigur() === 'rocco');
+
+  // Roccos Grundwerte unterscheiden sich von Timos.
+  const timo = charakterWerte(getMonster('timo'));
+  const rocco = charakterWerte(getMonster('rocco'));
+  pruefe('Rocco hat mehr Lebenspunkte als Timo', rocco.maxHp > timo.maxHp);
+  pruefe('Rocco schlägt weicher, lädt langsamer, ist gepanzerter',
+    rocco.damageFactor < timo.damageFactor &&
+    rocco.energieProSekunde < timo.energieProSekunde &&
+    rocco.defense > timo.defense);
+
+  resetProgress();
+  pruefe('Zurücksetzen stellt Timo als aktive Figur wieder her', getAktiveFigur() === 'timo');
 }
 
 console.log('\nEndlos-Arena');

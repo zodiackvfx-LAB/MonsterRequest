@@ -2,9 +2,9 @@
  * Kleine Bausteine, die mehrere Bildschirme gemeinsam nutzen.
  */
 
-import { gameState } from '../core/state.js';
+import { gameState, getAktiveFigur } from '../core/state.js';
 import { charakterWerte, getCharakter, xpFuerNaechstesLevel } from '../core/progression.js';
-import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { getMonster } from '../data/monsters.js';
 import { createSprite } from './sprite.js';
 import { MUENZE } from '../data/items.js';
 
@@ -45,7 +45,7 @@ export function balkenFuellen(element, anteil) {
  * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken und Münzen.
  */
 export function createHud() {
-  const starter = getMonster(STARTER_MONSTER_ID);
+  const starter = getMonster(getAktiveFigur());
   const { level } = charakterWerte(starter);
 
   // Der Balken zeigt, wie weit es bis zum nächsten Charakter-Level ist.

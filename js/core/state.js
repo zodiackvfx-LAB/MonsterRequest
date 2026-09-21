@@ -10,6 +10,7 @@
 import { LEVELS, bossLevelOf } from '../data/levels.js';
 import { WORLDS } from '../data/worlds.js';
 import { getKraft, kraftFuerWelt } from '../data/kraefte.js';
+import { MONSTERS } from '../data/monsters.js';
 import { cloudMerken } from './cloud.js';
 
 const STORAGE_KEY = 'monsterquest.save.v3';
@@ -23,6 +24,7 @@ function createNewGame() {
        siehe js/core/cloud.js. */
     revision: 0,
     name: '', // vom Spieler beim ersten Start gewählt (siehe js/ui/willkommen.js)
+    aktiveFigur: 'timo', // die gewählte Spielfigur (siehe js/data/monsters.js)
     unlockedWorld: 1, // höchste freigeschaltete Welt
     clearedLevels: [], // Level-ids wie "1-3"
     stars: {}, // { "1-3": 2 }
@@ -151,6 +153,8 @@ function figurUmbenennen(eintrag) {
 function uebernehmen(saved) {
   gameState.revision = Number(saved.revision) || 0;
   gameState.name = typeof saved.name === 'string' ? saved.name : '';
+  gameState.aktiveFigur =
+    typeof saved.aktiveFigur === 'string' && MONSTERS[saved.aktiveFigur] ? saved.aktiveFigur : 'timo';
   gameState.unlockedWorld = Number(saved.unlockedWorld) || 1;
   gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels.map(String) : [];
   gameState.stars = saved.stars && typeof saved.stars === 'object' ? saved.stars : {};
@@ -280,6 +284,35 @@ export function clearedInWorld(worldId) {
 export function isWorldCleared(worldId) {
   const boss = bossLevelOf(worldId);
   return Boolean(boss) && isLevelCleared(boss.id);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Spielfigur                                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ist diese Figur schon wählbar? Timo immer; jede andere erst, wenn ihr
+ * Freischalt-Level geschafft ist (siehe freischaltLevel in js/data/monsters.js).
+ */
+export function figurFrei(id) {
+  const monster = MONSTERS[id];
+  if (!monster) return false;
+  if (!monster.freischaltLevel) return true;
+  return isLevelCleared(monster.freischaltLevel);
+}
+
+/** Die aktuell gewählte Figur - fällt auf Timo zurück, falls etwas nicht passt. */
+export function getAktiveFigur() {
+  const id = gameState.aktiveFigur;
+  return MONSTERS[id] && figurFrei(id) ? id : 'timo';
+}
+
+/** Wählt eine (freigeschaltete) Figur aus. Gibt true zurück, wenn es klappte. */
+export function setAktiveFigur(id) {
+  if (!MONSTERS[id] || !figurFrei(id)) return false;
+  gameState.aktiveFigur = id;
+  saveProgress();
+  return true;
 }
 
 /* ------------------------------------------------------------------ */

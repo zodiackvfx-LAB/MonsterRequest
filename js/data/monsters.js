@@ -79,7 +79,39 @@ export const MONSTERS = {
     ],
   },
 
+  /* ---------- Zweite Spielfigur (nach dem ersten Boss wählbar) ---------- */
+  rocco: {
+    id: 'rocco',
+    name: 'Rocco',
+    icon: '🪨',
+    element: 'Stein',
+    // Rocco hat keine eigenen Grafiken - er wird als Pixelfigur berechnet
+    // (siehe js/ui/sprite.js), genau wie die Gegner. Deshalb nur ein "look".
+    look: { form: 'golem', hue: 210, sattheit: 22, akzentHue: 32, zusatz: 2 },
+    text: 'Ein bulliger Steingolem. Steckt viel ein und gibt nie auf - dafür schlägt und lädt er etwas langsamer.',
+    maxHp: 140,
+    // Werte-Grundlagen weichen von Timo ab (siehe charakterWerte in
+    // js/core/progression.js): mehr Panzer, dafür weicher und langsamer.
+    damageBasis: 0.9,
+    tempoBasis: 0.92,
+    defenseBasis: 0.05,
+    // Erst nach dem Sieg über den Boss von Welt 1 wählbar.
+    freischaltLevel: '1-12',
+    deck: [
+      'fausthieb',
+      'ellbogenstoss',
+      'wirbelkick',
+      'aufwaertshaken',
+      'deckung',
+      'energiestoss',
+      'druckwelle',
+      'sturmfaust',
+    ],
+  },
 };
+
+/** Die Ids aller spielbaren Figuren (nicht der Gegner). */
+export const SPIELER_FIGUREN = Object.keys(MONSTERS);
 
 /** Holt ein Monster per id - mit klarer Fehlermeldung, falls die id nicht existiert. */
 export function getMonster(id) {

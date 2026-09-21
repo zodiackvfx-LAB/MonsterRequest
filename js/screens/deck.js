@@ -7,13 +7,13 @@
  */
 
 import { showScreen } from '../core/screens.js';
-import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { getMonster } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
 import { BEUTE_ATTACKEN, MUENZE, SELTENHEITEN } from '../data/items.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { HAND_SIZE } from '../core/deck.js';
-import { besitztAttacke, gameState, getDeck, setDeck } from '../core/state.js';
+import { besitztAttacke, gameState, getAktiveFigur, getDeck, setDeck } from '../core/state.js';
 import { spieleKlang } from '../core/audio.js';
 import {
   MAX_ATTACKEN_LEVEL,
@@ -25,7 +25,7 @@ import {
 
 export const deckScreen = {
   mount(root) {
-    const monster = getMonster(STARTER_MONSTER_ID);
+    const monster = getMonster(getAktiveFigur());
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--page';

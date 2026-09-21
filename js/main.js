@@ -10,11 +10,11 @@
  */
 
 import { initScreens, registerScreen, showScreen } from './core/screens.js';
-import { getAktiverSkin, loadProgress, setSpielername } from './core/state.js';
+import { getAktiverSkin, getAktiveFigur, loadProgress, setSpielername } from './core/state.js';
 import { cloudStart } from './core/sync.js';
 import { zeigeWillkommen } from './ui/willkommen.js';
 import { getSkin } from './data/items.js';
-import { getMonster, STARTER_MONSTER_ID } from './data/monsters.js';
+import { getMonster } from './data/monsters.js';
 import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
 import { spieleKlang, tonFreischalten } from './core/audio.js';
 import { startScreen } from './screens/start.js';
@@ -46,7 +46,7 @@ setSkinNachschlag((monster) => {
 // schneller; die erste Angriffsanimation ruckelt trotzdem nicht, weil die
 // Bilder bis dahin längst da sind. Die Grafiken von Held und Menü lädt der
 // Startbildschirm selbst, sobald er sie zeigt.
-const spielfigur = getMonster(STARTER_MONSTER_ID);
+const spielfigur = getMonster(getAktiveFigur());
 function kampfgrafikenVorladen() {
   bilderVorladen([
     spielfigur.bildKampf,

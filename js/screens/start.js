@@ -5,11 +5,11 @@
 import { showScreen } from '../core/screens.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud } from '../ui/hud.js';
-import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { getMonster } from '../data/monsters.js';
 import { createSprite } from '../ui/sprite.js';
 import { parallaxAktivieren } from '../ui/parallax.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../ui/logo-pfade.js';
-import { gameState } from '../core/state.js';
+import { gameState, getAktiveFigur } from '../core/state.js';
 import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
@@ -53,7 +53,7 @@ export const MENU_BILDER = MENU.map((eintrag) => eintrag.bild).filter(Boolean);
 
 export const startScreen = {
   mount(root) {
-    const starter = getMonster(STARTER_MONSTER_ID);
+    const starter = getMonster(getAktiveFigur());
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--start';

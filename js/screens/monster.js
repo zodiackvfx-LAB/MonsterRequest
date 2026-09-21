@@ -13,7 +13,7 @@
  */
 
 import { showScreen } from '../core/screens.js';
-import { getMonster, STARTER_MONSTER_ID } from '../data/monsters.js';
+import { getMonster, SPIELER_FIGUREN } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
 import { MUENZE, SELTENHEITEN, SKINS } from '../data/items.js';
 import { BOSS_KRAEFTE } from '../data/kraefte.js';
@@ -25,9 +25,12 @@ import { spieleKlang } from '../core/audio.js';
 import {
   besitztKraft,
   besitztSkin,
+  figurFrei,
   gameState,
+  getAktiveFigur,
   getAktiverSkin,
   getDeck,
+  setAktiveFigur,
   setAktiverSkin,
   setBossKraft,
 } from '../core/state.js';
@@ -43,13 +46,20 @@ import {
 
 export const monsterScreen = {
   mount(root, params = {}) {
-    const monster = getMonster(STARTER_MONSTER_ID);
+    // Die gerade gewählte Figur. Wechselt man sie, wird der Bildschirm neu
+    // aufgebaut (showScreen), damit auch Kopfzeile und Auswahl frisch sind.
+    const monster = getMonster(getAktiveFigur());
 
     const screen = document.createElement('div');
     screen.className = 'screen screen--page';
     screen.appendChild(createScenery({ dimmed: true }));
     screen.appendChild(createTopbar('Deine Figur', () => showScreen('start')));
     screen.appendChild(createHud());
+
+    // Figur-Auswahl: nur zeigen, wenn es mehr als eine Figur gibt.
+    if (SPIELER_FIGUREN.length > 1) {
+      screen.appendChild(baueFigurWahl());
+    }
 
     const reiterLeiste = document.createElement('div');
     reiterLeiste.className = 'tabs';
@@ -89,6 +99,51 @@ export const monsterScreen = {
     }
 
     zeichne();
+
+    /* ------------------------------------------------------------------ */
+    /*  Figur-Auswahl (über den Reitern)                                   */
+    /* ------------------------------------------------------------------ */
+
+    function baueFigurWahl() {
+      const wahl = document.createElement('div');
+      wahl.className = 'figur-wahl';
+
+      SPIELER_FIGUREN.forEach((id) => {
+        const m = getMonster(id);
+        const frei = figurFrei(id);
+        const istAktiv = monster.id === id;
+
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `figur-chip${istAktiv ? ' is-active' : ''}${frei ? '' : ' is-locked'}`;
+        chip.disabled = istAktiv || !frei;
+        chip.innerHTML = `
+          <span class="figur-chip__sprite"></span>
+          <span class="figur-chip__text">
+            <span class="figur-chip__name">${frei ? m.name : '🔒 ' + m.name}</span>
+            <span class="figur-chip__hint">${frei ? (istAktiv ? '✓ Aktiv' : 'Wählen') : freischaltHinweis(m)}</span>
+          </span>
+        `;
+        chip.querySelector('.figur-chip__sprite').appendChild(createSprite(m));
+
+        if (frei && !istAktiv) {
+          chip.addEventListener('click', () => {
+            setAktiveFigur(id);
+            // Ganzen Bildschirm neu bauen (Kopfzeile, Auswahl, Werte) - Reiter merken.
+            showScreen('monster', { tab: aktiv });
+          });
+        }
+        wahl.appendChild(chip);
+      });
+
+      return wahl;
+    }
+
+    /** Kurzer Hinweis, wie eine gesperrte Figur freigeschaltet wird. */
+    function freischaltHinweis(m) {
+      const welt = m.freischaltLevel ? m.freischaltLevel.split('-')[0] : '';
+      return welt ? `Boss von Welt ${welt} besiegen` : 'Noch gesperrt';
+    }
 
     /* ------------------------------------------------------------------ */
     /*  Reiter 1: Werte                                                    */
@@ -211,10 +266,18 @@ export const monsterScreen = {
       skinBlock.className = 'panel';
       skinBlock.innerHTML = '<div class="panel__title">Skins</div>';
 
+      const eigeneSkins = SKINS.filter((skin) => skin.monsterId === monster.id);
+      if (eigeneSkins.length === 0) {
+        skinBlock.innerHTML +=
+          '<p class="map__info-text">Für diese Figur gibt es noch keine Skins.</p>';
+        content.appendChild(skinBlock);
+        return;
+      }
+
       const skinListe = document.createElement('div');
       skinListe.className = 'skin-list';
 
-      SKINS.filter((skin) => skin.monsterId === monster.id).forEach((skin) => {
+      eigeneSkins.forEach((skin) => {
         const besitzt = besitztSkin(skin.id);
         const aktiv = (getAktiverSkin(monster.id) ?? 'skin-standard') === skin.id;
         const seltenheit = SELTENHEITEN[skin.seltenheit];
