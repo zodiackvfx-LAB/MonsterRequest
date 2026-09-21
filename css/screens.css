@@ -59,6 +59,17 @@
   justify-items: center;
 }
 
+/* Arena-Startseite */
+.arena-intro {
+  text-align: center;
+}
+
+.arena-intro__icon {
+  font-size: 2.6rem;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
 /* =========================================================
    Weltkarte
    ========================================================= */

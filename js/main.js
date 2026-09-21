@@ -27,6 +27,7 @@ import { collectionScreen } from './screens/collection.js';
 import { dailyScreen } from './screens/daily.js';
 import { settingsScreen, applySettings } from './screens/settings.js';
 import { shopScreen } from './screens/shop.js';
+import { arenaScreen } from './screens/arena.js';
 
 const hatSpielstand = loadProgress();
 applySettings();
@@ -101,6 +102,7 @@ registerScreen('collection', collectionScreen);
 registerScreen('settings', settingsScreen);
 registerScreen('shop', shopScreen);
 registerScreen('daily', dailyScreen);
+registerScreen('arena', arenaScreen);
 
 showScreen('start');
 

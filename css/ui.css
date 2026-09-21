@@ -1037,6 +1037,27 @@
     0 1px 0 var(--fantasy-gold-tief);
 }
 
+/* Zweiter Spielmodus: die Endlos-Arena. Violett statt Gold, damit sie sich
+   klar vom Abenteuer-Knopf abhebt, aber nicht mit ihm konkurriert. */
+.btn--arena {
+  color: #fff;
+  font-size: 1rem;
+  padding: 13px 16px;
+  background: linear-gradient(180deg, #7a54c9 0%, #5a3aa0 55%, #3d2775 100%);
+  border: 2px solid #b98cff;
+  text-shadow: 0 2px 3px rgba(8, 14, 40, 0.7);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -3px 0 rgba(8, 14, 40, 0.35),
+    0 4px 0 #2c1c55,
+    0 8px 16px rgba(10, 16, 44, 0.4);
+}
+
+.btn--arena:active {
+  transform: translateY(3px) scale(0.99);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 1px 0 #2c1c55;
+}
+
 /* Ganz leichtes Atmen - der Knopf soll einladen, nicht blinken. */
 @keyframes abenteuer-pulsieren {
   0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.35),

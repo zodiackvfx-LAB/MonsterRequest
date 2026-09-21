@@ -155,6 +155,15 @@ export const startScreen = {
     });
     actions.appendChild(startButton);
 
+    // Zweiter Spielmodus: die Endlos-Arena. Als eigener Knopf, damit er neben
+    // dem Abenteuer klar sichtbar ist.
+    const arenaButton = document.createElement('button');
+    arenaButton.className = 'btn btn--arena';
+    arenaButton.type = 'button';
+    arenaButton.innerHTML = '🏟️&nbsp; Endlos-Arena';
+    arenaButton.addEventListener('click', () => showScreen('arena'));
+    actions.appendChild(arenaButton);
+
     const menu = document.createElement('div');
     menu.className = 'start__menu';
     MENU.forEach((entry) => {

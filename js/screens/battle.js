@@ -18,6 +18,7 @@ import { getEnemy } from '../data/enemies.js';
 import { getAttack } from '../data/attacks.js';
 import { createBattle, MAX_ENERGIE } from '../core/battle.js';
 import { kraftFuerWelt } from '../data/kraefte.js';
+import { arenaLevel } from '../data/arena.js';
 import { getSchwierigkeit } from '../data/schwierigkeit.js';
 import { calculateStars, gameState, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
 import { zeigeKampfTutorial } from '../ui/tutorial.js';
@@ -68,11 +69,15 @@ const KRAFT_KLANG = {
 };
 
 export const battleScreen = {
-  // Jede Welt hat ihre eigene Musik.
-  musik: (params) => getLevel(params.levelId)?.music ?? 'menue',
+  // Jede Welt hat ihre eigene Musik. In der Arena richtet sie sich nach dem
+  // Gegner der Runde.
+  musik: (params) =>
+    (params.arena ? arenaLevel(params.arena.runde) : getLevel(params.levelId))?.music ?? 'menue',
 
   mount(root, params) {
-    const level = getLevel(params.levelId);
+    // Im Arena-Modus liefert params.arena die Runde (und die bisher gehaltenen
+    // Lebenspunkte); das "Level" ist dann synthetisch (siehe js/data/arena.js).
+    const level = params.arena ? arenaLevel(params.arena.runde) : getLevel(params.levelId);
     if (!level) {
       throw new Error(`Level ${params.levelId} gibt es nicht (siehe js/data/levels.js)`);
     }
@@ -82,9 +87,10 @@ export const battleScreen = {
     const basis = getMonster(STARTER_MONSTER_ID);
     const playerMonster = { ...monsterMitFortschritt(basis), deck: getDeck(basis) };
     // Gegner als Kopie, damit der Schwierigkeitsgrad nur DIESEN Kampf ändert
-    // und nicht die Vorlage in ENEMIES (die für die Karte/Sammlung gilt).
+    // und nicht die Vorlage in ENEMIES (die für die Karte/Sammlung gilt). In
+    // der Arena ist der Gegner schon fertig skaliert im Level enthalten.
     const grad = getSchwierigkeit(gameState.settings.schwierigkeit);
-    const vorlage = getEnemy(level.enemyId);
+    const vorlage = level.arena ? level.gegner : getEnemy(level.enemyId);
     const enemyMonster = {
       ...vorlage,
       maxHp: Math.max(1, Math.round(vorlage.maxHp * grad.hp)),
@@ -108,7 +114,7 @@ export const battleScreen = {
       `
       <header class="topbar">
         <button class="btn btn--ghost btn--small" id="btn-flee" type="button">‹&nbsp;Fliehen</button>
-        <h2 class="topbar__title">${level.isBoss ? 'Bosskampf' : `Kampf ${level.number}`}</h2>
+        <h2 class="topbar__title">${level.arena ? `🏟️ Arena · Runde ${level.runde}` : level.isBoss ? 'Bosskampf' : `Kampf ${level.number}`}</h2>
         <span class="topbar__spacer"></span>
       </header>
 
@@ -274,6 +280,12 @@ export const battleScreen = {
       onEvent: handleEvent,
       onEnd: showResult,
     });
+
+    // Arena: die in der Vorrunde gehaltenen Lebenspunkte übernehmen. So wird
+    // es ein echtes Durchhalte-Rennen statt lauter frischer Einzelkämpfe.
+    if (level.arena && params.arena.hp != null) {
+      battle.state.player.hp = Math.max(1, Math.min(battle.state.player.maxHp, Math.round(params.arena.hp)));
+    }
 
     /* ---------- 3. Anzeige aktualisieren ---------- */
     function render(state) {
@@ -642,6 +654,14 @@ export const battleScreen = {
       const state = battle.state;
       // Ein fühlbarer Abschluss: Fanfare bei Sieg, dumpfes Brummen bei Niederlage.
       vibriere(result === 'win' ? 'sieg' : 'niederlage');
+
+      // Die Arena hat ihren eigenen Ausgang (weiter oder Endstand) - ohne
+      // Münzen, Sterne und Truhen.
+      if (level.arena) {
+        showArenaErgebnis(result);
+        return;
+      }
+
       let stars = 0;
       let belohnung = null;
 
@@ -675,6 +695,84 @@ export const battleScreen = {
         () => buildResultOverlay(result, stars, belohnung, neueErfolge),
         ERGEBNIS_VERZOEGERUNG
       );
+    }
+
+    /* ---------- Arena-Ausgang ---------- */
+    function showArenaErgebnis(result) {
+      const runde = level.runde;
+
+      statErhoehen('kaempfe');
+      if (result === 'win') {
+        statErhoehen('siege');
+        if (level.isBoss) statErhoehen('bosse');
+      } else {
+        statErhoehen('niederlagen');
+      }
+
+      // Bei einer Niederlage steht der Endstand fest: die Zahl der überstandenen
+      // Runden (die verlorene zählt nicht mit).
+      let best = gameState.statistik.arenaBest ?? 0;
+      let neuerRekord = false;
+      if (result === 'lose') {
+        const score = runde - 1;
+        if (score > best) {
+          best = score;
+          gameState.statistik.arenaBest = best;
+          neuerRekord = true;
+        }
+      }
+
+      const neueErfolge = pruefeNeueErfolge();
+      statistikSpeichern();
+
+      // Zwischen den Runden heilt der Spieler ein Stück - sonst wäre nach
+      // wenigen Runden Schluss.
+      const naechsteHp = Math.min(
+        battle.state.player.maxHp,
+        Math.round(battle.state.player.hp + battle.state.player.maxHp * 0.22)
+      );
+
+      resultTimer = setTimeout(
+        () => buildArenaOverlay(result, runde, best, neuerRekord, naechsteHp, neueErfolge),
+        ERGEBNIS_VERZOEGERUNG
+      );
+    }
+
+    function buildArenaOverlay(result, runde, best, neuerRekord, naechsteHp, neueErfolge) {
+      const gewonnen = result === 'win';
+      const ueberstanden = gewonnen ? runde : runde - 1;
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <div class="overlay__box">
+          <div class="overlay__icon">${gewonnen ? '🏟️' : '🏁'}</div>
+          <h3 class="overlay__title">${gewonnen ? `Runde ${runde} geschafft!` : 'Arena beendet'}</h3>
+          <p class="overlay__text">
+            ${gewonnen
+              ? 'Weiter geht’s - der nächste Gegner wartet.'
+              : `Du hast <strong>${ueberstanden}</strong> ${ueberstanden === 1 ? 'Runde' : 'Runden'} überstanden.`}
+          </p>
+          ${!gewonnen && neuerRekord ? '<p class="overlay__unlock">🏆 <strong>Neuer Rekord!</strong></p>' : ''}
+          ${!gewonnen ? `<p class="overlay__text">Bester Lauf: <strong>${best}</strong> ${best === 1 ? 'Runde' : 'Runden'}</p>` : ''}
+          ${neueErfolge.map((e) => `<p class="overlay__unlock overlay__unlock--erfolg">🏆 <strong>Erfolg: ${e.name}!</strong></p>`).join('')}
+          <div class="overlay__actions">
+            <button class="btn btn--big btn--green" id="btn-arena-next" type="button">${gewonnen ? 'Weiter' : 'Nochmal'}</button>
+            <button class="btn btn--ghost" id="btn-arena-back" type="button">Zur Arena</button>
+          </div>
+        </div>
+      `;
+
+      spieleKlang(gewonnen ? 'sieg' : 'niederlage');
+      if (gewonnen || neuerRekord) {
+        setTimeout(() => konfetti(overlay.querySelector('.overlay__box')), 120);
+      }
+
+      overlay.querySelector('#btn-arena-next').addEventListener('click', () => {
+        if (gewonnen) showScreen('battle', { arena: { runde: runde + 1, hp: naechsteHp } });
+        else showScreen('battle', { arena: { runde: 1, hp: null } });
+      });
+      overlay.querySelector('#btn-arena-back').addEventListener('click', () => showScreen('arena'));
+      screen.appendChild(overlay);
     }
 
     function buildResultOverlay(result, stars, belohnung, neueErfolge = []) {
@@ -765,7 +863,7 @@ export const battleScreen = {
     }
 
     screen.querySelector('#btn-flee').addEventListener('click', () =>
-      showScreen('map', { worldId: level.worldId })
+      showScreen(level.arena ? 'arena' : 'map', level.arena ? {} : { worldId: level.worldId })
     );
 
     root.appendChild(screen);

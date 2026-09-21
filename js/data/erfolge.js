@@ -126,6 +126,14 @@ export const ERFOLGE = [
     ziel: SKINS.length,
     wert: () => SKINS.filter((s) => besitztSkin(s.id)).length,
   },
+  {
+    id: 'arenakaempfer',
+    name: 'Arenakämpfer',
+    icon: '🏟️',
+    text: 'Überstehe 10 Runden in der Endlos-Arena.',
+    ziel: 10,
+    wert: () => gameState.statistik.arenaBest,
+  },
 ];
 
 /** Holt einen Erfolg per id. */

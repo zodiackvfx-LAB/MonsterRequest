@@ -48,6 +48,7 @@ function createNewGame() {
       schaden: 0,
       karten: 0,
       bosse: 0,
+      arenaBest: 0, // beste Rundenzahl in der Endlos-Arena
       erfolge: [], // ids der freigeschalteten Erfolge
     },
     // Tagesaufgaben - siehe js/core/aufgaben.js
@@ -198,6 +199,7 @@ function uebernehmen(saved) {
     schaden: Number(st.schaden) || 0,
     karten: Number(st.karten) || 0,
     bosse: Number(st.bosse) || 0,
+    arenaBest: Number(st.arenaBest) || 0,
     erfolge: Array.isArray(st.erfolge) ? st.erfolge.map(String) : [],
   };
   gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };

@@ -51,6 +51,7 @@ import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belo
 import { BOSS_KRAEFTE, getKraft, kraftFuerWelt } from '../js/data/kraefte.js';
 import { ERFOLGE } from '../js/data/erfolge.js';
 import { getSchwierigkeit } from '../js/data/schwierigkeit.js';
+import { arenaGegner, arenaLevel, istBossRunde } from '../js/data/arena.js';
 import { statErhoehen, pruefeNeueErfolge, erfolgFrei, erfolgErreicht } from '../js/core/statistik.js';
 import { BOSS_TRUHE } from '../js/data/shop.js';
 import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
@@ -921,6 +922,22 @@ console.log('\nSchwierigkeitsgrade');
     getSchwierigkeit('leicht').schaden < 1 && getSchwierigkeit('schwer').schaden > 1);
   pruefe('Ein unbekannter Grad fällt auf Normal zurück',
     getSchwierigkeit('gibtsnicht').id === 'normal');
+}
+
+console.log('\nEndlos-Arena');
+{
+  pruefe('Jede fünfte Runde ist ein Bosskampf',
+    istBossRunde(5) && istBossRunde(10) && !istBossRunde(1) && !istBossRunde(4));
+  pruefe('Der Arena-Gegner wird von Runde zu Runde stärker',
+    arenaGegner(10).maxHp > arenaGegner(1).maxHp &&
+    arenaGegner(10).damageFactor > arenaGegner(1).damageFactor);
+  pruefe('Bossrunden liefern einen Boss', arenaGegner(5).isBoss === true);
+  pruefe('Normale Runden liefern keinen Boss', arenaGegner(3).isBoss === false);
+  const lvl = arenaLevel(5);
+  pruefe('Das Arena-Level ist als Arena markiert und bringt seinen Gegner mit',
+    lvl.arena === true && lvl.gegner && lvl.enemyId === lvl.gegner.id && lvl.isBoss === true);
+  pruefe('Die Reaktionszeit bleibt auch in hohen Runden positiv',
+    arenaGegner(40).reactionTime >= 0.4);
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);
