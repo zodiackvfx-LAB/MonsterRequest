@@ -1,0 +1,2511 @@
+/* =========================================================================
+   MonsterQuest · screens.css
+   Aufbau der einzelnen Bildschirme.
+   ========================================================================= */
+
+/* =========================================================
+   Startbildschirm
+   ========================================================= */
+.screen--start {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.start__logo {
+  margin-top: 4px;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.start__hero {
+  flex: 1;
+  display: grid;
+  /* Zwei Reihen: oben die Buehne mit der Figur, darunter das Namensschild.
+     minmax(0, 1fr) ist der entscheidende Teil - damit DARF die Buehne
+     schrumpfen. Vorher war sie immer so hoch wie die Figur; auf niedrigen
+     Bildschirmen (Safari blendet die Adressleiste ein) wuchs sie dann nach
+     oben aus dem Bereich heraus und lag ueber dem Schriftzug. */
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  gap: 14px;
+  min-height: 0;
+}
+
+.start__hero-name {
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: linear-gradient(180deg, rgba(60, 95, 208, 0.9), rgba(27, 42, 99, 0.92));
+  border: 2px solid var(--fantasy-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 8px rgba(8, 14, 40, 0.45);
+}
+
+.start__actions {
+  display: grid;
+  gap: 16px;
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-bottom: 4px;
+}
+
+.start__menu {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 6px;
+  justify-items: center;
+}
+
+/* Arena-Startseite */
+.arena-intro {
+  text-align: center;
+}
+
+.arena-intro__icon {
+  font-size: 2.6rem;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* =========================================================
+   Weltkarte
+   ========================================================= */
+.screen--map {
+  gap: 10px;
+}
+
+.map {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+  /* Oben und unten laufen die Stationen weich aus, statt hart abgeschnitten
+     zu werden. Ein halb sichtbarer Levelpunkt sieht dadurch gewollt aus. */
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 54px,
+    #000 calc(100% - 26px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 54px,
+    #000 calc(100% - 26px),
+    transparent 100%
+  );
+  /* Beim Loslassen rastet die Karte sanft auf einer Station ein. */
+  scroll-snap-type: y proximity;
+}
+
+.map .node {
+  scroll-snap-align: center;
+}
+
+/* Die Flaeche, auf der die Levelpunkte liegen. Waechst automatisch mit,
+   wenn in js/data/levels.js weitere Level dazukommen. */
+.map__canvas {
+  position: relative;
+  width: 100%;
+  /* --levels wird in js/screens/map.js gesetzt: je mehr Kämpfe, desto höher
+     die Karte. Ab etwa acht Kämpfen wird sie scrollbar. */
+  min-height: max(100%, calc(var(--levels, 3) * 92px));
+}
+
+/* Der Weg zwischen den Levelpunkten */
+.map__path {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map__path-line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 2 18;
+}
+
+/* Ein Levelpunkt */
+.node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.node__circle {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: 50%;
+  /* Goldener Ring statt weissem - das Abzeichen wirkt dadurch wertiger. */
+  border: 3px solid var(--gold-1);
+  background: linear-gradient(180deg, #9db1e0 0%, #6a7cb8 45%, #3f4c80 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(8, 14, 40, 0.4),
+    0 5px 0 rgba(12, 18, 48, 0.55), 0 10px 16px rgba(10, 16, 44, 0.45);
+  transition: transform 0.1s ease;
+}
+
+/* Glanzlicht oben auf dem Abzeichen. */
+.node__circle::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 16%;
+  width: 68%;
+  height: 34%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent);
+  pointer-events: none;
+}
+
+.node.is-unlocked .node__circle {
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  color: var(--text-dark);
+}
+
+.node.is-cleared .node__circle {
+  background: linear-gradient(180deg, #bdf58a 0%, var(--green-1) 40%, var(--green-2) 100%);
+  color: #0f2a08;
+}
+
+.node.is-boss .node__circle {
+  width: 74px;
+  height: 74px;
+  font-size: 1.1rem;
+  background: linear-gradient(180deg, #b06bd8, #6b2f9e);
+  color: #fff;
+}
+
+.node:not(:disabled):active .node__circle {
+  transform: translateY(4px);
+}
+
+.node:disabled {
+  cursor: not-allowed;
+}
+
+/* Der naechste Kampf wippt und traegt einen goldenen Schein - so findet
+   man ihn sofort, auch wenn die Karte lang ist. */
+.node.is-current .node__circle {
+  animation: bob 1.8s ease-in-out infinite, node-leuchten 2.2s ease-in-out infinite;
+}
+
+@keyframes node-leuchten {
+  0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.4),
+                         0 5px 0 rgba(12,18,48,0.55), 0 0 12px rgba(255, 197, 61, 0.35); }
+  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.4),
+                         0 5px 0 rgba(12,18,48,0.55), 0 0 24px rgba(255, 197, 61, 0.7); }
+}
+
+.node__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(12, 18, 48, 0.65);
+  white-space: nowrap;
+}
+
+.node .stars {
+  font-size: 0.72rem;
+}
+
+/* Kopfzeile der Welt über der Karte */
+.map__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map__world {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map__chip {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: linear-gradient(180deg, #2f3f7d, #16204a);
+  border: 2px solid var(--gold-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(8, 14, 40, 0.4);
+}
+
+/* Der gerade ausgewählte Kampf */
+.node.is-selected .node__circle {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85), 0 5px 0 rgba(12, 18, 48, 0.5);
+}
+
+/* Infoleiste unten auf der Karte */
+.map__footer {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.map__buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.map__buttons .btn--big {
+  flex: 1;
+}
+
+.map__info {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+  justify-items: center;
+}
+
+/* Vorschau des Gegners in der Infoleiste */
+.map__info-sprite {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+
+.map__info-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.map__info-text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* =========================================================
+   Kampfbildschirm
+   ========================================================= */
+.screen--battle {
+  gap: 8px;
+}
+
+/* Die Kampffläche: hier stehen sich die beiden Monster gegenüber.
+   Die Arena darin ist in der Höhe begrenzt (css/scenery.css) und wird
+   mittig gesetzt - dadurch bleiben die Monster nah beieinander, egal wie
+   hoch der Bildschirm ist. */
+.battlefield {
+  position: relative;
+  flex: 1;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+}
+
+.stage {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+}
+
+/* Der Horizont der Arena liegt bei 52 Prozent ihrer Höhe. Der Gegner steht
+   knapp dahinter, der Spieler vorne - so entsteht die klassische
+   diagonale Aufstellung, und beide bleiben dicht beieinander. */
+.stage--enemy {
+  bottom: 26%;
+  right: 8%;
+}
+
+/* Die Figuren sind nach rechts gezeichnet. Der Gegner wird gespiegelt,
+   damit sich beide anschauen. */
+.stage--enemy .pixel-sprite {
+  transform: scaleX(-1);
+}
+
+.stage--player {
+  bottom: 1%;
+  left: 8%;
+}
+
+/* Infozeile eines Kämpfers (Name, Lebenspunkte, Energie) */
+.fighter-bar {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  gap: 5px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(42, 58, 114, 0.94), rgba(17, 24, 58, 0.94));
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* goldener Lichtstrich oben - dasselbe Muster wie bei .panel */
+.fighter-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 197, 61, 0.6), transparent);
+}
+
+.fighter-bar__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fighter-bar__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.fighter-bar__hp {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.fighter-bar__energie {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fighter-bar__energie-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.fighter-bar__energie .pips {
+  flex: 1;
+}
+
+/* Schild-Anzeige, erscheint nur wenn ein Schild aktiv ist */
+.shield-badge {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8fe3ff;
+}
+
+.shield-badge.is-active {
+  display: flex;
+}
+
+.battle-log {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  text-align: center;
+  padding: 0 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(12, 18, 48, 0.9);
+}
+
+/* Energieleiste des Spielers */
+.wert-leiste {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(42, 58, 114, 0.94), rgba(17, 24, 58, 0.94));
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.wert-leiste__kopf {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.wert-leiste__titel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6fd4ff;
+  letter-spacing: 0.04em;
+}
+
+.wert-leiste__wert {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* Energiepunkte und der Kraft-Knopf stehen nebeneinander in einer Reihe. */
+.wert-leiste__reihe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wert-leiste__reihe .pips {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- Boss-Kraft-Knopf ----------
+   Rund, mit dem Symbol der Kraft. Der Ring aussenrum zeigt, wie voll die
+   Kraft-Leiste ist (--kraft von 0 bis 1). Erst wenn sie voll ist, leuchtet
+   der Knopf und lässt sich drücken. */
+.kraft-knopf {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 38%, #2c3f83, #141f4d 78%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 3px 8px rgba(8, 14, 40, 0.5);
+  /* Solange nicht bereit: gedämpft. */
+  filter: saturate(0.6) brightness(0.85);
+  transition: filter 0.2s ease, transform 0.08s ease;
+}
+
+/* Der Ladering: goldener Bogen nach Füllstand, Rest dunkel. */
+.kraft-knopf__ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--fantasy-gold) calc(var(--kraft, 0) * 360deg),
+    rgba(12, 18, 48, 0.65) 0
+  );
+  /* Nur den äußeren Rand als Ring zeigen (Mitte ausstanzen). */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+}
+
+.kraft-knopf__icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 3px rgba(8, 14, 40, 0.6));
+}
+
+/* Bereit: volle Farbe, goldener Schein, ruhiges Pulsieren. */
+.kraft-knopf.is-bereit {
+  filter: none;
+  animation: kraft-bereit 1.3s ease-in-out infinite;
+}
+
+.kraft-knopf.is-bereit:active {
+  transform: scale(0.92);
+}
+
+.kraft-knopf:disabled {
+  cursor: default;
+}
+
+@keyframes kraft-bereit {
+  0%, 100% { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 197, 61, 0.5); }
+  50% { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 197, 61, 0.9); }
+}
+
+/* Eingefrorener Gegner (Boss-Kraft "Frostbann"): blau getönt, kein Wippen. */
+.ist-gefroren {
+  animation: none !important;
+  filter: brightness(1.1) saturate(1.3)
+    drop-shadow(0 0 10px rgba(140, 227, 255, 0.9)) hue-rotate(-12deg);
+}
+
+/* Betäubte Figur (Attacke "Frostschock"): gelb umflort, kein Wippen. */
+.ist-betaeubt {
+  animation: none !important;
+  filter: brightness(1.15) saturate(1.2)
+    drop-shadow(0 0 10px rgba(255, 224, 138, 0.9));
+}
+
+/* Warnleiste über der Spezialkraft eines Bosses: zeigt, wie nah sein
+   großer Angriff ist. Läuft sie voll, glüht sie bedrohlich. */
+.kraft-warnung {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kraft-warnung__label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ff9ad9;
+  white-space: nowrap;
+}
+
+.kraft-warnung__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.kraft-warnung__fill {
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b14dff, #ff5ad0);
+  transition: width 0.2s ease;
+}
+
+.kraft-warnung.is-voll .kraft-warnung__fill {
+  animation: kraft-warnung-puls 0.7s ease-in-out infinite;
+}
+
+.kraft-warnung.is-voll .kraft-warnung__label {
+  animation: kraft-warnung-puls 0.7s ease-in-out infinite;
+}
+
+@keyframes kraft-warnung-puls {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.6) drop-shadow(0 0 6px rgba(255, 90, 208, 0.9)); }
+}
+
+/* Die vier Handkarten */
+.hand {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* =========================================================
+   Unterseiten (Monster, Deck, Sammlung, Einstellungen)
+   ========================================================= */
+.screen--page {
+  gap: 10px;
+}
+
+.page__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding-bottom: 6px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.88rem;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-row__label {
+  color: var(--text-dim);
+}
+
+.stat-row__value {
+  font-weight: 600;
+}
+
+/* Deckliste: Karte mit Name, Kosten und Wirkung */
+.deck-list {
+  display: grid;
+  gap: 8px;
+}
+
+.deck-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 3px 0 rgba(8, 14, 40, 0.35);
+}
+
+/* Das Symbol sitzt auf einer runden Scheibe - wirkt wie ein Wappen */
+.deck-item__icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #4a63bd, #1a2350 75%);
+  border: 2px solid rgba(255, 197, 61, 0.55);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.deck-item__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.deck-item__name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.deck-item__text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* Der antippbare Teil einer Deckzeile */
+.deck-item__tap {
+  font: inherit;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.deck-item__tap:active {
+  transform: translateY(2px);
+}
+
+.deck-item__level {
+  /* nowrap, damit "Lv." und die Zahl nicht auf zwei Zeilen zerrissen werden. */
+  white-space: nowrap;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+}
+
+.deck-item .btn {
+  flex: 0 0 auto;
+  min-width: 92px;
+  line-height: 1.25;
+}
+
+.deck-item--button {
+  font: inherit;
+  color: var(--text);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.deck-item--button:not(:disabled):active {
+  transform: translateY(2px);
+}
+
+.deck-item--button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.deck-item--button.is-current {
+  border-color: var(--gold-2);
+}
+
+.deck-item__rarity {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Auswahlliste beim Kartentausch */
+.overlay__box--wide {
+  max-width: 460px;
+}
+
+.swap-list {
+  width: 100%;
+  max-height: 46vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 6px;
+  padding-right: 2px;
+}
+
+.deck-item__cost {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #06234a;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8fe3ff, #2ba7e0);
+  border: 2px solid #0d1430;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55), 0 2px 4px rgba(8, 14, 40, 0.45);
+}
+
+/* Sammlung: Raster aus Monsterkacheln */
+.collection {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.collection-item {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 3px 0 rgba(8, 14, 40, 0.35);
+}
+
+/* Heller Schimmer oben, damit die Kachel gewoelbt aussieht.
+   Der Schimmer holt sich die Rundung selbst - die Kachel braucht deshalb
+   kein overflow:hidden (das wuerde sie im Raster schrumpfen lassen). */
+.collection-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 42%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+  pointer-events: none;
+}
+
+.collection-item.is-locked {
+  opacity: 0.55;
+}
+
+/* runder Lichtfleck hinter der Figur - als Hintergrund, damit
+   die Figur selbst immer davor liegt */
+.collection-item__sprite {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  background: radial-gradient(circle, rgba(109, 146, 255, 0.34), transparent 68%);
+}
+
+.collection-item.is-locked .collection-item__sprite {
+  filter: grayscale(1) brightness(0.4);
+}
+
+.collection-item__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.collection-item__note {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* Einstellungen */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.setting-row__label {
+  display: grid;
+  gap: 2px;
+}
+
+.setting-row__name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.setting-row__hint {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+/* Schalter zum Ein- und Ausschalten */
+.switch {
+  position: relative;
+  width: 58px;
+  height: 32px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: #101838;
+  border: 2px solid var(--panel-border);
+  transition: background 0.15s ease;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #8ea3d6;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.switch.is-on {
+  background: var(--green-2);
+}
+
+.switch.is-on::after {
+  transform: translateX(26px);
+  background: #fff;
+}
+
+/* Schwierigkeitswahl: drei Knöpfe nebeneinander */
+.grad-wahl {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.grad-knopf {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 9px 4px;
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #232e62, #18224e);
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.grad-knopf__icon {
+  font-size: 1rem;
+}
+
+.grad-knopf.is-active {
+  border-color: var(--gold-2);
+  color: var(--text);
+  background: linear-gradient(180deg, #3d4f97, #232e5e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 10px rgba(255, 197, 61, 0.22);
+}
+
+.grad-knopf:not(.is-active):active {
+  transform: translateY(2px);
+}
+
+/* =========================================================
+   Anpassungen an die Bildschirmgroesse
+   ========================================================= */
+
+/* Breitere Geraete: vier Karten nebeneinander */
+@media (min-width: 480px) {
+  .hand {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .card {
+    min-height: 112px;
+  }
+
+  .collection {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Große Bildschirme (iPad): Das Spiel füllt den ganzen Schirm,
+   deshalb wächst hier alles mit - sonst wirkt die Bedienung verloren.
+   Die Schriftgröße wird an der Wurzel erhöht; weil fast alles in rem
+   gerechnet ist, skaliert der Text damit automatisch mit.
+   --------------------------------------------------------------- */
+@media (min-width: 700px) {
+  html {
+    font-size: 19px;
+  }
+
+  .screen {
+    padding: calc(16px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom)) 20px;
+    gap: 12px;
+  }
+
+  .logo {
+    max-width: 440px;
+  }
+
+  .card {
+    min-height: 150px;
+  }
+
+  .card__icon {
+    font-size: 2.3rem;
+  }
+
+  .card__cost {
+    min-width: 36px;
+    height: 36px;
+    top: -14px;
+    left: -10px;
+  }
+
+  .icon-btn__circle {
+    width: 68px;
+    height: 68px;
+    font-size: 1.9rem;
+  }
+
+  .btn--big {
+    min-height: 70px;
+  }
+
+  .node__circle {
+    width: 78px;
+    height: 78px;
+  }
+
+  .node.is-boss .node__circle {
+    width: 92px;
+    height: 92px;
+  }
+
+  .platform {
+    width: 150px;
+    height: 28px;
+  }
+
+  :root {
+    --sprite: 132px;
+    --sprite-large: 190px;
+  }
+
+  .arena {
+    max-height: 440px;
+  }
+
+  .overlay__box {
+    max-width: 440px;
+  }
+
+  .page__content {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+/* Viel Hoehe: groessere Monster */
+@media (min-height: 760px) {
+  :root {
+    --sprite: 118px;
+    --sprite-large: 168px;
+  }
+
+  .sprite--large {
+    font-size: 8rem;
+  }
+}
+
+/* Niedrige Displays (iPhone SE): alles kompakter, damit die vier
+   Handkarten sicher auf den Bildschirm passen. */
+@media (max-height: 700px) {
+  .screen {
+    padding: calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+    gap: 6px;
+  }
+
+  :root {
+    --sprite: 64px;
+    --sprite-large: 100px;
+  }
+
+  .fighter-bar {
+    padding: 7px 10px;
+  }
+
+  .battlefield {
+    min-height: 110px;
+  }
+
+  .arena {
+    max-height: 210px;
+  }
+
+  /* Kleine Displays: alle Tannen zusammen kleiner - eine Variable genügt */
+  .arena__tree { --h: 52px; }
+  .arena__treeline--fern .arena__tree:nth-child(2n) { --h: 42px; }
+  .arena__treeline--fern .arena__tree:nth-child(3n) { --h: 58px; }
+  .arena__treeline--fern .arena__tree:nth-child(5n) { --h: 36px; }
+  .arena__treeline--nah .arena__tree:nth-child(1) { --h: 82px; margin-bottom: -18px; }
+  .arena__treeline--nah .arena__tree:nth-child(2) { --h: 64px; margin-bottom: -8px; }
+  .arena__treeline--nah .arena__tree:nth-child(3) { --h: 74px; margin-bottom: -14px; }
+
+  .platform {
+    width: 80px;
+    height: 16px;
+  }
+
+  .logo {
+    max-width: 250px;
+  }
+
+  .battle-log {
+    font-size: 0.8rem;
+  }
+
+  .card {
+    min-height: 74px;
+    padding: 9px 5px 7px;
+  }
+
+  .card__icon {
+    font-size: 1.3rem;
+  }
+
+  .card__name {
+    font-size: 0.74rem;
+  }
+
+  .card__effect {
+    font-size: 0.66rem;
+  }
+
+  .btn--big {
+    min-height: 52px;
+    font-size: 1.1rem;
+  }
+
+  .icon-btn__circle {
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
+  }
+
+  .node__circle {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+/* =========================================================
+   Weltauswahl
+   ========================================================= */
+.world-card {
+  position: relative;
+  font: inherit;
+  color: var(--text);
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 55%, #16204a 100%);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* schraeger Lichtstreifen wie auf einer Sammelkarte */
+.world-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(118deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
+}
+
+.world-card:not(:disabled):active {
+  transform: translateY(3px);
+}
+
+.world-card.is-locked {
+  cursor: not-allowed;
+  filter: grayscale(0.7) brightness(0.75);
+}
+
+/* freigespielte Welten bekommen einen goldenen Rand */
+.world-card:not(.is-locked) {
+  border-color: var(--gold-2);
+}
+
+/* Kleine Vorschau der Weltfarben - nutzt dieselben Variablen wie die Kulisse */
+.world-card__art {
+  position: relative;
+  flex: 0 0 96px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--s-sky-top), var(--s-sky-bottom));
+  border-right: 2px solid rgba(8, 14, 40, 0.5);
+}
+
+/* weiche Abdunklung zum Text hin, damit die Kante nicht hart wirkt */
+.world-card__art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 55%, rgba(12, 18, 48, 0.45) 100%);
+}
+
+.world-card__hill {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  bottom: -30%;
+  height: 70%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: linear-gradient(180deg, var(--s-grass-light), var(--s-grass-dark));
+}
+
+.world-card__icon {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  font-size: 2.2rem;
+  filter: drop-shadow(0 4px 4px rgba(10, 20, 40, 0.4));
+}
+
+.world-card__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  padding: 12px 12px 12px 0;
+}
+
+.world-card__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.world-card__text {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.world-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.world-card__chip {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: rgba(12, 18, 48, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.world-card__chip--done {
+  background: linear-gradient(180deg, var(--green-2), var(--green-3));
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Zähler in einer Panel-Überschrift, z. B. "4/12" */
+.panel__count {
+  float: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* Hinweis im Ergebnisfenster, wenn eine neue Welt aufgeht */
+.overlay__unlock {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  background: rgba(255, 190, 60, 0.16);
+  border: 2px solid var(--gold-2);
+}
+
+/* Bosse in der Sammlung hervorheben */
+.collection-item.is-boss {
+  border-color: var(--gold-2);
+}
+
+/* =========================================================
+   Shop und Truhen
+   ========================================================= */
+.chest-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 58%, #16204a 100%);
+  border: 2px solid var(--gold-2);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* schraeger Glanz - Truhen sollen wertvoll aussehen */
+.chest-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(118deg, transparent 40%, rgba(255, 220, 140, 0.1) 50%, transparent 60%);
+}
+
+.chest-card__icon {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  font-size: 2.1rem;
+  border-radius: var(--radius-sm);
+  background: radial-gradient(circle at 50% 38%, rgba(255, 197, 61, 0.28), rgba(12, 18, 48, 0.65) 70%);
+  border: 2px solid rgba(255, 197, 61, 0.45);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+.chest-card__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.chest-card__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.chest-card__text,
+.chest-card__odds {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.chest-card__buy {
+  flex: 0 0 auto;
+}
+
+/* ---------- Truhe öffnen ---------- */
+.overlay--chest {
+  align-items: center;
+}
+
+.chest-open {
+  width: 100%;
+  max-width: 460px;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.chest-open__chest {
+  font-size: 4.6rem;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.5));
+}
+
+.chest-open__chest.is-shaking {
+  animation: chest-shake 0.35s ease-in-out infinite;
+}
+
+.chest-open__chest.is-open {
+  animation: chest-pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.chest-open__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8);
+}
+
+.loot-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.loot-item {
+  --rarity: var(--panel-border);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 92px;
+  padding: 8px 4px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #2f4185 0%, var(--panel-solid) 60%, #18224e 100%);
+  border: 2px solid var(--rarity);
+  box-shadow: 0 0 14px -2px var(--rarity), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  animation: loot-reveal 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.loot-item.is-hidden {
+  opacity: 0.35;
+  border-style: dashed;
+  box-shadow: none;
+  animation: none;
+  align-content: center;
+}
+
+.loot-item__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.loot-item__name {
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.loot-item__rarity {
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: var(--rarity);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chest-open__done {
+  margin-top: 6px;
+}
+
+@keyframes chest-shake {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+
+@keyframes chest-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.35) translateY(-10px); }
+  100% { transform: scale(1.12); }
+}
+
+@keyframes loot-reveal {
+  from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Auf schmalen Bildschirmen zwei Reihen statt einer sehr engen */
+@media (max-width: 420px) {
+  .loot-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .loot-item {
+    min-height: 84px;
+  }
+}
+
+/* Steckbrief oben im Monster-Bildschirm.
+   Der Lichtkegel liegt als zweite Hintergrundschicht ueber dem Panel-
+   Verlauf - so bleibt die Figur immer davor. */
+.monster-head {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 32%, rgba(120, 158, 255, 0.34), transparent 58%),
+    linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 55%, #16204a 100%);
+}
+
+/* Die Figur bekommt einen weichen Schatten nach unten */
+.monster-head .pixel-sprite {
+  filter: drop-shadow(0 8px 10px rgba(8, 14, 40, 0.55));
+}
+
+.monster-head__name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-shadow: 0 2px 0 rgba(8, 14, 40, 0.5), 0 0 14px rgba(255, 197, 61, 0.28);
+}
+
+/* Eine Zeile im Aufwertungs-Block */
+.upgrade-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.upgrade-row:last-child {
+  border-bottom: none;
+}
+
+.upgrade-row__label {
+  display: grid;
+  gap: 2px;
+}
+
+.upgrade-row__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.upgrade-row__hint {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.upgrade-row__mat {
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
+.upgrade-row .btn {
+  flex: 0 0 auto;
+  min-width: 96px;
+  line-height: 1.25;
+}
+
+/* Skin-Auswahl im Monster-Bildschirm */
+.skin-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+.skin-chip {
+  --rarity: var(--panel-border);
+  font: inherit;
+  color: var(--text);
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #2f4185 0%, var(--panel-solid) 60%, #18224e 100%);
+  border: 2px solid var(--rarity);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.skin-chip.is-active {
+  box-shadow: 0 0 0 3px var(--gold-2), 0 0 14px -2px var(--rarity);
+}
+
+.skin-chip.is-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.skin-chip__vorschau {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+
+.skin-chip__name {
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+/* =========================================================
+   Reiter (Sammlung)
+   ========================================================= */
+
+/* Figur-Auswahl über den Reitern (Deine Figur) */
+.figur-wahl {
+  display: flex;
+  gap: 8px;
+  padding: 0 var(--gap) 8px;
+}
+
+.figur-chip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  text-align: left;
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #232e62, #18224e);
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.figur-chip.is-active {
+  border-color: var(--gold-2);
+  color: var(--text);
+  background: linear-gradient(180deg, #3d4f97, #232e5e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 10px rgba(255, 197, 61, 0.22);
+}
+
+.figur-chip.is-locked {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.figur-chip__sprite {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.figur-chip__sprite .pixel-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.figur-chip__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.figur-chip__name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.figur-chip__hint {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 var(--gap) 10px;
+  /* Passen mehr Reiter nicht nebeneinander (z. B. fünf in der Sammlung),
+     lässt sich die Leiste seitlich schieben, statt dass etwas abgeschnitten
+     wird oder die Seite überbreit wird. Passen sie, füllen sie die Breite. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  font: inherit;
+  /* wachsen, um die Breite zu füllen, aber nie unter die eigene Textbreite
+     schrumpfen - sonst würde der Reiter-Text abgeschnitten. */
+  flex: 1 0 auto;
+  padding: 10px 6px;
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #232e62, #18224e);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.tab.is-active {
+  border-color: var(--gold-2);
+  color: var(--text);
+  background: linear-gradient(180deg, #3d4f97, #232e5e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 10px rgba(255, 197, 61, 0.22);
+}
+
+/* goldener Strich unter dem aktiven Reiter */
+.tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-1), transparent);
+}
+
+.tab:not(.is-active):active {
+  transform: translateY(2px);
+}
+
+/* =========================================================
+   Katalog-Zeilen (Attacken in der Sammlung)
+   ========================================================= */
+
+.katalog {
+  display: grid;
+  gap: 8px;
+}
+
+.katalog-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
+  /* Der farbige Streifen links zeigt die Seltenheit. */
+  border: 2px solid var(--panel-border);
+  border-left: 6px solid var(--seltenheit, var(--panel-border));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 0 rgba(8, 14, 40, 0.3);
+}
+
+.katalog-item.is-locked {
+  opacity: 0.5;
+  border-left-color: var(--panel-border);
+}
+
+.katalog-item__icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #445bb0, #182048 75%);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.katalog-item.is-locked .katalog-item__icon {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.katalog-item__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.katalog-item__name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.katalog-item__text {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.katalog-item__rarity {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--seltenheit, var(--text-dim));
+}
+
+.katalog-item.is-locked .katalog-item__rarity {
+  color: var(--text-dim);
+}
+
+/* Der Energiepreis rechts - gleiche Optik wie die Zahl auf der Kampfkarte. */
+.katalog-item__cost {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid rgba(12, 18, 48, 0.6);
+  background: linear-gradient(180deg, #6fd4ff, #2f9ae0);
+  color: var(--text-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(8, 14, 40, 0.4);
+}
+
+.katalog-item.is-locked .katalog-item__cost {
+  background: linear-gradient(180deg, #5c6a9c, #3d4874);
+  color: var(--text-dim);
+}
+
+/* Der getragene Skin bekommt einen goldenen Rahmen. */
+.collection-item.is-active {
+  border-color: var(--gold-2);
+  box-shadow: 0 0 0 2px rgba(255, 197, 61, 0.28);
+}
+
+/* =========================================================
+   Belohnungen im Siegesfenster
+   ========================================================= */
+
+.belohnung {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin: 2px 0 4px;
+}
+
+.belohnung .loot-item {
+  /* Schmaler als im Shop: hier stehen bis zu sechs Felder nebeneinander. */
+  min-height: 0;
+  width: 76px;
+  padding: 8px 4px;
+  /* backwards: vor dem eigenen Einsatz unsichtbar bleiben, sonst blitzen
+     alle Felder kurz auf, bevor die Verzoegerung greift. */
+  animation-fill-mode: backwards;
+}
+
+.belohnung .loot-item__name {
+  font-size: 0.6rem;
+}
+
+@media (max-height: 700px) {
+  .belohnung .loot-item {
+    width: 66px;
+    padding: 6px 3px;
+  }
+
+  .belohnung .loot-item__icon {
+    font-size: 1.3rem;
+  }
+}
+
+/* =========================================================
+   Tagesaufgaben
+   ========================================================= */
+
+/* Banner auf dem Startbildschirm */
+.tagesbanner {
+  font: inherit;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255, 197, 61, 0.4);
+  /* Goldene Kante nur links - ein Akzent, keine Flaeche. */
+  border-left: 5px solid var(--fantasy-gold);
+  background: linear-gradient(180deg, #2a3c7d 0%, var(--fantasy-tief) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 5px 14px rgba(10, 16, 44, 0.4);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tagesbanner:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 6px rgba(10, 16, 44, 0.4);
+}
+
+/* Liegt eine Belohnung bereit, faellt das Banner auf. */
+.tagesbanner.is-ready {
+  border-color: var(--gold-2);
+  animation: bar-warnung-gold 1.4s ease-in-out infinite;
+}
+
+@keyframes bar-warnung-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 197, 61, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(255, 197, 61, 0.5); }
+}
+
+.tagesbanner__icon {
+  font-size: 1.5rem;
+}
+
+.tagesbanner__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.tagesbanner__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tagesbanner__text {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.tagesbanner.is-ready .tagesbanner__text {
+  color: var(--gold-2);
+  font-weight: 600;
+}
+
+.tagesbanner__punkt {
+  flex: 0 0 auto;
+  min-width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  color: var(--text-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tagesbanner__pfeil {
+  color: var(--text-dim);
+  font-size: 1.2rem;
+}
+
+/* Eine Zeile im Aufgabenbildschirm */
+.aufgabe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 0 rgba(8, 14, 40, 0.3);
+}
+
+/* erledigte Aufgaben bekommen einen gruenen Rand statt nur blasser zu werden */
+.aufgabe.is-done {
+  border-color: var(--green-2);
+}
+
+.aufgabe + .aufgabe {
+  margin-top: 8px;
+}
+
+.aufgabe.is-done {
+  opacity: 0.6;
+}
+
+.aufgabe__icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #445bb0, #182048 75%);
+  border: 2px solid rgba(255, 197, 61, 0.4);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.aufgabe__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.aufgabe__name {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.aufgabe__text {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.aufgabe__stand {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* Schmalerer Balken als im Kampf. */
+.bar--schmal {
+  height: 9px;
+}
+
+.aufgabe__lohn {
+  flex: 0 0 auto;
+  min-width: 84px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+/* =========================================================
+   Niedrige Bildschirme im Hochformat
+   =========================================================
+   Wenn Safari die Adressleiste einblendet, bleiben von einem iPhone SE nur
+   rund 553 Pixel Hoehe uebrig. Kopfzeile, Schriftzug und die Knoepfe
+   brauchen davon fast alles - fuer die Figur bliebe ein Streifen von 20
+   Pixeln. Deshalb wird hier ueberall etwas Platz abgezwackt, damit die
+   Figur wieder ordentlich gross wird. Nichts verschwindet, alles behaelt
+   seinen Platz.
+   ========================================================= */
+@media (orientation: portrait) and (max-height: 700px) {
+  .start__logo {
+    margin-top: 2px;
+  }
+
+  .screen--start .logo {
+    max-width: 190px;
+  }
+
+  .screen--start .logo__claim {
+    margin-top: 2px;
+    font-size: 0.74rem;
+  }
+
+  .start__hero {
+    gap: 8px;
+  }
+
+  .start__hero-name {
+    padding: 4px 12px;
+    font-size: 0.78rem;
+  }
+
+  .start__actions {
+    gap: 9px;
+  }
+
+  .tagesbanner {
+    padding: 8px 12px;
+  }
+
+  .start__menu {
+    gap: 6px;
+  }
+
+  .screen--start .icon-btn__circle {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  .screen--start .icon-btn__label {
+    font-size: 0.56rem;
+  }
+}
+
+/* =========================================================
+   Querformat auf dem Handy
+   =========================================================
+   Gedreht bleiben nur rund 390 Pixel Hoehe - untereinander passt der
+   Startbildschirm da nicht mehr hin. Statt alles zu schrumpfen, nutzen wir
+   die Breite: links Logo und Monster, rechts die Knoepfe.
+   ========================================================= */
+@media (orientation: landscape) and (max-height: 560px) {
+  .screen--start {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    align-items: center;
+    column-gap: 18px;
+    row-gap: 4px;
+  }
+
+  /* Die Spielerleiste laeuft ueber beide Spalten. */
+  .screen--start .hud {
+    grid-area: 1 / 1 / 2 / 3;
+  }
+
+  .screen--start .start__logo {
+    grid-area: 2 / 1 / 3 / 2;
+    margin-top: 0;
+    align-self: end;
+  }
+
+  .screen--start .start__hero {
+    grid-area: 3 / 1 / 4 / 2;
+    /* min-height: 0 liesse den Bereich auf null zusammenfallen - die Figur
+       wuerde dann ueber das Logo laufen. */
+    min-height: 90px;
+    align-content: start;
+    gap: 8px;
+  }
+
+  .screen--start .start__actions {
+    grid-area: 2 / 2 / 4 / 3;
+    align-self: center;
+    padding-bottom: 0;
+    gap: 10px;
+  }
+
+  /* Alle sechs Menuepunkte in eine Reihe - spart eine ganze Zeile Hoehe. */
+  .screen--start .start__menu {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+
+  .logo {
+    max-width: 210px;
+  }
+
+  .logo__claim {
+    font-size: 0.72rem;
+  }
+
+  :root {
+    --sprite-large: 84px;
+  }
+
+  .start__hero-name {
+    font-size: 0.72rem;
+    padding: 3px 12px;
+  }
+
+  .tagesbanner {
+    padding: 7px 12px;
+  }
+
+  .tagesbanner__icon {
+    font-size: 1.2rem;
+  }
+
+  .btn--big {
+    min-height: 46px;
+    font-size: 1rem;
+  }
+
+  .icon-btn__circle {
+    width: 42px;
+    height: 42px;
+    font-size: 1.1rem;
+  }
+
+  .icon-btn__label {
+    font-size: 0.5rem;
+  }
+
+  /* Unterseiten: weniger Luft, damit der Inhalt nicht wegscrollt. */
+  .page__content {
+    gap: 8px;
+  }
+
+  /* ---- Kampf ----
+     Gedreht muss die ganze Kampfanzeige in rund 390 Pixel Hoehe passen:
+     Kopfzeile, zwei Kaempferleisten, die Arena, die Energieleiste und vier
+     Karten. Deshalb ist hier alles eine Nummer kleiner. Die Karten stehen
+     ohnehin schon nebeneinander, weil der Bildschirm breit genug ist. */
+  .screen--battle {
+    gap: 5px;
+  }
+
+  .fighter-bar {
+    padding: 5px 10px;
+    gap: 3px;
+  }
+
+  .fighter-bar__name {
+    font-size: 0.82rem;
+  }
+
+  .fighter-bar__hp {
+    font-size: 0.72rem;
+  }
+
+  .bar {
+    height: 11px;
+  }
+
+  .pip {
+    height: 9px;
+  }
+
+  .battlefield {
+    min-height: 60px;
+  }
+
+  .arena {
+    max-height: 124px;
+  }
+
+  .battle-log {
+    font-size: 0.74rem;
+  }
+
+  .wert-leiste {
+    padding: 5px 10px;
+  }
+
+  .wert-leiste__kopf {
+    margin-bottom: 4px;
+  }
+
+  .hand {
+    margin-top: 2px;
+  }
+
+  .card {
+    min-height: 58px;
+    padding: 5px 4px 4px;
+  }
+
+  .card__icon {
+    font-size: 1.05rem;
+  }
+
+  .card__name {
+    font-size: 0.66rem;
+  }
+
+  .card__effect {
+    font-size: 0.6rem;
+  }
+
+  :root {
+    --sprite: 54px;
+  }
+
+  /* Die Baeume der Arena mit verkleinern, sonst ragen sie oben heraus. */
+  .arena__tree { --h: 40px; }
+  .arena__treeline--fern .arena__tree:nth-child(2n) { --h: 32px; }
+  .arena__treeline--fern .arena__tree:nth-child(3n) { --h: 44px; }
+  .arena__treeline--fern .arena__tree:nth-child(5n) { --h: 28px; }
+  .arena__treeline--nah .arena__tree:nth-child(1) { --h: 60px; margin-bottom: -12px; }
+  .arena__treeline--nah .arena__tree:nth-child(2) { --h: 48px; margin-bottom: -6px; }
+  .arena__treeline--nah .arena__tree:nth-child(3) { --h: 54px; margin-bottom: -10px; }
+
+  .platform {
+    width: 64px;
+    height: 13px;
+  }
+
+  /* ---- Fenster (Sieg, Niederlage, Nachfragen) ----
+     Hochkant stehen die Knoepfe untereinander. Gedreht wuerde das Fenster
+     dadurch hoeher als der Bildschirm und man muesste darin scrollen, um
+     "Weiter" zu erreichen. Also breiter statt hoeher. */
+  .overlay__box {
+    max-width: 520px;
+    gap: 6px;
+    padding: 14px 18px;
+  }
+
+  .overlay__icon {
+    font-size: 2rem;
+  }
+
+  .overlay__title {
+    font-size: 1.15rem;
+  }
+
+  .overlay__text {
+    font-size: 0.8rem;
+  }
+
+  .overlay__actions {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 2px;
+  }
+
+  /* Der Hauptknopf steht links, damit er unter dem Daumen liegt. */
+  .overlay__actions .btn--big {
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+
+  .belohnung .loot-item {
+    width: 62px;
+    min-height: 0;
+    padding: 5px 3px;
+  }
+
+  .belohnung .loot-item__icon {
+    font-size: 1.1rem;
+  }
+
+  .overlay__unlock {
+    font-size: 0.78rem;
+    padding: 5px 8px;
+  }
+}
+
+/* Ein zu hohes Fenster darf nie ueber den Rand laufen - lieber scrollen.
+   Betrifft vor allem das Siegesfenster im Querformat. */
+.overlay__box {
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+}
+
+/* =========================================================
+   Timo in der Lobby
+   =========================================================
+   Der Charakter ist das Zentrum: ein sauberer Schatten setzt ihn auf den
+   Boden, ein warmer Schimmer hebt ihn vom Himmel ab, und er atmet ruhig.
+   ========================================================= */
+
+.hero-buehne {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  place-items: end center;
+}
+
+/* Die Figur nimmt die Hoehe der Buehne an - hoechstens aber ihre
+   vorgesehene Groesse. Das Seitenverhaeltnis bleibt gleich (5:7), damit
+   sie beim Schrumpfen nicht gestaucht wird. */
+.hero-buehne .sprite {
+  height: 100%;
+  /* min-height: 0 ist noetig: Ein Rasterfeld ist von sich aus mindestens so
+     gross wie sein Inhalt - ohne diese Zeile wuerde die Figur die Buehne
+     wieder auseinanderdruecken. */
+  min-height: 0;
+  min-width: 0;
+  max-height: calc(var(--sprite-large, 150px) * 1.4);
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 5 / 7;
+}
+
+/* Der Schatten liegt unter den Fuessen und ist bewusst weich - ein harter
+   Schatten wuerde die Pixelkanten der Figur stoeren. */
+.hero-schatten {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 62%;
+  height: 16px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(22, 48, 20, 0.42) 0 45%, rgba(22, 48, 20, 0) 72%);
+  animation: schatten-atmen 4.2s ease-in-out infinite;
+}
+
+/* Die Figur atmet: eine sehr kleine Hebung, viel ruhiger als das Wippen
+   im Kampf. Der Schatten wird dabei minimal kleiner - das verbindet beide. */
+.hero-atmen {
+  animation: atmen 4.2s ease-in-out infinite;
+  /* Warmer Schimmer von der Sonne oben rechts plus ein weicher Bodenschatten. */
+  filter: drop-shadow(-1px -1px 0 rgba(255, 244, 214, 0.5))
+    drop-shadow(0 0 7px rgba(255, 240, 200, 0.28))
+    drop-shadow(0 6px 6px rgba(14, 32, 56, 0.35));
+}
+
+@keyframes atmen {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+@keyframes schatten-atmen {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  50%      { transform: translateX(-50%) scale(0.93); opacity: 0.85; }
+}
+
+/* =========================================================
+   Tiefeneffekt der Lobby
+   =========================================================
+   --px und --py kommen aus js/ui/parallax.js und laufen von -1 bis +1.
+   Je weiter vorn eine Ebene liegt, desto weiter wandert sie. Die Zahlen
+   sind bewusst klein - es soll Tiefe entstehen, kein Wackeln.
+
+   Der Charakter bewegt sich NICHT mit. Er ist der ruhende Punkt, an dem
+   sich das Auge festhaelt. */
+.screen--start .scenery__sky,
+.screen--start .scenery__strahlen {
+  transform: translate(calc(var(--px, 0) * 3px), calc(var(--py, 0) * 2px));
+}
+
+.screen--start .scenery__mountains--fern {
+  transform: translate(calc(var(--px, 0) * 5px), calc(var(--py, 0) * 3px));
+}
+
+.screen--start .scenery__mountains {
+  transform: translate(calc(var(--px, 0) * 9px), calc(var(--py, 0) * 4px));
+}
+
+.screen--start .scenery__deko {
+  transform: translate(calc(var(--px, 0) * 16px), calc(var(--py, 0) * 6px));
+}
+
+/* Eine Einstellungszeile, deren Bedienelement unter die Beschriftung rutscht.
+   Gebraucht fuer das Eingabefeld des Uebertragungscodes: Feld und Knopf
+   nebeneinander lassen fuer den Text nur eine sehr schmale Spalte uebrig. */
+.setting-row--breit {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setting-row--breit .setting-row__label {
+  flex: 1 1 100%;
+}
+
+.setting-row--breit .eingabe-gruppe {
+  flex: 1 1 100%;
+}
+
+/* =========================================================================
+   Boss-Kräfte im Figur-Bildschirm
+   ========================================================================= */
+.kraft-item {
+  position: relative;
+  font: inherit;
+  color: var(--text);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, #2a3a72 0%, var(--panel-solid) 60%, #18224e 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 0 rgba(8, 14, 40, 0.3);
+}
+
+.kraft-item + .kraft-item {
+  margin-top: 8px;
+}
+
+.kraft-item:not(:disabled):active {
+  transform: translateY(2px);
+}
+
+/* Die getragene Kraft: goldener Rand und Schein. */
+.kraft-item.is-active {
+  border-color: var(--gold-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 0 14px rgba(255, 197, 61, 0.35);
+}
+
+/* Noch nicht freigeschaltet: gedämpft. */
+.kraft-item.is-locked {
+  cursor: not-allowed;
+  filter: grayscale(0.6) brightness(0.8);
+}
+
+.kraft-item__icon {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #445bb0, #182048 75%);
+  border: 2px solid rgba(255, 197, 61, 0.45);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.kraft-item__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.kraft-item__name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.kraft-item__text {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.kraft-item__stand {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold-1);
+}
+
+.kraft-item.is-active .kraft-item__stand {
+  color: var(--gold-1);
+}
+
+/* Kleiner Chip für die Gegner-Variante (Flink/Panzer/Wütend) */
+.map__variante,
+.fighter-bar__variante {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  vertical-align: middle;
+}
+
+.fighter-bar__variante {
+  margin-left: 6px;
+}
