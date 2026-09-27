@@ -20,7 +20,7 @@ import { createBattle, MAX_ENERGIE } from '../core/battle.js';
 import { kraftFuerWelt } from '../data/kraefte.js';
 import { arenaLevel } from '../data/arena.js';
 import { getSchwierigkeit } from '../data/schwierigkeit.js';
-import { calculateStars, gameState, getAktiveFigur, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
+import { calculateStars, figurAnzeigeName, gameState, getAktiveFigur, getBossKraft, getDeck, hinweisGesehen, merkeHinweis } from '../core/state.js';
 import { zeigeKampfTutorial } from '../ui/tutorial.js';
 import { statErhoehen, pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
@@ -85,7 +85,9 @@ export const battleScreen = {
     // Das Monster kämpft mit dem gewählten Deck und mit allen Werten aus
     // seinem Fortschritt (Level und gekaufte Aufwertungen).
     const basis = getMonster(getAktiveFigur());
-    const playerMonster = { ...monsterMitFortschritt(basis), deck: getDeck(basis) };
+    // Die eigene Figur trägt im Kampf immer den Spielernamen (Kampfleiste,
+    // Kampf-Log, Ergebnisfenster) - siehe figurAnzeigeName in js/core/state.js.
+    const playerMonster = { ...monsterMitFortschritt(basis), name: figurAnzeigeName(basis), deck: getDeck(basis) };
     // Gegner als Kopie, damit der Schwierigkeitsgrad nur DIESEN Kampf ändert
     // und nicht die Vorlage in ENEMIES (die für die Karte/Sammlung gilt). In
     // der Arena ist der Gegner schon fertig skaliert im Level enthalten.

@@ -315,6 +315,18 @@ export function setAktiveFigur(id) {
   return true;
 }
 
+/**
+ * Der Anzeigename der eigenen Spielfigur - IMMER der Spielername (wie in der
+ * Lobby), damit die eigene Figur überall gleich heißt, egal welche Figur man
+ * gerade trägt. Die Figuren haben zwar eigene Namen (Timo, Rocco) - die dienen
+ * aber nur der Unterscheidung in der Auswahl. Nur solange noch kein Name gesetzt
+ * ist, greift der Eigenname der Figur als Rückfall.
+ */
+export function figurAnzeigeName(monster) {
+  const name = (gameState.name ?? '').trim();
+  return name || monster?.name || 'Held';
+}
+
 /* ------------------------------------------------------------------ */
 /*  Level                                                              */
 /* ------------------------------------------------------------------ */

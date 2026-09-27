@@ -9,7 +9,7 @@ import { getMonster } from '../data/monsters.js';
 import { createSprite } from '../ui/sprite.js';
 import { parallaxAktivieren } from '../ui/parallax.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../ui/logo-pfade.js';
-import { gameState, getAktiveFigur } from '../core/state.js';
+import { figurAnzeigeName, gameState, getAktiveFigur } from '../core/state.js';
 import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 
 /** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
@@ -106,7 +106,7 @@ export const startScreen = {
         <span class="hero-schatten"></span>
         <div class="sprite sprite--large hero-atmen" id="hero-sprite"></div>
       </div>
-      <p class="start__hero-name">Deine Figur: ${starter.name}</p>
+      <p class="start__hero-name">Deine Figur: ${figurAnzeigeName(starter)}</p>
     `;
     hero.querySelector('#hero-sprite').appendChild(createSprite(starter));
     screen.appendChild(hero);

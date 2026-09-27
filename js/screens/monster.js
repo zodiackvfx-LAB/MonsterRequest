@@ -25,6 +25,7 @@ import { spieleKlang } from '../core/audio.js';
 import {
   besitztKraft,
   besitztSkin,
+  figurAnzeigeName,
   figurFrei,
   gameState,
   getAktiveFigur,
@@ -162,8 +163,8 @@ export const monsterScreen = {
       kopf.className = 'panel monster-head';
       kopf.innerHTML = `
         <div class="sprite sprite--large idle-bob" id="monster-sprite"></div>
-        <div class="monster-head__name">${monster.name}</div>
-        <div class="start__hero-name">${monster.element} · Level ${werte.level}</div>
+        <div class="monster-head__name">${figurAnzeigeName(monster)}</div>
+        <div class="start__hero-name">${monster.name} · ${monster.element} · Level ${werte.level}</div>
         <p class="map__info-text">${monster.text}</p>
         <div class="wert-leiste" style="width:100%">
           <div class="wert-leiste__kopf">
