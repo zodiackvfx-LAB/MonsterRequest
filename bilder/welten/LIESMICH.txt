@@ -1,0 +1,8 @@
+Hier kommen eigene Hintergrundbilder für die Welten hinein.
+
+Beispiel: Du legst "vulkan.png" in diesen Ordner und schreibst in
+js/data/worlds.js bei der Vulkanwelt eine Zeile dazu:
+
+    hintergrund: 'bilder/welten/vulkan.png',
+
+Mehr ist nicht nötig. Siehe ANLEITUNG.md im Hauptordner.
