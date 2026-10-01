@@ -1156,6 +1156,15 @@
 /* =========================================================
    Weltauswahl
    ========================================================= */
+
+/* Karten-Liste: jede Zeile so hoch wie ihr Inhalt. Sonst macht das Grid
+   alle Zeilen gleich hoch (an der kuerzesten), und hoehere Karten - etwa
+   fertige Welten mit dem zusaetzlichen "Geschafft"-Chip - werden oben und
+   unten abgeschnitten. */
+.page__content--cards {
+  grid-auto-rows: min-content;
+}
+
 .world-card {
   position: relative;
   font: inherit;
@@ -1239,7 +1248,9 @@
   min-width: 0;
   display: grid;
   gap: 4px;
-  align-content: center;
+  /* Von oben nach unten lesen - und falls der Platz doch einmal knapp wird,
+     bleibt wenigstens der Welt-Titel stehen statt mittig wegzurutschen. */
+  align-content: start;
   padding: 12px 12px 12px 0;
 }
 

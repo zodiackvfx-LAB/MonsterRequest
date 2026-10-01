@@ -20,7 +20,11 @@ export const worldsScreen = {
     screen.appendChild(createHud());
 
     const content = document.createElement('div');
-    content.className = 'page__content';
+    // --cards: Jede Weltkarte bekommt ihre eigene, inhaltsabhaengige Hoehe.
+    // Ohne das machte das Grid alle Zeilen gleich hoch, und die fertigen
+    // Welten (mit zusaetzlichem "Geschafft"-Chip) wurden oben und unten
+    // beschnitten - der Welt-Titel verschwand.
+    content.className = 'page__content page__content--cards';
 
     WORLDS.forEach((world) => {
       const unlocked = isWorldUnlocked(world.id);
