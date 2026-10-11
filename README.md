@@ -89,6 +89,7 @@ js/
     hud.js              Spielerleiste, Kopfzeile, Sterne
     kampfintro.js       Intro vor dem Kampf, Auftritte, Bewegung je Gegnerform
     umgebung.js         Arena-Varianten, Tageszeit, Wetter, kleine Tiere
+    truhen.js           Die gezeichneten Truhen (Holz, Silber, Gold, Boss)
 
   screens/              NUR Darstellung – baut HTML, reagiert auf Tipps
     start.js            Startbildschirm

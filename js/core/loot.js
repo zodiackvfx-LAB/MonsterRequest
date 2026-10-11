@@ -36,11 +36,15 @@ function wuerfleSeltenheit(chancen) {
  * Attacken und Skins, die man schon hat, kommen nicht mehr in den Topf -
  * dann wird es Material.
  */
-function ziehe(seltenheit) {
+function ziehe(seltenheit, schonGezogen = new Set()) {
+  // Was schon in DIESER Truhe liegt, kommt kein zweites Mal - sonst gäbe
+  // es dieselbe Attacke doppelt.
   const attacken = BEUTE_ATTACKEN.filter(
-    (a) => a.seltenheit === seltenheit && !besitztAttacke(a.id)
+    (a) => a.seltenheit === seltenheit && !besitztAttacke(a.id) && !schonGezogen.has(a.id)
   );
-  const skins = SKINS.filter((s) => s.seltenheit === seltenheit && !besitztSkin(s.id));
+  const skins = SKINS.filter(
+    (s) => s.seltenheit === seltenheit && !besitztSkin(s.id) && !schonGezogen.has(s.id)
+  );
 
   // Gewichte: Material kommt immer vor, Attacken und Skins nur, solange es
   // noch welche zu holen gibt.
@@ -103,11 +107,14 @@ function mischen(liste) {
 export function truheOeffnen(truhe) {
   // Genau ein Münzstück pro Truhe - der Rest sind Material, Attacken, Skins.
   const stuecke = [muenzStueck()];
+  const gezogen = new Set();
 
   for (let i = 0; i < truhe.anzahl - 1; i++) {
     const seltenheit =
       i === 0 && truhe.garantie ? truhe.garantie : wuerfleSeltenheit(truhe.chancen);
-    stuecke.push(ziehe(seltenheit));
+    const stueck = ziehe(seltenheit, gezogen);
+    if (stueck.id) gezogen.add(stueck.id);
+    stuecke.push(stueck);
   }
 
   return mischen(stuecke);

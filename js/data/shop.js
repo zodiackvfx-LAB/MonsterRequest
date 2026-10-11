@@ -13,12 +13,14 @@
  *               js/data/items.js), die übrigen Material, Attacken oder Skins
  *   chancen   - Wahrscheinlichkeit je Seltenheit in Prozent (Summe 100)
  *   garantie  - mindestens ein Stück dieser Seltenheit ist enthalten
+ *   design    - welche gezeichnete Truhe gezeigt wird (siehe js/ui/truhen.js)
  */
 export const TRUHEN = [
   {
     id: 'holztruhe',
     name: 'Holztruhe',
     icon: '🧰',
+    design: 'holz',
     text: 'Die einfache Truhe. 150 bis 500 Münzen, dazu Material - manchmal mehr.',
     preis: 250,
     anzahl: 5,
@@ -29,6 +31,7 @@ export const TRUHEN = [
     id: 'silbertruhe',
     name: 'Silbertruhe',
     icon: '🎁',
+    design: 'silber',
     text: 'Bessere Aussichten - mindestens ein seltenes Stück ist dabei.',
     preis: 800,
     anzahl: 5,
@@ -39,6 +42,7 @@ export const TRUHEN = [
     id: 'goldtruhe',
     name: 'Goldtruhe',
     icon: '🏆',
+    design: 'gold',
     text: 'Die große Truhe - mindestens ein episches Stück ist dabei.',
     preis: 2000,
     anzahl: 5,
@@ -55,6 +59,7 @@ export const BOSS_TRUHE = {
   id: 'bosstruhe',
   name: 'Bosstruhe',
   icon: '👑',
+  design: 'boss',
   text: 'Der Lohn für einen besiegten Boss.',
   preis: 0,
   anzahl: 3,

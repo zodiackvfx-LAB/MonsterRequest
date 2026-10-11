@@ -88,6 +88,7 @@ import {
   xpGutschreiben,
 } from '../js/core/progression.js';
 import { truheOeffnen } from '../js/core/loot.js';
+import { TRUHEN_DESIGNS } from '../js/ui/truhen.js';
 
 /** Die Spielerfigur - ueber die id geholt, damit ein Figurenwechsel
     (frueher Glutwelpe, jetzt Timo) die Tests nicht bricht. */
@@ -223,6 +224,12 @@ console.log('\nShop und Truhen');
     }
     pruefe(`${truhe.name}: genau ein Muenzstueck pro Truhe (300 Durchlaeufe)`, einmalMuenzen);
     pruefe(`${truhe.name}: Muenzen immer zwischen 150 und 500`, imRahmen);
+    let nieDoppelt = true;
+    for (let i = 0; i < 300; i++) {
+      const ids = truheOeffnen(truhe).filter((b) => b.id).map((b) => b.id);
+      if (new Set(ids).size !== ids.length) nieDoppelt = false;
+    }
+    pruefe(`${truhe.name}: keine Attacke und kein Skin doppelt in einer Truhe`, nieDoppelt);
     if (truhe.garantie) {
       // Ueber viele Durchlaeufe muss die Garantie immer halten.
       const rang = { gewoehnlich: 0, selten: 1, episch: 2, legendaer: 3 };
@@ -234,6 +241,9 @@ console.log('\nShop und Truhen');
       pruefe(`${truhe.name}: Garantie "${truhe.garantie}" haelt in 200 Durchlaeufen`, immer);
     }
   }
+
+  pruefe('Jede Truhe hat ein gezeichnetes Design',
+    [...TRUHEN, BOSS_TRUHE].every((t) => TRUHEN_DESIGNS.includes(t.design)));
 
   // Bezahlen
   gameState.coins = 300;

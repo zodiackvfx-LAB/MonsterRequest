@@ -29,6 +29,8 @@ import { fortschrittMelden } from '../core/aufgaben.js';
 import { spieleBeute, spieleKlang, spieleTreffer } from '../core/audio.js';
 import { vibriere } from '../core/haptik.js';
 import { SELTENHEITEN } from '../data/items.js';
+import { BOSS_TRUHE } from '../data/shop.js';
+import { truheSvg } from '../ui/truhen.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
 import { createSprite, spieleBildfolge } from '../ui/sprite.js';
@@ -862,6 +864,9 @@ export const battleScreen = {
               : `${playerMonster.name} ist erschöpft. ${MUT_SAETZE[Math.floor(Math.random() * MUT_SAETZE.length)]}`}
           </p>
           ${statistikHtml(result)}
+          ${sieg && level.isBoss && belohnung?.erstesMal
+            ? `<div class="boss-truhe">${truheSvg(BOSS_TRUHE.design, { offen: true })}<span class="boss-truhe__name">${BOSS_TRUHE.name} geöffnet!</span></div>`
+            : ''}
           ${sieg ? '<div class="belohnung" id="belohnung"></div>' : ''}
           ${belohnung?.xpErgebnis?.aufgestiegen
             ? `<p class="overlay__unlock">🌟 <strong>Level ${belohnung.xpErgebnis.levelNachher} erreicht!</strong></p>`

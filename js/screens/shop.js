@@ -12,6 +12,7 @@ import { showScreen } from '../core/screens.js';
 import { TRUHEN } from '../data/shop.js';
 import { MUENZE, SELTENHEITEN } from '../data/items.js';
 import { truheOeffnen } from '../core/loot.js';
+import { truheSvg } from '../ui/truhen.js';
 import { bezahlen, beuteGutschreiben, gameState, kannBezahlen } from '../core/state.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
 import { spieleBeute, spieleKlang } from '../core/audio.js';
@@ -86,7 +87,7 @@ export const shopScreen = {
         const karte = document.createElement('div');
         karte.className = 'chest-card';
         karte.innerHTML = `
-          <div class="chest-card__icon">${truhe.icon}</div>
+          <div class="chest-card__icon">${truheSvg(truhe.design)}</div>
           <div class="chest-card__body">
             <div class="chest-card__name">${truhe.name}</div>
             <div class="chest-card__text">${truhe.text}</div>
@@ -176,7 +177,7 @@ function oeffnungZeigen(screen, truhe) {
   overlay.className = 'overlay overlay--chest';
   overlay.innerHTML = `
     <div class="chest-open">
-      <div class="chest-open__chest" id="chest">${truhe.icon}</div>
+      <div class="chest-open__chest" id="chest">${truheSvg(truhe.design)}</div>
       <div class="chest-open__title" id="chest-title">${truhe.name} wird geöffnet…</div>
       <div class="loot-grid" id="loot"></div>
       <button class="btn btn--big btn--green chest-open__done" id="btn-done" type="button" hidden>

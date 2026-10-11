@@ -1649,3 +1649,112 @@
   45%  { transform: translateX(10%) scale(1.18); }
   100% { transform: translateX(26%) scale(0.88, 1.05); }
 }
+
+/* =========================================================================
+   7. Gezeichnete Truhen (js/ui/truhen.js)
+   ========================================================================= */
+
+.truhe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Der Deckel klappt um sein hinteres Scharnier nach oben. */
+.truhe__deckel {
+  transform-box: fill-box;
+  transform-origin: 8% 100%;
+  transition: transform 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.truhe.ist-offen .truhe__deckel,
+.is-open .truhe__deckel {
+  transform: translateY(-10px) rotate(-24deg);
+}
+
+/* Licht aus dem Inneren: erst beim Öffnen, dann pulsierend. */
+.truhe__licht {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: opacity 0.35s ease 0.12s;
+}
+
+.truhe.ist-offen .truhe__licht,
+.is-open .truhe__licht {
+  opacity: 1;
+  animation: truhe-licht 1.8s ease-in-out infinite;
+}
+
+@keyframes truhe-licht {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(1.12); }
+}
+
+/* Gold- und Bosstruhe funkeln. */
+.truhe__funkeln {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: stern-funkeln 2.2s ease-in-out infinite;
+}
+
+.truhe__funkeln--2 {
+  animation-delay: 1.1s;
+}
+
+/* ---------- Im Shop ---------- */
+.chest-card__icon {
+  width: 66px;
+  height: 66px;
+  padding: 6px 5px 4px;
+}
+
+/* Die Truhe im Shop wippt sacht - sie will geöffnet werden. */
+.chest-card__icon .truhe {
+  animation: truhe-wippen 2.8s ease-in-out infinite;
+}
+
+.chest-card:nth-child(3n) .chest-card__icon .truhe { animation-delay: -0.9s; }
+.chest-card:nth-child(3n + 1) .chest-card__icon .truhe { animation-delay: -1.8s; }
+
+@keyframes truhe-wippen {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-2px) rotate(-2deg); }
+}
+
+/* ---------- Beim Öffnen ---------- */
+.chest-open__chest {
+  width: 150px;
+  height: 130px;
+  font-size: 0;
+}
+
+/* ---------- Bosstruhe im Siegesfenster ---------- */
+.boss-truhe {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.boss-truhe .truhe {
+  width: 96px;
+  height: 84px;
+  animation: pop-in 0.45s 0.3s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.boss-truhe__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e8b6ff;
+}
+
+.truhe__innen {
+  opacity: 0;
+  transition: opacity 0.25s ease 0.1s;
+}
+
+.truhe.ist-offen .truhe__innen,
+.is-open .truhe__innen {
+  opacity: 1;
+}
