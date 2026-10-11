@@ -40,14 +40,17 @@ export function createDeck(cardIds, handSize = HAND_SIZE) {
   let discardPile = [];
   const hand = [];
 
-  /** Zieht eine einzelne Karte. Mischt bei Bedarf den Ablagestapel neu. */
-  function drawOne() {
+  /**
+   * Zieht eine einzelne Karte. Mischt bei Bedarf den Ablagestapel neu.
+   * @param {number} [platz] - Handposition für die neue Karte (Standard: hinten)
+   */
+  function drawOne(platz = hand.length) {
     if (drawPile.length === 0) {
       if (discardPile.length === 0) return false; // gar keine Karten mehr übrig
       drawPile = shuffle(discardPile);
       discardPile = [];
     }
-    hand.push(drawPile.pop());
+    hand.splice(platz, 0, drawPile.pop());
     return true;
   }
 
@@ -68,6 +71,10 @@ export function createDeck(cardIds, handSize = HAND_SIZE) {
 
     const [cardId] = hand.splice(handIndex, 1);
     discardPile.push(cardId);
+    // Die neue Karte landet genau auf dem frei gewordenen Platz - die anderen
+    // drei Karten bleiben liegen, wo sie sind. So muss man nach jedem Zug
+    // nicht neu suchen, wo die Lieblingskarte hingerutscht ist.
+    drawOne(handIndex);
     refill();
     return cardId;
   }

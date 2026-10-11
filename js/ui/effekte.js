@@ -36,6 +36,25 @@ export function bildschirmBeben(arena, anteil) {
 }
 
 /**
+ * Kurzer Kamera-Ruck bei starken Treffern: ein kleiner Zoom in Richtung
+ * des Getroffenen und zurück. Bewegt nur die Kampffläche - Leisten und
+ * Kartenhand bleiben, wo sie sind.
+ *
+ * @param {HTMLElement} kampfflaeche - .battlefield
+ * @param {'links'|'rechts'} richtung - wohin der Ruck geht
+ */
+export function kameraStoss(kampfflaeche, richtung) {
+  if (!kampfflaeche || !animationenAn()) return;
+  // Während des Boss-Zooms im Intro nicht dazwischenfunken.
+  if (kampfflaeche.classList.contains('kamera-intro-zoom')) return;
+  const klasse = `kamera-stoss-${richtung}`;
+  kampfflaeche.classList.remove('kamera-stoss-links', 'kamera-stoss-rechts');
+  void kampfflaeche.offsetWidth; // Neustart erzwingen
+  kampfflaeche.classList.add(klasse);
+  setTimeout(() => kampfflaeche.classList.remove(klasse), 480);
+}
+
+/**
  * Aufprall-Funken über einem getroffenen Monster: ein Lichtring und ein paar
  * Splitter, die wegfliegen.
  *

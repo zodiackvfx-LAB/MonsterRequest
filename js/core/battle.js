@@ -68,8 +68,13 @@ export function createBattle({
     gegnerKraft: 0, // 0..1: wie voll die Kraft-Leiste des Gegners ist
     playerFrozen: false, // true, solange der Spieler eingefroren ist (Boss-Kraft)
     running: false,
+    pausiert: false, // true, solange der Spieler die Pause-Taste gedrückt hat
     finished: false,
     result: null, // 'win' | 'lose'
+    zeit: 0, // gespielte Kampfzeit in Sekunden (ohne Pausen)
+    // Kampfstatistik für das Ergebnisfenster. Sie zählt nur mit und hat
+    // keinen Einfluss auf die Rechnung.
+    statistik: { karten: 0, schaden: 0 },
   };
 
   /* Die Kraft-Leiste füllt sich mit "Ladepunkten": für gespielte Karten und
@@ -109,6 +114,11 @@ export function createBattle({
 
   function emit(event) {
     if (onEvent) onEvent(event);
+  }
+
+  /** Zählt Schaden, den der SPIELER angerichtet hat, für die Statistik. */
+  function schadenZaehlen(seite, menge) {
+    if (seite === 'player') state.statistik.schaden += menge;
   }
 
   function finish(result) {
@@ -151,6 +161,7 @@ export function createBattle({
       if (krit) schaden = Math.round(schaden * KRIT_FAKTOR);
 
       const applied = defender.takeDamage(schaden);
+      schadenZaehlen(side, schaden);
       // Ein Treffer lädt die Kraft-Leiste der getroffenen Seite ein Stück.
       if (side === 'enemy') ladeKraft(2); // der Spieler wurde getroffen
       if (side === 'player') gegnerKraftLaden(2); // der Gegner wurde getroffen
@@ -238,6 +249,7 @@ export function createBattle({
     const attack = player.useCard(handIndex);
     if (!attack) return false;
 
+    state.statistik.karten += 1;
     // Für jede gespielte Karte lädt die Kraft-Leiste um die Energiekosten.
     ladeKraft(attack.cost);
     useAttack(player, enemy, attack, 'player');
@@ -274,12 +286,14 @@ export function createBattle({
         verteidiger.entferneSchild();
         const dmg = schadenBerechnen(angreifer, verteidiger, kraft.wert);
         verteidiger.takeDamage(dmg);
+        schadenZaehlen(seite, dmg);
         emit({ type: `${seite}-attack`, amount: dmg, kraft: true, text: `${kraft.name} zerschlägt das Schild: ${dmg} Schaden!` });
         break;
       }
       case 'lebensraub': {
         const dmg = schadenBerechnen(angreifer, verteidiger, kraft.wert);
         verteidiger.takeDamage(dmg);
+        schadenZaehlen(seite, dmg);
         angreifer.heal(dmg);
         emit({ type: `${seite}-attack`, amount: dmg, kraft: true, text: `${kraft.name}: ${dmg} Schaden - und ${dmg} LP zurück!` });
         emit({ type: `${seite}-heal`, amount: dmg });
@@ -289,12 +303,14 @@ export function createBattle({
         angreifer.energieVoll();
         const dmg = schadenBerechnen(angreifer, verteidiger, kraft.wert);
         verteidiger.takeDamage(dmg);
+        schadenZaehlen(seite, dmg);
         emit({ type: `${seite}-attack`, amount: dmg, kraft: true, text: `${kraft.name}: volle Energie und ${dmg} Schaden!` });
         break;
       }
       case 'energieraub': {
         const dmg = schadenBerechnen(angreifer, verteidiger, kraft.wert);
         verteidiger.takeDamage(dmg);
+        schadenZaehlen(seite, dmg);
         verteidiger.energieLeeren();
         emit({ type: `${seite}-attack`, amount: dmg, kraft: true, text: `${kraft.name}: ${dmg} Schaden - und die ganze Energie entladen!` });
         break;
@@ -302,6 +318,7 @@ export function createBattle({
       case 'brand': {
         const sofort = schadenBerechnen(angreifer, verteidiger, kraft.wert.sofort);
         verteidiger.takeDamage(sofort);
+        schadenZaehlen(seite, sofort);
         emit({ type: `${seite}-attack`, amount: sofort, kraft: true, text: `${kraft.name}: ${sofort} Schaden - Feuer!` });
         // Der Rest kommt tickweise in der Schleife - auf der getroffenen Seite.
         brand[gegenseite] = { rest: kraft.wert.male, tick: kraft.wert.tick, timer: 0.6, intervall: 0.6, angreifer, verteidiger, typ: 'brand' };
@@ -430,6 +447,8 @@ export function createBattle({
 
   /** Ein Schritt der Spielzeit. deltaSeconds = vergangene Zeit seit dem letzten Frame. */
   function tick(deltaSeconds) {
+    state.zeit += deltaSeconds;
+
     // Energie-Nachschub für den Spieler - außer er ist eingefroren (Frostbann
     // des Bosses). Eingefroren lädt er keine Energie und kann keine Karte spielen.
     if (frostRest.player > 0) {
@@ -463,6 +482,8 @@ export function createBattle({
       while (b.timer <= 0 && b.rest > 0 && !state.finished) {
         const dmg = schadenBerechnen(b.angreifer, b.verteidiger, b.tick);
         b.verteidiger.takeDamage(dmg);
+        // Brennt bzw. ist der GEGNER vergiftet, hat der Spieler den Schaden gemacht.
+        schadenZaehlen(seite === 'enemy' ? 'player' : 'enemy', dmg);
         const gift = b.typ === 'gift';
         emit({
           type: gift ? 'gift' : 'brand',
@@ -499,6 +520,7 @@ export function createBattle({
   function start() {
     if (state.running || state.finished) return;
     state.running = true;
+    state.pausiert = false;
     lastTimestamp = 0;
     rafId = requestAnimationFrame(loop);
   }
@@ -512,5 +534,25 @@ export function createBattle({
     }
   }
 
-  return { state, start, stop, playCard, canPlay, useBossPower };
+  /**
+   * Hält den Kampf an: keine Energie, kein Gegnerzug, keine Karte spielbar.
+   * Alles bleibt genau so stehen und läuft mit resume() an derselben Stelle
+   * weiter. Es gibt nur EINE Spielschleife - stop() beendet sie, start()
+   * legt sie neu an; doppelte Timer kann es dadurch nicht geben.
+   */
+  function pause() {
+    if (!state.running || state.finished) return false;
+    stop();
+    state.pausiert = true;
+    return true;
+  }
+
+  /** Setzt einen pausierten Kampf fort. */
+  function resume() {
+    if (!state.pausiert || state.finished) return false;
+    start();
+    return true;
+  }
+
+  return { state, start, stop, pause, resume, playCard, canPlay, useBossPower };
 }

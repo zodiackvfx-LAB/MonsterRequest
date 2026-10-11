@@ -32,13 +32,16 @@ import { SELTENHEITEN } from '../data/items.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
 import { createSprite, spieleBildfolge } from '../ui/sprite.js';
-import { bildschirmBeben, energiestrahl, karteWeg, konfetti, trefferFunke } from '../ui/effekte.js';
+import { bildschirmBeben, energiestrahl, kameraStoss, karteWeg, konfetti, trefferFunke } from '../ui/effekte.js';
+import { bewegungVon, spieleKampfIntro } from '../ui/kampfintro.js';
+import { baueUmgebung, waehleStimmung } from '../ui/umgebung.js';
 
 let battle = null; // laufender Kampf, damit unmount() ihn stoppen kann
 let resultTimer = null; // wartet kurz, bevor das Ergebnisfenster erscheint
 const klangTimer = []; // geplante Klaenge, damit sie beim Verlassen verstummen
 let bildfolgeStoppen = () => {}; // bricht eine laufende Angriffsanimation ab
 let handSperreTimer = null; // Doppeltap-Sperre nach dem Kartenspiel
+let aufraeumen = []; // Abmelde-Funktionen (Ereignis-Lauscher, Umgebung), siehe unmount()
 
 /**
  * Wartezeit zwischen dem letzten Treffer und dem Ergebnisfenster.
@@ -67,6 +70,40 @@ const KRAFT_KLANG = {
   energiesturm: 'kraftEnergiesturm',
   energieraub: 'kraftEnergieraub',
 };
+
+/**
+ * Rahmen der Handkarten nach Seltenheit der Attacke. Rein optisch: Ein
+ * Gold-Rahmen macht keinen Schaden mehr als ein einfacher.
+ */
+const RAHMEN = {
+  gewoehnlich: 'standard',
+  selten: 'silber',
+  episch: 'gold',
+  legendaer: 'glitzer',
+};
+
+/** Freundliche Sätze für das Niederlage-Fenster - einer wird ausgewürfelt. */
+const MUT_SAETZE = [
+  'Versuch es noch einmal!',
+  'Fast geschafft - beim nächsten Mal klappt es!',
+  'Spar Energie für die großen Karten - das hilft.',
+  'Eine Deckung zur rechten Zeit kann alles ändern.',
+  'Jeder Kampf macht dich ein Stück stärker.',
+];
+
+/**
+ * Der Kopf des Ergebnisfensters: ein großes Banner mit Band, darüber ein
+ * Symbol. Bei einem Sieg kreisen Sterne um das Symbol.
+ */
+function ergebnisKopf(sieg, boss) {
+  return `
+    <div class="ergebnis-kopf ${sieg ? 'ergebnis-kopf--sieg' : 'ergebnis-kopf--niederlage'}">
+      <div class="overlay__icon ergebnis-kopf__icon">${sieg ? (boss ? '👑' : '🏆') : '🌙'}</div>
+      ${sieg ? '<span class="ergebnis-kopf__stern ergebnis-kopf__stern--1">✦</span><span class="ergebnis-kopf__stern ergebnis-kopf__stern--2">✦</span><span class="ergebnis-kopf__stern ergebnis-kopf__stern--3">✦</span>' : ''}
+      <h3 class="overlay__title ergebnis-banner">${sieg ? 'Sieg!' : 'Niederlage'}</h3>
+    </div>
+  `;
+}
 
 export const battleScreen = {
   // Jede Welt hat ihre eigene Musik. In der Arena richtet sie sich nach dem
@@ -117,7 +154,9 @@ export const battleScreen = {
       <header class="topbar">
         <button class="btn btn--ghost btn--small" id="btn-flee" type="button">‹&nbsp;Fliehen</button>
         <h2 class="topbar__title">${level.arena ? `🏟️ Arena · Runde ${level.runde}` : level.isBoss ? 'Bosskampf' : `Kampf ${level.number}`}</h2>
-        <span class="topbar__spacer"></span>
+        <span class="topbar__spacer topbar__spacer--knopf">
+          <button class="btn btn--ghost btn--small pause-knopf" id="btn-pause" type="button" aria-label="Kampf pausieren" data-klang="keiner" disabled>⏸&nbsp;Pause</button>
+        </span>
       </header>
 
       <section class="fighter-bar">
@@ -142,7 +181,7 @@ export const battleScreen = {
       <div class="battlefield">
         <div class="arena" id="arena">
           <div class="stage stage--enemy">
-            <div class="sprite idle-bob${enemyMonster.isBoss ? ' sprite--boss' : ''}" id="enemy-sprite"></div>
+            <div class="sprite${enemyMonster.isBoss ? ' sprite--boss' : ''}" id="enemy-sprite"></div>
             <div class="platform"></div>
           </div>
 
@@ -178,8 +217,13 @@ export const battleScreen = {
       `
     );
 
-    // Die Pixel-Figuren einsetzen (siehe js/ui/sprite.js)
-    screen.querySelector('#enemy-sprite').appendChild(createSprite(enemyMonster));
+    // Die Pixel-Figuren einsetzen (siehe js/ui/sprite.js). Der Gegner steckt
+    // in einer Hülle, die seine eigene Dauerbewegung trägt (er schwebt,
+    // stampft, flattert ... - siehe js/ui/kampfintro.js).
+    const gegnerKoerper = document.createElement('span');
+    gegnerKoerper.className = `sprite__koerper ruhe--${bewegungVon(enemyMonster).ruhe}`;
+    gegnerKoerper.appendChild(createSprite(enemyMonster));
+    screen.querySelector('#enemy-sprite').appendChild(gegnerKoerper);
     // Im Kampf zeigt Timo seine Kampfhaltung statt der Vorderansicht.
     screen.querySelector('#player-sprite').appendChild(
       createSprite(playerMonster, { bild: basis.bildKampf })
@@ -187,6 +231,13 @@ export const battleScreen = {
 
     // Kulisse der Arena (Hügel, Wiese, Bäume, Kampfplatz) hinter die Monster legen
     screen.querySelector('#arena').prepend(...createArenaLayers());
+
+    // Stimmung dieses Kampfs: Arena-Variante, Wetter und Tageszeit - rein
+    // optisch (siehe js/ui/umgebung.js).
+    const stimmung = { ...waehleStimmung(getWorld(level.worldId)), boss: Boolean(enemyMonster.isBoss) };
+    const umgebung = baueUmgebung(screen, screen.querySelector('#arena'), stimmung);
+    aufraeumen.push(umgebung.aufraeumen);
+    screen.querySelector('#battle-log').textContent = `${stimmung.variantenName} · ${stimmung.wetterName}`;
 
     const ui = {
       enemyHpFill: screen.querySelector('#enemy-hp-fill'),
@@ -205,6 +256,7 @@ export const battleScreen = {
       energieText: screen.querySelector('#energie-text'),
       energieLeiste: screen.querySelector('.wert-leiste'),
       arena: screen.querySelector('#arena'),
+      battlefield: screen.querySelector('.battlefield'),
       hand: screen.querySelector('#hand'),
     };
 
@@ -245,6 +297,7 @@ export const battleScreen = {
     /* ---------- 2. Kampf starten ---------- */
     let renderedHandVersion = -1;
     const cardElements = [];
+    let letzteHand = null; // die Hand beim letzten Aufbau - für die Zieh-Animation
     // Merkt sich je Handplatz, ob die Karte zuletzt spielbar war - fuer den
     // kurzen Effekt, wenn sie es GERADE wird.
     const warBereit = [];
@@ -426,6 +479,13 @@ export const battleScreen = {
 
     /** Baut die 4 Handkarten neu auf. */
     function buildHand(state) {
+      // Welche Plätze haben gerade eine NEUE Karte bekommen? Nur die fliegen
+      // vom Stapel herein - die übrigen bleiben ruhig liegen.
+      const neuePlaetze = letzteHand
+        ? state.player.hand.map((id, i) => id !== letzteHand[i])
+        : state.player.hand.map(() => false);
+      letzteHand = [...state.player.hand];
+
       ui.hand.innerHTML = '';
       cardElements.length = 0;
       // Neue Karten: der "wird spielbar"-Effekt startet frisch, damit er nicht
@@ -443,7 +503,8 @@ export const battleScreen = {
         if (attack.stun) effect += ' 💫';
 
         const card = document.createElement('button');
-        card.className = 'card';
+        // Rahmen nach Seltenheit - rein optisch, die Werte bleiben gleich.
+        card.className = `card card--${RAHMEN[attack.seltenheit] ?? 'standard'}${neuePlaetze[index] ? ' karte-gezogen' : ''}`;
         card.type = 'button';
         card.innerHTML = `
           <span class="card__cost">${attack.cost}</span>
@@ -498,9 +559,11 @@ export const battleScreen = {
         case 'player-attack': {
           // Kleine Attacke = Nahkampf, grosse Attacke = Energiestrahl.
           const teuer = (event.attack?.cost ?? 0) >= ANGRIFF_AB_ENERGIE;
+          // Starke Treffer: die Kamera ruckt kurz zum Gegner, die Umgebung wackelt.
+          if (teuer || event.krit || event.kraft) kameraStoss(ui.battlefield, 'rechts');
           spieleFolge(teuer ? basis.bildStrahl : basis.bildSchlag);
           // Teure Attacken schießen einen Energiestrahl quer über die Arena.
-          if (teuer) energiestrahl(ui.playerSprite, ui.enemySprite, '#8fd0ff');
+          if (teuer) energiestrahl(ui.playerSprite, ui.enemySprite, basis.strahlFarbe ?? '#8fd0ff');
           flash(ui.playerSprite, 'lunge-right');
           flash(ui.enemySprite, 'hit');
           const anteilG = event.amount / (battle.state.enemy.maxHp || 1);
@@ -508,6 +571,7 @@ export const battleScreen = {
           // Ein Krit spritzt mehr Funken und lässt den Platz kräftiger beben.
           trefferFunke(ui.enemySprite, event.krit ? '#ff5a2c' : '#ffd76a', event.krit ? 12 : 7);
           bildschirmBeben(ui.arena, event.krit ? Math.max(anteilG, 0.3) : anteilG);
+          umgebung.reagieren(event.krit ? Math.max(anteilG, 0.3) : anteilG);
           spieleKlang('karte');
           if (event.krit) spieleKlang('trefferStark');
           else spieleTreffer(event.amount);
@@ -522,6 +586,9 @@ export const battleScreen = {
           break;
         }
         case 'enemy-attack': {
+          if ((event.attack?.cost ?? 0) >= ANGRIFF_AB_ENERGIE || event.krit || event.kraft) {
+            kameraStoss(ui.battlefield, 'links');
+          }
           if ((event.attack?.cost ?? 0) >= ANGRIFF_AB_ENERGIE) {
             energiestrahl(ui.enemySprite, ui.playerSprite, '#ff8a5a');
           }
@@ -531,6 +598,7 @@ export const battleScreen = {
           floatNumber(ui.playerSprite, `-${event.amount}`, 'damage', anteilP, event.krit);
           trefferFunke(ui.playerSprite, '#ff6a6a', event.krit ? 12 : 7);
           bildschirmBeben(ui.arena, event.krit ? Math.max(anteilP, 0.3) : anteilP);
+          umgebung.reagieren(event.krit ? Math.max(anteilP, 0.3) : anteilP);
           if (event.krit) spieleKlang('trefferStark');
           else spieleTreffer(event.amount);
           vibriere(event.krit ? 'krit' : 'treffer');
@@ -654,6 +722,7 @@ export const battleScreen = {
     /* ---------- 5. Kampfende ---------- */
     function showResult(result) {
       const state = battle.state;
+      pauseKnopf.disabled = true;
       // Ein fühlbarer Abschluss: Fanfare bei Sieg, dumpfes Brummen bei Niederlage.
       vibriere(result === 'win' ? 'sieg' : 'niederlage');
 
@@ -742,7 +811,7 @@ export const battleScreen = {
       const gewonnen = result === 'win';
       const ueberstanden = gewonnen ? runde : runde - 1;
       const overlay = document.createElement('div');
-      overlay.className = 'overlay';
+      overlay.className = `overlay overlay--ergebnis ${gewonnen ? 'overlay--sieg' : 'overlay--niederlage'}`;
       overlay.innerHTML = `
         <div class="overlay__box">
           <div class="overlay__icon">${gewonnen ? '🏟️' : '🏁'}</div>
@@ -754,6 +823,7 @@ export const battleScreen = {
           </p>
           ${neuerRekord ? '<p class="overlay__unlock">🏆 <strong>Neuer Bestwert!</strong></p>' : ''}
           <p class="overlay__text">Bester Lauf: <strong>${best}</strong> ${best === 1 ? 'Runde' : 'Runden'}</p>
+          ${statistikHtml(result)}
           ${neueErfolge.map((e) => `<p class="overlay__unlock overlay__unlock--erfolg">🏆 <strong>Erfolg: ${e.name}!</strong></p>`).join('')}
           <div class="overlay__actions">
             <button class="btn btn--big btn--green" id="btn-arena-next" type="button">${gewonnen ? 'Weiter' : 'Nochmal'}</button>
@@ -777,18 +847,22 @@ export const battleScreen = {
 
     function buildResultOverlay(result, stars, belohnung, neueErfolge = []) {
       const newWorld = belohnung?.newWorld ?? null;
+      const sieg = result === 'win';
       const overlay = document.createElement('div');
-      overlay.className = 'overlay';
+      overlay.className = `overlay overlay--ergebnis ${sieg ? 'overlay--sieg' : 'overlay--niederlage'}`;
       overlay.innerHTML = `
         <div class="overlay__box">
-          <div class="overlay__icon">${result === 'win' ? (level.isBoss ? '👑' : '🏆') : '💀'}</div>
-          <h3 class="overlay__title">${result === 'win' ? 'Sieg!' : 'Niederlage'}</h3>
+          ${ergebnisKopf(sieg, level.isBoss)}
+          <div class="ergebnis-portrait ${sieg ? 'ist-besiegt' : 'ist-froh'}" aria-hidden="true">
+            <span class="ergebnis-portrait__strahlen"></span>
+          </div>
           <p class="overlay__text">
-            ${result === 'win'
+            ${sieg
               ? `${enemyMonster.name} wurde besiegt.`
-              : `${playerMonster.name} ist erschöpft. Versuch es noch einmal!`}
+              : `${playerMonster.name} ist erschöpft. ${MUT_SAETZE[Math.floor(Math.random() * MUT_SAETZE.length)]}`}
           </p>
-          ${result === 'win' ? '<div class="belohnung" id="belohnung"></div>' : ''}
+          ${statistikHtml(result)}
+          ${sieg ? '<div class="belohnung" id="belohnung"></div>' : ''}
           ${belohnung?.xpErgebnis?.aufgestiegen
             ? `<p class="overlay__unlock">🌟 <strong>Level ${belohnung.xpErgebnis.levelNachher} erreicht!</strong></p>`
             : ''}
@@ -804,16 +878,18 @@ export const battleScreen = {
         </div>
       `;
 
-      if (result === 'win') {
+      overlay.querySelector('.ergebnis-portrait').appendChild(createSprite(enemyMonster));
+
+      if (sieg) {
         const box = overlay.querySelector('.overlay__box');
-        box.insertBefore(createStars(stars), box.querySelector('.overlay__text'));
+        box.insertBefore(createStars(stars), box.querySelector('.ergebnis-portrait'));
         fuelleBelohnung(overlay.querySelector('#belohnung'), belohnung.stuecke);
         // Konfetti zum Feiern - erst, wenn das Fenster steht.
-        setTimeout(() => konfetti(box), 120);
+        setTimeout(() => konfetti(box, 26), 120);
       }
 
       // Erst die Fanfare, danach Aufstieg bzw. neue Welt - nicht alles auf einmal.
-      spieleKlang(result === 'win' ? 'sieg' : 'niederlage');
+      spieleKlang(sieg ? 'sieg' : 'niederlage');
       if (belohnung?.xpErgebnis?.aufgestiegen) {
         klangTimer.push(setTimeout(() => spieleKlang('levelauf'), 900));
       }
@@ -822,10 +898,10 @@ export const battleScreen = {
       }
 
       const nextButton = overlay.querySelector('#btn-next');
-      nextButton.textContent = newWorld ? 'Neue Welt ansehen' : result === 'win' ? 'Weiter' : 'Nochmal kämpfen';
+      nextButton.textContent = newWorld ? 'Neue Welt ansehen' : sieg ? 'Weiter' : 'Nochmal kämpfen';
       nextButton.addEventListener('click', () => {
         if (newWorld) showScreen('worlds');
-        else if (result === 'win') showScreen('map', { worldId: level.worldId });
+        else if (sieg) showScreen('map', { worldId: level.worldId });
         else showScreen('battle', { levelId: level.id });
       });
 
@@ -833,6 +909,25 @@ export const battleScreen = {
         .querySelector('#btn-map')
         .addEventListener('click', () => showScreen('map', { worldId: level.worldId }));
       screen.appendChild(overlay);
+    }
+
+    /**
+     * Die Kampfstatistik: ausgespielte Karten, angerichteter Schaden und
+     * Dauer. Die Werte zählt die Engine mit (state.statistik, state.zeit) -
+     * sie fließen in keine Rechnung ein.
+     */
+    function statistikHtml(result) {
+      const st = battle.state.statistik;
+      const sekunden = Math.round(battle.state.zeit);
+      const dauer = `${Math.floor(sekunden / 60)}:${String(sekunden % 60).padStart(2, '0')}`;
+      return `
+        <div class="kampf-statistik" aria-label="Kampfstatistik">
+          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">🃏</span><strong>${st.karten}</strong><small>Karten</small></span>
+          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">💥</span><strong>${st.schaden}</strong><small>Schaden</small></span>
+          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">⏱️</span><strong>${dauer}</strong><small>Dauer</small></span>
+          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">${result === 'win' ? '🏆' : '💤'}</span><strong>${result === 'win' ? 'Sieg' : 'K.O.'}</strong><small>Ergebnis</small></span>
+        </div>
+      `;
     }
 
     /**
@@ -862,24 +957,89 @@ export const battleScreen = {
       });
     }
 
-    screen.querySelector('#btn-flee').addEventListener('click', () =>
-      showScreen(level.arena ? 'arena' : 'map', level.arena ? {} : { worldId: level.worldId })
-    );
+    /** Zurück zur Karte (bzw. zur Arena) - für "Fliehen" und das Pausenmenü. */
+    function verlassen() {
+      showScreen(level.arena ? 'arena' : 'map', level.arena ? {} : { worldId: level.worldId });
+    }
+
+    screen.querySelector('#btn-flee').addEventListener('click', verlassen);
+
+    /* ---------- Pause ----------
+       Die Engine hält an (keine Energie, kein Gegnerzug, keine Karten), und
+       alle CSS-Animationen im Kampf frieren ein (.ist-pausiert). Fortsetzen
+       läuft exakt am selben Stand weiter. */
+    const pauseKnopf = screen.querySelector('#btn-pause');
+    let pauseOverlay = null;
+
+    function pausieren() {
+      if (!battle || pauseOverlay || !battle.pause()) return;
+      spieleKlang('tipp');
+      screen.classList.add('ist-pausiert');
+      pauseOverlay = document.createElement('div');
+      pauseOverlay.className = 'overlay overlay--pause';
+      pauseOverlay.innerHTML = `
+        <div class="overlay__box">
+          <div class="overlay__icon">⏸</div>
+          <h3 class="overlay__title">Pause</h3>
+          <p class="overlay__text">Der Kampf ist angehalten. Energie und Gegner warten auf dich.</p>
+          <div class="overlay__actions">
+            <button class="btn btn--big btn--green" id="btn-weiter" type="button">▶&nbsp;Fortsetzen</button>
+            <button class="btn btn--ghost" id="btn-raus" type="button">${level.arena ? 'Zur Arena' : 'Zur Weltkarte'}</button>
+          </div>
+        </div>
+      `;
+      pauseOverlay.querySelector('#btn-weiter').addEventListener('click', fortsetzen);
+      pauseOverlay.querySelector('#btn-raus').addEventListener('click', verlassen);
+      screen.appendChild(pauseOverlay);
+    }
+
+    function fortsetzen() {
+      if (!pauseOverlay) return;
+      pauseOverlay.remove();
+      pauseOverlay = null;
+      screen.classList.remove('ist-pausiert');
+      battle?.resume();
+    }
+
+    pauseKnopf.addEventListener('click', pausieren);
+
+    // Wechselt man die App oder sperrt das Handy, pausiert der Kampf von
+    // selbst - sonst liefe der Gegner im Hintergrund weiter.
+    const beiSichtwechsel = () => {
+      if (document.hidden) pausieren();
+    };
+    document.addEventListener('visibilitychange', beiSichtwechsel);
+    aufraeumen.push(() => document.removeEventListener('visibilitychange', beiSichtwechsel));
+
+    /** Der Kampf läuft wirklich los - erst jetzt darf man pausieren. */
+    function losLegen() {
+      if (!battle) return;
+      battle.start();
+      pauseKnopf.disabled = false;
+    }
 
     root.appendChild(screen);
 
     render(battle.state); // einmal zeichnen, bevor der erste Frame läuft
 
-    // Beim allerersten Kampf ein kurzes Tutorial zeigen und den Kampf erst
-    // danach starten - so hat der Spieler in Ruhe Zeit, die Regeln zu lesen.
-    if (!hinweisGesehen('kampf')) {
-      zeigeKampfTutorial(screen, () => {
-        merkeHinweis('kampf');
-        battle.start();
-      });
-    } else {
-      battle.start();
-    }
+    // Erst das Intro (Silhouette, Name, Auftritt), dann geht es los. Beim
+    // allerersten Kampf kommt danach noch ein kurzes Tutorial - so hat der
+    // Spieler in Ruhe Zeit, die Regeln zu lesen.
+    const introAbbrechen = spieleKampfIntro(screen, {
+      gegner: enemyMonster,
+      sprite: ui.enemySprite,
+      fertig: () => {
+        if (!hinweisGesehen('kampf')) {
+          zeigeKampfTutorial(screen, () => {
+            merkeHinweis('kampf');
+            losLegen();
+          });
+        } else {
+          losLegen();
+        }
+      },
+    });
+    aufraeumen.push(introAbbrechen);
   },
 
   /** Wichtig: die Spielschleife stoppen, wenn der Bildschirm verlassen wird. */
@@ -903,5 +1063,7 @@ export const battleScreen = {
     }
     bildfolgeStoppen();
     bildfolgeStoppen = () => {};
+    aufraeumen.forEach((fn) => fn());
+    aufraeumen = [];
   },
 };

@@ -109,6 +109,11 @@ body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  /* clip statt nur hidden: Die Kampfwiese ragt absichtlich weit über den
+     Rand. Mit "hidden" durfte der Browser den Container trotzdem per
+     Fokus oder Antippen verschieben - dann rutschte der ganze Bildschirm
+     samt Ergebnisfenster aus dem Bild. "clip" verbietet jedes Scrollen. */
+  overflow: clip;
   background: #0d1430;
 }
 

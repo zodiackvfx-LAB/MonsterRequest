@@ -90,7 +90,14 @@ function klangFuerKnopf(knopf) {
   return 'tipp';
 }
 
-initScreens(document.getElementById('app'));
+const app = document.getElementById('app');
+// Sicherheitsnetz für ältere Browser ohne "overflow: clip" (siehe .app in
+// css/base.css): Wird der Spielcontainer doch einmal verschoben, sofort zurück.
+app.addEventListener('scroll', () => {
+  if (app.scrollTop || app.scrollLeft) app.scrollTo(0, 0);
+});
+
+initScreens(app);
 
 registerScreen('start', startScreen);
 registerScreen('worlds', worldsScreen);
