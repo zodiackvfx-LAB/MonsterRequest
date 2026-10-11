@@ -14,12 +14,12 @@
  *             male-mal je intervall Sekunden tick Schaden (siehe battle.js)
  *   stun    - Betäubung des Gegenübers in Sekunden (optional): es kann so
  *             lange nicht handeln (nutzt dieselbe Sperre wie Frost)
- *   icon    - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
+ *   icon    - Symbol auf der Karte
  *   text    - kurze Beschreibung für die Karte
  *   seltenheit - 'gewoehnlich' | 'selten' | 'episch' | 'legendaer'
  *                (nur für die Anzeige in der Sammlung, siehe js/data/items.js)
  *
- * Hier stehen nur Timos Attacken. Die Attacken der Gegner werden
+ * Hier stehen nur die Attacken der Spielfiguren (Timo, Rocco). Die Attacken der Gegner werden
  * aus den Vorlagen der jeweiligen Welt erzeugt (js/data/worlds.js) und über
  * registerAttack() ergänzt.
  *
@@ -125,6 +125,42 @@ export const ATTACKS = {
  * unterscheidet darüber, was von Anfang an dabei ist.
  */
 export const START_ATTACKEN = Object.keys(ATTACKS);
+
+/**
+ * Roccos Deck - die Stein-Fassung von Timos acht Attacken.
+ *
+ * Kosten, Schaden und Schild sind GENAU dieselben wie bei Timo; nur Name,
+ * Symbol und Beschreibung passen zu einem Steingolem. Damit bleibt das
+ * Balancing unverändert.
+ *
+ *   stufeVon - die Timo-Attacke, deren Level diese Attacke teilt. Wer
+ *              Fausthieb aufgewertet hat, hat damit auch Roccos Steinfaust
+ *              aufgewertet - und umgekehrt (siehe getAttackenLevel in
+ *              js/core/progression.js). So geht beim Figurwechsel kein
+ *              Fortschritt verloren.
+ */
+export const ROCCO_ATTACKEN = [
+  { id: 'steinfaust', stufeVon: 'fausthieb', seltenheit: 'gewoehnlich', name: 'Steinfaust', cost: 2, damage: 11, icon: '🪨', text: 'Eine Faust aus Fels - langsam ausgeholt, schwer gelandet.' },
+  { id: 'schulterramme', stufeVon: 'ellbogenstoss', seltenheit: 'gewoehnlich', name: 'Schulterramme', cost: 2, damage: 12, icon: '💪', text: 'Rocco wirft sich mit der ganzen Schulter nach vorn.' },
+  { id: 'felsstampfer', stufeVon: 'wirbelkick', seltenheit: 'selten', name: 'Felsstampfer', cost: 3, damage: 17, icon: '🦶', text: 'Ein Tritt auf den Boden, der bis zum Gegner bebt.' },
+  { id: 'brockenwurf', stufeVon: 'aufwaertshaken', seltenheit: 'selten', name: 'Brockenwurf', cost: 4, damage: 23, icon: '🗿', text: 'Ein Stück vom eigenen Rücken - mit Schwung geworfen.' },
+  { id: 'steinhaut', stufeVon: 'deckung', seltenheit: 'selten', name: 'Steinhaut', cost: 4, damage: 0, shield: 26, icon: '🧱', text: 'Rocco verhärtet sich. Fängt den nächsten Treffer ab.' },
+  { id: 'erdstoss', stufeVon: 'energiestoss', seltenheit: 'episch', name: 'Erdstoß', cost: 5, damage: 30, icon: '⛰️', text: 'Eine Felsspitze bricht unter dem Gegner aus dem Boden.' },
+  { id: 'felslawine', stufeVon: 'druckwelle', seltenheit: 'episch', name: 'Felslawine', cost: 7, damage: 45, icon: '🏔️', text: 'Geröll von allen Seiten - kaum auszuweichen.' },
+  { id: 'bergsturz', stufeVon: 'sturmfaust', seltenheit: 'legendaer', name: 'Bergsturz', cost: 9, damage: 62, icon: '🌋', text: 'Roccos stärkster Schlag: der halbe Berg fällt auf einmal.' },
+];
+
+ROCCO_ATTACKEN.forEach((attacke) => {
+  ATTACKS[attacke.id] = { heal: 0, shield: 0, ...attacke };
+});
+
+/**
+ * Die Attacke, deren Level eine Attacke trägt - meist sie selbst. Roccos
+ * Attacken teilen ihr Level mit Timos (siehe ROCCO_ATTACKEN).
+ */
+export function stufenId(id) {
+  return ATTACKS[id]?.stufeVon ?? id;
+}
 
 /**
  * Trägt eine Attacke nachträglich in den Katalog ein.

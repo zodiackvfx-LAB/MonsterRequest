@@ -201,6 +201,6 @@ Der restliche Code bleibt unverändert.
 ## Rechtliches
 
 Alle Monster, Attacken und Namen sind eigene Erfindungen. Es werden bewusst
-keine geschützten Inhalte Dritter verwendet. Die Monster-Darstellungen sind
-Emoji-Platzhalter und sollen später durch eigene Grafiken ersetzt werden.
+keine geschützten Inhalte Dritter verwendet. Timo ist eigens gezeichnet, alle
+anderen Figuren sind berechnete Pixel-Figuren (`js/ui/sprite.js`).
 Die Schrift Fredoka steht unter der SIL Open Font License (`fonts/OFL.txt`).

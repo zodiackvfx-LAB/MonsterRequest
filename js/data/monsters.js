@@ -12,9 +12,10 @@
  * Felder:
  *   id            - eindeutiger Schlüssel
  *   name          - Anzeigename
- *   icon          - Platzhalter-Grafik (später durch eigene Bilder ersetzbar)
+ *   icon          - Emoji für kleine Anzeigen (die Figur selbst zeigt image bzw. look)
  *   maxHp         - maximale Lebenspunkte
- *   element       - Typ der Kreatur (für die Anzeige; Stärken/Schwächen folgen später)
+ *   element       - Typ der Kreatur, nur zur Anzeige (es gibt bewusst keine
+ *                   Stärken/Schwächen-Regel)
  *   look          - Aussehen der Pixel-Figur (siehe js/ui/sprite.js)
  *   text          - kurze Beschreibung für Monster- und Sammlungsbildschirm
  *   deck          - genau 8 Attacken-ids aus js/data/attacks.js
@@ -97,15 +98,20 @@ export const MONSTERS = {
     defenseBasis: 0.05,
     // Erst nach dem Sieg über den Boss von Welt 1 wählbar.
     freischaltLevel: '1-12',
+    // Grosse Attacken schiessen bei Rocco keinen blauen Energiestrahl, sondern
+    // einen erdfarbenen (siehe js/screens/battle.js).
+    strahlFarbe: '#e0a25a',
+    // Roccos eigene Stein-Attacken - gleiche Kosten und Werte wie Timos
+    // Deck, nur passend zum Golem (siehe ROCCO_ATTACKEN in js/data/attacks.js).
     deck: [
-      'fausthieb',
-      'ellbogenstoss',
-      'wirbelkick',
-      'aufwaertshaken',
-      'deckung',
-      'energiestoss',
-      'druckwelle',
-      'sturmfaust',
+      'steinfaust',
+      'schulterramme',
+      'felsstampfer',
+      'brockenwurf',
+      'steinhaut',
+      'erdstoss',
+      'felslawine',
+      'bergsturz',
     ],
   },
 };

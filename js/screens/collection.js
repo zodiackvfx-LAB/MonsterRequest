@@ -15,7 +15,7 @@ import { MONSTERS, STARTER_MONSTER_ID } from '../data/monsters.js';
 import { WORLDS } from '../data/worlds.js';
 import { LEVELS } from '../data/levels.js';
 import { getEnemy } from '../data/enemies.js';
-import { getAttack, START_ATTACKEN } from '../data/attacks.js';
+import { getAttack, ROCCO_ATTACKEN, START_ATTACKEN } from '../data/attacks.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../data/items.js';
 import { BOSS_KRAEFTE } from '../data/kraefte.js';
 import { getWorld } from '../data/worlds.js';
@@ -26,6 +26,7 @@ import {
   besitztAttacke,
   besitztKraft,
   besitztSkin,
+  figurFrei,
   gameState,
   getAktiverSkin,
   isLevelCleared,
@@ -178,6 +179,10 @@ function baueAttacken(content) {
   );
 
   content.appendChild(attackenBlock('Startattacken', start, () => true));
+  // Roccos Stein-Attacken gehören zu ihm und sind da, sobald er frei ist.
+  // Sie zählen nicht zum Sammelzähler oben - sie sind keine Beute.
+  const rocco = ROCCO_ATTACKEN.map((attacke) => getAttack(attacke.id));
+  content.appendChild(attackenBlock('Roccos Attacken', rocco, () => figurFrei('rocco')));
   content.appendChild(attackenBlock('Aus Truhen', beute, (attacke) => besitztAttacke(attacke.id)));
 }
 

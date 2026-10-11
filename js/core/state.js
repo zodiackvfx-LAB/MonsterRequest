@@ -29,7 +29,7 @@ function createNewGame() {
     clearedLevels: [], // Level-ids wie "1-3"
     stars: {}, // { "1-3": 2 }
     coins: 0,
-    materials: 0, // für spätere Aufwertungen
+    materials: 0, // Material (💠) für Aufwertungen - siehe js/core/progression.js
     ownedAttacks: [], // aus Truhen freigeschaltete Attacken
     bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null, // die getragene Boss-Kraft (id) oder null

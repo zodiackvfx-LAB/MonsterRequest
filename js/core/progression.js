@@ -15,6 +15,7 @@
 
 import { gameState, saveProgress } from './state.js';
 import { fortschrittMelden } from './aufgaben.js';
+import { stufenId } from '../data/attacks.js';
 
 /* ------------------------------------------------------------------ */
 /*  Charakter-Level                                                    */
@@ -169,9 +170,12 @@ export function monsterMitFortschritt(monster) {
 /** Höchstes Attacken-Level. */
 export const MAX_ATTACKEN_LEVEL = 5;
 
-/** Das Level einer Attacke (1, wenn noch nie aufgewertet). */
+/**
+ * Das Level einer Attacke (1, wenn noch nie aufgewertet). Roccos Attacken
+ * teilen ihr Level mit Timos Gegenstück (siehe stufenId in js/data/attacks.js).
+ */
 export function getAttackenLevel(attackId) {
-  return gameState.attackLevels[attackId] ?? 1;
+  return gameState.attackLevels[stufenId(attackId)] ?? 1;
 }
 
 /**
@@ -198,7 +202,7 @@ export function attackeAufwerten(attackId) {
 
   gameState.coins -= kosten.muenzen;
   gameState.materials -= kosten.material;
-  gameState.attackLevels[attackId] = level + 1;
+  gameState.attackLevels[stufenId(attackId)] = level + 1;
   saveProgress();
   fortschrittMelden('aufwertung');
   return true;

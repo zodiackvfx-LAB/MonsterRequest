@@ -18,7 +18,7 @@ globalThis.localStorage = {
 import { createDeck, DECK_SIZE, HAND_SIZE } from '../js/core/deck.js';
 import { createFighter, MAX_ENERGIE, START_ENERGIE } from '../js/core/fighter.js';
 import { MONSTERS, SPIELER_FIGUREN, STARTER_MONSTER_ID, getMonster } from '../js/data/monsters.js';
-import { ATTACKS, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
+import { ATTACKS, ROCCO_ATTACKEN, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
 import { GEGNER_ARTEN } from '../js/data/gegnerarten.js';
 import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
@@ -955,6 +955,28 @@ console.log('\nZweite Spielfigur');
 
   resetProgress();
   pruefe('Zurücksetzen stellt Timo als aktive Figur wieder her', getAktiveFigur() === 'timo');
+}
+
+console.log('\nRoccos Attacken');
+{
+  resetProgress();
+  const rocco = getMonster('rocco');
+  pruefe('Rocco hat ein eigenes Deck aus genau 8 Attacken',
+    rocco.deck.length === 8 && rocco.deck.every((id) => ATTACKS[id]) &&
+    rocco.deck.every((id) => !getMonster('timo').deck.includes(id)));
+  const gleich = ROCCO_ATTACKEN.every((a) => {
+    const t = getAttack(a.stufeVon);
+    return a.cost === t.cost && a.damage === t.damage && (a.shield ?? 0) === (t.shield ?? 0);
+  });
+  pruefe('Roccos Attacken kosten und wirken genau wie Timos Gegenstück', gleich);
+  gameState.coins = 999999;
+  gameState.materials = 999;
+  attackeAufwerten('fausthieb');
+  pruefe('Aufgewerteter Fausthieb wertet auch Steinfaust auf',
+    getAttackenLevel('steinfaust') === 2 && getAttackenLevel('fausthieb') === 2);
+  attackeAufwerten('steinfaust');
+  pruefe('...und umgekehrt', getAttackenLevel('fausthieb') === 3);
+  resetProgress();
 }
 
 console.log('\nEndlos-Arena');

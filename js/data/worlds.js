@@ -19,7 +19,7 @@
  *                 Kulisse, z. B. 'bilder/welten/vulkan.png'
  *   hueBase     - Grundfarbton der Kreaturen dieser Welt (0-360)
  *   text        - kurze Beschreibung
- *   music       - Klang-Kategorie (noch ohne Wirkung, für später vorgesehen)
+ *   music       - Musik-Kategorie der Welt (siehe js/data/musik.js)
  *   powerPerXp  - wie viel Schaden die Gegner pro Energie austeilen (Schwierigkeit)
  *   baseHp      - Lebenspunkte des ersten Gegners der Welt
  *   hpGrowth    - wie stark die Lebenspunkte von Kampf zu Kampf steigen
@@ -28,12 +28,12 @@
  *                 (n = Name, i = Symbol, c = Energiekosten; der Schaden wird
  *                  aus den Kosten und powerPerXp berechnet)
  *   bossAttacks - 8 Attacken-Vorlagen für den Boss
- *   enemies     - 11 normale Gegner (n = Name, i = Platzhalter-Symbol)
+ *   enemies     - 11 normale Gegner (n = Name, i = Emoji für kleine Anzeigen)
  *   boss        - der Bossgegner der Welt
  *
- * Die Symbole sind bewusst nur Platzhalter. In einem späteren Schritt
- * werden sie durch eigene Pixel-Art-Figuren ersetzt - dafür muss an dieser
- * Datei nichts geändert werden außer dem Feld selbst.
+ * Wie ein Gegner aussieht, steht nicht hier: Jeder bekommt automatisch eine
+ * eigene Pixel-Figur (js/ui/sprite.js, Form und Farbe aus js/data/enemies.js).
+ * Das Emoji (i) taucht nur noch in kleinen Anzeigen auf.
  */
 export const WORLDS = [
   {
