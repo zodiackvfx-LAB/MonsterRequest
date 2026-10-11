@@ -22,6 +22,19 @@ python3 -m http.server 8000
 
 Dann <http://localhost:8000> öffnen.
 
+**Als einzelne Datei (ohne Webserver):** `dist/MonsterQuest.html` enthält
+das komplette Spiel – Code, Grafiken und Schrift – in einer Datei. Einfach
+doppelklicken oder verschicken. Sie wird aus dem Projekt erzeugt:
+
+```bash
+node werkzeuge/eine-datei-bauen.mjs
+```
+
+Weiterentwickelt wird wie bisher in `js/`, `css/` und `bilder/`; danach neu
+bauen. In der Einzeldatei fehlt nur die Installation als App (Service
+Worker). Achtung: Der Browser speichert den Spielstand je Adresse – die
+Einzeldatei hat also einen eigenen Spielstand, getrennt von der Web-Version.
+
 **Nur mit iPad/iPhone:** Repository auf GitHub öffentlich stellen und unter
 *Settings → Pages* den Branch veröffentlichen. Danach läuft das Spiel über eine
 feste Adresse, und über *Teilen → Zum Home-Bildschirm* bekommst du ein
