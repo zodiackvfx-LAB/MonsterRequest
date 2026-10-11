@@ -22,9 +22,9 @@ export function createScenery({ dimmed = false, skyOnly = false, deko = false } 
     <div class="scenery__sky"></div>
     <div class="scenery__strahlen"></div>
     <div class="scenery__sun"></div>
-    <div class="scenery__cloud"></div>
-    <div class="scenery__cloud"></div>
-    <div class="scenery__cloud"></div>
+    <div class="scenery__cloud scenery__cloud--1"></div>
+    <div class="scenery__cloud scenery__cloud--2"></div>
+    <div class="scenery__cloud scenery__cloud--3"></div>
   `;
 
   // Zwei Bergreihen statt einer: die hintere ist heller und etwas versetzt.

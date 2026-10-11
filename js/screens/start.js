@@ -25,6 +25,12 @@ const MENU = [
 /** Raeumt den Tiefeneffekt beim Verlassen der Lobby wieder weg. */
 let parallaxAus = () => {};
 
+/** Das Logo springt nur beim ersten Öffnen ins Bild, nicht bei jeder Rückkehr. */
+let logoGezeigt = false;
+
+/** Timer der Sternschnuppe, damit sie beim Verlassen nicht weiterläuft. */
+let schnuppenTimer = null;
+
 /** Wie lange der Aufleucht-Effekt dauert, bevor die Karte kommt (ms). */
 const START_EFFEKT = 240;
 
@@ -77,7 +83,7 @@ export const startScreen = {
 
        Die Pfade erzeugt werkzeuge/logo-bauen.py. */
     content.innerHTML = `
-      <svg class="logo" viewBox="0 0 300 108" role="img" aria-label="MonsterQuest">
+      <svg class="logo${logoGezeigt ? '' : ' logo--rein'}" viewBox="0 0 300 108" role="img" aria-label="MonsterQuest">
         <defs>
           <linearGradient id="logo-monster" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0.35" stop-color="#ffffff" />
@@ -87,17 +93,50 @@ export const startScreen = {
             <stop offset="0.3" stop-color="#ffe98a" />
             <stop offset="1" stop-color="#ff9e18" />
           </linearGradient>
+          <clipPath id="logo-schrift">
+            <path d="${LOGO_MONSTER}" />
+            <path d="${LOGO_QUEST}" />
+          </clipPath>
         </defs>
+        <!-- Tiefe: eine dunkle Kopie, etwas nach unten versetzt - die
+             Buchstaben wirken dadurch wie dicke Klötzchen. -->
+        <g class="logo__tiefe" transform="translate(0 5)">
+          <path d="${LOGO_MONSTER}" />
+          <path d="${LOGO_QUEST}" />
+        </g>
         <path class="logo__rand" d="${LOGO_MONSTER}" />
         <path class="logo__rand" d="${LOGO_QUEST}" />
         <path class="logo__kontur" d="${LOGO_MONSTER}" />
         <path class="logo__kontur" d="${LOGO_QUEST}" />
         <path class="logo__fuellung" d="${LOGO_MONSTER}" fill="url(#logo-monster)" />
         <path class="logo__fuellung" d="${LOGO_QUEST}" fill="url(#logo-quest)" />
+        <!-- Ein Lichtstreif wandert ab und zu über die Buchstaben. -->
+        <g clip-path="url(#logo-schrift)">
+          <rect class="logo__glanz" x="-70" y="-10" width="34" height="130" />
+        </g>
       </svg>
+      <span class="logo-stern logo-stern--1" aria-hidden="true">✦</span>
+      <span class="logo-stern logo-stern--2" aria-hidden="true">✦</span>
+      <span class="logo-stern logo-stern--3" aria-hidden="true">✧</span>
+      <span class="logo-stern logo-stern--4" aria-hidden="true">✦</span>
       <p class="logo__claim">Kleine Monster. Große Abenteuer.</p>
     `;
     screen.appendChild(content);
+    logoGezeigt = true;
+
+    // Geheimnis: Ein kleiner Stern am Himmel blinkt. Wer ihn antippt,
+    // schickt ihn als Sternschnuppe davon. Keine Belohnung - nur Freude.
+    const stern = document.createElement('button');
+    stern.type = 'button';
+    stern.className = 'himmels-stern';
+    stern.setAttribute('aria-label', 'Ein funkelnder Stern');
+    stern.addEventListener('click', () => {
+      if (stern.classList.contains('ist-schnuppe')) return;
+      stern.classList.add('ist-schnuppe');
+      clearTimeout(schnuppenTimer);
+      schnuppenTimer = setTimeout(() => stern.classList.remove('ist-schnuppe'), 6000);
+    });
+    screen.appendChild(stern);
 
     const hero = document.createElement('div');
     hero.className = 'start__hero';
@@ -170,6 +209,8 @@ export const startScreen = {
       const button = document.createElement('button');
       button.className = 'icon-btn';
       button.type = 'button';
+      // Die Knöpfe schweben leicht versetzt - wie eine kleine Welle.
+      button.style.setProperty('--schwebe-verzug', `${-(MENU.indexOf(entry) * 0.45)}s`);
       button.innerHTML = `
         <span class="icon-btn__circle"></span>
         <span class="icon-btn__label">${entry.label}</span>
@@ -203,5 +244,7 @@ export const startScreen = {
   unmount() {
     parallaxAus();
     parallaxAus = () => {};
+    clearTimeout(schnuppenTimer);
+    schnuppenTimer = null;
   },
 };

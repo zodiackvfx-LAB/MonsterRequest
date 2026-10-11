@@ -66,13 +66,17 @@
   animation: drift 26s linear infinite;
 }
 
-.scenery__cloud:nth-child(1) { top: 9%;  left: -30%; width: 96px; animation-duration: 34s; }
-.scenery__cloud:nth-child(2) { top: 18%; left: -55%; width: 74px; animation-duration: 46s; animation-delay: -12s; }
-.scenery__cloud:nth-child(3) { top: 5%;  left: -80%; width: 120px; animation-duration: 58s; animation-delay: -30s; }
+/* Eigene Klassen statt :nth-child - vor den Wolken liegen Himmel, Strahlen
+   und Sonne im selben Behälter, :nth-child(1) traf deshalb nie eine Wolke
+   (sie blieben ohne Breite und damit unsichtbar). */
+.scenery__cloud--1 { top: 9%;  left: -30%; width: 96px; animation-duration: 34s; }
+.scenery__cloud--2 { top: 18%; left: -55%; width: 74px; animation-duration: 46s; animation-delay: -12s; }
+.scenery__cloud--3 { top: 5%;  left: -80%; width: 120px; animation-duration: 58s; animation-delay: -30s; }
 
+/* Einmal quer über den ganzen Bildschirm (100vw) plus die eigene Breite. */
 @keyframes drift {
   from { transform: translateX(0); }
-  to   { transform: translateX(260%); }
+  to   { transform: translateX(calc(100vw + 200%)); }
 }
 
 /* ---------- Berge im Hintergrund ---------- */

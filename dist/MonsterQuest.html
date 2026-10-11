@@ -240,13 +240,17 @@ body.no-animations *::after {
   animation: drift 26s linear infinite;
 }
 
-.scenery__cloud:nth-child(1) { top: 9%;  left: -30%; width: 96px; animation-duration: 34s; }
-.scenery__cloud:nth-child(2) { top: 18%; left: -55%; width: 74px; animation-duration: 46s; animation-delay: -12s; }
-.scenery__cloud:nth-child(3) { top: 5%;  left: -80%; width: 120px; animation-duration: 58s; animation-delay: -30s; }
+/* Eigene Klassen statt :nth-child - vor den Wolken liegen Himmel, Strahlen
+   und Sonne im selben Behälter, :nth-child(1) traf deshalb nie eine Wolke
+   (sie blieben ohne Breite und damit unsichtbar). */
+.scenery__cloud--1 { top: 9%;  left: -30%; width: 96px; animation-duration: 34s; }
+.scenery__cloud--2 { top: 18%; left: -55%; width: 74px; animation-duration: 46s; animation-delay: -12s; }
+.scenery__cloud--3 { top: 5%;  left: -80%; width: 120px; animation-duration: 58s; animation-delay: -30s; }
 
+/* Einmal quer über den ganzen Bildschirm (100vw) plus die eigene Breite. */
 @keyframes drift {
   from { transform: translateX(0); }
-  to   { transform: translateX(260%); }
+  to   { transform: translateX(calc(100vw + 200%)); }
 }
 
 /* ---------- Berge im Hintergrund ---------- */
@@ -6255,6 +6259,181 @@ body.no-animations *::after {
 .welt-teilchen--sand .welt-teilchen__stueck { width: 5px; height: 5px; border-radius: 50%; background: #f2d28c; }
 .welt-teilchen--feder .welt-teilchen__stueck { width: 6px; height: 16px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; background: linear-gradient(90deg, #ffffff, #dfe8ff); }
 
+/* =========================================================================
+   6. Startbildschirm und Wolken
+   ========================================================================= */
+
+.start__logo {
+  position: relative;
+}
+
+/* ---------- Logo: Tiefe, Glanz, Auftritt ---------- */
+.logo__tiefe path {
+  fill: #0b1236;
+  stroke: #0b1236;
+  stroke-width: 11;
+  stroke-linejoin: round;
+}
+
+.logo__glanz {
+  fill: rgba(255, 255, 255, 0.55);
+  transform: skewX(-20deg);
+  animation: logo-glanz 5.5s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+
+@keyframes logo-glanz {
+  0%   { transform: translateX(0) skewX(-20deg); }
+  28%  { transform: translateX(420px) skewX(-20deg); }
+  100% { transform: translateX(420px) skewX(-20deg); }
+}
+
+.logo--rein {
+  animation: logo-rein 0.75s cubic-bezier(0.25, 1.5, 0.45, 1) both, logo-schimmern 6s 0.75s ease-in-out infinite;
+}
+
+@keyframes logo-rein {
+  0%   { transform: translateY(-30px) scale(0.6); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Funkelnde Sterne rund um den Schriftzug. */
+.logo-stern {
+  position: absolute;
+  color: #fff6c9;
+  text-shadow: 0 0 8px rgba(255, 220, 120, 0.95);
+  pointer-events: none;
+  animation: stern-funkeln 2.4s ease-in-out infinite;
+}
+
+.logo-stern--1 { top: 2%;  left: 10%; font-size: 1rem; }
+.logo-stern--2 { top: 38%; right: 6%; font-size: 1.25rem; animation-delay: 0.8s; }
+.logo-stern--3 { top: 64%; left: 4%; font-size: 0.9rem; animation-delay: 1.5s; }
+.logo-stern--4 { top: -4%; right: 22%; font-size: 0.75rem; animation-delay: 2s; }
+
+/* ---------- Menüknöpfe: leichtes Schweben, federnder Druck ---------- */
+.screen--start .icon-btn__circle {
+  animation: knopf-schweben 3.2s ease-in-out infinite;
+  animation-delay: var(--schwebe-verzug, 0s);
+}
+
+@keyframes knopf-schweben {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -3px; }
+}
+
+.icon-btn:active .icon-btn__circle {
+  scale: 0.94;
+}
+
+.icon-btn:active .icon-btn__label {
+  color: var(--gold-1);
+}
+
+.icon-btn:focus-visible .icon-btn__circle {
+  outline: 3px solid var(--gold-1);
+  outline-offset: 3px;
+}
+
+/* ---------- Geheimnis: der Stern am Himmel ---------- */
+.himmels-stern {
+  /* !important: base.css macht direkte Kinder des Bildschirms relativ. */
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 34%;
+  left: 5%;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.himmels-stern::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 3px rgba(255, 255, 230, 0.9);
+  animation: stern-blinken 4.5s ease-in-out infinite;
+}
+
+.himmels-stern.ist-schnuppe {
+  pointer-events: none;
+}
+
+.himmels-stern.ist-schnuppe::before {
+  animation: schnuppe 1.1s ease-in forwards;
+}
+
+/* Der Schweif der Sternschnuppe. */
+.himmels-stern.ist-schnuppe::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70px;
+  height: 2px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  animation: schnuppe-schweif 1.1s ease-in forwards;
+}
+
+@keyframes schnuppe {
+  0%   { transform: translate(0, 0) scale(1.4); opacity: 1; }
+  100% { transform: translate(240px, 120px) scale(0.4); opacity: 0; }
+}
+
+@keyframes schnuppe-schweif {
+  0%   { transform: translate(0, 0) rotate(206deg) scaleX(0.2); opacity: 1; }
+  100% { transform: translate(240px, 120px) rotate(206deg) scaleX(1); opacity: 0; }
+}
+
+/* ---------- Wolken, die ihre Form verändern ----------
+   Zwei zusätzliche Beulen je Wolke wachsen und schrumpfen langsam und
+   wandern ein Stück - jede in ihrem eigenen Takt. Dadurch sieht keine Wolke
+   zweimal gleich aus. Nur transform: kostet fast nichts. */
+.scenery__cloud::before,
+.scenery__cloud::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  transform-origin: 50% 100%;
+}
+
+.scenery__cloud::before {
+  left: 14%;
+  bottom: 38%;
+  width: 42%;
+  height: 120%;
+  animation: wolke-beule 13s ease-in-out infinite alternate;
+}
+
+.scenery__cloud::after {
+  right: 6%;
+  bottom: 30%;
+  width: 30%;
+  height: 92%;
+  animation: wolke-beule 17s ease-in-out infinite alternate-reverse;
+}
+
+.scenery__cloud--2::before { animation-duration: 19s; }
+.scenery__cloud--3::after { animation-duration: 11s; }
+
+@keyframes wolke-beule {
+  0%   { transform: translateX(-12%) scale(0.7); }
+  45%  { transform: translateX(10%) scale(1.18); }
+  100% { transform: translateX(26%) scale(0.88, 1.05); }
+}
+
   </style>
 </head>
 <body>
@@ -9136,9 +9315,9 @@ function createScenery({ dimmed = false, skyOnly = false, deko = false } = {}) {
     <div class="scenery__sky"></div>
     <div class="scenery__strahlen"></div>
     <div class="scenery__sun"></div>
-    <div class="scenery__cloud"></div>
-    <div class="scenery__cloud"></div>
-    <div class="scenery__cloud"></div>
+    <div class="scenery__cloud scenery__cloud--1"></div>
+    <div class="scenery__cloud scenery__cloud--2"></div>
+    <div class="scenery__cloud scenery__cloud--3"></div>
   `;
   const landschaft = `
     <div class="scenery__mountains scenery__mountains--fern"></div>
@@ -9658,6 +9837,8 @@ var MENU = [
 ];
 var parallaxAus = () => {
 };
+var logoGezeigt = false;
+var schnuppenTimer = null;
 var START_EFFEKT = 240;
 function funkenStreuen(knopf) {
   const anzahl = 10;
@@ -9685,7 +9866,7 @@ var startScreen = {
     const content = document.createElement("div");
     content.className = "start__logo";
     content.innerHTML = `
-      <svg class="logo" viewBox="0 0 300 108" role="img" aria-label="MonsterQuest">
+      <svg class="logo${logoGezeigt ? "" : " logo--rein"}" viewBox="0 0 300 108" role="img" aria-label="MonsterQuest">
         <defs>
           <linearGradient id="logo-monster" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0.35" stop-color="#ffffff" />
@@ -9695,17 +9876,47 @@ var startScreen = {
             <stop offset="0.3" stop-color="#ffe98a" />
             <stop offset="1" stop-color="#ff9e18" />
           </linearGradient>
+          <clipPath id="logo-schrift">
+            <path d="${LOGO_MONSTER}" />
+            <path d="${LOGO_QUEST}" />
+          </clipPath>
         </defs>
+        <!-- Tiefe: eine dunkle Kopie, etwas nach unten versetzt - die
+             Buchstaben wirken dadurch wie dicke Klötzchen. -->
+        <g class="logo__tiefe" transform="translate(0 5)">
+          <path d="${LOGO_MONSTER}" />
+          <path d="${LOGO_QUEST}" />
+        </g>
         <path class="logo__rand" d="${LOGO_MONSTER}" />
         <path class="logo__rand" d="${LOGO_QUEST}" />
         <path class="logo__kontur" d="${LOGO_MONSTER}" />
         <path class="logo__kontur" d="${LOGO_QUEST}" />
         <path class="logo__fuellung" d="${LOGO_MONSTER}" fill="url(#logo-monster)" />
         <path class="logo__fuellung" d="${LOGO_QUEST}" fill="url(#logo-quest)" />
+        <!-- Ein Lichtstreif wandert ab und zu über die Buchstaben. -->
+        <g clip-path="url(#logo-schrift)">
+          <rect class="logo__glanz" x="-70" y="-10" width="34" height="130" />
+        </g>
       </svg>
+      <span class="logo-stern logo-stern--1" aria-hidden="true">✦</span>
+      <span class="logo-stern logo-stern--2" aria-hidden="true">✦</span>
+      <span class="logo-stern logo-stern--3" aria-hidden="true">✧</span>
+      <span class="logo-stern logo-stern--4" aria-hidden="true">✦</span>
       <p class="logo__claim">Kleine Monster. Große Abenteuer.</p>
     `;
     screen.appendChild(content);
+    logoGezeigt = true;
+    const stern = document.createElement("button");
+    stern.type = "button";
+    stern.className = "himmels-stern";
+    stern.setAttribute("aria-label", "Ein funkelnder Stern");
+    stern.addEventListener("click", () => {
+      if (stern.classList.contains("ist-schnuppe")) return;
+      stern.classList.add("ist-schnuppe");
+      clearTimeout(schnuppenTimer);
+      schnuppenTimer = setTimeout(() => stern.classList.remove("ist-schnuppe"), 6e3);
+    });
+    screen.appendChild(stern);
     const hero = document.createElement("div");
     hero.className = "start__hero";
     hero.innerHTML = `
@@ -9760,6 +9971,7 @@ var startScreen = {
       const button = document.createElement("button");
       button.className = "icon-btn";
       button.type = "button";
+      button.style.setProperty("--schwebe-verzug", `${-(MENU.indexOf(entry) * 0.45)}s`);
       button.innerHTML = `
         <span class="icon-btn__circle"></span>
         <span class="icon-btn__label">${entry.label}</span>
@@ -9787,6 +9999,8 @@ var startScreen = {
     parallaxAus();
     parallaxAus = () => {
     };
+    clearTimeout(schnuppenTimer);
+    schnuppenTimer = null;
   }
 };
 
