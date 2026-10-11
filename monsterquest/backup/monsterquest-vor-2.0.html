@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MonsterQuest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#7ec8f2;
+    --sky-bottom:#ffe08a;
+    --meadow-dark:#2f8f5b;
+    --meadow:#3fae6f;
+    --meadow-light:#63c98a;
+    --ink:#2b2140;
+    --ink-soft:#6b6178;
+    --cream:#fff8e9;
+    --cream-edge:#e8d7ae;
+    --gold:#ffb400;
+    --gold-dark:#e2900a;
+    --ember:#ff6b4a;
+    --ember-dark:#e14f30;
+    --locked:#8a8a9c;
+    --hp-green:#57c26b;
+    --hp-red:#e1503f;
+    --xp-blue:#4aa8ff;
+    --card-shadow: 0 6px 0 rgba(0,0,0,0.18);
+    color-scheme: light;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  [hidden]{ display:none !important; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    font-family:'Nunito', system-ui, sans-serif;
+    color:var(--ink);
+    background:#111;
+    overflow:hidden;
+    touch-action: manipulation;
+  }
+  .headline, .btn, .logo, .level-num, .card-name, .screen-title{
+    font-family:'Baloo 2', system-ui, sans-serif;
+  }
+  button:focus-visible, input:focus-visible{ outline:3px solid var(--xp-blue); outline-offset:2px; }
+
+  #app{
+    position:relative;
+    width:100%;
+    height:100dvh;
+    max-width:520px;
+    margin:0 auto;
+    overflow:hidden;
+  }
+
+  .screen{
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .screen.active{ display:flex; }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    border:none;
+    cursor:pointer;
+    font-weight:700;
+    letter-spacing:0.3px;
+    color:white;
+    border-radius:999px;
+    padding:16px 28px;
+    font-size:1.15rem;
+    background:linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+    box-shadow: 0 5px 0 #a56a05, 0 8px 16px rgba(0,0,0,0.25);
+    transition: transform .08s ease, box-shadow .08s ease;
+    -webkit-user-select:none; user-select:none;
+  }
+  .btn:active{
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #a56a05, 0 3px 8px rgba(0,0,0,0.25);
+  }
+  .btn.secondary{
+    background:linear-gradient(180deg, #fff 0%, #eee0c4 100%);
+    color:var(--ink);
+    box-shadow: 0 5px 0 #c9b98c, 0 8px 16px rgba(0,0,0,0.18);
+    font-size:0.95rem;
+    padding:10px 16px;
+  }
+  .btn.secondary:active{ box-shadow: 0 1px 0 #c9b98c; }
+  .btn.danger{
+    background:linear-gradient(180deg, var(--ember) 0%, var(--ember-dark) 100%);
+    box-shadow: 0 5px 0 #9c2f1c, 0 8px 16px rgba(0,0,0,0.2);
+  }
+  .btn.danger:active{ box-shadow: 0 1px 0 #9c2f1c; }
+  .btn.small{ padding:9px 14px; font-size:0.85rem; }
+  .btn:disabled{
+    background:linear-gradient(180deg,#b9b9c4,#9797a4);
+    box-shadow:0 5px 0 #74748080;
+    cursor:not-allowed;
+    opacity:0.75;
+  }
+
+  /* ================= START SCREEN ================= */
+  #screen-start{
+    justify-content:space-between;
+    background:
+      radial-gradient(1200px 500px at 50% -10%, #b9e6ff 0%, transparent 60%),
+      linear-gradient(180deg, var(--sky-top) 0%, #a9dfae 55%, var(--meadow) 100%);
+  }
+  .parallax-hills{
+    position:absolute; left:0; right:0; bottom:0; height:46%;
+    background:
+      radial-gradient(60% 100% at 20% 100%, var(--meadow-light) 0%, transparent 70%),
+      radial-gradient(70% 100% at 80% 100%, var(--meadow-dark) 0%, transparent 70%),
+      linear-gradient(180deg, transparent 0%, var(--meadow) 40%);
+  }
+  .cloud{
+    position:absolute; background:#fff; border-radius:50%;
+    opacity:0.85; filter:blur(0.5px);
+  }
+  .start-content{
+    position:relative; z-index:2;
+    display:flex; flex-direction:column; align-items:center;
+    padding:8vh 24px 0;
+    gap:6px;
+  }
+  .logo{
+    font-size:2.6rem;
+    font-weight:800;
+    text-align:center;
+    color:var(--gold);
+    -webkit-text-stroke: 2px #7a3d00;
+    text-shadow: 0 4px 0 #7a3d00, 0 8px 14px rgba(0,0,0,0.35);
+    line-height:1;
+    margin:0;
+  }
+  .tagline{
+    font-family:'Baloo 2', system-ui, sans-serif;
+    font-weight:600;
+    color:#fff;
+    background:rgba(43,33,64,0.55);
+    padding:6px 16px;
+    border-radius:999px;
+    font-size:0.85rem;
+    margin-top:6px;
+  }
+  .mascot{
+    position:relative; z-index:2;
+    align-self:center;
+    margin-top:2vh;
+    width:150px; height:150px;
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.25));
+  }
+  .start-actions{
+    position:relative; z-index:2;
+    display:flex; flex-direction:column; align-items:center;
+    gap:16px;
+    padding:0 32px 4vh;
+  }
+  .cta-start{ width:100%; max-width:320px; text-align:center; font-size:1.3rem; padding:18px; }
+  .quick-nav{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    width:100%; max-width:360px;
+  }
+  .quick-nav button{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:rgba(255,255,255,0.85);
+    border:none; border-radius:16px; padding:10px 6px;
+    width:74px;
+    box-shadow:0 4px 0 rgba(0,0,0,0.15);
+    font-family:'Nunito',system-ui,sans-serif; font-weight:700; font-size:0.68rem;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .quick-nav button:active{ transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,0.15); }
+  .quick-nav .qicon{ font-size:1.4rem; }
+
+  /* ================= TOP BAR ================= */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px;
+    background:rgba(43,33,64,0.35);
+    backdrop-filter: blur(2px);
+    position:relative; z-index:3;
+  }
+  .topbar-title{
+    font-family:'Baloo 2', system-ui, sans-serif; font-weight:800; color:#fff;
+    text-shadow:0 2px 0 rgba(0,0,0,0.2);
+  }
+  .player-chip{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,0.9);
+    border-radius:999px; padding:4px 12px 4px 4px;
+  }
+  .player-avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(180deg,#ffd479,#ff9d4a);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .player-avatar svg{ width:30px; height:30px; margin-top:4px; }
+  .player-lv{ font-weight:800; font-size:0.8rem; }
+  .stat-pill{
+    display:flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,0.9);
+    border-radius:999px; padding:6px 12px;
+    font-weight:800; font-size:0.85rem;
+  }
+  .back-btn{
+    background:rgba(255,255,255,0.9); border:none; border-radius:999px;
+    width:36px; height:36px; font-size:1.1rem; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink); cursor:pointer;
+  }
+
+  /* ================= MAP SCREEN ================= */
+  #screen-map{
+    background:
+      radial-gradient(1000px 400px at 50% -10%, #cdeeff 0%, transparent 60%),
+      linear-gradient(180deg, var(--sky-top) 0%, #bfe8c2 30%, var(--meadow) 70%, var(--meadow-dark) 100%);
+  }
+  .map-scroll{
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    position:relative;
+    padding:24px 0 60px;
+  }
+  .map-path{
+    position:relative;
+    width:100%;
+    min-height:640px;
+    padding:0 20px;
+  }
+  .map-path svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .level-node{
+    position:absolute;
+    display:flex; flex-direction:column; align-items:center;
+    gap:6px;
+    transform:translate(-50%,-50%);
+    cursor:pointer;
+  }
+  .node-circle{
+    width:64px; height:64px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.5rem; font-weight:800;
+    color:#fff;
+    background:linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+    box-shadow:0 5px 0 #a56a05, 0 8px 14px rgba(0,0,0,0.3);
+    border:4px solid #fff4d6;
+  }
+  .level-node.locked .node-circle{
+    background:linear-gradient(180deg,#a3a3b0,#787886);
+    box-shadow:0 5px 0 #5c5c68, 0 8px 14px rgba(0,0,0,0.3);
+    border-color:#d7d7e0;
+  }
+  .level-node.boss .node-circle{
+    width:76px; height:76px; font-size:1.8rem;
+    background:linear-gradient(180deg, var(--ember) 0%, var(--ember-dark) 100%);
+    box-shadow:0 5px 0 #9c2f1c, 0 8px 14px rgba(0,0,0,0.3);
+  }
+  .node-label{
+    background:rgba(255,255,255,0.92);
+    border-radius:999px; padding:3px 12px;
+    font-weight:800; font-size:0.7rem;
+    white-space:nowrap;
+  }
+  .node-lock-icon{ position:absolute; top:-4px; right:-2px; font-size:1.1rem; }
+  .level-node:not(.locked) .node-circle{ animation: bob 2.4s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }
+
+  .map-welcome{
+    margin:14px 16px 0;
+    background:rgba(255,255,255,0.95);
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 4px 0 rgba(0,0,0,0.1);
+  }
+  .map-welcome h2{ margin:0 0 4px; font-family:'Baloo 2', system-ui, sans-serif; font-size:1rem; }
+  .map-welcome p{ margin:0; font-size:0.85rem; color:#544b66; line-height:1.4; }
+
+  /* ================= BATTLE SCREEN ================= */
+  #screen-battle{
+    background:
+      radial-gradient(900px 400px at 50% 0%, #ffe9b0 0%, transparent 55%),
+      linear-gradient(180deg, #ffd77a 0%, #ffb454 35%, #d97a3e 100%);
+  }
+  .battle-arena{
+    flex:1; position:relative;
+    display:flex; flex-direction:column;
+    padding:6px 16px 0;
+    min-height:0;
+  }
+  .ground{
+    position:absolute; left:0; right:0; bottom:0; height:34%;
+    background:
+      radial-gradient(70% 100% at 50% 100%, #c98a4a 0%, #a86a34 70%),
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.15));
+    border-top:6px solid #8a5626;
+  }
+
+  .combatant-row{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    position:relative; z-index:2;
+  }
+  .combatant{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    width:44%;
+  }
+  .combatant.enemy{ align-items:flex-end; }
+  .name-plate{
+    background:rgba(255,255,255,0.92);
+    border-radius:12px;
+    padding:6px 10px;
+    width:100%;
+    box-shadow:0 3px 0 rgba(0,0,0,0.12);
+  }
+  .name-plate .nm{ font-weight:800; font-size:0.78rem; display:flex; justify-content:space-between; gap:6px; }
+  .name-plate .nm span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hp-track{
+    height:9px; border-radius:999px; background:#e4d9c2; margin-top:4px; overflow:hidden;
+    border:1.5px solid rgba(0,0,0,0.15);
+  }
+  .hp-fill{
+    height:100%; background:linear-gradient(180deg,#7be08d,var(--hp-green));
+    transition:width .35s ease;
+  }
+  .hp-fill.low{ background:linear-gradient(180deg,#ff8b7a,var(--hp-red)); }
+  .hp-text{ font-size:0.62rem; font-weight:700; color:var(--ink-soft); margin-top:2px; text-align:right; }
+
+  .sprite-wrap{
+    width:96px; height:96px;
+    display:flex; align-items:center; justify-content:center;
+    filter: drop-shadow(0 8px 6px rgba(0,0,0,0.3));
+    animation: idle 2.6s ease-in-out infinite;
+  }
+  .enemy .sprite-wrap{ animation-delay:0.3s; }
+  @keyframes idle{ 0%,100%{ transform:translateY(0) scaleX(var(--flip,1)); } 50%{ transform:translateY(-5px) scaleX(var(--flip,1)); } }
+  .sprite-wrap.hit{ animation: hitflash 0.35s ease; }
+  @keyframes hitflash{ 0%{ filter:brightness(2) drop-shadow(0 8px 6px rgba(0,0,0,0.3)); } 100%{ filter:brightness(1) drop-shadow(0 8px 6px rgba(0,0,0,0.3)); } }
+  .enemy .sprite-wrap{ --flip:-1; }
+
+  .floatie{
+    position:absolute; font-family:'Baloo 2', system-ui, sans-serif; font-weight:800; font-size:1.1rem;
+    color:#fff; -webkit-text-stroke:1.5px #b23a24;
+    pointer-events:none; animation: floatUp 0.9s ease forwards; z-index:5;
+  }
+  @keyframes floatUp{ 0%{ transform:translateY(0); opacity:1;} 100%{ transform:translateY(-46px); opacity:0;} }
+
+  .battle-log{
+    position:relative; z-index:2;
+    margin-top:auto;
+    background:rgba(43,33,64,0.85);
+    color:#fff; border-radius:14px 14px 0 0;
+    padding:8px 14px;
+    font-size:0.78rem; font-weight:600;
+    min-height:34px;
+    display:flex; align-items:center;
+  }
+
+  .battle-bottom{
+    position:relative; z-index:3;
+    background:var(--cream);
+    border-top:4px solid var(--cream-edge);
+    padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .xp-row{ display:flex; align-items:center; gap:8px; }
+  .xp-label{ font-family:'Baloo 2', system-ui, sans-serif; font-weight:700; font-size:0.75rem; color:var(--ink); width:44px; }
+  .xp-track{
+    flex:1; height:16px; border-radius:999px; background:#e0dcef;
+    border:2px solid #cfc8e6; overflow:hidden; position:relative;
+  }
+  .xp-fill{
+    height:100%; background:linear-gradient(180deg,#7fc4ff,var(--xp-blue));
+    transition:width .25s linear;
+  }
+  .xp-text{ font-weight:800; font-size:0.72rem; width:42px; text-align:right; font-variant-numeric:tabular-nums; }
+
+  .hand{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+  }
+  .card{
+    position:relative;
+    border-radius:14px;
+    padding:8px 6px 10px;
+    background:linear-gradient(180deg,#fff,#f3ecd6);
+    box-shadow:var(--card-shadow), 0 2px 6px rgba(0,0,0,0.15);
+    border:2px solid #e7dcb8;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    min-height:88px;
+    transition: transform .08s ease;
+    color:var(--ink);
+    font:inherit;
+    cursor:pointer;
+  }
+  .card:active{ transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.18); }
+  .card .cicon{ font-size:1.4rem; }
+  .card-name{ font-size:0.62rem; font-weight:700; text-align:center; line-height:1.1; min-height:22px; }
+  .card-cost{
+    position:absolute; top:-8px; right:-6px;
+    background:var(--xp-blue); color:#fff;
+    font-family:'Baloo 2', system-ui, sans-serif; font-weight:800; font-size:0.72rem;
+    width:24px; height:24px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #fff; box-shadow:0 2px 0 rgba(0,0,0,0.2);
+  }
+  .card.disabled{ opacity:0.45; filter:grayscale(0.5); cursor:default; }
+  .card.disabled:active{ transform:none; box-shadow:var(--card-shadow), 0 2px 6px rgba(0,0,0,0.15); }
+
+  .deck-counter{
+    text-align:center; font-size:0.65rem; color:#8a7f66; font-weight:700;
+  }
+
+  /* ================= RESULT OVERLAY ================= */
+  .overlay{
+    position:absolute; inset:0; z-index:20;
+    background:rgba(20,14,32,0.72);
+    display:none; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .overlay.active{ display:flex; }
+  .overlay-card{
+    background:var(--cream);
+    border-radius:22px;
+    padding:28px 24px;
+    width:100%; max-width:320px;
+    text-align:center;
+    box-shadow:0 10px 0 rgba(0,0,0,0.25);
+  }
+  .overlay-card h2{ margin:0 0 6px; font-family:'Baloo 2', system-ui, sans-serif; font-size:1.5rem; color:var(--gold-dark); }
+  .overlay-card p{ margin:0 0 18px; font-size:0.9rem; color:var(--ink-soft); }
+  .overlay-card .emoji{ font-size:3rem; margin-bottom:6px; }
+
+  /* ================= MENÜ-SCREENS (Monster / Deck / Sammlung / Einstellungen) ================= */
+  .menu-screen{
+    background:
+      radial-gradient(1000px 400px at 50% -10%, #cdeeff 0%, transparent 60%),
+      linear-gradient(180deg, var(--sky-top) 0%, #a9dfae 45%, var(--meadow) 100%);
+  }
+  .menu-scroll{
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:16px 16px calc(28px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .panel{
+    background:var(--cream);
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 5px 0 rgba(0,0,0,0.14);
+    border:2px solid var(--cream-edge);
+  }
+  .panel h3{
+    margin:0 0 10px;
+    font-family:'Baloo 2', system-ui, sans-serif; font-weight:800; font-size:0.78rem;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft);
+  }
+  .panel p.hint{ margin:0; font-size:0.8rem; color:var(--ink-soft); line-height:1.4; }
+
+  /* Monster */
+  .hero-monster{
+    display:flex; align-items:center; gap:14px;
+  }
+  .hero-monster .portrait{
+    flex:0 0 auto;
+    width:104px; height:104px; border-radius:22px;
+    background:radial-gradient(circle at 50% 35%, #e6f8ff 0%, #a8def0 100%);
+    display:flex; align-items:center; justify-content:center;
+    border:3px solid #fff;
+    box-shadow:0 4px 0 rgba(0,0,0,0.12);
+  }
+  .hero-monster .portrait svg{ width:92px; height:92px; }
+  .hero-monster .info{ min-width:0; flex:1; }
+  .hero-monster .mname{
+    font-family:'Baloo 2', system-ui, sans-serif; font-weight:800; font-size:1.5rem; line-height:1.1;
+    overflow-wrap:anywhere;
+  }
+  .badge{
+    display:inline-block;
+    font-weight:800; font-size:0.68rem;
+    padding:3px 10px; border-radius:999px;
+    background:#dff3fb; color:#1f6f8a;
+    margin-top:4px;
+  }
+  .badge.gold{ background:#fff0c7; color:#8a5a00; }
+  .badge.red{ background:#ffe1d9; color:#a3341d; }
+  .badge.grey{ background:#ebe9f0; color:#6b6178; }
+  .stat-list{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat{
+    background:#fff; border-radius:12px; padding:8px 10px;
+    border:1.5px solid #eadfc2;
+  }
+  .stat .k{ font-size:0.66rem; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; }
+  .stat .v{ font-family:'Baloo 2', system-ui, sans-serif; font-weight:800; font-size:1.15rem; font-variant-numeric:tabular-nums; }
+  .team-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .team-slot{
+    background:#ece8df; border-radius:14px; padding:10px 6px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    border:2px dashed #cbbf9f;
+  }
+  .team-slot svg{ width:52px; height:52px; }
+  .team-slot .lbl{ font-size:0.64rem; font-weight:800; color:var(--ink-soft); text-align:center; line-height:1.2; }
+
+  /* Deck */
+  .deck-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px 8px; padding-top:8px; }
+  .deck-card{ cursor:default; min-height:104px; }
+  .deck-card:active{ transform:none; box-shadow:var(--card-shadow), 0 2px 6px rgba(0,0,0,0.15); }
+  .card-effect{
+    font-size:0.6rem; font-weight:800; padding:2px 6px; border-radius:999px;
+    background:#ffe1d9; color:#a3341d; white-space:nowrap;
+  }
+  .card-effect.heal{ background:#dcf4e1; color:#23753a; }
+  .deck-rules{ margin:0; padding-left:18px; font-size:0.8rem; color:var(--ink-soft); line-height:1.5; }
+
+  /* Sammlung */
+  .dex-progress{ display:flex; align-items:center; gap:10px; }
+  .dex-progress .xp-track{ height:14px; }
+  .dex-progress .num{ font-weight:800; font-size:0.85rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .dex-list{ display:flex; flex-direction:column; gap:10px; }
+  .dex-entry{
+    display:flex; align-items:center; gap:12px;
+    background:#fff; border-radius:14px; padding:8px 12px 8px 8px;
+    border:1.5px solid #eadfc2;
+  }
+  .dex-entry .pic{
+    flex:0 0 auto; width:60px; height:60px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    background:#f3ecd6;
+  }
+  .dex-entry .pic svg{ width:54px; height:54px; }
+  .dex-entry.unknown .pic{ background:#e6e3ec; }
+  .dex-entry .txt{ min-width:0; flex:1; }
+  .dex-entry .no{ font-size:0.64rem; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .dex-entry .dn{ font-family:'Baloo 2', system-ui, sans-serif; font-weight:800; font-size:1rem; line-height:1.15; overflow-wrap:anywhere; }
+  .dex-entry .dd{ font-size:0.72rem; color:var(--ink-soft); line-height:1.3; }
+
+  /* Einstellungen */
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-weight:800; font-size:0.85rem; }
+  .field input[type="text"]{
+    font:inherit; font-weight:700; font-size:1rem;
+    padding:10px 14px; border-radius:12px;
+    border:2px solid #d9cba5; background:#fff; color:var(--ink);
+    width:100%;
+  }
+  .setting-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:10px 0;
+  }
+  .setting-row + .setting-row{ border-top:1.5px solid #eadfc2; }
+  .setting-row .st{ min-width:0; }
+  .setting-row .st b{ display:block; font-size:0.88rem; }
+  .setting-row .st span{ font-size:0.74rem; color:var(--ink-soft); }
+  .toggle{
+    position:relative; flex:0 0 auto;
+    width:54px; height:30px; border-radius:999px; border:none; cursor:pointer;
+    background:#cfc8dc; transition:background .15s ease;
+  }
+  .toggle::after{
+    content:""; position:absolute; top:3px; left:3px;
+    width:24px; height:24px; border-radius:50%; background:#fff;
+    box-shadow:0 2px 0 rgba(0,0,0,0.2);
+    transition:transform .15s ease;
+  }
+  .toggle[aria-checked="true"]{ background:var(--hp-green); }
+  .toggle[aria-checked="true"]::after{ transform:translateX(24px); }
+  .seg{ display:flex; gap:6px; flex:0 0 auto; }
+  .seg button{
+    font:inherit; font-weight:800; font-size:0.74rem;
+    padding:6px 10px; border-radius:999px; border:2px solid #d9cba5;
+    background:#fff; color:var(--ink); cursor:pointer;
+  }
+  .seg button[aria-pressed="true"]{ background:var(--gold); border-color:var(--gold-dark); color:#fff; }
+  .reset-box{ display:flex; flex-direction:column; gap:10px; }
+  .reset-confirm{ display:flex; gap:8px; flex-wrap:wrap; }
+  .saved-note{ font-size:0.74rem; font-weight:700; color:#23753a; min-height:1em; }
+
+  /* Animationen aus */
+  #app.no-anim *, #app.no-anim *::before, #app.no-anim *::after{
+    animation-duration:0.001s !important; animation-iteration-count:1 !important; transition:none !important;
+  }
+  @media (prefers-reduced-motion: reduce){
+    #app *, #app *::before, #app *::after{ animation-duration:0.001s !important; animation-iteration-count:1 !important; transition:none !important; }
+  }
+
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ START SCREEN ============ -->
+  <section id="screen-start" class="screen active">
+    <div class="parallax-hills"></div>
+    <div class="cloud" style="width:70px;height:26px;top:8%;left:8%;"></div>
+    <div class="cloud" style="width:50px;height:20px;top:14%;left:60%;"></div>
+    <div class="cloud" style="width:90px;height:32px;top:20%;left:30%;"></div>
+
+    <div class="start-content">
+      <h1 class="logo">MonsterQuest</h1>
+      <div class="tagline">Kleine Monster. Große Abenteuer.</div>
+    </div>
+
+    <svg class="mascot" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="180" rx="55" ry="10" fill="rgba(0,0,0,0.15)"/>
+      <path d="M100 40 C50 40 35 90 45 130 C50 155 75 170 100 170 C125 170 150 155 155 130 C165 90 150 40 100 40 Z" fill="#5fc9e8"/>
+      <path d="M55 60 C35 40 20 45 25 65 C30 82 48 88 60 78 Z" fill="#4bb4d4"/>
+      <path d="M145 60 C165 40 180 45 175 65 C170 82 152 88 140 78 Z" fill="#4bb4d4"/>
+      <circle cx="80" cy="105" r="13" fill="#2b2140"/>
+      <circle cx="120" cy="105" r="13" fill="#2b2140"/>
+      <circle cx="84" cy="100" r="4" fill="#fff"/>
+      <circle cx="124" cy="100" r="4" fill="#fff"/>
+      <path d="M85 135 Q100 148 115 135" stroke="#2b2140" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="65" cy="122" r="8" fill="#ff9d8a" opacity="0.7"/>
+      <circle cx="135" cy="122" r="8" fill="#ff9d8a" opacity="0.7"/>
+    </svg>
+
+    <div class="start-actions">
+      <button class="btn cta-start" id="btn-play">▶ SPIEL STARTEN</button>
+      <div class="quick-nav">
+        <button data-screen="screen-monster"><span class="qicon">🐾</span>MONSTER</button>
+        <button data-screen="screen-deck"><span class="qicon">🃏</span>DECK</button>
+        <button data-screen="screen-dex"><span class="qicon">📖</span>SAMMLUNG</button>
+        <button data-screen="screen-settings"><span class="qicon">⚙️</span>EINSTELLUNGEN</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAP SCREEN ============ -->
+  <section id="screen-map" class="screen">
+    <div class="topbar">
+      <button class="back-btn" id="map-back" aria-label="Zurück">←</button>
+      <div class="player-chip">
+        <div class="player-avatar" data-svg="flauschi"></div>
+        <div class="player-lv">Lv. 1</div>
+      </div>
+      <div class="stat-pill">🪙 250</div>
+    </div>
+    <div class="map-scroll">
+      <div class="map-welcome">
+        <h2>Willkommen in MonsterQuest</h2>
+        <p>Erkunde die Welt, besiege Gegner und schalte neue Level frei. Level 1 wartet auf dich!</p>
+      </div>
+      <div class="map-path" id="map-path">
+        <svg viewBox="0 0 320 560" preserveAspectRatio="none">
+          <path d="M60 460 C 40 400, 90 380, 100 340 S 60 260, 150 220 S 260 170, 240 100"
+                stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="2 22" opacity="0.85"/>
+        </svg>
+        <div class="level-node" style="left:60px; top:460px;" data-level="1">
+          <div class="node-circle">1</div>
+          <div class="node-label">Grasland</div>
+        </div>
+        <div class="level-node locked" style="left:100px; top:340px;" data-level="2">
+          <div class="node-circle">2</div>
+          <div class="node-lock-icon">🔒</div>
+          <div class="node-label">Wald</div>
+        </div>
+        <div class="level-node locked" style="left:150px; top:220px;" data-level="3">
+          <div class="node-circle">3</div>
+          <div class="node-lock-icon">🔒</div>
+          <div class="node-label">Hügel</div>
+        </div>
+        <div class="level-node locked boss" style="left:240px; top:100px;" data-level="boss">
+          <div class="node-circle">👑</div>
+          <div class="node-lock-icon">🔒</div>
+          <div class="node-label">BOSS</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BATTLE SCREEN ============ -->
+  <section id="screen-battle" class="screen">
+    <div class="topbar">
+      <button class="back-btn" id="battle-flee" aria-label="Fliehen">←</button>
+      <div class="topbar-title">Level 1 · Grasland</div>
+      <div style="width:36px;"></div>
+    </div>
+
+    <div class="battle-arena">
+      <div class="ground"></div>
+
+      <div class="combatant-row" style="margin-top:26px;">
+        <div class="combatant player">
+          <div class="name-plate">
+            <div class="nm"><span id="player-name">Flauschi</span><span id="player-lv-tag">Lv.1</span></div>
+            <div class="hp-track"><div class="hp-fill" id="player-hp-fill" style="width:100%;"></div></div>
+            <div class="hp-text"><span id="player-hp-text">30/30</span></div>
+          </div>
+          <div class="sprite-wrap" id="player-sprite">
+            <svg width="90" height="90" viewBox="0 0 200 200">
+              <ellipse cx="100" cy="180" rx="50" ry="9" fill="rgba(0,0,0,0.15)"/>
+              <path d="M100 40 C50 40 35 90 45 130 C50 155 75 170 100 170 C125 170 150 155 155 130 C165 90 150 40 100 40 Z" fill="#5fc9e8"/>
+              <path d="M55 60 C35 40 20 45 25 65 C30 82 48 88 60 78 Z" fill="#4bb4d4"/>
+              <path d="M145 60 C165 40 180 45 175 65 C170 82 152 88 140 78 Z" fill="#4bb4d4"/>
+              <circle cx="80" cy="105" r="13" fill="#2b2140"/>
+              <circle cx="120" cy="105" r="13" fill="#2b2140"/>
+              <circle cx="84" cy="100" r="4" fill="#fff"/>
+              <circle cx="124" cy="100" r="4" fill="#fff"/>
+              <path d="M85 135 Q100 148 115 135" stroke="#2b2140" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="combatant enemy">
+          <div class="name-plate">
+            <div class="nm"><span id="enemy-lv-tag">Lv.1</span><span id="enemy-name">Grollzahn</span></div>
+            <div class="hp-track"><div class="hp-fill" id="enemy-hp-fill" style="width:100%;"></div></div>
+            <div class="hp-text"><span id="enemy-hp-text">24/24</span></div>
+          </div>
+          <div class="sprite-wrap" id="enemy-sprite">
+            <svg width="90" height="90" viewBox="0 0 200 200">
+              <ellipse cx="100" cy="180" rx="50" ry="9" fill="rgba(0,0,0,0.15)"/>
+              <path d="M100 45 C60 45 40 85 48 120 C52 150 75 168 100 168 C125 168 148 150 152 120 C160 85 140 45 100 45 Z" fill="#c9683f"/>
+              <path d="M65 55 L50 25 L80 48 Z" fill="#a34a28"/>
+              <path d="M135 55 L150 25 L120 48 Z" fill="#a34a28"/>
+              <circle cx="80" cy="110" r="11" fill="#ffe08a"/>
+              <circle cx="120" cy="110" r="11" fill="#ffe08a"/>
+              <circle cx="80" cy="110" r="5" fill="#2b2140"/>
+              <circle cx="120" cy="110" r="5" fill="#2b2140"/>
+              <path d="M80 145 Q100 130 120 145" stroke="#2b2140" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="battle-log" id="battle-log">Ein wilder Grollzahn erscheint!</div>
+    </div>
+
+    <div class="battle-bottom">
+      <div class="xp-row">
+        <div class="xp-label">XP</div>
+        <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:100%;"></div></div>
+        <div class="xp-text" id="xp-text">10/10</div>
+      </div>
+      <div class="hand" id="hand"></div>
+      <div class="deck-counter" id="deck-counter">Deck: 4 Karten übrig</div>
+    </div>
+
+    <div class="overlay" id="battle-overlay">
+      <div class="overlay-card">
+        <div class="emoji" id="overlay-emoji">🏆</div>
+        <h2 id="overlay-title">Sieg!</h2>
+        <p id="overlay-text">Du hast Grollzahn besiegt.</p>
+        <button class="btn" id="overlay-btn" style="width:100%;">Zurück zur Karte</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MONSTER SCREEN ============ -->
+  <section id="screen-monster" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Monster</div>
+      <div style="width:36px;"></div>
+    </div>
+    <div class="menu-scroll">
+      <div class="panel">
+        <div class="hero-monster">
+          <div class="portrait" data-svg="flauschi"></div>
+          <div class="info">
+            <div class="mname" id="mon-name">Flauschi</div>
+            <span class="badge">Dein Partner</span>
+            <span class="badge gold">Lv. 1</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Werte</h3>
+        <div class="stat-list">
+          <div class="stat"><div class="k">Lebenspunkte</div><div class="v">30 HP</div></div>
+          <div class="stat"><div class="k">XP-Aufladung</div><div class="v">+1 / Sek.</div></div>
+          <div class="stat"><div class="k">Max. XP</div><div class="v">10</div></div>
+          <div class="stat"><div class="k">Handkarten</div><div class="v">4</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Kampfbilanz</h3>
+        <div class="stat-list">
+          <div class="stat"><div class="k">Siege</div><div class="v" id="mon-wins">0</div></div>
+          <div class="stat"><div class="k">Niederlagen</div><div class="v" id="mon-losses">0</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Team</h3>
+        <div class="team-row">
+          <div class="team-slot"><div data-svg="silhouette"></div><div class="lbl">Platz 2<br>ab Level 2</div></div>
+          <div class="team-slot"><div data-svg="silhouette"></div><div class="lbl">Platz 3<br>ab Level 3</div></div>
+          <div class="team-slot"><div data-svg="silhouette"></div><div class="lbl">Platz 4<br>nach dem Boss</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DECK SCREEN ============ -->
+  <section id="screen-deck" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Deck</div>
+      <div style="width:36px;"></div>
+    </div>
+    <div class="menu-scroll">
+      <div class="panel">
+        <h3 id="deck-heading">Attacken</h3>
+        <div class="deck-grid" id="deck-grid"></div>
+      </div>
+      <div class="panel">
+        <h3>So funktioniert das Deck</h3>
+        <ul class="deck-rules">
+          <li>Zu Kampfbeginn wird das Deck gemischt.</li>
+          <li>Du hast immer 4 Karten auf der Hand.</li>
+          <li>Jede Karte kostet XP (blaue Zahl). XP lädt sich um 1 pro Sekunde auf, bis maximal 10.</li>
+          <li>Nach jeder gespielten Karte ziehst du eine neue, solange das Deck reicht.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SAMMLUNG SCREEN ============ -->
+  <section id="screen-dex" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Sammlung</div>
+      <div style="width:36px;"></div>
+    </div>
+    <div class="menu-scroll">
+      <div class="panel">
+        <h3>Monster-Lexikon</h3>
+        <div class="dex-progress">
+          <div class="xp-track"><div class="xp-fill" id="dex-fill" style="width:20%;"></div></div>
+          <div class="num" id="dex-num">1 / 5 entdeckt</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="dex-list" id="dex-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EINSTELLUNGEN SCREEN ============ -->
+  <section id="screen-settings" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Einstellungen</div>
+      <div style="width:36px;"></div>
+    </div>
+    <div class="menu-scroll">
+      <form class="panel field" id="name-form">
+        <h3>Monster</h3>
+        <label for="set-name">Name deines Monsters</label>
+        <input type="text" id="set-name" maxlength="14" autocomplete="off" value="Flauschi">
+        <div class="saved-note" id="name-note"></div>
+      </form>
+      <div class="panel">
+        <h3>Spiel</h3>
+        <div class="setting-row">
+          <div class="st"><b>Animationen</b><span>Hüpfen, Treffer-Blitze und Schadenszahlen</span></div>
+          <button class="toggle" id="set-anim" role="switch" aria-checked="true" aria-label="Animationen"></button>
+        </div>
+        <div class="setting-row">
+          <div class="st"><b>Gegner-Tempo</b><span>Wie schnell der Gegner zurückschlägt</span></div>
+          <div class="seg" id="set-speed">
+            <button type="button" data-speed="900" aria-pressed="false">Ruhig</button>
+            <button type="button" data-speed="550" aria-pressed="true">Normal</button>
+            <button type="button" data-speed="300" aria-pressed="false">Schnell</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel reset-box">
+        <h3>Fortschritt</h3>
+        <p class="hint">Setzt Siege, Niederlagen und das Monster-Lexikon zurück. Name und Einstellungen bleiben erhalten.</p>
+        <button class="btn danger small" id="reset-btn" type="button">Fortschritt zurücksetzen</button>
+        <div class="reset-confirm" id="reset-confirm" hidden>
+          <button class="btn danger small" id="reset-yes" type="button">Ja, zurücksetzen</button>
+          <button class="btn secondary small" id="reset-no" type="button">Abbrechen</button>
+        </div>
+        <div class="saved-note" id="reset-note"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ======================================================
+  // GRAFIKEN (wiederverwendbare Monster-SVGs)
+  // ======================================================
+  var SVG = {
+    flauschi:
+      '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M100 40 C50 40 35 90 45 130 C50 155 75 170 100 170 C125 170 150 155 155 130 C165 90 150 40 100 40 Z" fill="#5fc9e8"/>' +
+      '<path d="M55 60 C35 40 20 45 25 65 C30 82 48 88 60 78 Z" fill="#4bb4d4"/>' +
+      '<path d="M145 60 C165 40 180 45 175 65 C170 82 152 88 140 78 Z" fill="#4bb4d4"/>' +
+      '<circle cx="80" cy="105" r="13" fill="#2b2140"/><circle cx="120" cy="105" r="13" fill="#2b2140"/>' +
+      '<circle cx="84" cy="100" r="4" fill="#fff"/><circle cx="124" cy="100" r="4" fill="#fff"/>' +
+      '<path d="M85 135 Q100 148 115 135" stroke="#2b2140" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+      '<circle cx="65" cy="122" r="8" fill="#ff9d8a" opacity="0.7"/><circle cx="135" cy="122" r="8" fill="#ff9d8a" opacity="0.7"/>' +
+      '</svg>',
+    grollzahn:
+      '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M100 45 C60 45 40 85 48 120 C52 150 75 168 100 168 C125 168 148 150 152 120 C160 85 140 45 100 45 Z" fill="#c9683f"/>' +
+      '<path d="M65 55 L50 25 L80 48 Z" fill="#a34a28"/><path d="M135 55 L150 25 L120 48 Z" fill="#a34a28"/>' +
+      '<circle cx="80" cy="110" r="11" fill="#ffe08a"/><circle cx="120" cy="110" r="11" fill="#ffe08a"/>' +
+      '<circle cx="80" cy="110" r="5" fill="#2b2140"/><circle cx="120" cy="110" r="5" fill="#2b2140"/>' +
+      '<path d="M80 145 Q100 130 120 145" stroke="#2b2140" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+      '</svg>',
+    silhouette:
+      '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M100 42 C55 42 38 88 46 126 C51 154 75 170 100 170 C125 170 149 154 154 126 C162 88 145 42 100 42 Z" fill="#9d97ab"/>' +
+      '<path d="M60 58 L48 30 L80 50 Z" fill="#9d97ab"/><path d="M140 58 L152 30 L120 50 Z" fill="#9d97ab"/>' +
+      '<text x="100" y="128" text-anchor="middle" font-family="Baloo 2, system-ui, sans-serif" font-weight="800" font-size="56" fill="#e6e3ec">?</text>' +
+      '</svg>'
+  };
+  document.querySelectorAll('[data-svg]').forEach(function(el){
+    el.innerHTML = SVG[el.getAttribute('data-svg')] || '';
+  });
+
+  // ======================================================
+  // EINSTELLUNGEN & FORTSCHRITT (lokal im Browser)
+  // ======================================================
+  var STORE_KEY = 'monsterquest.v1';
+  var DEFAULTS = { name:'Flauschi', anim:true, enemyDelay:550, wins:0, losses:0, seenGrollzahn:false };
+  var save = loadSave();
+
+  function loadSave(){
+    var s = {};
+    try { s = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; } catch(e){ s = {}; }
+    var out = {};
+    Object.keys(DEFAULTS).forEach(function(k){ out[k] = (k in s) ? s[k] : DEFAULTS[k]; });
+    return out;
+  }
+  function persist(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(save)); } catch(e){}
+  }
+
+  function applyAnim(){
+    document.getElementById('app').classList.toggle('no-anim', !save.anim);
+  }
+  applyAnim();
+
+  // ======================================================
+  // NAVIGATION
+  // ======================================================
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+  }
+
+  document.getElementById('btn-play').addEventListener('click', function(){
+    showScreen('screen-map');
+  });
+  document.getElementById('map-back').addEventListener('click', function(){
+    showScreen('screen-start');
+  });
+  document.getElementById('battle-flee').addEventListener('click', function(){
+    stopXpRegen();
+    if(state) state.over = true;
+    showScreen('screen-map');
+  });
+  document.querySelectorAll('[data-back]').forEach(function(btn){
+    btn.addEventListener('click', function(){ showScreen('screen-start'); });
+  });
+
+  var MENU_RENDER = {
+    'screen-monster': renderMonster,
+    'screen-deck': renderDeck,
+    'screen-dex': renderDex,
+    'screen-settings': renderSettings
+  };
+  document.querySelectorAll('.quick-nav button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.getAttribute('data-screen');
+      if(MENU_RENDER[id]) MENU_RENDER[id]();
+      showScreen(id);
+    });
+  });
+
+  document.querySelectorAll('.level-node').forEach(function(node){
+    node.addEventListener('click', function(){
+      if(node.classList.contains('locked')){
+        flashLockedHint(node);
+        return;
+      }
+      var lvl = node.getAttribute('data-level');
+      if(lvl === '1'){
+        startBattle();
+        showScreen('screen-battle');
+      }
+    });
+  });
+
+  function flashLockedHint(node){
+    var circle = node.querySelector('.node-circle');
+    circle.style.transition = 'transform .12s ease';
+    circle.style.transform = 'scale(0.9)';
+    setTimeout(function(){ circle.style.transform = 'scale(1)'; }, 120);
+  }
+
+  // ======================================================
+  // DATA: Attacken-Pool
+  // ======================================================
+  var ATTACK_POOL = [
+    { id:'krallenhieb', name:'Krallenhieb', cost:2, dmg:5,  icon:'🐾' },
+    { id:'feuerball',   name:'Feuerball',   cost:3, dmg:8,  icon:'🔥' },
+    { id:'flammenstoss',name:'Flammenstoß', cost:4, dmg:11, icon:'💥' },
+    { id:'biss',        name:'Biss',        cost:2, dmg:6,  icon:'🦷' },
+    { id:'feuersturm',  name:'Feuersturm',  cost:5, dmg:15, icon:'🌪️' },
+    { id:'schutzschild',name:'Schutzschild',cost:4, dmg:0,  heal:8, icon:'🛡️' },
+    { id:'lavabombe',   name:'Lavabombe',   cost:7, dmg:20, icon:'☄️' },
+    { id:'meteor',      name:'Meteor',      cost:9, dmg:26, icon:'🌠' }
+  ];
+
+  // ======================================================
+  // DATA: Monster-Lexikon
+  // ======================================================
+  var DEX = [
+    { no:1, key:'flauschi',  area:'Dein Partner' },
+    { no:2, key:'grollzahn', name:'Grollzahn', area:'Grasland · Level 1' },
+    { no:3, key:null, area:'Wald · Level 2' },
+    { no:4, key:null, area:'Hügel · Level 3' },
+    { no:5, key:null, area:'Boss-Gebiet' }
+  ];
+
+  // ======================================================
+  // MENÜ-SCREENS
+  // ======================================================
+  function renderMonster(){
+    document.getElementById('mon-name').textContent = save.name;
+    document.getElementById('mon-wins').textContent = save.wins;
+    document.getElementById('mon-losses').textContent = save.losses;
+  }
+
+  function renderDeck(){
+    var grid = document.getElementById('deck-grid');
+    grid.innerHTML = '';
+    document.getElementById('deck-heading').textContent = 'Attacken · ' + ATTACK_POOL.length + ' Karten';
+    ATTACK_POOL.forEach(function(atk){
+      var c = document.createElement('div');
+      c.className = 'card deck-card';
+      var eff = atk.heal
+        ? '<div class="card-effect heal">+' + atk.heal + ' HP</div>'
+        : '<div class="card-effect">' + atk.dmg + ' Schaden</div>';
+      c.innerHTML =
+        '<div class="card-cost">' + atk.cost + '</div>' +
+        '<div class="cicon">' + atk.icon + '</div>' +
+        '<div class="card-name">' + atk.name + '</div>' + eff;
+      grid.appendChild(c);
+    });
+  }
+
+  function renderDex(){
+    var list = document.getElementById('dex-list');
+    list.innerHTML = '';
+    var found = 0;
+    DEX.forEach(function(m){
+      var known = m.key === 'flauschi' || (m.key === 'grollzahn' && save.seenGrollzahn);
+      if(known) found++;
+      var row = document.createElement('div');
+      row.className = 'dex-entry' + (known ? '' : ' unknown');
+      var pic = document.createElement('div');
+      pic.className = 'pic';
+      pic.innerHTML = known ? SVG[m.key] : SVG.silhouette;
+      var txt = document.createElement('div');
+      txt.className = 'txt';
+      var no = document.createElement('div');
+      no.className = 'no';
+      no.textContent = 'Nr. ' + String(m.no).padStart(3, '0');
+      var dn = document.createElement('div');
+      dn.className = 'dn';
+      dn.textContent = known ? (m.key === 'flauschi' ? save.name : m.name) : '???';
+      var dd = document.createElement('div');
+      dd.className = 'dd';
+      dd.textContent = m.area;
+      txt.appendChild(no); txt.appendChild(dn); txt.appendChild(dd);
+      var badge = document.createElement('span');
+      if(m.key === 'flauschi'){ badge.className = 'badge'; badge.textContent = 'Partner'; }
+      else if(m.key === 'grollzahn' && save.wins > 0){ badge.className = 'badge gold'; badge.textContent = save.wins + '× besiegt'; }
+      else if(known){ badge.className = 'badge red'; badge.textContent = 'Gesehen'; }
+      else { badge.className = 'badge grey'; badge.textContent = 'Unbekannt'; }
+      row.appendChild(pic); row.appendChild(txt); row.appendChild(badge);
+      list.appendChild(row);
+    });
+    document.getElementById('dex-fill').style.width = (found / DEX.length * 100) + '%';
+    document.getElementById('dex-num').textContent = found + ' / ' + DEX.length + ' entdeckt';
+  }
+
+  function renderSettings(){
+    document.getElementById('set-name').value = save.name;
+    document.getElementById('name-note').textContent = '';
+    document.getElementById('reset-note').textContent = '';
+    document.getElementById('set-anim').setAttribute('aria-checked', save.anim ? 'true' : 'false');
+    document.querySelectorAll('#set-speed button').forEach(function(b){
+      b.setAttribute('aria-pressed', Number(b.getAttribute('data-speed')) === save.enemyDelay ? 'true' : 'false');
+    });
+    document.getElementById('reset-confirm').hidden = true;
+    document.getElementById('reset-btn').hidden = false;
+  }
+
+  function commitName(){
+    var input = document.getElementById('set-name');
+    var v = input.value.trim().slice(0, 14);
+    if(!v){
+      input.value = save.name;
+      document.getElementById('name-note').textContent = 'Der Name darf nicht leer sein.';
+      return;
+    }
+    if(v !== save.name){
+      save.name = v;
+      persist();
+      document.getElementById('player-name').textContent = v;
+      document.getElementById('name-note').textContent = 'Name gespeichert.';
+    }
+    input.value = v;
+  }
+  document.getElementById('name-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    commitName();
+    document.getElementById('set-name').blur();
+  });
+  document.getElementById('set-name').addEventListener('change', commitName);
+
+  document.getElementById('set-anim').addEventListener('click', function(){
+    save.anim = !save.anim;
+    persist();
+    applyAnim();
+    this.setAttribute('aria-checked', save.anim ? 'true' : 'false');
+  });
+  document.querySelectorAll('#set-speed button').forEach(function(b){
+    b.addEventListener('click', function(){
+      save.enemyDelay = Number(b.getAttribute('data-speed'));
+      persist();
+      document.querySelectorAll('#set-speed button').forEach(function(o){
+        o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+      });
+    });
+  });
+  document.getElementById('reset-btn').addEventListener('click', function(){
+    this.hidden = true;
+    document.getElementById('reset-confirm').hidden = false;
+    document.getElementById('reset-note').textContent = '';
+  });
+  document.getElementById('reset-no').addEventListener('click', function(){
+    document.getElementById('reset-confirm').hidden = true;
+    document.getElementById('reset-btn').hidden = false;
+  });
+  document.getElementById('reset-yes').addEventListener('click', function(){
+    save.wins = 0; save.losses = 0; save.seenGrollzahn = false;
+    persist();
+    document.getElementById('reset-confirm').hidden = true;
+    document.getElementById('reset-btn').hidden = false;
+    document.getElementById('reset-note').textContent = 'Fortschritt zurückgesetzt.';
+  });
+
+  // ======================================================
+  // BATTLE STATE
+  // ======================================================
+  var state = null;
+  var xpTimer = null;
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function newBattleState(){
+    var deckOrder = shuffle(ATTACK_POOL.map(function(a){ return a.id; }));
+    return {
+      xp: 10,
+      xpMax: 10,
+      player: { name:save.name, lv:1, hp:30, hpMax:30 },
+      enemy:  { name:'Grollzahn', lv:1, hp:24, hpMax:24 },
+      deck: deckOrder.slice(4),   // restliche 4 Karten im Deck
+      hand: deckOrder.slice(0,4), // 4 Karten auf der Hand
+      over: false
+    };
+  }
+
+  function attackById(id){
+    for(var i=0;i<ATTACK_POOL.length;i++){ if(ATTACK_POOL[i].id === id) return ATTACK_POOL[i]; }
+    return null;
+  }
+
+  function startBattle(){
+    state = newBattleState();
+    if(!save.seenGrollzahn){ save.seenGrollzahn = true; persist(); }
+    document.getElementById('player-name').textContent = state.player.name;
+    document.getElementById('enemy-name').textContent = state.enemy.name;
+    document.getElementById('battle-overlay').classList.remove('active');
+    log('Ein wilder ' + state.enemy.name + ' erscheint!');
+    renderAll();
+    startXpRegen();
+  }
+
+  // ---------------- XP Regeneration: +1 XP / Sekunde, min 0, max 10 ----------------
+  function startXpRegen(){
+    stopXpRegen();
+    xpTimer = setInterval(function(){
+      if(!state || state.over) return;
+      if(state.xp < state.xpMax){
+        state.xp = Math.min(state.xpMax, state.xp + 1);
+        renderXp();
+        renderHand();
+      }
+    }, 1000);
+  }
+  function stopXpRegen(){
+    if(xpTimer){ clearInterval(xpTimer); xpTimer = null; }
+  }
+
+  // ---------------- Rendering ----------------
+  function renderAll(){
+    renderHp();
+    renderXp();
+    renderHand();
+    renderDeckCounter();
+  }
+
+  function renderHp(){
+    var p = state.player, e = state.enemy;
+    setHp('player-hp-fill','player-hp-text', p.hp, p.hpMax);
+    setHp('enemy-hp-fill','enemy-hp-text', e.hp, e.hpMax);
+    document.getElementById('player-lv-tag').textContent = 'Lv.' + p.lv;
+    document.getElementById('enemy-lv-tag').textContent = 'Lv.' + e.lv;
+  }
+  function setHp(fillId, textId, hp, hpMax){
+    var pct = Math.max(0, Math.min(100, (hp / hpMax) * 100));
+    var fill = document.getElementById(fillId);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('low', pct <= 30);
+    document.getElementById(textId).textContent = Math.max(0,hp) + '/' + hpMax;
+  }
+
+  function renderXp(){
+    var pct = (state.xp / state.xpMax) * 100;
+    document.getElementById('xp-fill').style.width = pct + '%';
+    document.getElementById('xp-text').textContent = state.xp + '/' + state.xpMax;
+  }
+
+  function renderHand(){
+    var handEl = document.getElementById('hand');
+    handEl.innerHTML = '';
+    state.hand.forEach(function(id, idx){
+      var atk = attackById(id);
+      var affordable = state.xp >= atk.cost;
+      var card = document.createElement('button');
+      card.className = 'card' + (affordable ? '' : ' disabled');
+      card.setAttribute('data-idx', idx);
+      card.innerHTML =
+        '<div class="card-cost">' + atk.cost + '</div>' +
+        '<div class="cicon">' + atk.icon + '</div>' +
+        '<div class="card-name">' + atk.name + '</div>';
+      card.addEventListener('click', function(){ useCard(idx); });
+      handEl.appendChild(card);
+    });
+  }
+
+  function renderDeckCounter(){
+    document.getElementById('deck-counter').textContent = 'Deck: ' + state.deck.length + ' Karten übrig';
+  }
+
+  function log(msg){
+    document.getElementById('battle-log').textContent = msg;
+  }
+
+  function floatText(target, text){
+    var wrap = target === 'enemy' ? document.getElementById('enemy-sprite') : document.getElementById('player-sprite');
+    wrap.classList.add('hit');
+    setTimeout(function(){ wrap.classList.remove('hit'); }, 350);
+    if(!save.anim) return;
+    var f = document.createElement('div');
+    f.className = 'floatie';
+    f.textContent = text;
+    f.style.left = '30%';
+    f.style.top = '-6px';
+    wrap.style.position = 'relative';
+    wrap.appendChild(f);
+    setTimeout(function(){ f.remove(); }, 900);
+  }
+
+  // ---------------- Card usage ----------------
+  function useCard(idx){
+    if(!state || state.over) return;
+    var id = state.hand[idx];
+    var atk = attackById(id);
+    if(state.xp < atk.cost) return; // nicht genug XP
+
+    // XP bezahlen
+    state.xp -= atk.cost;
+
+    // Karte aus der Hand entfernen
+    state.hand.splice(idx, 1);
+
+    // Effekt anwenden
+    if(atk.dmg && atk.dmg > 0){
+      state.enemy.hp = Math.max(0, state.enemy.hp - atk.dmg);
+      floatText('enemy', '-' + atk.dmg);
+      log(state.player.name + ' setzt ' + atk.name + ' ein! (' + atk.dmg + ' Schaden)');
+    }
+    if(atk.heal && atk.heal > 0){
+      state.player.hp = Math.min(state.player.hpMax, state.player.hp + atk.heal);
+      floatText('player', '+' + atk.heal);
+      log(state.player.name + ' nutzt ' + atk.name + ' und heilt sich! (+' + atk.heal + ')');
+    }
+
+    // Neue Karte aus dem Deck ziehen, damit die Hand wieder 4 Karten hat
+    if(state.deck.length > 0){
+      var drawn = state.deck.shift();
+      state.hand.push(drawn);
+    }
+
+    renderHp();
+    renderXp();
+    renderHand();
+    renderDeckCounter();
+
+    if(state.enemy.hp <= 0){
+      endBattle(true);
+      return;
+    }
+
+    // einfache Gegner-Antwort nach kurzer Verzögerung
+    setTimeout(enemyTurn, save.enemyDelay);
+  }
+
+  function enemyTurn(){
+    if(!state || state.over) return;
+    var dmg = 3 + Math.floor(Math.random() * 4); // 3-6 Schaden
+    state.player.hp = Math.max(0, state.player.hp - dmg);
+    floatText('player', '-' + dmg);
+    log(state.enemy.name + ' greift an! (' + dmg + ' Schaden)');
+    renderHp();
+
+    if(state.player.hp <= 0){
+      endBattle(false);
+    }
+  }
+
+  function endBattle(won){
+    state.over = true;
+    stopXpRegen();
+    if(won) save.wins++; else save.losses++;
+    persist();
+    var overlay = document.getElementById('battle-overlay');
+    var emoji = document.getElementById('overlay-emoji');
+    var title = document.getElementById('overlay-title');
+    var text = document.getElementById('overlay-text');
+    if(won){
+      emoji.textContent = '🏆';
+      title.textContent = 'Sieg!';
+      text.textContent = 'Du hast ' + state.enemy.name + ' besiegt.';
+    } else {
+      emoji.textContent = '💀';
+      title.textContent = 'Niederlage';
+      text.textContent = state.enemy.name + ' war zu stark. Versuch es noch einmal!';
+    }
+    overlay.classList.add('active');
+  }
+
+  document.getElementById('overlay-btn').addEventListener('click', function(){
+    document.getElementById('battle-overlay').classList.remove('active');
+    showScreen('screen-map');
+  });
+
+  document.getElementById('player-name').textContent = save.name;
+
+})();
+</script>
+</body>
+</html>
