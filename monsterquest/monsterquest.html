@@ -1,0 +1,3433 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MonsterQuest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* MonsterQuest 2.0 – ein Spiel, eine Datei. Hochformat, max. 520 px breit. */
+  :root{
+    --sky-top:#7ec8f2;
+    --sky-bottom:#ffe08a;
+    --meadow-dark:#2f8f5b;
+    --meadow:#3fae6f;
+    --meadow-light:#63c98a;
+    --ink:#2b2140;
+    --ink-soft:#6b6178;
+    --cream:#fff8e9;
+    --cream-edge:#e8d7ae;
+    --gold:#ffb400;
+    --gold-dark:#e2900a;
+    --ember:#ff6b4a;
+    --ember-dark:#e14f30;
+    --locked:#8a8a9c;
+    --hp-green:#57c26b;
+    --hp-red:#e1503f;
+    --xp-blue:#4aa8ff;
+    --xp-blue-dark:#2a7fd6;
+    --night:#1d1030;
+    --lava:#ff7a1a;
+    --card-shadow: 0 5px 0 rgba(0,0,0,0.22), 0 8px 14px rgba(0,0,0,0.16);
+    --font-display:'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+    --font-body:'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color-scheme: light;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  [hidden]{ display:none !important; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    color:var(--ink);
+    background:#14101f;
+    overflow:hidden;
+    touch-action: manipulation;
+    -webkit-user-select:none; user-select:none;
+  }
+  input{ -webkit-user-select:text; user-select:text; }
+  .headline, .btn, .logo, .card-name, .screen-title{ font-family:var(--font-display); }
+  button{ font:inherit; color:inherit; }
+  button:focus-visible, input:focus-visible{ outline:3px solid var(--xp-blue); outline-offset:2px; }
+
+  #app{
+    position:relative;
+    width:100%;
+    height:100dvh;
+    max-width:520px;
+    margin:0 auto;
+    overflow:hidden;
+    background:#2a1f3d;
+  }
+  #svg-defs{ position:absolute; width:0; height:0; overflow:hidden; }
+
+  .screen{
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .screen.active{ display:flex; }
+  .screen.enter{ animation: scrIn .32s cubic-bezier(.2,.8,.3,1) both; }
+  .screen.enter-zoom{ animation: scrZoom .4s cubic-bezier(.2,.8,.3,1) both; }
+  @keyframes scrIn{ from{ opacity:0; transform:translateY(16px) scale(.985); } to{ opacity:1; transform:none; } }
+  @keyframes scrZoom{ from{ opacity:0; transform:scale(1.08); } to{ opacity:1; transform:none; } }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    border:none;
+    cursor:pointer;
+    font-weight:800;
+    letter-spacing:0.3px;
+    color:white;
+    border-radius:999px;
+    padding:15px 26px;
+    min-height:48px;
+    font-size:1.1rem;
+    background:linear-gradient(180deg, #ffd04a 0%, var(--gold) 45%, var(--gold-dark) 100%);
+    box-shadow: 0 5px 0 #a56a05, 0 9px 16px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.45);
+    text-shadow:0 2px 0 rgba(150,80,0,0.35);
+    transition: transform .08s ease, box-shadow .08s ease;
+    -webkit-user-select:none; user-select:none;
+  }
+  .btn:active{
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #a56a05, 0 3px 8px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.45);
+  }
+  .btn.secondary{
+    background:linear-gradient(180deg, #fff 0%, #eee0c4 100%);
+    color:var(--ink);
+    text-shadow:none;
+    box-shadow: 0 5px 0 #c9b98c, 0 8px 16px rgba(0,0,0,0.18);
+    font-size:0.95rem;
+    padding:10px 18px;
+  }
+  .btn.secondary:active{ box-shadow: 0 1px 0 #c9b98c; }
+  .btn.danger{
+    background:linear-gradient(180deg, #ff8f6e 0%, var(--ember) 45%, var(--ember-dark) 100%);
+    box-shadow: 0 5px 0 #9c2f1c, 0 8px 16px rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.35);
+    text-shadow:0 2px 0 rgba(120,30,10,0.35);
+  }
+  .btn.danger:active{ box-shadow: 0 1px 0 #9c2f1c; }
+  .btn.small{ padding:10px 16px; font-size:0.88rem; min-height:44px; }
+  .btn:disabled{
+    background:linear-gradient(180deg,#b9b9c4,#9797a4);
+    box-shadow:0 5px 0 #74748080;
+    cursor:not-allowed;
+    opacity:0.75;
+  }
+
+  /* ================= START SCREEN ================= */
+  #screen-start{
+    justify-content:space-between;
+    background:
+      radial-gradient(1200px 500px at 50% -10%, #c9ecff 0%, transparent 60%),
+      linear-gradient(180deg, #6fc1f0 0%, #a7dcf3 38%, #bfe6b4 62%, var(--meadow) 100%);
+  }
+  .start-bg{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+  .start-bg > svg{ position:absolute; left:0; bottom:0; width:100%; height:60%; }
+  .start-cloud{ position:absolute; pointer-events:auto; cursor:pointer; background:none; border:none; padding:0; }
+  .start-cloud svg{ width:100%; height:100%; display:block; }
+  .start-cloud.c1{ width:96px; height:48px; top:9%; left:-24px; animation: cloudDrift 38s linear infinite; }
+  .start-cloud.c2{ width:72px; height:36px; top:17%; left:-24px; animation: cloudDrift 52s linear infinite; animation-delay:-20s; }
+  .start-cloud.c3{ width:120px; height:56px; top:4%; left:-24px; animation: cloudDrift 64s linear infinite; animation-delay:-41s; }
+  @keyframes cloudDrift{ from{ transform:translateX(-140px); } to{ transform:translateX(640px); } }
+  .start-cloud .puff{ transform-box:fill-box; transform-origin:center; transition: transform .6s cubic-bezier(.3,1.6,.5,1); }
+  .start-cloud.morph .puff.p1{ transform:scale(1.25,0.85); }
+  .start-cloud.morph .puff.p2{ transform:scale(0.75,1.2) translateY(-4px); }
+  .start-cloud.morph .puff.p3{ transform:scale(1.3); }
+
+  .star-float{
+    position:absolute; width:18px; height:18px; pointer-events:auto; cursor:pointer;
+    background:none; border:none; padding:0;
+    animation: starFloat 5s ease-in-out infinite;
+  }
+  .star-float svg{ width:100%; height:100%; display:block; }
+  .star-float.flash svg{ animation: starFlash .7s ease; }
+  @keyframes starFloat{ 0%,100%{ transform:translateY(0) rotate(0); opacity:.85; } 50%{ transform:translateY(-10px) rotate(20deg); opacity:1; } }
+  @keyframes starFlash{ 0%{ transform:scale(1); filter:none; } 40%{ transform:scale(2.4) rotate(40deg); filter:drop-shadow(0 0 8px #fff6a8); } 100%{ transform:scale(1); filter:none; } }
+
+  .start-content{
+    position:relative; z-index:2;
+    display:flex; flex-direction:column; align-items:center;
+    padding:6vh 16px 0;
+    gap:4px;
+  }
+  .logo{ margin:0; width:min(92%, 380px); line-height:0; }
+  .logo svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .logo .logo-bounce{ animation: logoIn .8s cubic-bezier(.2,1.4,.4,1) both; transform-origin:50% 60%; transform-box:fill-box; }
+  @keyframes logoIn{ from{ transform:scale(.6) translateY(-20px); opacity:0; } to{ transform:none; opacity:1; } }
+  .tagline{
+    font-family:var(--font-display);
+    font-weight:700;
+    color:#fff;
+    background:rgba(43,33,64,0.55);
+    padding:6px 16px;
+    border-radius:999px;
+    font-size:0.88rem;
+    box-shadow:0 3px 0 rgba(0,0,0,0.12);
+  }
+  .mascot-wrap{
+    position:relative; z-index:2;
+    align-self:center;
+    width:min(46vw, 190px); height:min(46vw, 190px);
+    margin-top:1vh;
+    cursor:pointer;
+    background:none; border:none; padding:0;
+  }
+  .mascot-wrap .bob{ width:100%; height:100%; animation: mascotHop 2.2s ease-in-out infinite; transform-origin:50% 100%; }
+  .mascot-wrap.boop .bob{ animation: mascotBoop .5s ease; }
+  @keyframes mascotHop{ 0%,100%{ transform:translateY(0) scale(1,1); } 40%{ transform:translateY(-12px) scale(.97,1.04); } 55%{ transform:translateY(-14px); } 85%{ transform:translateY(0) scale(1.05,.95); } }
+  @keyframes mascotBoop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.12,.88); } 70%{ transform:scale(.94,1.08); } 100%{ transform:scale(1); } }
+  .start-actions{
+    position:relative; z-index:2;
+    display:flex; flex-direction:column; align-items:center;
+    gap:16px;
+    padding:0 16px calc(4vh + env(safe-area-inset-bottom));
+  }
+  .cta-start{ width:100%; max-width:320px; text-align:center; font-size:1.3rem; padding:18px; min-height:60px; }
+  .quick-nav{
+    display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px;
+    width:100%; max-width:380px;
+  }
+  .quick-nav button{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    background:linear-gradient(180deg,#ffffff 0%, #f3ead6 100%);
+    border:none; border-radius:18px; padding:10px 2px 9px;
+    min-height:72px;
+    box-shadow:0 5px 0 rgba(60,40,10,0.22), 0 8px 14px rgba(0,0,0,0.12), inset 0 2px 0 #fff;
+    font-family:var(--font-display); font-weight:800; font-size:0.62rem; letter-spacing:0.04em;
+    color:var(--ink);
+    cursor:pointer;
+    transition: transform .08s ease, box-shadow .08s ease;
+    min-width:0;
+  }
+  .quick-nav button:active{ transform:translateY(4px); box-shadow:0 1px 0 rgba(60,40,10,0.22); }
+  .quick-nav .qicon{
+    font-size:1.25rem; width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%, #fff 0%, #ffe6a6 70%, #ffc95a 100%);
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  .ladybug{
+    position:absolute; z-index:2; right:14%; bottom:30%; width:26px; height:26px;
+    background:none; border:none; padding:0; cursor:pointer;
+  }
+  .ladybug svg{ width:100%; height:100%; display:block; transition: transform .5s ease; }
+  .ladybug.walk svg{ animation: bugWalk 2.4s ease-in-out; }
+  @keyframes bugWalk{ 0%{ transform:none; } 30%{ transform:translate(-40px,-6px) rotate(-20deg); } 60%{ transform:translate(-70px,4px) rotate(10deg); } 100%{ transform:none; } }
+
+  /* ================= TOP BAR ================= */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:calc(8px + env(safe-area-inset-top)) 12px 8px;
+    background:rgba(43,33,64,0.35);
+    backdrop-filter: blur(2px);
+    position:relative; z-index:6;
+    min-height:56px;
+  }
+  .topbar-title{
+    font-family:var(--font-display); font-weight:800; color:#fff;
+    text-shadow:0 2px 0 rgba(0,0,0,0.2);
+    min-width:0; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    flex:1;
+  }
+  .topbar-spacer{ width:40px; flex:0 0 auto; }
+  .player-chip{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,0.92);
+    border-radius:999px; padding:4px 12px 4px 4px;
+  }
+  .player-avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(180deg,#ffd479,#ff9d4a);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .player-avatar svg{ width:34px; height:34px; margin-top:6px; }
+  .player-lv{ font-weight:800; font-size:0.8rem; }
+  .stat-pill{
+    display:flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,0.92);
+    border-radius:999px; padding:6px 12px;
+    font-weight:800; font-size:0.85rem;
+  }
+  .back-btn, .icon-btn{
+    background:rgba(255,255,255,0.92); border:none; border-radius:999px;
+    width:40px; height:40px; font-size:1.1rem; font-weight:800; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink); cursor:pointer;
+    box-shadow:0 3px 0 rgba(0,0,0,0.15);
+  }
+  .back-btn:active, .icon-btn:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
+  .icon-btn svg{ width:18px; height:18px; }
+  .icon-btn:disabled{ opacity:.45; }
+
+  /* ================= MAP SCREEN ================= */
+  #screen-map{ background:#3a2a4f; }
+  .map-scroll{
+    flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+    position:relative;
+    overscroll-behavior:contain;
+  }
+  .map-welcome{
+    position:relative; z-index:4; margin:12px 16px;
+    background:rgba(255,248,233,0.96);
+    border-radius:18px;
+    padding:12px 44px 12px 16px;
+    box-shadow:0 5px 0 rgba(0,0,0,0.14);
+  }
+  .map-welcome h2{ margin:0 0 2px; font-family:var(--font-display); font-size:1rem; }
+  .map-welcome p{ margin:0; font-size:0.82rem; color:#544b66; line-height:1.4; }
+  .map-welcome .close{
+    position:absolute; top:8px; right:8px; width:32px; height:32px; border:none; border-radius:50%;
+    background:#efe4c8; font-weight:800; cursor:pointer;
+  }
+  .map-wrap{ position:relative; width:100%; aspect-ratio: 360 / 640; }
+  .map-wrap > svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .map-cloud{ animation: mapCloud 30s ease-in-out infinite alternate; }
+  .map-cloud.b{ animation-duration:42s; animation-delay:-12s; }
+  @keyframes mapCloud{ from{ transform:translateX(-30px); } to{ transform:translateX(40px); } }
+  .map-lava{ animation: lavaPulse 2.4s ease-in-out infinite; }
+  @keyframes lavaPulse{ 0%,100%{ opacity:.75; } 50%{ opacity:1; } }
+  .map-ember{ animation: mapEmber 3.2s linear infinite; transform-box:fill-box; }
+  @keyframes mapEmber{ from{ transform:translateY(0); opacity:1; } to{ transform:translateY(-60px); opacity:0; } }
+  .map-tap{ cursor:pointer; pointer-events:auto; }
+  .map-tap.wobble{ animation: wobble .6s ease; transform-box:fill-box; transform-origin:50% 100%; }
+  @keyframes wobble{ 0%,100%{ transform:rotate(0); } 20%{ transform:rotate(-12deg); } 45%{ transform:rotate(9deg); } 70%{ transform:rotate(-5deg); } }
+  .snail-peek{ transition: transform .6s cubic-bezier(.3,1.5,.5,1); transform-box:fill-box; }
+  .snail-peek.out{ transform: translateX(22px); }
+
+  .map-node{
+    position:absolute; transform:translate(-50%,-50%);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:none; border:none; padding:0; cursor:pointer;
+    z-index:3;
+  }
+  .node-badge{
+    position:relative;
+    width:70px; height:70px;
+    filter: drop-shadow(0 6px 0 rgba(0,0,0,0.22));
+    transition: transform .2s ease;
+  }
+  .node-badge svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .map-node:not(.locked) .node-badge{ animation: bob 2.4s ease-in-out infinite; }
+  .map-node.boss .node-badge{ width:84px; height:84px; }
+  .map-node.selected .node-badge{ transform: scale(1.12); }
+  .map-node .ring{
+    position:absolute; inset:-8px; border-radius:50%;
+    border:4px solid #fff; opacity:0; pointer-events:none;
+  }
+  .map-node.selected .ring{ opacity:1; animation: ringPulse 1.2s ease-out infinite; }
+  @keyframes ringPulse{ from{ transform:scale(.85); opacity:.9; } to{ transform:scale(1.3); opacity:0; } }
+  .map-node.unlocking .node-badge{ animation: unlockPop .9s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes unlockPop{ 0%{ transform:scale(1); } 30%{ transform:scale(.8) rotate(-8deg); } 60%{ transform:scale(1.25) rotate(6deg); } 100%{ transform:scale(1); } }
+  .node-label{
+    background:rgba(255,255,255,0.95);
+    border-radius:999px; padding:3px 12px;
+    font-family:var(--font-display); font-weight:800; font-size:0.74rem;
+    white-space:nowrap;
+    box-shadow:0 3px 0 rgba(0,0,0,0.15);
+  }
+  .map-node.locked .node-label{ background:rgba(230,226,236,0.95); color:#6b6178; }
+  .map-node.cleared .node-label::after{ content:" ✓"; color:var(--meadow-dark); }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }
+  .map-burst{ position:absolute; z-index:5; pointer-events:none; width:0; height:0; }
+  .map-burst i{
+    position:absolute; left:-6px; top:-6px; width:12px; height:12px;
+    animation: burst .7s ease-out forwards;
+  }
+  .map-burst i svg{ width:100%; height:100%; display:block; }
+  @keyframes burst{ from{ transform:translate(0,0) rotate(0) scale(.6); opacity:1; } to{ transform:translate(var(--bx), var(--by)) rotate(var(--br)) scale(1); opacity:0; } }
+
+  /* Bottom-Sheet: Gebietsübersicht + Monster-Vorschau */
+  .sheet-backdrop{
+    position:absolute; inset:0; z-index:10; background:rgba(20,14,32,0.45);
+    opacity:0; pointer-events:none; transition: opacity .25s ease;
+  }
+  .sheet-backdrop.open{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:absolute; left:0; right:0; bottom:0; z-index:11;
+    background:var(--cream);
+    border-radius:24px 24px 0 0;
+    padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 20px rgba(0,0,0,0.25);
+    transform:translateY(105%);
+    transition: transform .32s cubic-bezier(.2,.9,.3,1.05);
+    display:flex; flex-direction:column; gap:12px;
+    max-height:88%;
+    overflow-y:auto;
+  }
+  .sheet.open{ transform:none; }
+  .sheet .grab{ width:44px; height:5px; border-radius:99px; background:#d9cba5; align-self:center; }
+  .sheet-head{ display:flex; gap:12px; align-items:center; }
+  .area-thumb{
+    flex:0 0 auto; width:96px; height:72px; border-radius:14px; overflow:hidden;
+    border:3px solid #fff; box-shadow:0 3px 0 rgba(0,0,0,0.15); position:relative;
+  }
+  .area-thumb svg{ width:100%; height:100%; display:block; }
+  .sheet-title{ min-width:0; }
+  .sheet-title .eyebrow{ font-size:0.68rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .sheet-title h2{ margin:0; font-family:var(--font-display); font-size:1.4rem; line-height:1.1; }
+  .sheet-facts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .fact{ background:#fff; border:1.5px solid #eadfc2; border-radius:12px; padding:8px 10px; min-width:0; }
+  .fact .k{ font-size:0.64rem; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; }
+  .fact .v{ font-family:var(--font-display); font-weight:800; font-size:1rem; line-height:1.2; }
+  .sheet-roster{ display:flex; gap:8px; }
+  .sheet-roster .mini{
+    flex:1; aspect-ratio:1; max-width:72px; border-radius:12px; background:#f3ecd6;
+    display:flex; align-items:center; justify-content:center; border:1.5px solid #eadfc2;
+  }
+  .sheet-roster .mini svg{ width:86%; height:86%; }
+  .sheet-roster .mini.unknown svg{ filter:brightness(0) opacity(.25); }
+  .sheet-actions{ display:flex; gap:10px; }
+  .sheet-actions .btn{ flex:1; }
+  .lock-note{ font-size:0.85rem; color:var(--ink-soft); line-height:1.4; margin:0; }
+
+  .preview-card{ display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
+  .preview-portrait{
+    width:150px; height:150px; border-radius:28px; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    border:4px solid #fff; box-shadow:0 5px 0 rgba(0,0,0,0.15);
+    overflow:hidden;
+  }
+  .preview-portrait .pv-in{ width:128px; height:128px; }
+  .preview-portrait.boss{ width:180px; height:170px; }
+  .preview-portrait.boss .pv-in{ width:166px; height:160px; }
+  .preview-card h2{ margin:0; font-family:var(--font-display); font-size:1.6rem; line-height:1.1; }
+  .preview-card .facts{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+
+  /* ================= BATTLE SCREEN ================= */
+  #screen-battle{ background:#2a1f3d; }
+  .battle-arena{
+    flex:1; position:relative; min-height:0; overflow:hidden;
+    isolation:isolate;
+  }
+  .cam{ position:absolute; inset:0; transform-origin:72% 38%; }
+  .layer{ position:absolute; top:0; bottom:0; left:-6%; right:-6%; pointer-events:none; }
+  .layer > svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .sky{ left:0; right:0; transition: background .4s ease; }
+  .layer-far{ animation: driftFar 26s ease-in-out infinite alternate; }
+  .layer-mid{ animation: driftMid 20s ease-in-out infinite alternate; }
+  .layer-fore{ animation: driftFore 15s ease-in-out infinite alternate; z-index:4; }
+  @keyframes driftFar{ from{ transform:translateX(-4px); } to{ transform:translateX(4px); } }
+  @keyframes driftMid{ from{ transform:translateX(-8px); } to{ transform:translateX(8px); } }
+  @keyframes driftFore{ from{ transform:translateX(-14px); } to{ transform:translateX(14px); } }
+  .tod{ position:absolute; inset:0; pointer-events:none; z-index:5; }
+  .arena[data-tod="morning"] .tod{ background:linear-gradient(180deg, rgba(255,170,120,0.18), rgba(255,220,160,0.06)); }
+  .arena[data-tod="evening"] .tod{ background:linear-gradient(180deg, rgba(70,40,120,0.30), rgba(255,120,60,0.16)); }
+  .arena[data-area="boss"] .tod{ background:radial-gradient(120% 80% at 50% 100%, rgba(255,110,30,0.22), transparent 60%); }
+
+  /* Himmel je Gebiet und Tageszeit */
+  .arena .sky{ background:linear-gradient(180deg, #67b9ec 0%, #a9dcf6 55%, #dff3fb 100%); }
+  .arena[data-tod="morning"] .sky{ background:linear-gradient(180deg, #8fc0e8 0%, #f6c6b0 60%, #ffe6c0 100%); }
+  .arena[data-tod="evening"] .sky{ background:linear-gradient(180deg, #3b3170 0%, #b0607e 52%, #ffb070 100%); }
+  .arena[data-wx="cloudy"] .sky{ filter:saturate(.7) brightness(.95); }
+  .arena[data-wx="rain"] .sky{ filter:saturate(.55) brightness(.85); }
+  .arena[data-area="boss"] .sky{ background:linear-gradient(180deg, #1d1030 0%, #3d1838 45%, #8e2f25 100%); filter:none; }
+
+  .sun{
+    position:absolute; width:120px; height:120px; border-radius:50%; pointer-events:none;
+    top:-30px; left:12%;
+    background:radial-gradient(circle, #fffbe0 0%, #ffe58a 28%, rgba(255,229,138,0.35) 48%, transparent 70%);
+  }
+  .sun::before{
+    content:""; position:absolute; inset:-40px;
+    background:repeating-conic-gradient(rgba(255,245,200,0.28) 0 6deg, transparent 6deg 22deg);
+    border-radius:50%;
+    -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%);
+            mask: radial-gradient(circle, #000 30%, transparent 70%);
+    animation: spin 60s linear infinite;
+  }
+  .arena[data-tod="morning"] .sun{ left:4%; top:10%; }
+  .arena[data-tod="evening"] .sun{ left:auto; right:6%; top:30%; filter:hue-rotate(-25deg) saturate(1.4); }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .sky-cloud{ position:absolute; pointer-events:none; animation: cloudSail 50s linear infinite; }
+  .sky-cloud svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .sky-cloud .puff{ transform-box:fill-box; transform-origin:center; animation: puffMorph 9s ease-in-out infinite; }
+  .sky-cloud .puff:nth-child(2){ animation-delay:-3s; }
+  .sky-cloud .puff:nth-child(3){ animation-delay:-6s; }
+  @keyframes cloudSail{ from{ transform:translateX(-160px); } to{ transform:translateX(620px); } }
+  @keyframes puffMorph{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.18,0.9); } }
+
+  /* Wetter */
+  .wx{ position:absolute; inset:0; pointer-events:none; z-index:5; overflow:hidden; }
+  .wx-rain{
+    position:absolute; left:0; right:0; top:-120px; bottom:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='120'%3E%3Cg stroke='%23ffffff' stroke-opacity='0.55' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M10 4 l-4 16'/%3E%3Cpath d='M38 38 l-4 16'/%3E%3Cpath d='M24 72 l-4 16'/%3E%3Cpath d='M52 96 l-4 16'/%3E%3C/g%3E%3C/svg%3E");
+    animation: rainFall .55s linear infinite;
+  }
+  @keyframes rainFall{ from{ transform:translate(0,0); } to{ transform:translate(-30px,120px); } }
+  .wx-fog{
+    position:absolute; left:-30%; width:160%; height:45%;
+    background:radial-gradient(50% 50% at 50% 50%, rgba(255,255,255,0.55), transparent 70%);
+    animation: fogDrift 22s ease-in-out infinite alternate;
+  }
+  .wx-fog.f1{ top:35%; }
+  .wx-fog.f2{ top:55%; animation-duration:30s; animation-delay:-8s; opacity:.8; }
+  @keyframes fogDrift{ from{ transform:translateX(-12%); } to{ transform:translateX(12%); } }
+  .wx-dim{ position:absolute; inset:0; background:rgba(110,120,145,0.16); }
+  .ember{
+    position:absolute; bottom:-10px; width:8px; height:8px; border-radius:50%;
+    background:radial-gradient(circle, #fff3b0 0%, #ff9a2a 45%, rgba(255,90,20,0) 72%);
+    animation: emberRise var(--d,5s) linear infinite; animation-delay: var(--dl,0s);
+  }
+  @keyframes emberRise{
+    0%{ transform:translate(0,0); opacity:0; }
+    10%{ opacity:1; }
+    50%{ transform:translate(var(--sx,10px), -45vh); }
+    100%{ transform:translate(calc(var(--sx,10px) * -1), -90vh); opacity:0; }
+  }
+
+  /* Tiere & interaktive Details */
+  .critters{ position:absolute; inset:0; z-index:3; pointer-events:none; }
+  .bird{ position:absolute; width:22px; height:12px; animation: birdFly 18s linear infinite; }
+  .bird svg{ width:100%; height:100%; display:block; animation: flap .5s ease-in-out infinite alternate; transform-origin:center; }
+  @keyframes birdFly{ from{ transform:translateX(-60px); } to{ transform:translateX(620px); } }
+  @keyframes flap{ from{ transform:scaleY(1); } to{ transform:scaleY(.45); } }
+  .butterfly{
+    position:absolute; width:40px; height:40px; padding:8px; border:none; background:none; cursor:pointer;
+    pointer-events:auto; animation: flutterPath 7s ease-in-out infinite;
+  }
+  .butterfly svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .butterfly .bw{ transform-box:fill-box; animation: bwing .25s ease-in-out infinite alternate; }
+  .butterfly .bw.l{ transform-origin:100% 50%; }
+  .butterfly .bw.r{ transform-origin:0% 50%; }
+  @keyframes bwing{ from{ transform:scaleX(1); } to{ transform:scaleX(.25); } }
+  @keyframes flutterPath{ 0%,100%{ transform:translate(0,0); } 25%{ transform:translate(14px,-10px); } 50%{ transform:translate(4px,-18px); } 75%{ transform:translate(-10px,-6px); } }
+  .butterfly.flee{ animation: flee 1.4s ease-in forwards; pointer-events:none; }
+  @keyframes flee{ to{ transform:translate(160px,-220px) rotate(25deg); opacity:0; } }
+  .snail{ position:absolute; width:34px; height:24px; animation: snailCrawl 70s linear infinite; }
+  .snail svg{ width:100%; height:100%; display:block; }
+  @keyframes snailCrawl{ from{ transform:translateX(0); } to{ transform:translateX(260px); } }
+  .firefly{
+    position:absolute; width:6px; height:6px; border-radius:50%;
+    background:radial-gradient(circle, #fffbb0, rgba(255,240,120,0) 70%);
+    animation: firefly 4s ease-in-out infinite; animation-delay:var(--dl,0s);
+  }
+  @keyframes firefly{ 0%,100%{ transform:translate(0,0); opacity:.2; } 50%{ transform:translate(var(--sx,12px),-14px); opacity:1; } }
+  .eagle{ position:absolute; width:34px; height:16px; top:12%; left:30%; animation: eagleCircle 16s linear infinite; }
+  .eagle svg{ width:100%; height:100%; display:block; }
+  @keyframes eagleCircle{ 0%{ transform:translate(0,0) scaleX(1); } 25%{ transform:translate(90px,12px) scaleX(1); } 50%{ transform:translate(150px,0) scaleX(-1); } 75%{ transform:translate(60px,-10px) scaleX(-1); } 100%{ transform:translate(0,0) scaleX(1); } }
+  .tappable{ pointer-events:auto; cursor:pointer; }
+  .react, .tappable{ transform-box:fill-box; transform-origin:50% 100%; }
+  .sway{ transform-box:fill-box; transform-origin:50% 100%; animation: sway 4s ease-in-out infinite; }
+  .sway.s2{ animation-duration:5.2s; animation-delay:-1.3s; }
+  @keyframes sway{ 0%,100%{ transform:rotate(-2.5deg); } 50%{ transform:rotate(2.5deg); } }
+  .arena.rustle .react{ animation: rustle .55s ease; }
+  @keyframes rustle{ 0%,100%{ transform:rotate(0) scale(1); } 25%{ transform:rotate(-6deg) scale(1.04,.97); } 55%{ transform:rotate(5deg); } 80%{ transform:rotate(-2deg); } }
+  .tappable.wobble{ animation: wobble .6s ease; }
+  .water-shine{ animation: shine 3s ease-in-out infinite; }
+  @keyframes shine{ 0%,100%{ opacity:.25; } 50%{ opacity:.7; } }
+  .lava-flow{ animation: lavaPulse 2s ease-in-out infinite; }
+  .light-beam{ animation: beam 6s ease-in-out infinite; }
+  @keyframes beam{ 0%,100%{ opacity:.18; } 50%{ opacity:.38; } }
+  .leaf-fall{
+    position:absolute; top:-20px; width:14px; height:14px;
+    animation: leafFall var(--d,9s) linear infinite; animation-delay:var(--dl,0s);
+  }
+  .leaf-fall svg{ width:100%; height:100%; display:block; }
+  @keyframes leafFall{
+    0%{ transform:translate(0,0) rotate(0); opacity:0; }
+    10%{ opacity:1; }
+    50%{ transform:translate(var(--sx,30px), 45vh) rotate(180deg); }
+    100%{ transform:translate(0, 90vh) rotate(360deg); opacity:0; }
+  }
+
+  /* Kämpfer */
+  .battle-field{ position:absolute; inset:0; z-index:2; }
+  .spot{ position:absolute; display:flex; flex-direction:column; align-items:center; }
+  .enemy-spot{ right:6%; bottom:27%; --sz: clamp(96px, 27vw, 128px); }
+  .player-spot{ left:6%; bottom:4%; --sz: clamp(100px, 28vw, 132px); }
+  .enemy-spot.is-boss{ right:2%; bottom:22%; --sz: clamp(132px, 38vw, 176px); }
+  .sprite-anchor{ position:relative; width:var(--sz); height:var(--sz); z-index:2; }
+  .sprite{ position:relative; width:100%; height:100%; transition: filter .35s ease; }
+  .sprite .idle{ width:100%; height:100%; transform-origin:50% 92%; }
+  .sprite svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .platform{
+    width:calc(var(--sz) * 1.45); height:calc(var(--sz) * 0.26);
+    margin-top:calc(var(--sz) * -0.17);
+    border-radius:50%;
+    background:radial-gradient(50% 50% at 50% 45%, rgba(255,255,255,0.35), rgba(255,255,255,0.08) 60%, transparent 72%), radial-gradient(50% 50% at 50% 50%, var(--plat,#8fd27a) 0%, var(--plat-edge,#5aa85a) 70%, transparent 72%);
+    z-index:1;
+  }
+  .arena[data-area="forest"] .platform{ --plat:#6fae5a; --plat-edge:#3f7a3e; }
+  .arena[data-area="hills"] .platform{ --plat:#c9c2b4; --plat-edge:#948a7a; }
+  .arena[data-area="boss"] .platform{ --plat:#4a2a3a; --plat-edge:#ff7a1a; }
+  .arena[data-tod="evening"] .platform{ filter:brightness(.85); }
+  .sprite.silhouette{ filter: brightness(0) opacity(.8); }
+  .sprite.hidden{ visibility:hidden; }
+  .sprite.hit{ animation: hitflash .4s ease; }
+  @keyframes hitflash{ 0%{ filter:brightness(2.4); transform:translateX(0); } 30%{ transform:translateX(6px); } 60%{ transform:translateX(-3px); } 100%{ filter:brightness(1); transform:none; } }
+  .player-spot .sprite.lunge{ animation: lungeP .32s ease; }
+  .enemy-spot .sprite.lunge{ animation: lungeE .32s ease; }
+  @keyframes lungeP{ 0%,100%{ transform:none; } 45%{ transform:translate(14%,-8%) scale(1.05); } }
+  @keyframes lungeE{ 0%,100%{ transform:none; } 45%{ transform:translate(-14%,8%) scale(1.05); } }
+  .enemy-spot .sprite.stomp{ animation: stompAtk .45s ease; }
+  @keyframes stompAtk{ 0%,100%{ transform:none; } 30%{ transform:translateY(-14%) scale(.95,1.06); } 55%{ transform:translateY(0) scale(1.12,.86); } 75%{ transform:scale(.97,1.03); } }
+
+  /* Auftritte */
+  .entry-prop{ position:absolute; left:50%; bottom:2%; width:calc(var(--sz) * 1.1); height:calc(var(--sz) * 0.6); transform:translateX(-50%); z-index:3; pointer-events:none; }
+  .entry-prop svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .entry-prop.out{ animation: propOut .5s ease forwards; }
+  @keyframes propOut{ 0%{ transform:translateX(-50%); } 30%{ transform:translateX(-50%) rotate(-6deg) scale(1.05); } 100%{ transform:translateX(-50%) scale(.6); opacity:0; } }
+  .sprite-anchor.ent-bush{ animation: entBush .75s cubic-bezier(.3,.9,.4,1) both; }
+  .sprite-anchor.ent-roll{ animation: entRoll .8s cubic-bezier(.25,.8,.35,1) both; }
+  .sprite-anchor.ent-drop{ animation: entDrop .75s cubic-bezier(.5,0,.5,1) both; }
+  .sprite-anchor.ent-rock{ animation: entRock .85s ease both; }
+  .sprite-anchor.ent-glide{ animation: entGlide .8s cubic-bezier(.2,.8,.3,1) both; }
+  .sprite-anchor.ent-land{ animation: entLand 1s cubic-bezier(.45,0,.5,1) both; }
+  @keyframes entBush{ 0%{ transform:translate(0,48%) scale(.7); } 45%{ transform:translate(-6%,-38%) scale(1.02); } 75%{ transform:translate(0,0) scale(1); } 85%{ transform:scale(1.08,.9); } 100%{ transform:none; } }
+  @keyframes entRoll{ 0%{ transform:translateX(170%) rotate(400deg); } 75%{ transform:translateX(-8%) rotate(-12deg); } 88%{ transform:translateX(3%) rotate(4deg); } 100%{ transform:none; } }
+  @keyframes entDrop{ 0%{ transform:translateY(-270%); } 62%{ transform:translateY(0) scale(1); } 74%{ transform:scale(1.16,.82); } 88%{ transform:scale(.95,1.06); } 100%{ transform:none; } }
+  @keyframes entRock{ 0%{ transform:translate(0,55%) scale(.85); } 35%{ transform:translate(0,22%) scale(.9); } 50%{ transform:translate(0,22%) rotate(-6deg) scale(.9); } 80%{ transform:translate(0,-12%) scale(1.02); } 100%{ transform:none; } }
+  @keyframes entGlide{ 0%{ transform:translate(130%,-70%) rotate(10deg); opacity:0; } 30%{ opacity:1; } 100%{ transform:none; opacity:1; } }
+  @keyframes entLand{ 0%{ transform:translateY(-330%) scale(.85); } 70%{ transform:translateY(0) scale(1); } 78%{ transform:scale(1.12,.86); } 90%{ transform:scale(.97,1.04); } 100%{ transform:none; } }
+
+  /* Kamera */
+  .cam.cam-hit{ animation: camHit .5s ease; }
+  .cam.cam-land{ animation: camLand .5s ease; }
+  .cam.cam-zoom{ transform:scale(1.32); transition: transform .8s cubic-bezier(.3,.8,.3,1); }
+  .cam.cam-unzoom{ transform:none; transition: transform .6s cubic-bezier(.3,.8,.3,1); }
+  @keyframes camHit{ 0%{ transform:none; } 22%{ transform:scale(1.06) translate(-1.6%,0.8%); } 40%{ transform:scale(1.06) translate(1.2%,-0.6%); } 58%{ transform:scale(1.05) translate(-0.8%,0.4%); } 100%{ transform:none; } }
+  @keyframes camLand{ 0%,100%{ transform:none; } 20%{ transform:translateY(2.5%); } 40%{ transform:translateY(-1.5%); } 60%{ transform:translateY(1%); } 80%{ transform:translateY(-0.4%); } }
+  .cam.cam-hit .layer-far{ animation: pxFar .5s ease; }
+  .cam.cam-hit .layer-fore{ animation: pxFore .5s ease; }
+  @keyframes pxFar{ 30%{ transform:translateX(3px); } }
+  @keyframes pxFore{ 30%{ transform:translateX(-10px) scale(1.02); } }
+  .hurt-vignette{ position:absolute; inset:0; z-index:6; pointer-events:none; opacity:0; background:radial-gradient(80% 70% at 50% 50%, transparent 55%, rgba(225,60,40,0.45) 100%); }
+  .hurt-vignette.on{ animation: hurt .45s ease; }
+  @keyframes hurt{ 0%{ opacity:0; } 25%{ opacity:1; } 100%{ opacity:0; } }
+
+  /* Namensschilder */
+  .plate{
+    position:absolute; z-index:7; width:min(48%, 210px);
+    background:rgba(255,250,240,0.95);
+    border-radius:14px;
+    padding:7px 11px 6px;
+    box-shadow:0 4px 0 rgba(0,0,0,0.16);
+    border:2px solid #fff;
+  }
+  .plate.enemy{ left:10px; top:10px; }
+  .plate.player{ right:10px; bottom:12px; }
+  .plate .nm{ font-family:var(--font-display); font-weight:800; font-size:0.86rem; display:flex; justify-content:space-between; gap:6px; line-height:1.15; }
+  .plate .nm span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .plate .lvtag{ flex:0 0 auto; font-size:0.7rem; background:#efe6ff; color:#5a3d9a; border-radius:999px; padding:0 7px; }
+  .plate .lvtag.boss{ background:var(--ember); color:#fff; }
+  .hp-track{
+    height:10px; border-radius:999px; background:#e4d9c2; margin-top:4px; overflow:hidden;
+    border:1.5px solid rgba(0,0,0,0.15); position:relative;
+  }
+  .hp-fill{
+    height:100%; width:100%; transform-origin:0 50%;
+    background:linear-gradient(180deg,#8be89a,var(--hp-green));
+    transition:transform .35s ease;
+  }
+  .hp-fill.low{ background:linear-gradient(180deg,#ff8b7a,var(--hp-red)); }
+  .hp-text{ font-size:0.66rem; font-weight:800; color:var(--ink-soft); margin-top:2px; text-align:right; font-variant-numeric:tabular-nums; }
+  .topbar-stack{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; line-height:1.15; }
+  .topbar-stack .topbar-title{ flex:none; max-width:100%; }
+  .env-chip{
+    max-width:100%; color:#fff; opacity:.92;
+    font-size:0.66rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  .floatie{
+    position:absolute; left:50%; top:4%; font-family:var(--font-display); font-weight:800; font-size:1.35rem;
+    color:#fff; -webkit-text-stroke:1.5px #b23a24; paint-order:stroke fill;
+    pointer-events:none; animation: floatUp 0.9s ease forwards; z-index:8;
+    text-shadow:0 2px 0 rgba(0,0,0,0.2);
+  }
+  .floatie.heal{ -webkit-text-stroke-color:#23753a; }
+  .floatie.big{ font-size:1.8rem; }
+  @keyframes floatUp{ 0%{ transform:translate(-50%,0) scale(.6); opacity:1;} 20%{ transform:translate(-50%,-14px) scale(1.15); } 100%{ transform:translate(-50%,-56px) scale(1); opacity:0;} }
+  .impact{
+    position:absolute; left:50%; top:45%; width:70%; aspect-ratio:1; z-index:7; pointer-events:none;
+    transform:translate(-50%,-50%);
+  }
+  .impact svg{ width:100%; height:100%; display:block; animation: impact .4s ease-out forwards; }
+  @keyframes impact{ from{ transform:scale(.3) rotate(0); opacity:1; } to{ transform:scale(1.3) rotate(25deg); opacity:0; } }
+
+  /* Intro */
+  .intro-dim{ position:absolute; inset:0; z-index:6; background:rgba(15,8,25,0.6); opacity:0; pointer-events:none; transition: opacity .4s ease; }
+  .intro-dim.on{ opacity:1; }
+  .intro-banner{
+    position:absolute; z-index:8; left:0; right:0; top:42%;
+    display:flex; justify-content:center; pointer-events:none;
+  }
+  .intro-banner .ib{
+    background:linear-gradient(90deg, transparent, rgba(43,33,64,0.88) 18%, rgba(43,33,64,0.88) 82%, transparent);
+    color:#fff; padding:8px 50px; text-align:center;
+    animation: bannerIn .45s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  .intro-banner .ib small{ display:block; font-size:0.7rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; opacity:.8; }
+  .intro-banner .ib b{ font-family:var(--font-display); font-size:1.6rem; line-height:1.1; }
+  .intro-banner.out .ib{ animation: bannerOut .3s ease forwards; }
+  @keyframes bannerIn{ from{ transform:translateX(-60%) skewX(-12deg); opacity:0; } to{ transform:none; opacity:1; } }
+  @keyframes bannerOut{ to{ transform:translateX(60%) skewX(12deg); opacity:0; } }
+  .boss-crown{ position:absolute; z-index:8; left:50%; top:30%; width:84px; height:64px; transform:translate(-50%,-50%); pointer-events:none; }
+  .boss-crown svg{ width:100%; height:100%; display:block; animation: crownIn 1s cubic-bezier(.2,1.4,.4,1) both; }
+  .boss-crown.out svg{ animation: crownOut .35s ease forwards; }
+  @keyframes crownIn{ 0%{ transform:scale(0) rotate(-30deg); opacity:0; } 60%{ transform:scale(1.2) rotate(6deg); opacity:1; } 100%{ transform:scale(1); } }
+  @keyframes crownOut{ to{ transform:translateY(-40px) scale(.6); opacity:0; } }
+  .boss-banner{
+    position:absolute; z-index:8; left:50%; top:58%; transform:translate(-50%,-50%);
+    pointer-events:none; text-align:center; white-space:nowrap;
+  }
+  .boss-banner .bb{
+    font-family:var(--font-display); font-weight:800; color:#fff;
+    background:linear-gradient(180deg, #ff8a4a, #d9361c);
+    border:3px solid #ffd36a; border-radius:14px; padding:6px 26px;
+    box-shadow:0 6px 0 #7e1f12, 0 0 30px rgba(255,140,40,0.6);
+    animation: bossBanner .6s cubic-bezier(.2,1.5,.4,1) both;
+  }
+  .boss-banner .bb small{ display:block; font-size:0.72rem; letter-spacing:0.3em; color:#ffe6a6; }
+  .boss-banner .bb b{ font-size:1.8rem; line-height:1.05; text-shadow:0 3px 0 rgba(120,20,0,0.5); }
+  .boss-banner.out .bb{ animation: bannerOut .35s ease forwards; }
+  @keyframes bossBanner{ from{ transform:scale(2.2); opacity:0; } to{ transform:scale(1); opacity:1; } }
+
+  .battle-log{
+    position:relative; z-index:2;
+    background:rgba(43,33,64,0.92);
+    color:#fff;
+    padding:8px 14px;
+    font-size:0.8rem; font-weight:700;
+    min-height:36px;
+    display:flex; align-items:center;
+  }
+
+  .battle-bottom{
+    position:relative; z-index:3;
+    background:linear-gradient(180deg, #fff8e9, #f6ead0);
+    border-top:4px solid var(--cream-edge);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .xp-row{ display:flex; align-items:center; gap:8px; }
+  .xp-label{ font-family:var(--font-display); font-weight:800; font-size:0.76rem; color:var(--ink); display:flex; align-items:center; gap:3px; flex:0 0 auto; }
+  .xp-label svg{ width:14px; height:14px; }
+  .xp-track{
+    flex:1; height:16px; border-radius:999px; background:#e0dcef;
+    border:2px solid #cfc8e6; overflow:hidden; position:relative;
+  }
+  .xp-fill{
+    height:100%; width:100%; transform-origin:0 50%;
+    background:linear-gradient(180deg,#8fd0ff,var(--xp-blue));
+    transition:transform .25s linear;
+  }
+  .xp-ticks{ position:absolute; inset:0; background:repeating-linear-gradient(90deg, transparent 0 calc(10% - 1.5px), rgba(255,255,255,0.7) calc(10% - 1.5px) 10%); pointer-events:none; }
+  .xp-text{ font-weight:800; font-size:0.74rem; width:42px; text-align:right; font-variant-numeric:tabular-nums; flex:0 0 auto; }
+
+  .hand{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; min-height:112px; }
+  .hand-foot{ display:flex; align-items:center; justify-content:center; gap:8px; }
+  .deck-pile{ position:relative; width:22px; height:26px; flex:0 0 auto; }
+  .deck-pile i{ position:absolute; inset:0; border-radius:4px; background:linear-gradient(160deg,#7a5ad0,#4b3394); border:1.5px solid #fff; box-shadow:0 1px 0 rgba(0,0,0,0.2); }
+  .deck-pile i:nth-child(2){ transform:translate(2px,-2px); }
+  .deck-pile i:nth-child(3){ transform:translate(4px,-4px); }
+  .deck-pile.empty i{ background:#cfc8dc; }
+  .deck-counter{ text-align:center; font-size:0.7rem; color:#8a7f66; font-weight:800; }
+
+  /* ================= KARTEN ================= */
+  .card{
+    position:relative;
+    border:none; padding:3px;
+    border-radius:16px;
+    background:var(--frame);
+    box-shadow:var(--card-shadow);
+    min-height:112px;
+    display:block; width:100%;
+    cursor:pointer;
+    color:var(--ink);
+    text-align:center;
+    transition: transform .14s ease, box-shadow .14s ease, filter .2s ease, opacity .2s ease;
+    touch-action:manipulation;
+  }
+  .card[data-r="standard"]{ --frame:linear-gradient(160deg,#f3e9cc 0%,#d8c697 100%); }
+  .card[data-r="silber"]{ --frame:linear-gradient(155deg,#ffffff 0%,#c3ccd8 35%,#f4f7fb 55%,#94a1b3 100%); }
+  .card[data-r="gold"]{ --frame:linear-gradient(155deg,#fff3b8 0%,#f5b82e 40%,#ffe58a 58%,#c77c06 100%); }
+  .card[data-r="glitzer"]{
+    --frame:linear-gradient(120deg,#ffc6ec,#b9a4ff,#8fe3ff,#b6ffcf,#ffe58a,#ffc6ec);
+    background-size:300% 300%;
+    animation: glitter 5s linear infinite;
+  }
+  @keyframes glitter{ from{ background-position:0% 50%; } to{ background-position:300% 50%; } }
+  .card .face{
+    position:relative; height:100%; min-height:106px;
+    border-radius:13px;
+    background:linear-gradient(180deg,#fffdf7 0%, #f6edd5 100%);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:15px 3px 7px;
+    overflow:hidden;
+  }
+  .card[data-r="glitzer"] .face::after{
+    content:""; position:absolute; top:-20%; bottom:-20%; width:40%; left:-60%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,0.75), transparent);
+    animation: sheen 3.2s ease-in-out infinite;
+  }
+  @keyframes sheen{ 0%,55%{ transform:translateX(0) skewX(-15deg); } 100%{ transform:translateX(420%) skewX(-15deg); } }
+  .card .art{
+    width:46px; height:46px; border-radius:50%; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.45rem; line-height:1;
+    background:radial-gradient(circle at 35% 30%, #fff 0%, var(--art,#ffd8b0) 55%, var(--art-dark,#f0a46a) 100%);
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12), 0 2px 0 rgba(255,255,255,0.7);
+  }
+  .card[data-kind="heal"] .art{ --art:#c9f1d1; --art-dark:#6fcf8a; }
+  .card[data-kind="storm"] .art{ --art:#d4e7ff; --art-dark:#7fb3f0; }
+  .card[data-kind="star"] .art{ --art:#efe0ff; --art-dark:#b28ef0; }
+  .card .cname{
+    font-family:var(--font-display); font-weight:800; font-size:0.7rem; line-height:1.05;
+    min-height:1.7em; display:flex; align-items:center; justify-content:center;
+    overflow-wrap:normal; word-break:normal; -webkit-hyphens:manual; hyphens:manual; padding:0 2px;
+  }
+  .card .ceff{
+    font-size:0.62rem; font-weight:800; color:#a3341d; background:#ffe1d9;
+    padding:1px 7px; border-radius:999px; white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .card .ceff.heal{ background:#dcf4e1; color:#23753a; }
+  .card .cost{
+    position:absolute; top:-8px; left:-7px; z-index:2;
+    width:28px; height:28px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:800; font-size:0.9rem; color:#fff;
+    background:radial-gradient(circle at 35% 30%, #c8e8ff 0%, var(--xp-blue) 55%, var(--xp-blue-dark) 100%);
+    border:2px solid #fff; box-shadow:0 2px 0 rgba(0,0,0,0.25);
+    text-shadow:0 1px 0 rgba(0,0,0,0.25);
+  }
+  .card .rar{
+    position:absolute; top:4px; right:6px; width:9px; height:9px; border-radius:50%;
+    background:var(--frame); border:1.5px solid rgba(255,255,255,0.9); box-shadow:0 0 0 1px rgba(0,0,0,0.12);
+  }
+  .card.ready{ box-shadow:var(--card-shadow), 0 0 0 2px rgba(74,168,255,0.0); }
+  .hand .card:not(.disabled):active{ transform:translateY(-8px) scale(1.05); box-shadow:0 12px 18px rgba(0,0,0,0.22); }
+  .card.disabled{ filter:grayscale(.65) brightness(.95); opacity:.6; cursor:default; }
+  .card.drawing{ pointer-events:none; }
+  .fx-layer{ position:absolute; inset:0; pointer-events:none; z-index:15; overflow:hidden; }
+  .fx-layer .card{ position:absolute; margin:0; }
+  .card.play-out{ animation: playOut .3s cubic-bezier(.4,0,.6,1) forwards; }
+  @keyframes playOut{
+    0%{ transform:none; }
+    35%{ transform:translateY(-26px) scale(1.12); opacity:1; }
+    100%{ transform:translateY(-130px) scale(.5) rotate(-8deg); opacity:0; }
+  }
+
+  /* ================= OVERLAYS (Ergebnis, Pause) ================= */
+  .overlay{
+    position:absolute; inset:0; z-index:20;
+    background:rgba(20,14,32,0.72);
+    display:none; align-items:center; justify-content:center;
+    padding:16px;
+  }
+  .overlay.active{ display:flex; animation: fadeIn .25s ease both; }
+  @keyframes fadeIn{ from{ opacity:0; } }
+  .overlay-card{
+    position:relative;
+    background:var(--cream);
+    border-radius:24px;
+    padding:22px 18px 18px;
+    width:100%; max-width:340px;
+    text-align:center;
+    box-shadow:0 10px 0 rgba(0,0,0,0.25);
+    animation: popIn .4s cubic-bezier(.2,1.3,.4,1) both;
+    max-height:100%; overflow-y:auto;
+  }
+  @keyframes popIn{ from{ transform:scale(.8); opacity:0; } to{ transform:none; opacity:1; } }
+  .overlay-card h2{ margin:0 0 6px; font-family:var(--font-display); font-size:1.5rem; color:var(--gold-dark); }
+  .overlay-card p{ margin:0 0 14px; font-size:0.9rem; color:var(--ink-soft); line-height:1.4; }
+  .overlay-actions{ display:flex; flex-direction:column; gap:10px; }
+
+  .result-card{ padding-top:46px; margin-top:30px; overflow:visible; }
+  .result-banner{
+    position:absolute; left:50%; top:-26px; transform:translateX(-50%);
+    min-width:78%; padding:8px 26px 10px;
+    font-family:var(--font-display); font-weight:800; font-size:1.7rem; line-height:1; color:#fff;
+    background:linear-gradient(180deg,#ffd04a,#e2900a);
+    border-radius:14px; border:3px solid #fff;
+    box-shadow:0 6px 0 #a56a05;
+    text-shadow:0 3px 0 rgba(140,70,0,0.4);
+    white-space:nowrap;
+  }
+  .result-banner::before, .result-banner::after{
+    content:""; position:absolute; top:14px; width:26px; height:34px; z-index:-1;
+    background:#c77c06;
+  }
+  .result-banner::before{ left:-18px; clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%); }
+  .result-banner::after{ right:-18px; clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%); }
+  .result.lose .result-banner{ background:linear-gradient(180deg,#9a8fc0,#5f5390); box-shadow:0 6px 0 #3b3168; text-shadow:0 3px 0 rgba(30,20,60,0.4); }
+  .result.lose .result-banner::before, .result.lose .result-banner::after{ background:#4a3f7a; }
+  .result.lose{ background:rgba(16,10,30,0.82); }
+  .result.lose .overlay-card{ background:#f1ecf7; }
+  .result-stars{ display:flex; justify-content:center; gap:6px; margin:-4px 0 4px; }
+  .result-stars svg{ width:34px; height:34px; animation: starPop .5s cubic-bezier(.2,1.6,.4,1) both; }
+  .result-stars svg:nth-child(2){ width:44px; height:44px; margin-top:-8px; animation-delay:.15s; }
+  .result-stars svg:nth-child(3){ animation-delay:.3s; }
+  @keyframes starPop{ from{ transform:scale(0) rotate(-90deg); } to{ transform:none; } }
+  .result-monster{
+    width:110px; height:110px; margin:0 auto 6px; border-radius:24px;
+    display:flex; align-items:center; justify-content:center;
+    border:3px solid #fff; box-shadow:0 4px 0 rgba(0,0,0,0.12);
+  }
+  .result-monster .pv-in{ width:96px; height:96px; }
+  .result.win .result-monster .pv-in{ animation: dizzy 1.6s ease-in-out infinite; }
+  @keyframes dizzy{ 0%,100%{ transform:rotate(-4deg); } 50%{ transform:rotate(4deg); } }
+  .result-monster.ko svg{ filter:saturate(.6); }
+  .stats-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 14px; text-align:left; }
+  .stats-grid .stat{ background:#fff; border:1.5px solid #eadfc2; border-radius:12px; padding:7px 10px; }
+  .stats-grid .stat .k{ font-size:0.62rem; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; }
+  .stats-grid .stat .v{ font-family:var(--font-display); font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+  .unlock-note{
+    display:flex; align-items:center; gap:8px; justify-content:center;
+    background:#e6f6e9; color:#23753a; border-radius:12px; padding:8px 10px; margin:0 0 12px;
+    font-weight:800; font-size:0.84rem;
+  }
+  .confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:21; }
+  .confetti i{
+    position:absolute; top:-14px; width:8px; height:13px; border-radius:2px;
+    animation: confetti var(--d,2.4s) cubic-bezier(.3,.5,.5,1) forwards; animation-delay:var(--dl,0s);
+  }
+  @keyframes confetti{
+    0%{ transform:translate(0,0) rotate(0); opacity:1; }
+    100%{ transform:translate(var(--sx,0px), 105vh) rotate(var(--r,540deg)); opacity:.9; }
+  }
+  .pause-overlay .overlay-card h2{ color:var(--ink); }
+  .pause-icon{ width:56px; height:56px; margin:0 auto 4px; border-radius:50%; background:#efe6ff; display:flex; align-items:center; justify-content:center; }
+  .pause-icon svg{ width:24px; height:24px; }
+  #screen-battle.paused .battle-stage *,
+  #screen-battle.paused .battle-stage *::before,
+  #screen-battle.paused .battle-stage *::after{ animation-play-state:paused !important; }
+  #screen-battle.paused .fx-layer *{ animation-play-state:paused !important; }
+  .battle-stage{ flex:1; display:flex; flex-direction:column; min-height:0; }
+  .hand.locked .card{ pointer-events:none; filter:grayscale(.35) brightness(.97); }
+
+  /* Übergang Karte → Kampf */
+  .transition{
+    position:absolute; inset:0; z-index:40; pointer-events:none; visibility:hidden;
+  }
+  .transition.on{ visibility:visible; pointer-events:auto; }
+  .transition .iris{
+    position:absolute; inset:0; background:var(--tr-bg,#2a1f3d);
+    clip-path:circle(0% at var(--tx,50%) var(--ty,50%));
+  }
+  .transition.on .iris{ animation: irisIn .42s cubic-bezier(.5,0,.7,.4) forwards; }
+  .transition.on.opening .iris{ animation: irisOut .42s cubic-bezier(.3,.6,.5,1) forwards; }
+  @keyframes irisIn{ from{ clip-path:circle(0% at var(--tx,50%) var(--ty,50%)); } to{ clip-path:circle(150% at var(--tx,50%) var(--ty,50%)); } }
+  @keyframes irisOut{ from{ clip-path:circle(150% at 50% 50%); } to{ clip-path:circle(0% at 50% 50%); } }
+  .transition .tp{
+    position:absolute; width:18px; height:18px; top:-30px;
+    animation: tpFall .9s ease-in forwards; animation-delay:var(--dl,0s);
+  }
+  .transition .tp svg{ width:100%; height:100%; display:block; }
+  @keyframes tpFall{ from{ transform:translate(0,0) rotate(0); opacity:1; } to{ transform:translate(var(--sx,20px), 110vh) rotate(var(--r,360deg)); opacity:.8; } }
+
+  /* ================= MENÜ-SCREENS (Monster / Deck / Sammlung / Einstellungen) ================= */
+  .menu-screen{
+    background:
+      radial-gradient(1000px 400px at 50% -10%, #cdeeff 0%, transparent 60%),
+      linear-gradient(180deg, var(--sky-top) 0%, #a9dfae 45%, var(--meadow) 100%);
+  }
+  .menu-scroll{
+    flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+    padding:16px 16px calc(28px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .menu-scroll > *{ animation: rise .4s cubic-bezier(.2,.8,.3,1) both; }
+  .menu-scroll > *:nth-child(2){ animation-delay:.05s; }
+  .menu-scroll > *:nth-child(3){ animation-delay:.1s; }
+  .menu-scroll > *:nth-child(4){ animation-delay:.15s; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+  .panel{
+    background:var(--cream);
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 5px 0 rgba(0,0,0,0.14);
+    border:2px solid var(--cream-edge);
+    min-width:0;
+  }
+  .panel h3{
+    margin:0 0 10px;
+    font-family:var(--font-display); font-weight:800; font-size:0.78rem;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft);
+  }
+  .panel p.hint{ margin:0; font-size:0.8rem; color:var(--ink-soft); line-height:1.4; }
+
+  /* Monster */
+  .hero-monster{ display:flex; align-items:center; gap:14px; }
+  .hero-monster .portrait{
+    flex:0 0 auto;
+    width:110px; height:110px; border-radius:24px;
+    background:radial-gradient(circle at 50% 35%, #e6f8ff 0%, #a8def0 100%);
+    display:flex; align-items:center; justify-content:center;
+    border:3px solid #fff;
+    box-shadow:0 4px 0 rgba(0,0,0,0.12);
+  }
+  .hero-monster .portrait .pv-in{ width:96px; height:96px; }
+  .hero-monster .info{ min-width:0; flex:1; }
+  .hero-monster .mname{
+    font-family:var(--font-display); font-weight:800; font-size:1.5rem; line-height:1.1;
+    overflow-wrap:anywhere;
+  }
+  .badge{
+    display:inline-block;
+    font-weight:800; font-size:0.68rem;
+    padding:3px 10px; border-radius:999px;
+    background:#dff3fb; color:#1f6f8a;
+    margin-top:4px;
+    white-space:nowrap;
+  }
+  .badge.gold{ background:#fff0c7; color:#8a5a00; }
+  .badge.red{ background:#ffe1d9; color:#a3341d; }
+  .badge.grey{ background:#ebe9f0; color:#6b6178; }
+  .badge.green{ background:#dcf4e1; color:#23753a; }
+  .stat-list{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat{
+    background:#fff; border-radius:12px; padding:8px 10px;
+    border:1.5px solid #eadfc2; min-width:0;
+  }
+  .stat .k{ font-size:0.66rem; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; }
+  .stat .v{ font-family:var(--font-display); font-weight:800; font-size:1.15rem; font-variant-numeric:tabular-nums; }
+  .team-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .team-slot{
+    background:#ece8df; border-radius:14px; padding:10px 6px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    border:2px dashed #cbbf9f;
+  }
+  .team-slot .pv-in{ width:52px; height:52px; }
+  .team-slot .lbl{ font-size:0.64rem; font-weight:800; color:var(--ink-soft); text-align:center; line-height:1.2; }
+
+  /* Deck */
+  .sort-bar{ display:flex; flex-wrap:wrap; gap:6px; }
+  .sort-bar button{
+    font-weight:800; font-size:0.74rem;
+    padding:7px 11px; min-height:36px; border-radius:999px; border:2px solid #d9cba5;
+    background:#fff; color:var(--ink); cursor:pointer;
+  }
+  .sort-bar button[aria-pressed="true"]{ background:var(--gold); border-color:var(--gold-dark); color:#fff; }
+  .deck-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px 9px; padding-top:10px; }
+  .deck-grid .card{ cursor:default; }
+  .deck-grid.anim .card{ animation: cardIn .35s cubic-bezier(.2,1.2,.4,1) both; animation-delay:calc(var(--i,0) * 30ms); }
+  @keyframes cardIn{ from{ transform:translateY(10px) scale(.9); opacity:0; } to{ transform:none; opacity:1; } }
+  .deck-rules{ margin:0; padding-left:18px; font-size:0.8rem; color:var(--ink-soft); line-height:1.5; }
+  .rarity-legend{ display:flex; flex-wrap:wrap; gap:10px 14px; font-size:0.74rem; font-weight:800; color:var(--ink-soft); }
+  .rarity-legend span{ display:flex; align-items:center; gap:6px; }
+  .rarity-legend i{ width:14px; height:14px; border-radius:4px; background:var(--frame); display:inline-block; box-shadow:0 0 0 1px rgba(0,0,0,0.1); }
+
+  /* Sammlung */
+  .dex-progress{ display:flex; align-items:center; gap:10px; }
+  .dex-progress .xp-track{ height:14px; }
+  .dex-progress .num{ font-weight:800; font-size:0.85rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .dex-group h4{ margin:4px 0 8px; font-family:var(--font-display); font-size:0.95rem; display:flex; align-items:center; gap:8px; }
+  .dex-group h4 .dot{ width:12px; height:12px; border-radius:50%; background:var(--area-col); }
+  .dex-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .dex-entry{
+    position:relative; display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:#fff; border-radius:16px; padding:8px 8px 10px;
+    border:3px solid var(--area-col, #eadfc2);
+    box-shadow:0 4px 0 rgba(0,0,0,0.1);
+    min-width:0;
+  }
+  .dex-entry .pic{
+    width:100%; aspect-ratio:1.25; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--area-bg, #f3ecd6);
+    overflow:hidden;
+  }
+  .dex-entry .pic .pv-in{ width:74%; height:92%; }
+  .dex-entry.unknown .pic{ background:#e6e3ec; }
+  .dex-entry.unknown .pic svg{ filter:brightness(0) opacity(.28); }
+  .dex-entry .no{ position:absolute; top:12px; left:14px; font-size:0.62rem; font-weight:800; color:var(--ink-soft); background:rgba(255,255,255,0.85); padding:1px 6px; border-radius:999px; font-variant-numeric:tabular-nums; }
+  .dex-entry .dn{ font-family:var(--font-display); font-weight:800; font-size:0.98rem; line-height:1.15; overflow-wrap:anywhere; text-align:center; margin-top:4px; }
+  .dex-entry .badge{ margin-top:2px; }
+  .dex-entry.partner{ grid-column:1 / -1; flex-direction:row; gap:12px; padding:8px 12px 8px 8px; }
+  .dex-entry.partner .pic{ width:84px; flex:0 0 auto; aspect-ratio:1; }
+  .dex-entry.partner .no{ position:static; align-self:flex-start; }
+  .dex-entry.partner .txt{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+  .dex-entry.partner .dn{ text-align:left; }
+
+  /* Einstellungen */
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-weight:800; font-size:0.85rem; }
+  .field input[type="text"]{
+    font:inherit; font-weight:700; font-size:1rem;
+    padding:10px 14px; border-radius:12px; min-height:46px;
+    border:2px solid #d9cba5; background:#fff; color:var(--ink);
+    width:100%;
+  }
+  .setting-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding:10px 0;
+  }
+  .setting-row + .setting-row{ border-top:1.5px solid #eadfc2; }
+  .setting-row .st{ min-width:0; flex:1 1 160px; }
+  .setting-row .st b{ display:block; font-size:0.88rem; }
+  .setting-row .st span{ font-size:0.74rem; color:var(--ink-soft); }
+  .toggle{
+    position:relative; flex:0 0 auto;
+    width:56px; height:32px; border-radius:999px; border:none; cursor:pointer;
+    background:#cfc8dc; transition:background .15s ease;
+  }
+  .toggle::after{
+    content:""; position:absolute; top:4px; left:4px;
+    width:24px; height:24px; border-radius:50%; background:#fff;
+    box-shadow:0 2px 0 rgba(0,0,0,0.2);
+    transition:transform .15s ease;
+  }
+  .toggle[aria-checked="true"]{ background:var(--hp-green); }
+  .toggle[aria-checked="true"]::after{ transform:translateX(24px); }
+  .seg{ display:flex; gap:6px; flex:0 0 auto; flex-wrap:wrap; }
+  .seg button{
+    font-weight:800; font-size:0.76rem;
+    padding:7px 12px; min-height:38px; border-radius:999px; border:2px solid #d9cba5;
+    background:#fff; color:var(--ink); cursor:pointer;
+  }
+  .seg button[aria-pressed="true"]{ background:var(--gold); border-color:var(--gold-dark); color:#fff; }
+  .reset-box{ display:flex; flex-direction:column; gap:10px; }
+  .reset-confirm{ display:flex; gap:8px; flex-wrap:wrap; }
+  .saved-note{ font-size:0.74rem; font-weight:700; color:#23753a; min-height:1em; }
+
+  /* ================= MONSTER-ANIMATIONEN ================= */
+  .mon .m-eyes{ transform-box:fill-box; transform-origin:center; animation: blink 4.6s infinite; }
+  .mon .m-eyes.e2{ animation-delay:-1.7s; }
+  @keyframes blink{ 0%,93%,100%{ transform:scaleY(1); } 96%{ transform:scaleY(.08); } }
+  .mon .ear-l{ transform-box:fill-box; transform-origin:85% 85%; animation: earL 3.2s ease-in-out infinite; }
+  .mon .ear-r{ transform-box:fill-box; transform-origin:15% 85%; animation: earR 3.2s ease-in-out infinite; }
+  @keyframes earL{ 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(-9deg); } }
+  @keyframes earR{ 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(9deg); } }
+  .mon .leaves{ transform-box:fill-box; transform-origin:50% 100%; animation: leafSway 2.6s ease-in-out infinite; }
+  @keyframes leafSway{ 0%,100%{ transform:rotate(-7deg); } 50%{ transform:rotate(7deg); } }
+  .mon .arm-l{ transform-box:fill-box; transform-origin:100% 20%; animation: armL 1.8s ease-in-out infinite; }
+  .mon .arm-r{ transform-box:fill-box; transform-origin:0% 20%; animation: armR 1.8s ease-in-out infinite; }
+  @keyframes armL{ 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(16deg); } }
+  @keyframes armR{ 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(-16deg); } }
+  .mon .pebble-l{ transform-box:fill-box; transform-origin:center; animation: pebL 2s ease-in-out infinite; }
+  .mon .pebble-r{ transform-box:fill-box; transform-origin:center; animation: pebL 2s ease-in-out infinite reverse; }
+  @keyframes pebL{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+  .mon .wing-l{ transform-box:fill-box; transform-origin:100% 60%; animation: wingL .5s ease-in-out infinite alternate; }
+  .mon .wing-r{ transform-box:fill-box; transform-origin:0% 60%; animation: wingR .5s ease-in-out infinite alternate; }
+  @keyframes wingL{ from{ transform:rotate(8deg) scaleX(1); } to{ transform:rotate(-14deg) scaleX(.72); } }
+  @keyframes wingR{ from{ transform:rotate(-8deg) scaleX(1); } to{ transform:rotate(14deg) scaleX(.72); } }
+  .mon-glutdrache .wing-l{ animation: dWingL 1.8s ease-in-out infinite; transform-origin:100% 80%; }
+  .mon-glutdrache .wing-r{ animation: dWingR 1.8s ease-in-out infinite; transform-origin:0% 80%; }
+  @keyframes dWingL{ 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(-16deg) scaleY(1.05); } }
+  @keyframes dWingR{ 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(16deg) scaleY(1.05); } }
+  .mon .tail{ transform-box:fill-box; transform-origin:0% 60%; animation: tail 2.4s ease-in-out infinite; }
+  @keyframes tail{ 0%,100%{ transform:rotate(-4deg); } 50%{ transform:rotate(7deg); } }
+  .mon .glow{ animation: glowPulse 1.8s ease-in-out infinite; }
+  @keyframes glowPulse{ 0%,100%{ opacity:.65; } 50%{ opacity:1; } }
+  .mon .smoke{ transform-box:fill-box; transform-origin:center; animation: smoke 3.6s ease-out infinite; opacity:0; }
+  .mon .smoke.s2{ animation-delay:.4s; }
+  @keyframes smoke{ 0%,60%{ transform:translate(0,0) scale(.4); opacity:0; } 70%{ opacity:.7; } 100%{ transform:translate(0,-26px) scale(1.4); opacity:0; } }
+  .mon .curl{ transform-box:fill-box; transform-origin:50% 100%; animation: leafSway 2s ease-in-out infinite; }
+  .mon .antenna-l{ transform-box:fill-box; transform-origin:100% 100%; animation: earL 1.6s ease-in-out infinite; }
+  .mon .antenna-r{ transform-box:fill-box; transform-origin:0% 100%; animation: earR 1.6s ease-in-out infinite; }
+
+  .idle.i-breathe{ animation: breathe 2.8s ease-in-out infinite; }
+  .idle.i-float{ animation: floaty 2.6s ease-in-out infinite; }
+  .idle.i-hop{ animation: hopSide 1.6s ease-in-out infinite; }
+  .idle.i-stomp{ animation: stompIdle 4.2s ease-in-out infinite; }
+  .idle.i-wobble{ animation: wobbleIdle 1.5s ease-in-out infinite; }
+  .idle.i-heavy{ animation: heavy 3.6s ease-in-out infinite; }
+  .idle.i-dragon{ animation: dragonBob 2.8s ease-in-out infinite; }
+  .idle.i-player{ animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{ transform:scale(1,1); } 50%{ transform:scale(1.03,.97); } }
+  @keyframes floaty{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
+  @keyframes hopSide{ 0%,100%{ transform:translate(0,0); } 25%{ transform:translate(-6px,-12px); } 50%{ transform:translate(-8px,0) scale(1.04,.96); } 75%{ transform:translate(0,-10px); } }
+  @keyframes stompIdle{ 0%,70%,100%{ transform:none; } 76%{ transform:translateY(-8px) rotate(-3deg); } 82%{ transform:translateY(0) scale(1.08,.92); } 88%{ transform:none; } }
+  @keyframes wobbleIdle{ 0%,100%{ transform:rotate(-4deg); } 50%{ transform:rotate(4deg); } }
+  @keyframes heavy{ 0%,100%{ transform:translateX(0) scale(1); } 25%{ transform:translateX(-3px) scale(1.02,.98); } 75%{ transform:translateX(3px) scale(1.02,.98); } }
+  @keyframes dragonBob{ 0%,100%{ transform:translateY(0) scale(1); } 50%{ transform:translateY(-6px) scale(1.01,.99); } }
+
+  /* Animationen aus */
+  #app.no-anim *, #app.no-anim *::before, #app.no-anim *::after{
+    animation-duration:0.001s !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition:none !important;
+  }
+  @media (prefers-reduced-motion: reduce){
+    #app *, #app *::before, #app *::after{ animation-duration:0.001s !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition:none !important; }
+  }
+
+  @media (max-width:360px){
+    .hand{ gap:6px; }
+    .card .art{ width:40px; height:40px; font-size:1.25rem; }
+    .card .cname{ font-size:0.64rem; }
+    .deck-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .quick-nav{ gap:6px; }
+    .quick-nav button{ font-size:0.56rem; }
+  }
+  @media (max-height:620px){
+    .start-content{ padding-top:3vh; }
+    .hand{ min-height:100px; }
+    .card{ min-height:100px; }
+    .card .face{ min-height:94px; padding-top:13px; gap:3px; }
+    .card .art{ width:38px; height:38px; font-size:1.2rem; }
+  }
+
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</head>
+<body>
+
+<!-- Gemeinsame SVG-Definitionen (Farbverläufe, Filter). Wird beim Start per JS gefüllt. -->
+<svg id="svg-defs" aria-hidden="true" focusable="false"><defs id="defs"></defs></svg>
+
+<div id="app">
+
+  <!-- ============ START SCREEN ============ -->
+  <section id="screen-start" class="screen active">
+    <div class="start-bg" id="start-bg"></div>
+
+    <div class="start-content">
+      <h1 class="logo" aria-label="MonsterQuest" id="logo"></h1>
+      <div class="tagline">Kleine Monster. Große Abenteuer.</div>
+    </div>
+
+    <button class="mascot-wrap" id="mascot" aria-label="Flauschi">
+      <div class="bob" id="mascot-art"></div>
+    </button>
+
+    <div class="start-actions">
+      <button class="btn cta-start" id="btn-play">▶ SPIEL STARTEN</button>
+      <div class="quick-nav">
+        <button data-screen="screen-monster"><span class="qicon">🐾</span>MONSTER</button>
+        <button data-screen="screen-deck"><span class="qicon">🃏</span>DECK</button>
+        <button data-screen="screen-dex"><span class="qicon">📖</span>SAMMLUNG</button>
+        <button data-screen="screen-settings"><span class="qicon">⚙️</span>EINSTELLUNGEN</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAP SCREEN ============ -->
+  <section id="screen-map" class="screen">
+    <div class="topbar">
+      <button class="back-btn" id="map-back" aria-label="Zurück">←</button>
+      <div class="player-chip">
+        <div class="player-avatar" data-mon="flauschi"></div>
+        <div class="player-lv">Lv. 1</div>
+      </div>
+      <div class="stat-pill">🪙 250</div>
+    </div>
+    <div class="map-scroll" id="map-scroll">
+      <div class="map-welcome" id="map-welcome">
+        <h2>Willkommen in MonsterQuest</h2>
+        <p>Erkunde die Welt, besiege Gegner und schalte neue Level frei. Level 1 wartet auf dich!</p>
+        <button class="close" id="welcome-close" aria-label="Hinweis schließen">✕</button>
+      </div>
+      <div class="map-wrap" id="map-wrap"></div>
+    </div>
+
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
+    <div class="sheet" id="area-sheet" role="dialog" aria-label="Gebietsübersicht" aria-hidden="true"></div>
+    <div class="sheet" id="preview-sheet" role="dialog" aria-label="Gegner-Vorschau" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============ BATTLE SCREEN ============ -->
+  <section id="screen-battle" class="screen">
+    <div class="battle-stage">
+      <div class="topbar">
+        <button class="back-btn" id="battle-flee" aria-label="Fliehen">←</button>
+        <div class="topbar-stack"><div class="topbar-title" id="battle-title">Level 1 · Grasland</div><div class="env-chip" id="env-chip"></div></div>
+        <button class="icon-btn" id="btn-pause" aria-label="Pause">
+          <svg viewBox="0 0 20 20"><rect x="4" y="3" width="4.5" height="14" rx="1.5" fill="#2b2140"/><rect x="11.5" y="3" width="4.5" height="14" rx="1.5" fill="#2b2140"/></svg>
+        </button>
+      </div>
+
+      <div class="battle-arena arena" id="arena">
+        <div class="cam" id="cam">
+          <div class="layer sky" id="layer-sky"></div>
+          <div class="layer layer-far" id="layer-far"></div>
+          <div class="layer layer-mid" id="layer-mid"></div>
+          <div class="critters" id="critters"></div>
+          <div class="battle-field">
+            <div class="spot enemy-spot" id="enemy-spot">
+              <div class="sprite-anchor" id="enemy-anchor">
+                <div class="sprite" id="enemy-sprite"></div>
+              </div>
+              <div class="platform"></div>
+              <div class="entry-prop" id="entry-prop" hidden></div>
+            </div>
+            <div class="spot player-spot" id="player-spot">
+              <div class="sprite-anchor">
+                <div class="sprite" id="player-sprite"></div>
+              </div>
+              <div class="platform"></div>
+            </div>
+          </div>
+          <div class="layer layer-fore" id="layer-fore"></div>
+          <div class="wx" id="wx"></div>
+          <div class="tod"></div>
+        </div>
+
+        <div class="plate enemy">
+          <div class="nm"><span id="enemy-name">Grollzahn</span><span class="lvtag" id="enemy-lv-tag">Lv.1</span></div>
+          <div class="hp-track"><div class="hp-fill" id="enemy-hp-fill"></div></div>
+          <div class="hp-text"><span id="enemy-hp-text">24/24</span></div>
+        </div>
+        <div class="plate player">
+          <div class="nm"><span id="player-name">Flauschi</span><span class="lvtag" id="player-lv-tag">Lv.1</span></div>
+          <div class="hp-track"><div class="hp-fill" id="player-hp-fill"></div></div>
+          <div class="hp-text"><span id="player-hp-text">30/30</span></div>
+        </div>
+        <div class="hurt-vignette" id="hurt"></div>
+        <div class="intro-dim" id="intro-dim"></div>
+        <div id="intro-layer"></div>
+      </div>
+
+      <div class="battle-log" id="battle-log" aria-live="polite">Ein wilder Grollzahn erscheint!</div>
+
+      <div class="battle-bottom">
+        <div class="xp-row">
+          <div class="xp-label"><svg viewBox="0 0 16 16"><path d="M9.5 1 3 9h4l-1 6 6.5-8h-4z" fill="#ffb400" stroke="#c77c06" stroke-width="1" stroke-linejoin="round"/></svg>Energie</div>
+          <div class="xp-track"><div class="xp-fill" id="xp-fill"></div><div class="xp-ticks"></div></div>
+          <div class="xp-text" id="xp-text">10/10</div>
+        </div>
+        <div class="hand" id="hand"></div>
+        <div class="hand-foot">
+          <div class="deck-pile" id="deck-pile"><i></i><i></i><i></i></div>
+          <div class="deck-counter" id="deck-counter">Deck: 4 Karten übrig</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fx-layer" id="fx-layer"></div>
+
+    <div class="overlay pause-overlay" id="pause-overlay" role="dialog" aria-label="Pause">
+      <div class="overlay-card">
+        <div class="pause-icon"><svg viewBox="0 0 20 20"><rect x="4" y="3" width="4.5" height="14" rx="1.5" fill="#5a3d9a"/><rect x="11.5" y="3" width="4.5" height="14" rx="1.5" fill="#5a3d9a"/></svg></div>
+        <h2>Pause</h2>
+        <p>Der Kampf ist angehalten. Energie und Gegner warten, bis du weiterspielst.</p>
+        <div class="overlay-actions">
+          <button class="btn" id="pause-resume">Fortsetzen</button>
+          <button class="btn secondary" id="pause-exit">Zurück zur Weltkarte</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay result" id="battle-overlay" role="dialog" aria-label="Kampfergebnis">
+      <div class="confetti" id="confetti"></div>
+      <div class="overlay-card result-card">
+        <div class="result-banner" id="overlay-title">Sieg!</div>
+        <div class="result-stars" id="result-stars"></div>
+        <div class="result-monster" id="result-monster"></div>
+        <p id="overlay-text">Du hast Grollzahn besiegt.</p>
+        <div class="unlock-note" id="unlock-note" hidden></div>
+        <div class="stats-grid">
+          <div class="stat"><div class="k">Ergebnis</div><div class="v" id="st-result">Sieg</div></div>
+          <div class="stat"><div class="k">Kampfdauer</div><div class="v" id="st-time">0:00</div></div>
+          <div class="stat"><div class="k">Karten gespielt</div><div class="v" id="st-cards">0</div></div>
+          <div class="stat"><div class="k">Schaden</div><div class="v" id="st-dmg">0</div></div>
+        </div>
+        <div class="overlay-actions">
+          <button class="btn" id="overlay-retry" hidden>Nochmal versuchen</button>
+          <button class="btn" id="overlay-btn">Zurück zur Karte</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MONSTER SCREEN ============ -->
+  <section id="screen-monster" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Monster</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="menu-scroll">
+      <div class="panel">
+        <div class="hero-monster">
+          <div class="portrait"><div class="pv-in" data-mon="flauschi"></div></div>
+          <div class="info">
+            <div class="mname" id="mon-name">Flauschi</div>
+            <span class="badge">Dein Partner</span>
+            <span class="badge gold">Lv. 1</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Werte</h3>
+        <div class="stat-list">
+          <div class="stat"><div class="k">Lebenspunkte</div><div class="v">30 HP</div></div>
+          <div class="stat"><div class="k">Energie-Aufladung</div><div class="v">+1 / Sek.</div></div>
+          <div class="stat"><div class="k">Max. Energie</div><div class="v">10</div></div>
+          <div class="stat"><div class="k">Handkarten</div><div class="v">4</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Kampfbilanz</h3>
+        <div class="stat-list">
+          <div class="stat"><div class="k">Siege</div><div class="v" id="mon-wins">0</div></div>
+          <div class="stat"><div class="k">Niederlagen</div><div class="v" id="mon-losses">0</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Team</h3>
+        <div class="team-row">
+          <div class="team-slot"><div class="pv-in" data-mon="silhouette"></div><div class="lbl">Platz 2<br>ab Level 2</div></div>
+          <div class="team-slot"><div class="pv-in" data-mon="silhouette"></div><div class="lbl">Platz 3<br>ab Level 3</div></div>
+          <div class="team-slot"><div class="pv-in" data-mon="silhouette"></div><div class="lbl">Platz 4<br>nach dem Boss</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DECK SCREEN ============ -->
+  <section id="screen-deck" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Deck</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="menu-scroll">
+      <div class="panel">
+        <h3>Sortieren</h3>
+        <div class="sort-bar" id="sort-bar">
+          <button type="button" data-sort="name">Name</button>
+          <button type="button" data-sort="cost-asc">Energie ↑</button>
+          <button type="button" data-sort="cost-desc">Energie ↓</button>
+          <button type="button" data-sort="dmg-asc">Schaden ↑</button>
+          <button type="button" data-sort="dmg-desc">Schaden ↓</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 id="deck-heading">Kampfdeck · 8 Karten</h3>
+        <div class="deck-grid" id="deck-grid"></div>
+      </div>
+      <div class="panel">
+        <h3 id="extra-heading">Weitere Karten</h3>
+        <p class="hint">Diese Karten sind neu in deiner Kartensammlung. Im Kampf spielst du weiterhin mit dem Standard-Deck aus 8 Karten.</p>
+        <div class="deck-grid" id="extra-grid"></div>
+      </div>
+      <div class="panel">
+        <h3>So funktioniert das Deck</h3>
+        <ul class="deck-rules">
+          <li>Zu Kampfbeginn wird das Deck gemischt.</li>
+          <li>Du hast immer 4 Karten auf der Hand.</li>
+          <li>Jede Karte kostet Energie (blaue Zahl). Energie lädt sich um 1 pro Sekunde auf, bis maximal 10.</li>
+          <li>Nach jeder gespielten Karte ziehst du eine neue, solange das Deck reicht.</li>
+        </ul>
+        <h3 style="margin-top:14px;">Kartenrahmen</h3>
+        <div class="rarity-legend">
+          <span><i style="--frame:linear-gradient(160deg,#f3e9cc,#d8c697)"></i>Standard</span>
+          <span><i style="--frame:linear-gradient(155deg,#fff,#c3ccd8 35%,#f4f7fb 55%,#94a1b3)"></i>Silber</span>
+          <span><i style="--frame:linear-gradient(155deg,#fff3b8,#f5b82e 40%,#ffe58a 58%,#c77c06)"></i>Gold</span>
+          <span><i style="--frame:linear-gradient(120deg,#ffc6ec,#b9a4ff,#8fe3ff,#b6ffcf,#ffe58a)"></i>Glitzer</span>
+        </div>
+        <p class="hint" style="margin-top:8px;">Rahmen sind nur Schmuck. Sie ändern weder Schaden noch Energiekosten.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SAMMLUNG SCREEN ============ -->
+  <section id="screen-dex" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Sammlung</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="menu-scroll">
+      <div class="panel">
+        <h3>Monster-Lexikon</h3>
+        <div class="dex-progress">
+          <div class="xp-track"><div class="xp-fill" id="dex-fill"></div></div>
+          <div class="num" id="dex-num">1 / 14 entdeckt</div>
+        </div>
+      </div>
+      <div class="panel" id="dex-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ EINSTELLUNGEN SCREEN ============ -->
+  <section id="screen-settings" class="screen menu-screen">
+    <div class="topbar">
+      <button class="back-btn" data-back aria-label="Zurück">←</button>
+      <div class="topbar-title">Einstellungen</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="menu-scroll">
+      <form class="panel field" id="name-form">
+        <h3>Monster</h3>
+        <label for="set-name">Name deines Monsters</label>
+        <input type="text" id="set-name" maxlength="14" autocomplete="off" value="Flauschi">
+        <div class="saved-note" id="name-note"></div>
+      </form>
+      <div class="panel">
+        <h3>Spiel</h3>
+        <div class="setting-row">
+          <div class="st"><b>Animationen</b><span>Hüpfen, Auftritte, Wetter, Kamera und Schadenszahlen</span></div>
+          <button class="toggle" id="set-anim" role="switch" aria-checked="true" aria-label="Animationen"></button>
+        </div>
+        <div class="setting-row">
+          <div class="st"><b>Gegner-Tempo</b><span>Wie schnell der Gegner zurückschlägt</span></div>
+          <div class="seg" id="set-speed">
+            <button type="button" data-speed="900" aria-pressed="false">Ruhig</button>
+            <button type="button" data-speed="550" aria-pressed="true">Normal</button>
+            <button type="button" data-speed="300" aria-pressed="false">Schnell</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel reset-box">
+        <h3>Fortschritt</h3>
+        <p class="hint">Setzt Siege, Niederlagen, freigeschaltete Gebiete und das Monster-Lexikon zurück. Name und Einstellungen bleiben erhalten.</p>
+        <button class="btn danger small" id="reset-btn" type="button">Fortschritt zurücksetzen</button>
+        <div class="reset-confirm" id="reset-confirm" hidden>
+          <button class="btn danger small" id="reset-yes" type="button">Ja, zurücksetzen</button>
+          <button class="btn secondary small" id="reset-no" type="button">Abbrechen</button>
+        </div>
+        <div class="saved-note" id="reset-note"></div>
+        <p class="hint">Dein Spielstand wird in diesem Browser gespeichert, zusätzlich mit einer Sicherungskopie. Beides liegt im selben Browser: Wenn du dort die Website-Daten löschst, sind Spielstand und Sicherung weg.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Übergang zwischen Weltkarte und Kampf -->
+  <div class="transition" id="transition"><div class="iris"></div></div>
+
+</div>
+<script>
+/* =====================================================================
+   MonsterQuest 2.0 – Grafik
+   Alle Monster sind SVG-Illustrationen. Farbverläufe und Filter liegen
+   einmal zentral in #defs und werden per url(#id) wiederverwendet.
+   ===================================================================== */
+const ART = (function(){
+  "use strict";
+
+  // ---------- Farbverläufe ----------
+  function stopsOf(list){
+    return list.map((s, i) => {
+      const c = Array.isArray(s) ? s[0] : s;
+      const op = Array.isArray(s) && s[1] != null ? ` stop-opacity="${s[1]}"` : '';
+      const off = Array.isArray(s) && s[2] != null ? s[2] : (list.length === 1 ? 0 : i / (list.length - 1));
+      return `<stop offset="${off}" stop-color="${c}"${op}/>`;
+    }).join('');
+  }
+  function rg(id, list, o){
+    o = o || {};
+    if(o.user) return `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${o.cx}" cy="${o.cy}" r="${o.r}">${stopsOf(list)}</radialGradient>`;
+    return `<radialGradient id="${id}" cx="${o.cx || '36%'}" cy="${o.cy || '28%'}" r="${o.r || '78%'}">${stopsOf(list)}</radialGradient>`;
+  }
+  function lg(id, list, o){
+    o = o || {};
+    return `<linearGradient id="${id}" x1="${o.x1 || 0}" y1="${o.y1 || 0}" x2="${o.x2 || 0}" y2="${o.y2 == null ? 1 : o.y2}">${stopsOf(list)}</linearGradient>`;
+  }
+
+  const DEFS = [
+    rg('g-shadow', [['#000',0.32],['#000',0]], {cx:'50%', cy:'50%', r:'50%'}),
+    rg('g-flauschi', ['#c4f4ff','#66cdea','#3190b6']),
+    rg('g-groll', ['#f7b893','#d06e45','#8d3b1c']),
+    lg('g-horn', ['#fffaf0','#f1dcb4','#c09a62']),
+    rg('g-puff', ['#fffef4','#ffef9e','#f2c94c'], {user:true, cx:78, cy:68, r:110}),
+    rg('g-klee', ['#e8fccd','#9edc6e','#559f37']),
+    lg('g-leaf', ['#a6e67f','#4b9f3b']),
+    rg('g-knuff', ['#fffbf2','#f0d9b0','#c39f6c']),
+    lg('g-knuffhorn', ['#fffdf6','#e9d6b0','#b8956a']),
+    rg('g-moos', ['#c2ee9e','#66b54d','#36722f']),
+    rg('g-cap', ['#ffab9a','#e2453a','#9c1d17']),
+    rg('g-stem', ['#fffcf4','#f1dfc2','#c9a97d']),
+    rg('g-wurzel', ['#dcb185','#a06f42','#63391d']),
+    rg('g-flatter', ['#faf0ff','#cdaaf5','#8f62c8']),
+    lg('g-wing', [['#ffffff',0.95],['#e2cbff',0.85],['#c4a2f2',0.75]]),
+    rg('g-mops', ['#f2f4f6','#b4bbc3','#78808a']),
+    lg('g-plate', ['#b3bac2','#6a727b']),
+    rg('g-kiesel', ['#ffffff','#d8dce0','#9ea5ae']),
+    rg('g-fels', ['#e6be93','#a8784c','#6b4524']),
+    lg('g-rock', ['#cbbfb2','#857669']),
+    rg('g-roll', ['#b3b9c1','#6b717a','#3e434a']),
+    rg('g-dragon', ['#ffc896','#f0642f','#9f2614'], {cx:'40%', cy:'26%'}),
+    rg('g-belly', ['#fff7cc','#ffcc4d','#f08a17'], {cx:'50%', cy:'35%'}),
+    lg('g-dwing', ['#ffa274','#e2502c','#9f2614']),
+    lg('g-dmembrane', [['#ffcf8a',0.95],['#ff8a4a',0.9]]),
+    lg('g-dhorn', ['#fff6dc','#e8bf7c','#b07a3a']),
+    rg('g-iris', ['#fff4a8','#ffb400','#d16e06'], {cx:'40%', cy:'35%'}),
+    rg('g-glowdot', [['#fff6c0',1],['#ffb347',0.8],['#ff6a00',0]], {cx:'50%', cy:'50%', r:'50%'}),
+    rg('g-silhouette', ['#b9b3c6','#9a93ab','#7d768f']),
+    `<filter id="f-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`,
+    `<filter id="f-blur2"><feGaussianBlur stdDeviation="2"/></filter>`
+  ];
+
+  // ---------- Bausteine ----------
+  const INK = '#2b2140';
+  const shadow = (cx = 100, cy = 184, rx = 52, ry = 9) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#g-shadow)"/>`;
+  function eyes(x1, x2, y, r, cls){
+    let s = `<g class="m-eyes${cls ? ' ' + cls : ''}">`;
+    [x1, x2].forEach(x => {
+      s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${INK}"/>` +
+           `<circle cx="${(x + r * 0.32).toFixed(1)}" cy="${(y - r * 0.36).toFixed(1)}" r="${(r * 0.36).toFixed(1)}" fill="#fff"/>` +
+           `<circle cx="${(x - r * 0.36).toFixed(1)}" cy="${(y + r * 0.34).toFixed(1)}" r="${(r * 0.15).toFixed(1)}" fill="#fff" opacity=".85"/>`;
+    });
+    return s + '</g>';
+  }
+  const shine = (cx, cy, rx, ry, rot = -30, op = 0.5) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${op}" transform="rotate(${rot} ${cx} ${cy})"/>`;
+  const blush = (x1, x2, y, r = 8, c = '#ff9d8a') => `<circle cx="${x1}" cy="${y}" r="${r}" fill="${c}" opacity=".55"/><circle cx="${x2}" cy="${y}" r="${r}" fill="${c}" opacity=".55"/>`;
+  const smile = (x1, x2, y, depth, w = 4) => `<path d="M${x1} ${y} Q${(x1 + x2) / 2} ${y + depth} ${x2} ${y}" stroke="${INK}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+
+  // ---------- Monster ----------
+  const M = {};
+
+  M.flauschi = () => `
+    ${shadow(100, 182, 50, 9)}
+    <g class="ear-l"><path d="M60 68 C34 40 14 46 21 70 C27 89 47 94 64 81 Z" fill="url(#g-flauschi)" stroke="#2a7fa3" stroke-width="3" stroke-linejoin="round"/><path d="M53 72 C38 57 29 61 31 71 C33 80 44 84 53 78 Z" fill="#ffb8c6" opacity=".85"/></g>
+    <g class="ear-r"><path d="M140 68 C166 40 186 46 179 70 C173 89 153 94 136 81 Z" fill="url(#g-flauschi)" stroke="#2a7fa3" stroke-width="3" stroke-linejoin="round"/><path d="M147 72 C162 57 171 61 169 71 C167 80 156 84 147 78 Z" fill="#ffb8c6" opacity=".85"/></g>
+    <ellipse cx="77" cy="171" rx="16" ry="9" fill="#3a9fc4" stroke="#2a7fa3" stroke-width="3"/>
+    <ellipse cx="123" cy="171" rx="16" ry="9" fill="#3a9fc4" stroke="#2a7fa3" stroke-width="3"/>
+    <path d="M100 40 C50 40 35 90 45 130 C50 155 75 172 100 172 C125 172 150 155 155 130 C165 90 150 40 100 40 Z" fill="url(#g-flauschi)" stroke="#2a7fa3" stroke-width="3"/>
+    <ellipse cx="100" cy="142" rx="33" ry="24" fill="#e2f9ff" opacity=".75"/>
+    <path d="M47 118 C36 122 35 136 48 137" fill="#5cc3e2" stroke="#2a7fa3" stroke-width="3" stroke-linecap="round"/>
+    <path d="M153 118 C164 122 165 136 152 137" fill="#5cc3e2" stroke="#2a7fa3" stroke-width="3" stroke-linecap="round"/>
+    <path class="curl" d="M94 42 C90 28 100 22 107 28 C102 30 101 37 107 41" fill="none" stroke="#2a7fa3" stroke-width="3.5" stroke-linecap="round"/>
+    ${shine(73, 70, 17, 9)}
+    ${eyes(80, 120, 104, 13)}
+    ${blush(63, 137, 123)}
+    <path d="M86 133 Q100 149 114 133 Q100 140 86 133 Z" fill="${INK}"/>
+    <ellipse cx="100" cy="140" rx="5" ry="2.6" fill="#ff8a9a"/>`;
+
+  M.grollzahn = () => `
+    ${shadow(100, 182, 52, 9)}
+    <path d="M66 60 C56 46 50 30 55 18 C64 30 75 40 84 50 Z" fill="url(#g-horn)" stroke="#8a5a2e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M134 60 C144 46 150 30 145 18 C136 30 125 40 116 50 Z" fill="url(#g-horn)" stroke="#8a5a2e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M60 170 l-6 10 h14 l2 -8 Z M132 170 l6 10 h-14 l-2 -8 Z" fill="#7a3418"/>
+    <ellipse cx="74" cy="170" rx="17" ry="9" fill="#a94d2a" stroke="#6e2c14" stroke-width="3"/>
+    <ellipse cx="126" cy="170" rx="17" ry="9" fill="#a94d2a" stroke="#6e2c14" stroke-width="3"/>
+    <path d="M100 45 C60 45 40 85 48 120 C52 150 75 168 100 168 C125 168 148 150 152 120 C160 85 140 45 100 45 Z" fill="url(#g-groll)" stroke="#6e2c14" stroke-width="3"/>
+    <path d="M92 50 L100 60 L108 50 M84 58 L90 66 M116 58 L110 66" stroke="#93401f" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="100" cy="138" rx="30" ry="22" fill="#f8c9a8" opacity=".6"/>
+    <path d="M49 116 C36 118 34 134 46 138 L50 132" fill="#c9653d" stroke="#6e2c14" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M151 116 C164 118 166 134 154 138 L150 132" fill="#c9653d" stroke="#6e2c14" stroke-width="3" stroke-linejoin="round"/>
+    ${shine(72, 72, 15, 8)}
+    <g class="m-eyes">
+      <circle cx="80" cy="110" r="12" fill="#ffe08a" stroke="#b8862b" stroke-width="2"/>
+      <circle cx="120" cy="110" r="12" fill="#ffe08a" stroke="#b8862b" stroke-width="2"/>
+      <circle cx="82" cy="112" r="5.5" fill="${INK}"/><circle cx="118" cy="112" r="5.5" fill="${INK}"/>
+      <circle cx="84" cy="109" r="2" fill="#fff"/><circle cx="120" cy="109" r="2" fill="#fff"/>
+    </g>
+    <path d="M64 94 L92 101 M136 94 L108 101" stroke="#5c220c" stroke-width="6" stroke-linecap="round"/>
+    <path d="M80 147 Q100 134 120 147" stroke="${INK}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path d="M88 142 L91 150 L95 140 Z M112 142 L109 150 L105 140 Z" fill="#fff" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>`;
+
+  M.pustepuff = () => {
+    const puffs = [[100,100,42],[62,110,27],[138,110,27],[78,76,26],[122,76,26],[100,64,24],[100,130,34],[70,134,22],[130,134,22]];
+    const outline = puffs.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="${p[2]}"/>`).join('');
+    return `
+    ${shadow(100, 186, 40, 7)}
+    <path d="M86 160 L84 172 M114 160 L116 172" stroke="#d99a2b" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="82" cy="175" rx="9" ry="6" fill="#f2a33a" stroke="#b9741a" stroke-width="2.5"/>
+    <ellipse cx="118" cy="175" rx="9" ry="6" fill="#f2a33a" stroke="#b9741a" stroke-width="2.5"/>
+    <g fill="#d9a826" stroke="#c39220" stroke-width="7">${outline}</g>
+    <g fill="url(#g-puff)">${outline}</g>
+    <circle cx="80" cy="74" r="10" fill="#fff" opacity=".55"/><circle cx="64" cy="104" r="6" fill="#fff" opacity=".45"/>
+    <path class="curl" d="M100 44 C94 26 116 22 116 36 C116 46 104 46 106 37" fill="none" stroke="#d9a826" stroke-width="4.5" stroke-linecap="round"/>
+    ${eyes(84, 116, 102, 15)}
+    ${blush(66, 134, 120, 8, '#ffab8a')}
+    <ellipse cx="100" cy="127" rx="6.5" ry="5.5" fill="${INK}"/>
+    <ellipse cx="100" cy="129" rx="3.5" ry="2" fill="#ff8a9a"/>`;
+  };
+
+  M.kleehops = () => `
+    ${shadow(100, 184, 44, 8)}
+    <g class="ear-l"><path d="M72 76 C42 62 24 32 33 12 C58 20 82 46 84 70 Z" fill="url(#g-leaf)" stroke="#3a8a30" stroke-width="3" stroke-linejoin="round"/><path d="M80 66 C64 48 48 30 36 16 M58 44 L50 46 M68 54 L60 58" stroke="#d6f5b8" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/></g>
+    <g class="ear-r"><path d="M128 76 C158 62 176 32 167 12 C142 20 118 46 116 70 Z" fill="url(#g-leaf)" stroke="#3a8a30" stroke-width="3" stroke-linejoin="round"/><path d="M120 66 C136 48 152 30 164 16 M142 44 L150 46 M132 54 L140 58" stroke="#d6f5b8" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/></g>
+    <rect x="72" y="158" width="20" height="20" rx="9" fill="#7fc455" stroke="#3a8a30" stroke-width="3"/>
+    <rect x="108" y="158" width="20" height="20" rx="9" fill="#7fc455" stroke="#3a8a30" stroke-width="3"/>
+    <path d="M100 62 C66 62 52 98 56 130 C60 158 80 170 100 170 C120 170 140 158 144 130 C148 98 134 62 100 62 Z" fill="url(#g-klee)" stroke="#3a8a30" stroke-width="3"/>
+    <ellipse cx="100" cy="140" rx="27" ry="22" fill="#f4ffe6" opacity=".75"/>
+    <path d="M100 64 C100 56 102 50 107 45" stroke="#3a8a30" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <g class="leaves" stroke="#2f7a2a" stroke-width="2">
+      <path d="M107 45 C100 34 104 26 110 30 C114 24 122 30 114 38 Z" fill="#4fa83e"/>
+      <path d="M107 45 C96 46 92 38 98 35 C94 28 104 26 106 36 Z" fill="#5cb84a"/>
+      <path d="M107 45 C112 54 120 52 120 46 C127 46 126 36 116 40 Z" fill="#46993a"/>
+    </g>
+    ${shine(80, 84, 12, 7)}
+    ${eyes(84, 116, 108, 11)}
+    ${blush(70, 130, 124, 7)}
+    <path d="M88 132 Q100 148 112 132 Z" fill="${INK}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+    <ellipse cx="100" cy="139" rx="5" ry="3" fill="#ff8a9a"/>
+    <path d="M94 132 v5 h5 v-5 Z" fill="#fff"/>`;
+
+  M.knuffhorn = () => `
+    ${shadow(100, 184, 56, 9)}
+    <ellipse cx="74" cy="172" rx="16" ry="9" fill="#d9bd8f" stroke="#9c7b4f" stroke-width="3"/>
+    <ellipse cx="126" cy="172" rx="16" ry="9" fill="#d9bd8f" stroke="#9c7b4f" stroke-width="3"/>
+    <path d="M52 98 C36 92 30 112 46 118 C50 112 52 106 52 98 Z" fill="#d9bd8f" stroke="#9c7b4f" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M148 98 C164 92 170 112 154 118 C150 112 148 106 148 98 Z" fill="#d9bd8f" stroke="#9c7b4f" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="100" cy="122" rx="58" ry="52" fill="url(#g-knuff)" stroke="#9c7b4f" stroke-width="3"/>
+    <g fill="#a8794a" opacity=".55">
+      <ellipse cx="70" cy="98" rx="11" ry="8" transform="rotate(-20 70 98)"/>
+      <ellipse cx="132" cy="146" rx="13" ry="9" transform="rotate(15 132 146)"/>
+      <ellipse cx="128" cy="92" rx="7" ry="5"/>
+      <ellipse cx="66" cy="150" rx="8" ry="6"/>
+    </g>
+    <path d="M94 74 C88 52 98 34 118 26 C110 40 110 56 114 72 Z" fill="url(#g-knuffhorn)" stroke="#9c7b4f" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M98 62 Q105 58 112 62 M100 50 Q106 46 112 50" stroke="#b8956a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${shine(76, 90, 15, 8)}
+    ${eyes(80, 120, 114, 10)}
+    <ellipse cx="100" cy="141" rx="24" ry="15" fill="#fff7ea" stroke="#d9bd8f" stroke-width="2"/>
+    <ellipse cx="92" cy="138" rx="3.5" ry="2.5" fill="#8a6640"/><ellipse cx="108" cy="138" rx="3.5" ry="2.5" fill="#8a6640"/>
+    ${smile(92, 108, 147, 6, 3)}
+    ${blush(66, 134, 130, 7)}`;
+
+  M.moosling = () => {
+    const bumps = [[56,100,13],[70,84,14],[88,76,14],[108,74,14],[127,80,14],[142,92,13]];
+    const b = bumps.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="${p[2]}"/>`).join('');
+    return `
+    ${shadow(100, 182, 58, 9)}
+    <ellipse cx="76" cy="170" rx="14" ry="8" fill="#3f8a36" stroke="#2c5f27" stroke-width="3"/>
+    <ellipse cx="124" cy="170" rx="14" ry="8" fill="#3f8a36" stroke="#2c5f27" stroke-width="3"/>
+    <g fill="#36722f" stroke="#2c5f27" stroke-width="6">${b}<ellipse cx="100" cy="124" rx="60" ry="48"/></g>
+    <g fill="url(#g-moos)">${b}<ellipse cx="100" cy="124" rx="60" ry="48"/></g>
+    <g fill="#d6f5b0" opacity=".55"><circle cx="70" cy="92" r="3"/><circle cx="96" cy="84" r="2.5"/><circle cx="126" cy="96" r="3"/><circle cx="144" cy="120" r="2.5"/><circle cx="60" cy="130" r="2.5"/><circle cx="114" cy="86" r="2"/></g>
+    <g class="leaves" stroke="#3a7a2c" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M98 66 C86 52 88 38 98 34 C106 46 106 56 98 66 Z" fill="#8edc63"/>
+      <path d="M104 66 C114 50 128 48 134 54 C128 64 116 68 104 66 Z" fill="#7fd35a"/>
+      <path d="M94 68 C80 60 70 62 68 70 C76 76 86 76 94 68 Z" fill="#9ae36f"/>
+      <path d="M98 64 L98 44 M106 64 L124 55 M92 68 L74 69" stroke="#4f9a3a" stroke-width="1.5" fill="none"/>
+    </g>
+    ${shine(74, 100, 14, 8, -25, 0.35)}
+    ${eyes(80, 120, 120, 15)}
+    ${blush(62, 138, 138, 7, '#ffb0a0')}
+    ${smile(92, 108, 146, 7, 3.5)}`;
+  };
+
+  M.pilzbert = () => `
+    ${shadow(100, 184, 46, 8)}
+    <ellipse cx="84" cy="174" rx="13" ry="7" fill="#e0c69c" stroke="#a88a5c" stroke-width="3"/>
+    <ellipse cx="116" cy="174" rx="13" ry="7" fill="#e0c69c" stroke="#a88a5c" stroke-width="3"/>
+    <path d="M70 110 C64 140 70 170 100 172 C130 170 136 140 130 110 Z" fill="url(#g-stem)" stroke="#a88a5c" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M40 112 C70 125 130 125 160 112 C132 130 68 130 40 112 Z" fill="#e8cfae" stroke="#a88a5c" stroke-width="2"/>
+    <path d="M28 112 C28 58 62 32 100 32 C138 32 172 58 172 112 C152 124 48 124 28 112 Z" fill="url(#g-cap)" stroke="#8a1f19" stroke-width="3" stroke-linejoin="round"/>
+    <g fill="#fff" stroke="#f1d6d0" stroke-width="1.5">
+      <ellipse cx="64" cy="74" rx="11" ry="9"/><ellipse cx="100" cy="50" rx="10" ry="8"/><ellipse cx="136" cy="72" rx="12" ry="10"/>
+      <ellipse cx="86" cy="96" rx="7" ry="6"/><ellipse cx="152" cy="100" rx="6" ry="5"/><ellipse cx="46" cy="100" rx="6" ry="5"/><ellipse cx="118" cy="98" rx="6" ry="5"/>
+    </g>
+    ${shine(70, 54, 18, 8, -25, 0.4)}
+    ${eyes(86, 114, 138, 8.5)}
+    ${blush(76, 124, 152, 6)}
+    ${smile(94, 106, 156, 6, 3)}`;
+
+  M.wurzelwusel = () => `
+    ${shadow(100, 184, 46, 8)}
+    <g stroke="#5a3418" stroke-width="7" fill="none" stroke-linecap="round">
+      <path d="M84 164 C80 176 72 178 64 181"/><path d="M100 168 L100 182"/><path d="M116 164 C120 176 128 178 136 181"/>
+    </g>
+    <g class="arm-l"><path d="M66 104 C50 102 40 112 34 126 M40 117 C34 112 28 112 24 116 M36 124 C30 128 28 134 30 138" stroke="#5a3418" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M66 104 C50 102 40 112 34 126" stroke="#b07b4c" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>
+    <g class="arm-r"><path d="M134 104 C150 102 160 112 166 126 M160 117 C166 112 172 112 176 116 M164 124 C170 128 172 134 170 138" stroke="#5a3418" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M134 104 C150 102 160 112 166 126" stroke="#b07b4c" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>
+    <path d="M100 40 C72 40 62 76 64 112 C66 148 80 170 100 170 C120 170 134 148 136 112 C138 76 128 40 100 40 Z" fill="url(#g-wurzel)" stroke="#5a3418" stroke-width="3"/>
+    <g stroke="#7d5230" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7">
+      <path d="M78 60 C74 80 76 96 74 110"/><path d="M124 64 C128 84 126 100 128 118"/><path d="M90 140 C92 150 90 158 92 164"/><path d="M112 136 C110 148 114 156 112 164"/>
+    </g>
+    <g class="leaves" stroke="#3a7a2c" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M100 42 C100 32 98 26 94 22" stroke="#5a3418" stroke-width="3.5" fill="none"/>
+      <path d="M95 24 C80 14 70 18 68 26 C78 32 90 30 95 24 Z" fill="#7fd35a"/>
+      <path d="M99 30 C110 16 124 14 130 20 C122 30 110 32 99 30 Z" fill="#5cb84a"/>
+      <path d="M96 22 C94 12 98 6 104 6 C104 14 100 20 96 22 Z" fill="#8edc63"/>
+    </g>
+    ${shine(80, 64, 9, 14, 10, 0.3)}
+    <ellipse cx="100" cy="104" rx="26" ry="22" fill="#8a5a33" opacity=".35"/>
+    ${eyes(88, 112, 98, 9)}
+    ${blush(78, 122, 114, 6)}
+    ${smile(92, 108, 118, 7, 3.5)}`;
+
+  M.flatterflaum = () => `
+    ${shadow(100, 186, 34, 6)}
+    <g class="wing-l">
+      <path d="M78 98 C50 62 20 66 22 94 C24 118 54 122 78 110 Z" fill="url(#g-wing)" stroke="#9a72cf" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M80 116 C60 124 48 142 60 150 C74 152 82 136 84 120 Z" fill="url(#g-wing)" stroke="#9a72cf" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="44" cy="90" r="7" fill="#ffd1f0" opacity=".8"/><path d="M76 102 C60 92 44 84 30 86" stroke="#c4a2f2" stroke-width="1.5" fill="none"/>
+    </g>
+    <g class="wing-r">
+      <path d="M122 98 C150 62 180 66 178 94 C176 118 146 122 122 110 Z" fill="url(#g-wing)" stroke="#9a72cf" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M120 116 C140 124 152 142 140 150 C126 152 118 136 116 120 Z" fill="url(#g-wing)" stroke="#9a72cf" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="156" cy="90" r="7" fill="#ffd1f0" opacity=".8"/><path d="M124 102 C140 92 156 84 170 86" stroke="#c4a2f2" stroke-width="1.5" fill="none"/>
+    </g>
+    <g class="antenna-l"><path d="M90 76 C84 52 74 40 62 36" stroke="#7a52ad" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="62" cy="36" r="6.5" fill="#ffc7ea" stroke="#b77fc9" stroke-width="2"/></g>
+    <g class="antenna-r"><path d="M110 76 C116 52 126 40 138 36" stroke="#7a52ad" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="138" cy="36" r="6.5" fill="#ffc7ea" stroke="#b77fc9" stroke-width="2"/></g>
+    <path d="M92 152 L90 164 M108 152 L110 164" stroke="#7a52ad" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="100" cy="114" rx="34" ry="42" fill="url(#g-flatter)" stroke="#7a52ad" stroke-width="3"/>
+    <path d="M80 132 Q100 140 120 132 M84 144 Q100 151 116 144" stroke="#e9d8ff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+    <path d="M92 74 C96 66 104 66 108 74" fill="#f1e4ff" stroke="#7a52ad" stroke-width="2.5"/>
+    ${shine(86, 90, 9, 6)}
+    ${eyes(88, 112, 104, 9)}
+    ${blush(78, 122, 118, 6, '#ff9dd0')}
+    ${smile(94, 106, 120, 5, 3)}`;
+
+  M.steinmops = () => `
+    ${shadow(100, 184, 60, 9)}
+    <g fill="url(#g-plate)" stroke="#545b63" stroke-width="3" stroke-linejoin="round">
+      <path d="M66 76 L76 52 L94 68 Z"/><path d="M90 66 L102 40 L118 64 Z"/><path d="M114 68 L130 50 L138 78 Z"/>
+    </g>
+    <rect x="62" y="158" width="20" height="20" rx="7" fill="#9aa1a9" stroke="#545b63" stroke-width="3"/>
+    <rect x="118" y="158" width="20" height="20" rx="7" fill="#9aa1a9" stroke="#545b63" stroke-width="3"/>
+    <path d="M100 62 C56 62 36 96 40 132 C44 160 70 172 100 172 C130 172 156 160 160 132 C164 96 144 62 100 62 Z" fill="url(#g-mops)" stroke="#545b63" stroke-width="3"/>
+    <path d="M56 86 L66 96 L62 104 M146 140 L136 146" stroke="#7b838c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M50 84 L36 104 L60 100 Z" fill="#7b838c" stroke="#545b63" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M150 84 L164 104 L140 100 Z" fill="#7b838c" stroke="#545b63" stroke-width="3" stroke-linejoin="round"/>
+    ${shine(76, 80, 14, 7, -20, 0.55)}
+    <ellipse cx="100" cy="134" rx="30" ry="20" fill="#cdd2d8" stroke="#8b939c" stroke-width="2"/>
+    ${eyes(74, 126, 106, 10)}
+    <path d="M62 92 L84 98 M138 92 L116 98" stroke="#545b63" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="100" cy="124" rx="9" ry="6" fill="#3a3f46"/><ellipse cx="97" cy="122" rx="3" ry="1.6" fill="#fff" opacity=".6"/>
+    <path d="M86 140 Q93 147 100 140 Q107 147 114 140" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+
+  M.kieselknirps = () => `
+    ${shadow(100, 184, 44, 8)}
+    <g class="pebble-l"><ellipse cx="40" cy="120" rx="13" ry="11" fill="url(#g-kiesel)" stroke="#8b9199" stroke-width="3"/></g>
+    <g class="pebble-r"><ellipse cx="162" cy="116" rx="13" ry="11" fill="url(#g-kiesel)" stroke="#8b9199" stroke-width="3"/></g>
+    <ellipse cx="86" cy="172" rx="12" ry="7" fill="#c4c9cf" stroke="#8b9199" stroke-width="3"/>
+    <ellipse cx="116" cy="172" rx="12" ry="7" fill="#c4c9cf" stroke="#8b9199" stroke-width="3"/>
+    <path d="M96 58 C64 56 50 88 54 120 C58 152 80 170 104 168 C132 166 150 146 148 112 C146 80 128 60 96 58 Z" fill="url(#g-kiesel)" stroke="#8b9199" stroke-width="3"/>
+    <g fill="#a2a8b0" opacity=".6"><circle cx="70" cy="90" r="2.5"/><circle cx="128" cy="84" r="3"/><circle cx="136" cy="140" r="2.5"/><circle cx="66" cy="140" r="2"/><circle cx="112" cy="70" r="2"/></g>
+    ${shine(76, 76, 14, 8)}
+    <g class="m-eyes">
+      <circle cx="84" cy="108" r="13" fill="#fff" stroke="#8b9199" stroke-width="2"/><circle cx="120" cy="106" r="13" fill="#fff" stroke="#8b9199" stroke-width="2"/>
+      <circle cx="86" cy="110" r="7.5" fill="${INK}"/><circle cx="122" cy="108" r="7.5" fill="${INK}"/>
+      <circle cx="89" cy="106" r="2.6" fill="#fff"/><circle cx="125" cy="104" r="2.6" fill="#fff"/>
+    </g>
+    ${blush(70, 136, 128, 6)}
+    <path d="M94 136 Q102 144 110 136" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+
+  M.felsflaus = () => `
+    ${shadow(100, 184, 56, 9)}
+    <path d="M60 86 L40 50 L76 64 Z" fill="url(#g-rock)" stroke="#5c5148" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M140 86 L160 50 L124 64 Z" fill="url(#g-rock)" stroke="#5c5148" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M56 66 L64 78 M144 66 L136 78" stroke="#a49585" stroke-width="2"/>
+    <ellipse cx="76" cy="172" rx="18" ry="9" fill="#8a5c34" stroke="#5a3a1f" stroke-width="3"/>
+    <ellipse cx="124" cy="172" rx="18" ry="9" fill="#8a5c34" stroke="#5a3a1f" stroke-width="3"/>
+    <path d="M58 82 C62 66 80 60 100 60 C120 60 140 66 144 84 C152 112 150 150 136 164 C122 174 78 174 64 164 C50 150 50 110 58 82 Z" fill="url(#g-fels)" stroke="#5a3a1f" stroke-width="3"/>
+    <path d="M89 64 L100 56 L113 64 L107 76 L94 76 Z" fill="url(#g-rock)" stroke="#5c5148" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M58 124 L68 116 L78 126 L70 134 Z M142 124 L132 116 L122 126 L130 134 Z" fill="url(#g-rock)" stroke="#5c5148" stroke-width="2.5" stroke-linejoin="round"/>
+    <ellipse cx="100" cy="140" rx="26" ry="18" fill="#e8c7a0" opacity=".45"/>
+    ${shine(76, 80, 12, 7, -20, 0.35)}
+    <rect x="70" y="90" width="22" height="6" rx="3" fill="#5a3a1f"/><rect x="108" y="90" width="22" height="6" rx="3" fill="#5a3a1f"/>
+    ${eyes(82, 118, 106, 8)}
+    <path d="M88 134 L112 134" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
+    <path d="M86 132 Q100 140 114 132" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".5"/>`;
+
+  M.rollbrocken = () => `
+    ${shadow(100, 182, 62, 9)}
+    <ellipse cx="80" cy="170" rx="12" ry="7" fill="#585e66" stroke="#2f3338" stroke-width="3"/>
+    <ellipse cx="120" cy="170" rx="12" ry="7" fill="#585e66" stroke="#2f3338" stroke-width="3"/>
+    <ellipse cx="100" cy="124" rx="66" ry="46" fill="url(#g-roll)" stroke="#2f3338" stroke-width="3"/>
+    <path d="M58 102 L70 110 L66 124 M136 142 L146 132 L158 136 M118 88 L126 96" stroke="#3a3f46" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M76 82 C86 74 104 74 112 80 C104 84 88 86 76 82 Z" fill="#6fae5a" stroke="#3f7a3e" stroke-width="2"/>
+    ${shine(76, 98, 18, 8, -15, 0.35)}
+    <path d="M78 108 L94 112 M124 108 L108 112" stroke="#2f3338" stroke-width="4" stroke-linecap="round"/>
+    ${eyes(88, 114, 120, 6.5)}
+    ${smile(94, 108, 136, 5, 3)}`;
+
+  M.glutdrache = () => `
+    ${shadow(120, 214, 74, 11)}
+    <g class="tail">
+      <path d="M142 168 C178 178 202 162 212 138 C218 124 226 120 232 124 C226 130 224 142 216 154 C200 182 168 192 136 186 Z" fill="url(#g-dragon)" stroke="#7e1f12" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M226 122 L240 112 L238 134 Z" fill="#ffc24a" stroke="#b8321c" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M170 176 L174 166 L180 174 M190 166 L196 156 L200 166" fill="#ffc24a" stroke="#b8321c" stroke-width="2" stroke-linejoin="round"/>
+    </g>
+    <g class="wing-l">
+      <path d="M92 98 C64 60 30 54 12 70 C24 74 30 82 28 94 C40 92 48 100 46 110 C60 106 74 110 86 120 Z" fill="url(#g-dmembrane)" stroke="#7e1f12" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M92 98 C64 60 30 54 12 70" fill="none" stroke="url(#g-dwing)" stroke-width="6" stroke-linecap="round"/>
+      <path d="M86 104 L28 94 M84 112 L46 110" stroke="#c8381f" stroke-width="2" opacity=".7"/>
+    </g>
+    <g class="wing-r">
+      <path d="M148 98 C176 60 210 54 228 70 C216 74 210 82 212 94 C200 92 192 100 194 110 C180 106 166 110 154 120 Z" fill="url(#g-dmembrane)" stroke="#7e1f12" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M148 98 C176 60 210 54 228 70" fill="none" stroke="url(#g-dwing)" stroke-width="6" stroke-linecap="round"/>
+      <path d="M154 104 L212 94 M156 112 L194 110" stroke="#c8381f" stroke-width="2" opacity=".7"/>
+    </g>
+    <g class="glow" filter="url(#f-glow)">
+      <path d="M98 56 L106 38 L114 56 Z M114 50 L122 30 L130 50 Z M130 56 L138 40 L144 58 Z" fill="#ffc24a" stroke="#b8321c" stroke-width="2.5" stroke-linejoin="round"/>
+    </g>
+    <ellipse cx="96" cy="206" rx="19" ry="9" fill="#c8381f" stroke="#7e1f12" stroke-width="3"/>
+    <ellipse cx="144" cy="206" rx="19" ry="9" fill="#c8381f" stroke="#7e1f12" stroke-width="3"/>
+    <path d="M82 208 l3 -6 l3 6 Z M92 210 l3 -6 l3 6 Z M140 210 l3 -6 l3 6 Z M150 208 l3 -6 l3 6 Z" fill="#fff4dc"/>
+    <path d="M120 60 C78 60 62 104 66 146 C70 186 94 206 120 206 C146 206 170 186 174 146 C178 104 162 60 120 60 Z" fill="url(#g-dragon)" stroke="#7e1f12" stroke-width="3.5"/>
+    <path d="M70 120 C78 98 92 84 108 78" stroke="#ffd2a8" stroke-width="5" fill="none" stroke-linecap="round" opacity=".45"/>
+    <g class="glow">
+      <ellipse cx="120" cy="162" rx="33" ry="40" fill="url(#g-belly)" stroke="#e07a14" stroke-width="2.5"/>
+      <path d="M92 138 Q120 146 148 138 M89 154 Q120 162 151 154 M90 170 Q120 178 150 170 M95 186 Q120 193 145 186" stroke="#e07a14" stroke-width="2.2" fill="none"/>
+    </g>
+    <ellipse cx="120" cy="162" rx="33" ry="40" fill="url(#g-glowdot)" opacity=".35" class="glow" filter="url(#f-glow)"/>
+    <path d="M90 76 C74 62 70 40 80 22 C84 40 94 52 106 62 Z" fill="url(#g-dhorn)" stroke="#8a5a2e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M150 76 C166 62 170 40 160 22 C156 40 146 52 134 62 Z" fill="url(#g-dhorn)" stroke="#8a5a2e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M78 150 C66 152 60 166 72 170 C78 168 82 162 86 156 Z" fill="#e2502c" stroke="#7e1f12" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M162 150 C174 152 180 166 168 170 C162 168 158 162 154 156 Z" fill="#e2502c" stroke="#7e1f12" stroke-width="3" stroke-linejoin="round"/>
+    ${shine(92, 84, 14, 7, -25, 0.4)}
+    <g class="m-eyes">
+      <ellipse cx="100" cy="104" rx="15" ry="17" fill="#fff" stroke="#7e1f12" stroke-width="2.5"/>
+      <ellipse cx="140" cy="104" rx="15" ry="17" fill="#fff" stroke="#7e1f12" stroke-width="2.5"/>
+      <circle cx="102" cy="106" r="10.5" fill="url(#g-iris)"/><circle cx="138" cy="106" r="10.5" fill="url(#g-iris)"/>
+      <ellipse cx="102" cy="106" rx="3.4" ry="8" fill="${INK}"/><ellipse cx="138" cy="106" rx="3.4" ry="8" fill="${INK}"/>
+      <circle cx="106" cy="100" r="3.4" fill="#fff"/><circle cx="142" cy="100" r="3.4" fill="#fff"/>
+    </g>
+    <path d="M84 84 Q98 78 112 88 M156 84 Q142 78 128 88" stroke="#7e1f12" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="120" cy="132" rx="27" ry="16" fill="#ffb27c" stroke="#b8321c" stroke-width="2.5"/>
+    <ellipse cx="111" cy="127" rx="3.6" ry="2.6" fill="#7e1f12"/><ellipse cx="129" cy="127" rx="3.6" ry="2.6" fill="#7e1f12"/>
+    <path d="M106 139 Q120 150 134 139" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M110 141 l2 6 l3 -5 Z M130 141 l-2 6 l-3 -5 Z" fill="#fff" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>
+    ${blush(84, 156, 124, 7, '#ff8a5c')}
+    <circle class="smoke" cx="111" cy="118" r="5" fill="#c9c0c8"/>
+    <circle class="smoke s2" cx="129" cy="118" r="5" fill="#c9c0c8"/>`;
+
+  M.silhouette = () => `
+    <path d="M100 42 C55 42 38 88 46 126 C51 154 75 170 100 170 C125 170 149 154 154 126 C162 88 145 42 100 42 Z" fill="url(#g-silhouette)"/>
+    <path d="M60 58 L48 30 L80 50 Z M140 58 L152 30 L120 50 Z" fill="#9a93ab"/>
+    <text x="100" y="128" text-anchor="middle" font-family="Baloo 2, system-ui, sans-serif" font-weight="800" font-size="56" fill="#e6e3ec">?</text>`;
+
+  const VIEWBOX = { glutdrache:'0 0 240 230' };
+
+  function monster(id, extraClass){
+    const fn = M[id] || M.silhouette;
+    return `<svg class="mon mon-${id}${extraClass ? ' ' + extraClass : ''}" viewBox="${VIEWBOX[id] || '0 0 200 200'}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${fn()}</svg>`;
+  }
+
+  // ---------- Kleine Symbole ----------
+  const ICON = {
+    star: (c1 = '#ffe58a', c2 = '#f5b82e') => `<svg viewBox="0 0 40 40"><path d="M20 3 L25 14 L37 15.5 L28 24 L30.5 36 L20 30 L9.5 36 L12 24 L3 15.5 L15 14 Z" fill="${c1}" stroke="${c2}" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 14 L18 12" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".8"/></svg>`,
+    sparkle: (c = '#fff6a8') => `<svg viewBox="0 0 20 20"><path d="M10 0 C11 7 13 9 20 10 C13 11 11 13 10 20 C9 13 7 11 0 10 C7 9 9 7 10 0 Z" fill="${c}"/></svg>`,
+    crown: () => `<svg viewBox="0 0 84 64"><path d="M6 20 L22 38 L42 8 L62 38 L78 20 L72 56 L12 56 Z" fill="#ffc83d" stroke="#b8741a" stroke-width="4" stroke-linejoin="round"/><rect x="12" y="50" width="60" height="9" rx="3" fill="#f5a623" stroke="#b8741a" stroke-width="3"/><circle cx="42" cy="34" r="6" fill="#ff5a5a" stroke="#a32019" stroke-width="2"/><circle cx="24" cy="44" r="4" fill="#5ac8ff"/><circle cx="60" cy="44" r="4" fill="#5ac8ff"/><circle cx="6" cy="20" r="5" fill="#ffe58a"/><circle cx="42" cy="8" r="5" fill="#ffe58a"/><circle cx="78" cy="20" r="5" fill="#ffe58a"/></svg>`,
+    leaf: (c = '#6fcf5a') => `<svg viewBox="0 0 20 20"><path d="M3 17 C3 8 9 3 18 2 C17 11 12 17 3 17 Z" fill="${c}" stroke="#3a7a2c" stroke-width="1.5"/><path d="M4 16 L14 6" stroke="#3a7a2c" stroke-width="1.2"/></svg>`,
+    petal: (c = '#ffb3d1') => `<svg viewBox="0 0 20 20"><ellipse cx="10" cy="10" rx="5" ry="8" fill="${c}" transform="rotate(30 10 10)"/></svg>`,
+    pebble: (c = '#a9a092') => `<svg viewBox="0 0 20 20"><path d="M4 12 C3 6 9 3 14 5 C18 7 18 13 14 16 C9 18 5 16 4 12 Z" fill="${c}" stroke="#6e6458" stroke-width="1.5"/></svg>`,
+    ember: () => `<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" fill="url(#g-glowdot)"/><circle cx="10" cy="10" r="2.5" fill="#fff3b0"/></svg>`,
+    impact: (c = '#fff6c0') => `<svg viewBox="0 0 100 100"><path d="M50 4 L58 34 L88 20 L68 46 L96 58 L64 62 L74 92 L50 70 L26 92 L36 62 L4 58 L32 46 L12 20 L42 34 Z" fill="${c}" stroke="#ffb400" stroke-width="3" stroke-linejoin="round" opacity=".95"/></svg>`,
+    heal: () => `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#7be08d" stroke-width="6" opacity=".9"/><path d="M50 26 V74 M26 50 H74" stroke="#7be08d" stroke-width="12" stroke-linecap="round"/></svg>`,
+    lock: () => `<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="12" rx="3" fill="#6b6178"/><path d="M8 10 V7 a4 4 0 0 1 8 0 V10" fill="none" stroke="#6b6178" stroke-width="3"/><circle cx="12" cy="16" r="2" fill="#fff"/></svg>`
+  };
+
+  function cloud(cls, fill = '#fff', op = 0.95){
+    return `<svg viewBox="0 0 120 56" class="${cls || ''}"><g fill="${fill}" opacity="${op}"><ellipse class="puff p1" cx="34" cy="36" rx="26" ry="18"/><ellipse class="puff p2" cx="64" cy="26" rx="28" ry="22"/><ellipse class="puff p3" cx="92" cy="38" rx="22" ry="15"/><rect x="18" y="36" width="88" height="18" rx="9"/></g></svg>`;
+  }
+
+  return { DEFS, monster, ICON, cloud, rg, lg };
+})();
+</script>
+<script>
+/* =====================================================================
+   MonsterQuest 2.0 – Welt: Kampfarenen, Weltkarte, Startbildschirm
+   Arenen bestehen aus Ebenen (Himmel, Ferne, Mitte, Vordergrund) im
+   viewBox 0 0 400 300. Die Ebenen bewegen sich leicht unterschiedlich.
+   ===================================================================== */
+const WORLD = (function(){
+  "use strict";
+  const { rg, lg } = ART;
+
+  const DEFS = [
+    lg('w-grass', ['#9fe08a','#5fbf5f']),
+    lg('w-grass-dark', ['#7ccb6c','#3f9a4f']),
+    lg('w-forest-floor', ['#5e9f4e','#2f6a3a']),
+    lg('w-hill-ground', ['#cfc6b0','#a89d86']),
+    lg('w-hill-grass', ['#b5d48f','#86b06a']),
+    lg('w-water', ['#9fe0ff','#4aa8e8']),
+    lg('w-lava', ['#fff0a0','#ffb02a','#ff5a14']),
+    lg('w-volcano', ['#4a2a4a','#22142a']),
+    lg('w-rockdark', ['#5a3a50','#2a1a2e']),
+    lg('w-mountain', ['#b9c6d6','#8496ad']),
+    lg('w-mountain-far', ['#d4def0','#aebcd4']),
+    lg('w-trunk', ['#8a5a33','#5a3418'], {x2:1, y2:0}),
+    lg('w-pine', ['#4f9a5a','#2f6a43']),
+    lg('w-beam', [['#fffbe0',0.7],['#fffbe0',0]]),
+    lg('w-path', ['#e2c9a0','#c4a578']),
+    rg('w-bush', ['#9be27a','#5cb84a','#3a8a3a']),
+    rg('w-bush-dark', ['#6fbf5a','#3f8a3e','#2a5f2e']),
+    rg('w-rock', ['#d9d2c6','#a79c8c','#7a6f62']),
+    rg('w-rock-dark', ['#6a4a5e','#3e2638','#24142a']),
+    rg('w-cap', ['#ff9d8c','#e2453a','#a32019']),
+    rg('w-lavaglow', [['#ffb347',0.9],['#ff6a00',0.4],['#ff6a00',0]], {cx:'50%', cy:'50%', r:'50%'})
+  ];
+
+  // ---------- Formen ----------
+  const bush = (x, y, s = 1, cls = 'react', g = 'w-bush') =>
+    `<g class="${cls}" transform="translate(${x} ${y}) scale(${s})"><g fill="url(#${g})" stroke="#2f6a2e" stroke-width="2"><circle cx="-18" cy="-12" r="16"/><circle cx="18" cy="-12" r="16"/><circle cx="0" cy="-24" r="19"/><rect x="-32" y="-14" width="64" height="14" rx="7"/></g><circle cx="-6" cy="-30" r="5" fill="#fff" opacity=".25"/></g>`;
+  const flower = (x, y, c = '#ff8ab3', s = 1) =>
+    `<g class="sway" transform="translate(${x} ${y}) scale(${s})"><path d="M0 0 V-12" stroke="#3f8a3e" stroke-width="2"/><g fill="${c}"><circle cx="0" cy="-17" r="3.4"/><circle cx="4.4" cy="-13" r="3.4"/><circle cx="-4.4" cy="-13" r="3.4"/><circle cx="2.6" cy="-8.6" r="3.2"/><circle cx="-2.6" cy="-8.6" r="3.2"/></g><circle cx="0" cy="-12.5" r="2.6" fill="#ffe14d"/></g>`;
+  const tuft = (x, y, s = 1, c = '#4fa84a') =>
+    `<g class="sway s2" transform="translate(${x} ${y}) scale(${s})"><path d="M-8 0 Q-9 -14 -12 -20 Q-4 -12 -2 0 M-2 0 Q0 -18 2 -26 Q4 -14 4 0 M4 0 Q8 -12 14 -18 Q10 -8 10 0 Z" fill="${c}" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/></g>`;
+  const tree = (x, y, s = 1, g = 'w-bush') =>
+    `<g transform="translate(${x} ${y}) scale(${s})"><rect x="-7" y="-50" width="14" height="52" rx="5" fill="url(#w-trunk)"/><g fill="url(#${g})" stroke="#2f6a2e" stroke-width="2"><circle cx="-22" cy="-62" r="22"/><circle cx="22" cy="-62" r="22"/><circle cx="0" cy="-84" r="28"/><circle cx="0" cy="-56" r="22"/></g><circle cx="-10" cy="-92" r="8" fill="#fff" opacity=".2"/></g>`;
+  const pine = (x, y, s = 1, c = 'url(#w-pine)') =>
+    `<g transform="translate(${x} ${y}) scale(${s})"><rect x="-4" y="-14" width="8" height="16" fill="#5a3418"/><path d="M0 -92 L22 -54 L12 -54 L30 -26 L18 -26 L36 -2 L-36 -2 L-18 -26 L-30 -26 L-12 -54 L-22 -54 Z" fill="${c}" stroke="#244f33" stroke-width="2" stroke-linejoin="round"/></g>`;
+  const rock = (x, y, s = 1, cls = '', g = 'w-rock') =>
+    `<g class="${cls}" transform="translate(${x} ${y}) scale(${s})"><path d="M-26 0 C-30 -14 -20 -30 -2 -32 C16 -34 30 -20 28 -4 C27 0 -24 2 -26 0 Z" fill="url(#${g})" stroke="#5f5548" stroke-width="2"/><path d="M-14 -22 C-8 -27 0 -28 6 -26" stroke="#fff" stroke-width="3" opacity=".35" fill="none" stroke-linecap="round"/></g>`;
+  const mushroom = (x, y, s = 1) =>
+    `<g class="react" transform="translate(${x} ${y}) scale(${s})"><path d="M-6 0 C-7 -10 -5 -16 -4 -18 H4 C5 -16 7 -10 6 0 Z" fill="#fff3e0" stroke="#b89a6a" stroke-width="1.5"/><path d="M-18 -16 C-18 -32 -8 -38 0 -38 C8 -38 18 -32 18 -16 Z" fill="url(#w-cap)" stroke="#8a1f19" stroke-width="1.8"/><circle cx="-8" cy="-26" r="3" fill="#fff"/><circle cx="6" cy="-31" r="2.5" fill="#fff"/><circle cx="9" cy="-21" r="2" fill="#fff"/></g>`;
+  const fern = (x, y, s = 1, flip = 1) =>
+    `<g class="sway" transform="translate(${x} ${y}) scale(${s * flip} ${s})"><path d="M0 0 C4 -20 14 -34 30 -42" stroke="#3f8a3e" stroke-width="2.5" fill="none"/><g fill="#5cb84a"><ellipse cx="8" cy="-14" rx="9" ry="3.5" transform="rotate(-50 8 -14)"/><ellipse cx="14" cy="-24" rx="9" ry="3.5" transform="rotate(-35 14 -24)"/><ellipse cx="22" cy="-33" rx="8" ry="3" transform="rotate(-25 22 -33)"/><ellipse cx="2" cy="-22" rx="8" ry="3" transform="rotate(-110 2 -22)"/><ellipse cx="10" cy="-32" rx="7" ry="3" transform="rotate(-100 10 -32)"/></g></g>`;
+  const fence = (x, y, n = 4) => {
+    let s = `<g transform="translate(${x} ${y})">`;
+    s += `<rect x="-4" y="-22" width="${n * 22 + 8}" height="5" rx="2" fill="#b07b4c" stroke="#7a522e" stroke-width="1.2"/><rect x="-4" y="-12" width="${n * 22 + 8}" height="5" rx="2" fill="#b07b4c" stroke="#7a522e" stroke-width="1.2"/>`;
+    for(let i = 0; i <= n; i++) s += `<path d="M${i * 22 - 3} 0 V-26 L${i * 22} -30 L${i * 22 + 3} -26 V0 Z" fill="#c99a6b" stroke="#7a522e" stroke-width="1.2"/>`;
+    return s + '</g>';
+  };
+  const hillShape = (y, amp, fill, seed = 0) => {
+    const a = [0,1,2,3,4].map(i => y - amp * Math.abs(Math.sin(i * 1.7 + seed)));
+    return `<path d="M-20 ${y} C40 ${a[0]} 90 ${a[1]} 150 ${a[1] + 6} C210 ${a[2]} 260 ${a[3]} 320 ${a[3] + 4} C360 ${a[4]} 400 ${a[4]} 420 ${y} L420 300 L-20 300 Z" fill="${fill}"/>`;
+  };
+  const ground = (y, fill, stroke) => `<path d="M-20 ${y} C80 ${y - 6} 180 ${y + 4} 260 ${y - 2} C330 ${y - 6} 380 ${y} 420 ${y - 2} L420 300 L-20 300 Z" fill="${fill}"${stroke ? ` stroke="${stroke}" stroke-width="2"` : ''}/>`;
+  const svg = (inner, par = 'xMidYMax slice') => `<svg viewBox="0 0 400 300" preserveAspectRatio="${par}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+  const flowerField = (n, y0, y1, cols, seed) => {
+    let s = '';
+    for(let i = 0; i < n; i++){
+      const r1 = Math.abs(Math.sin(i * 12.9898 + seed) * 43758.5453) % 1;
+      const r2 = Math.abs(Math.sin(i * 78.233 + seed) * 12345.678) % 1;
+      s += flower(Math.round(10 + r1 * 380), Math.round(y0 + r2 * (y1 - y0)), cols[i % cols.length], 0.7 + r2 * 0.5);
+    }
+    return s;
+  };
+
+  // ---------- Fernebene je Gebiet ----------
+  const FAR = {
+    grass: () => svg(hillShape(190, 36, '#a8e095', 0.3) + hillShape(205, 26, '#8fd27f', 1.4) + tree(40, 196, 0.55) + tree(352, 192, 0.6) + tree(300, 200, 0.45)),
+    forest: () => {
+      let s = `<rect x="0" y="0" width="400" height="300" fill="#2c5a3e" opacity=".25"/>`;
+      for(let i = 0; i < 9; i++) s += pine(i * 50 - 10 + (i % 2) * 12, 200 + (i % 3) * 6, 1.1 + (i % 3) * 0.15, i % 2 ? '#3d7a50' : '#346b46');
+      for(let i = 0; i < 7; i++) s += pine(i * 64 + 20, 214, 0.9, '#2d5f3e');
+      return svg(s);
+    },
+    hills: () => svg(
+      `<path d="M-20 200 L40 120 L80 160 L140 80 L200 150 L250 110 L300 160 L360 90 L420 170 L420 300 L-20 300 Z" fill="url(#w-mountain-far)"/>` +
+      `<path d="M140 80 L128 96 L138 94 L146 100 L152 90 Z M360 90 L350 104 L360 102 L368 108 L372 98 Z M40 120 L32 132 L44 130 L50 134 Z" fill="#fff" opacity=".9"/>` +
+      `<path d="M-20 214 L60 160 L120 196 L190 150 L260 196 L330 156 L420 206 L420 300 L-20 300 Z" fill="url(#w-mountain)"/>` +
+      hillShape(222, 18, '#b5d48f', 2.2)),
+    boss: () => svg(
+      `<path d="M-20 230 L60 200 L110 150 L150 60 L175 52 L200 58 L230 150 L290 200 L420 220 L420 300 L-20 300 Z" fill="url(#w-volcano)"/>` +
+      `<ellipse cx="175" cy="56" rx="32" ry="10" fill="url(#w-lavaglow)" class="lava-flow"/>` +
+      `<path d="M168 60 C164 90 172 110 160 140 C156 156 150 168 146 180" stroke="url(#w-lava)" stroke-width="5" fill="none" class="lava-flow" stroke-linecap="round"/>` +
+      `<path d="M186 60 C192 92 186 118 200 146" stroke="url(#w-lava)" stroke-width="4" fill="none" class="lava-flow" stroke-linecap="round"/>` +
+      `<path d="M-20 250 L30 230 L60 180 L80 178 L96 230 L140 246 L420 240 L420 300 L-20 300 Z" fill="#2a1a2e"/>` +
+      `<path d="M300 250 L320 170 L336 168 L350 240 L420 250 L420 300 L280 300 Z" fill="#2a1a2e"/>`)
+  };
+
+  // ---------- Mittelebene: drei Varianten je normales Gebiet ----------
+  const MID = {
+    grass: [
+      // Blumenwiese
+      () => svg(ground(215, 'url(#w-grass)') + fence(250, 220, 5) + bush(40, 222, 0.9) + flowerField(26, 225, 295, ['#ff8ab3','#fff176','#ffffff','#c49bff'], 1)),
+      // Bachrand
+      () => svg(ground(215, 'url(#w-grass)') +
+        `<path d="M-20 262 C60 244 120 270 200 252 C270 238 330 258 420 244 L420 274 C330 288 270 268 200 282 C120 298 60 274 -20 292 Z" fill="url(#w-water)" stroke="#3a8ac4" stroke-width="2"/>` +
+        `<path d="M20 268 C50 262 70 266 90 262 M190 264 C220 256 250 260 270 254 M320 262 C340 258 360 260 380 256" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" class="water-shine"/>` +
+        rock(130, 258, 0.5, 'tappable') + rock(300, 252, 0.45) + tuft(60, 250, 1.1, '#3f8a3e') + tuft(240, 248, 1.2, '#3f8a3e') + tuft(370, 246, 1, '#3f8a3e') +
+        bush(360, 220, 0.8) + flowerField(10, 222, 240, ['#ffffff','#fff176'], 4)),
+      // Sonnige Lichtung
+      () => svg(`<polygon points="120,0 170,0 240,230 140,230" fill="url(#w-beam)" class="light-beam"/><polygon points="230,0 260,0 320,230 270,230" fill="url(#w-beam)" class="light-beam" style="animation-delay:-3s"/>` +
+        tree(-10, 226, 1.2) + tree(410, 226, 1.25) + ground(215, 'url(#w-grass)') + fence(40, 222, 3) + flowerField(14, 226, 292, ['#ffb3d1','#fff176','#ffffff'], 9) + bush(330, 226, 0.8))
+    ],
+    forest: [
+      // Pilzwald
+      () => svg(ground(212, 'url(#w-forest-floor)') + mushroom(60, 236, 1.4) + mushroom(90, 228, 0.9) + mushroom(330, 240, 1.6) + mushroom(368, 228, 0.9) + mushroom(220, 222, 0.7) +
+        fern(20, 226, 1.1) + fern(390, 232, 1.1, -1) + `<g fill="#6fbf5a" opacity=".6"><ellipse cx="160" cy="250" rx="30" ry="6"/><ellipse cx="280" cy="268" rx="36" ry="7"/></g>`),
+      // Alte Baumlichtung
+      () => svg(`<g transform="translate(40 230)"><path d="M-30 0 C-20 -30 -26 -90 -14 -170 L26 -170 C34 -90 30 -30 44 0 C30 -6 20 -10 8 -8 C0 -4 -14 -4 -30 0 Z" fill="url(#w-trunk)" stroke="#3e2410" stroke-width="2"/><path d="M-30 0 C-46 6 -56 8 -64 6 M44 0 C60 8 74 8 84 6 M8 -6 C14 6 18 12 30 16" stroke="#5a3418" stroke-width="8" fill="none" stroke-linecap="round"/><ellipse cx="6" cy="-70" rx="8" ry="12" fill="#3e2410"/><g fill="url(#w-bush-dark)" stroke="#244f33" stroke-width="2"><circle cx="-20" cy="-180" r="40"/><circle cx="34" cy="-176" r="44"/></g></g>` +
+        `<polygon points="170,0 210,0 290,230 200,230" fill="url(#w-beam)" class="light-beam"/>` +
+        ground(214, 'url(#w-forest-floor)') + rock(300, 236, 0.7, 'tappable', 'w-rock') + `<ellipse cx="300" cy="216" rx="18" ry="5" fill="#6fbf5a"/>` + fern(360, 236, 1, -1) + mushroom(120, 240, 0.8)),
+      // Moosiger Waldpfad
+      () => svg(ground(212, 'url(#w-forest-floor)') +
+        `<path d="M170 212 C200 230 140 250 160 300 L270 300 C240 260 280 236 220 212 Z" fill="url(#w-path)" opacity=".85"/>` +
+        `<g transform="translate(70 246)"><rect x="-46" y="-14" width="92" height="22" rx="11" fill="#8a5a33" stroke="#5a3418" stroke-width="2"/><ellipse cx="46" cy="-3" rx="8" ry="11" fill="#c99a6b" stroke="#5a3418" stroke-width="2"/><path d="M-40 -14 C-20 -22 10 -22 30 -15" stroke="#6fbf5a" stroke-width="7" fill="none" stroke-linecap="round"/></g>` +
+        fern(330, 238, 1.2, -1) + fern(20, 230, 0.9) + mushroom(380, 236, 0.9) + `<path d="M260 230 C280 236 300 232 320 240" stroke="#5a3418" stroke-width="5" fill="none" stroke-linecap="round"/>`)
+    ],
+    hills: [
+      // Steinplateau
+      () => svg(ground(214, 'url(#w-hill-ground)', '#94886f') + rock(40, 230, 1.4) + rock(90, 220, 0.8) + rock(350, 236, 1.6) +
+        `<g transform="translate(280 214)"><path d="M-10 0 L-6 -50 L8 -56 L12 0 Z M20 0 L24 -36 L34 -40 L38 0 Z" fill="url(#w-rock)" stroke="#5f5548" stroke-width="2"/></g>` + tuft(180, 236, 0.9, '#86b06a') + tuft(240, 262, 1, '#86b06a') + rock(200, 270, 0.4, 'tappable')),
+      // Bergwiese
+      () => svg(ground(214, 'url(#w-hill-grass)') + flowerField(18, 224, 292, ['#ffffff','#c49bff','#fff176'], 17) + rock(330, 234, 1.1) + rock(60, 226, 0.7, 'tappable') + tuft(110, 240, 1.1, '#6f9a52') + tuft(260, 230, 1, '#6f9a52')),
+      // Felsiger Pfad
+      () => svg(ground(214, 'url(#w-hill-ground)', '#94886f') +
+        `<path d="M-20 214 L90 214 L80 300 L-20 300 Z" fill="#8a7e68"/>` +
+        `<g transform="translate(70 205)"><path d="M-40 0 C-30 -30 30 -30 40 0 L30 0 C24 -18 -24 -18 -30 0 Z" fill="url(#w-rock)" stroke="#5f5548" stroke-width="2"/><rect x="-44" y="-4" width="88" height="8" rx="3" fill="#b1a592" stroke="#5f5548" stroke-width="1.5"/></g>` +
+        rock(330, 240, 1.5) + rock(380, 222, 0.8, 'tappable') + rock(180, 262, 0.55) + tuft(240, 236, 1, '#86b06a'))
+    ],
+    boss: [
+      () => svg(ground(214, '#3a2236', '#24142a') +
+        `<path d="M-20 260 C60 248 120 270 200 256 C280 244 340 262 420 252 L420 276 C340 288 280 270 200 282 C120 294 60 276 -20 286 Z" fill="url(#w-lava)" class="lava-flow"/>` +
+        `<path d="M-20 256 C60 244 120 266 200 252 C280 240 340 258 420 248" stroke="#fff0a0" stroke-width="2" fill="none" opacity=".7" class="lava-flow"/>` +
+        `<g fill="url(#w-rock-dark)" stroke="#170c1c" stroke-width="2"><path d="M20 214 L28 120 L44 112 L56 214 Z"/><path d="M350 214 L356 134 L372 128 L384 214 Z"/><path d="M300 214 L306 168 L318 164 L326 214 Z"/></g>` +
+        `<path d="M32 200 L40 150 M362 200 L366 160" stroke="#ff8a2a" stroke-width="2" opacity=".8" class="lava-flow"/>` +
+        `<ellipse cx="200" cy="268" rx="220" ry="30" fill="url(#w-lavaglow)" opacity=".35"/>`)
+    ]
+  };
+
+  // ---------- Vordergrund (reagiert auf Angriffe) ----------
+  const FORE = {
+    grass: () => svg(bush(400, 300, 1.15) + bush(-6, 304, 0.9) + tuft(350, 300, 1.4) + tuft(20, 302, 1.2), 'xMidYMax slice'),
+    forest: () => svg(fern(392, 302, 1.6, -1) + `<g class="react">${fern(8, 304, 1.3)}</g>` + mushroom(360, 304, 1.1), 'xMidYMax slice'),
+    hills: () => svg(rock(392, 304, 1.3, 'react') + tuft(350, 302, 1.3, '#86b06a') + rock(4, 306, 0.9, 'tappable'), 'xMidYMax slice'),
+    boss: () => svg(`<g class="react" transform="translate(400 304)"><path d="M-70 0 C-66 -30 -40 -52 -10 -54 C10 -55 20 -40 22 0 Z" fill="url(#w-rock-dark)" stroke="#170c1c" stroke-width="2"/><path d="M-50 -10 L-36 -30 L-30 -18" stroke="#ff8a2a" stroke-width="2.5" fill="none" class="lava-flow"/></g><g class="react" transform="translate(0 306)"><path d="M-20 0 C-16 -24 4 -40 26 -38 C40 -36 46 -20 44 0 Z" fill="url(#w-rock-dark)" stroke="#170c1c" stroke-width="2"/></g>`, 'xMidYMax slice')
+  };
+
+  // ---------- Requisiten für Auftritte ----------
+  const PROP = {
+    bush: () => `<svg viewBox="-40 -50 80 52" preserveAspectRatio="xMidYMax meet">${bush(0, 0, 1.15, '')}</svg>`,
+    forestbush: () => `<svg viewBox="-40 -50 80 52" preserveAspectRatio="xMidYMax meet">${bush(0, 0, 1.15, '', 'w-bush-dark')}</svg>`,
+    rock: () => `<svg viewBox="-40 -40 80 42" preserveAspectRatio="xMidYMax meet">${rock(0, 0, 1.3, '')}</svg>`
+  };
+
+  // ---------- Tiere & Details ----------
+  const butterflySVG = (c1 = '#ffb3d1', c2 = '#ff7fb0') =>
+    `<svg viewBox="0 0 24 20"><g class="bw l"><path d="M12 10 C6 0 0 2 1 8 C2 13 8 13 12 10 Z" fill="${c1}" stroke="${c2}" stroke-width="1"/></g><g class="bw r"><path d="M12 10 C18 0 24 2 23 8 C22 13 16 13 12 10 Z" fill="${c1}" stroke="${c2}" stroke-width="1"/></g><rect x="11" y="6" width="2" height="9" rx="1" fill="#4a3a5a"/></svg>`;
+  const birdSVG = (c = '#4a3a5a') => `<svg viewBox="0 0 22 12"><path d="M1 4 Q6 0 11 6 Q16 0 21 4" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+  const snailSVG = () => `<svg viewBox="0 0 34 24"><path d="M2 22 C6 18 14 18 30 20 L32 22 Z" fill="#c9a0d8"/><circle cx="16" cy="13" r="9" fill="#e8a84a" stroke="#a8692a" stroke-width="1.5"/><path d="M16 13 m-4 0 a4 4 0 1 1 4 4" stroke="#a8692a" stroke-width="1.5" fill="none"/><path d="M28 20 L30 10 M31 20 L34 12" stroke="#c9a0d8" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+  const eagleSVG = () => `<svg viewBox="0 0 34 16"><path d="M1 8 Q9 1 17 8 Q25 1 33 8 Q25 5 17 11 Q9 5 1 8 Z" fill="#5a4a3a"/></svg>`;
+
+  function critters(area, tod){
+    let s = '';
+    if(area === 'grass'){
+      s += `<div class="bird" style="top:12%; animation-delay:-4s">${birdSVG()}</div><div class="bird" style="top:18%; animation-delay:-11s; animation-duration:22s">${birdSVG()}</div>`;
+      s += `<button class="butterfly" data-bf style="left:30%; top:52%" aria-label="Schmetterling">${butterflySVG()}</button>`;
+      s += `<button class="butterfly" data-bf style="left:72%; top:66%; animation-delay:-3s" aria-label="Schmetterling">${butterflySVG('#fff4a0','#e0b83a')}</button>`;
+    } else if(area === 'forest'){
+      s += `<div class="snail" style="left:2%; top:68%">${snailSVG()}</div>`;
+      s += `<button class="butterfly" data-bf style="left:48%; top:48%" aria-label="Schmetterling">${butterflySVG('#c9e8ff','#6fa8e8')}</button>`;
+      const n = tod === 'evening' ? 8 : 3;
+      for(let i = 0; i < n; i++) s += `<i class="firefly" style="left:${10 + i * 11}%; top:${40 + (i % 3) * 12}%; --dl:${-i * 0.7}s; --sx:${i % 2 ? 14 : -12}px"></i>`;
+      for(let i = 0; i < 4; i++) s += `<i class="leaf-fall" style="left:${15 + i * 22}%; --d:${8 + i * 2}s; --dl:${-i * 2.6}s; --sx:${i % 2 ? 40 : -30}px">${ART.ICON.leaf(i % 2 ? '#e8b04a' : '#8edc63')}</i>`;
+    } else if(area === 'hills'){
+      s += `<div class="eagle">${eagleSVG()}</div>`;
+      s += `<div class="bird" style="top:22%; animation-delay:-7s; animation-duration:26s">${birdSVG('#6a5a6a')}</div>`;
+      s += `<button class="butterfly" data-bf style="left:38%; top:62%" aria-label="Schmetterling">${butterflySVG('#ffffff','#b0b8c4')}</button>`;
+    }
+    return s;
+  }
+
+  function weather(area, wx){
+    if(area === 'boss'){
+      let s = '';
+      for(let i = 0; i < 14; i++){
+        s += `<i class="ember" style="left:${(i * 37) % 100}%; --d:${4 + (i % 5)}s; --dl:${-i * 0.45}s; --sx:${(i % 2 ? 1 : -1) * (8 + i % 4 * 6)}px"></i>`;
+      }
+      return s;
+    }
+    if(wx === 'rain') return `<div class="wx-dim"></div><div class="wx-rain"></div>`;
+    if(wx === 'fog') return `<div class="wx-fog f1"></div><div class="wx-fog f2"></div>`;
+    if(wx === 'cloudy') return `<div class="wx-dim" style="background:rgba(120,130,150,0.12)"></div>`;
+    return '';
+  }
+
+  function skyExtras(area, wx){
+    if(area === 'boss') return '';
+    let s = '';
+    if(wx === 'sunny') s += `<div class="sun"></div>`;
+    const n = wx === 'cloudy' || wx === 'rain' ? 5 : (wx === 'fog' ? 3 : 2);
+    for(let i = 0; i < n; i++){
+      const w = 70 + (i * 23) % 60;
+      const grey = wx === 'rain' ? '#d6dbe4' : (wx === 'cloudy' ? '#eef1f6' : '#ffffff');
+      s += `<div class="sky-cloud" style="width:${w}px; height:${w * 0.47}px; top:${4 + (i * 9) % 30}%; animation-duration:${40 + i * 9}s; animation-delay:${-i * 13}s">${ART.cloud('', grey)}</div>`;
+    }
+    return s;
+  }
+
+  // ---------- Gebietsvorschau (klein, für das Gebietsmenü) ----------
+  function thumb(area){
+    const skies = { grass:['#7ec8f2','#dff3fb'], forest:['#5fa8c8','#cfe8c8'], hills:['#8fb8e0','#e6eef6'], boss:['#1d1030','#8e2f25'] };
+    const k = skies[area];
+    const far = FAR[area]().replace(/^<svg[^>]*>|<\/svg>$/g, '');
+    const mid = MID[area][0]().replace(/^<svg[^>]*>|<\/svg>$/g, '');
+    return `<svg viewBox="40 60 320 240" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="th-${area}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${k[0]}"/><stop offset="1" stop-color="${k[1]}"/></linearGradient></defs><rect x="0" y="0" width="400" height="300" fill="url(#th-${area})"/>${far}${mid}</svg>`;
+  }
+
+  // ---------- Weltkarte ----------
+  const NODES = {
+    grass:  { x:86,  y:568 },
+    forest: { x:262, y:452 },
+    hills:  { x:104, y:304 },
+    boss:   { x:236, y:126 }
+  };
+  function mapSVG(){
+    let s = `<svg viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mp-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2a1630"/><stop offset=".22" stop-color="#5a2a3a"/><stop offset=".3" stop-color="#9fb4c8"/>
+          <stop offset=".5" stop-color="#b9c9a0"/><stop offset=".62" stop-color="#4f9a5a"/><stop offset=".75" stop-color="#6fc46a"/><stop offset="1" stop-color="#8fd67e"/>
+        </linearGradient>
+      </defs>
+      <rect width="360" height="640" fill="url(#mp-bg)"/>`;
+    // Bossgebiet (oben)
+    s += `<path d="M0 200 L40 170 L90 120 L130 40 L150 34 L170 40 L210 120 L260 150 L300 120 L360 160 L360 220 L0 230 Z" fill="url(#w-volcano)"/>
+      <ellipse cx="150" cy="38" rx="22" ry="7" fill="url(#w-lavaglow)" class="map-lava"/>
+      <path d="M146 42 C140 70 150 90 136 120 M156 42 C162 72 156 96 170 120" stroke="url(#w-lava)" stroke-width="4" fill="none" class="map-lava" stroke-linecap="round"/>
+      <path d="M0 214 C60 200 120 222 180 206 C250 190 300 214 360 200 L360 236 L0 240 Z" fill="#3a2236"/>
+      <path d="M20 222 C80 210 140 228 200 214 C260 202 310 220 350 212" stroke="url(#w-lava)" stroke-width="5" fill="none" class="map-lava" stroke-linecap="round"/>`;
+    for(let i = 0; i < 6; i++) s += `<circle class="map-ember" cx="${60 + i * 48}" cy="${200 - (i % 3) * 30}" r="2.5" fill="#ffb347" style="animation-delay:${-i * 0.5}s"/>`;
+    // Hügel
+    s += `<path d="M0 250 L50 220 L90 246 L150 210 L210 250 L270 222 L360 252 L360 380 L0 380 Z" fill="url(#w-mountain)"/>
+      <path d="M150 210 L140 222 L150 220 L158 226 L162 218 Z M270 222 L262 232 L272 231 L278 236 Z" fill="#fff" opacity=".85"/>
+      <path d="M0 300 C70 276 140 296 210 282 C280 268 320 286 360 278 L360 400 L0 400 Z" fill="url(#w-hill-grass)"/>`;
+    s += rock(190, 330, 0.6) + rock(300, 300, 0.8) + rock(36, 352, 0.5);
+    s += `<g transform="translate(240 352)"><path d="M-28 0 C-20 -22 20 -22 28 0 L20 0 C16 -12 -16 -12 -20 0 Z" fill="url(#w-rock)" stroke="#5f5548" stroke-width="1.5"/><rect x="-30" y="-3" width="60" height="6" rx="2" fill="#b1a592"/></g>`;
+    // Wald
+    s += `<path d="M0 392 C80 376 160 398 240 384 C300 374 330 386 360 382 L360 520 L0 520 Z" fill="#3f8a4a"/>`;
+    for(let i = 0; i < 8; i++) s += pine(18 + i * 46, 418 + (i % 2) * 10, 0.42, i % 2 ? 'url(#w-pine)' : '#3d7a50');
+    s += tree(40, 490, 0.45, 'w-bush-dark') + tree(170, 478, 0.4, 'w-bush-dark') + tree(330, 500, 0.42, 'w-bush-dark');
+    s += mushroom(200, 500, 0.5) + mushroom(110, 470, 0.45);
+    // Grasland
+    s += `<path d="M0 520 C80 506 180 528 260 512 C310 502 340 510 360 508 L360 640 L0 640 Z" fill="url(#w-grass)"/>`;
+    s += `<ellipse cx="290" cy="590" rx="40" ry="14" fill="url(#w-water)" stroke="#3a8ac4" stroke-width="1.5"/><path d="M270 588 Q290 584 306 588" stroke="#fff" stroke-width="2" fill="none" class="water-shine"/>`;
+    s += fence(150, 612, 3) + flowerField(16, 540, 630, ['#ff8ab3','#fff176','#ffffff'], 3);
+    s += `<g class="map-tap" id="map-bush" transform="translate(30 540)"><g class="snail-peek" id="map-snail" transform="translate(-6 -6)">${snailSVG().replace('<svg ', '<svg x="-12" y="-14" width="28" height="20" ')}</g>${bush(0, 0, 0.7, '')}</g>`;
+    s += `<g class="map-tap" id="map-stone">${rock(330, 628, 0.5, '')}</g>`;
+    // Weg
+    const path = `M${NODES.grass.x} ${NODES.grass.y} C150 560 240 530 ${NODES.forest.x} ${NODES.forest.y} C286 388 160 362 ${NODES.hills.x} ${NODES.hills.y} C56 252 156 182 ${NODES.boss.x} ${NODES.boss.y}`;
+    s += `<path d="${path}" stroke="#c4a578" stroke-width="16" fill="none" stroke-linecap="round" opacity=".85"/>`;
+    s += `<path d="${path}" stroke="#e8d3ad" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+    s += `<path d="${path}" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-dasharray="1 14" opacity=".9"/>`;
+    // Wolken
+    s += `<g class="map-cloud" opacity=".9"><g transform="translate(30 250) scale(.6)">${ART.cloud('').replace(/<\/?svg[^>]*>/g, '')}</g></g>`;
+    s += `<g class="map-cloud b" opacity=".85"><g transform="translate(220 380) scale(.5)">${ART.cloud('').replace(/<\/?svg[^>]*>/g, '')}</g></g>`;
+    s += `<g class="map-cloud" opacity=".55"><g transform="translate(250 240) scale(.45)">${ART.cloud('', '#e8dff0').replace(/<\/?svg[^>]*>/g, '')}</g></g>`;
+    s += `</svg>`;
+    return s;
+  }
+
+  // Gebietssymbole für die Levelpunkte
+  function badge(area, locked){
+    const base = {
+      grass:  ['#8fe07a','#3f9a4f','#2f7a3a'],
+      forest: ['#5fb36a','#2f6a43','#1f4a2e'],
+      hills:  ['#d9cfbc','#9a8c74','#6e604a'],
+      boss:   ['#ff9a5a','#d9361c','#7e1f12']
+    }[area];
+    const c = locked ? ['#c9c5d2','#8f8a9c','#6b6578'] : base;
+    const icon = {
+      grass:  `<g transform="translate(35 37)"><path d="M0 12 V-2" stroke="#2f7a3a" stroke-width="3"/><g fill="#fff"><circle cx="0" cy="-10" r="6"/><circle cx="8" cy="-3" r="6"/><circle cx="-8" cy="-3" r="6"/><circle cx="5" cy="6" r="5.5"/><circle cx="-5" cy="6" r="5.5"/></g><circle cx="0" cy="-1" r="5" fill="#ffd23f"/></g>`,
+      forest: `<g transform="translate(35 52)"><rect x="-3" y="-8" width="6" height="9" fill="#5a3418"/><path d="M0 -36 L14 -16 L8 -16 L18 -4 L-18 -4 L-8 -16 L-14 -16 Z" fill="#fff" opacity=".95"/></g>`,
+      hills:  `<g transform="translate(35 48)"><path d="M-20 0 L-6 -24 L2 -12 L8 -20 L22 0 Z" fill="#fff"/><path d="M-6 -24 L-10 -17 L-6 -18 L-2 -15 Z" fill="${c[1]}"/></g>`,
+      boss:   `<g transform="translate(35 38) scale(.62)">${ART.ICON.crown().replace(/<\/?svg[^>]*>/g, '').replace(/^/, '<g transform="translate(-42 -32)">') + '</g>'}</g>`
+    }[area];
+    const lock = locked ? `<g transform="translate(44 40)"><circle cx="0" cy="0" r="12" fill="#fff" stroke="#6b6578" stroke-width="2"/><g transform="translate(-8 -9) scale(.68)">${ART.ICON.lock().replace(/<\/?svg[^>]*>/g, '')}</g></g>` : '';
+    return `<svg viewBox="0 0 70 70"><defs><radialGradient id="bd-${area}${locked ? 'L' : ''}" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="${c[0]}"/><stop offset=".6" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></radialGradient></defs>
+      <circle cx="35" cy="35" r="31" fill="url(#bd-${area}${locked ? 'L' : ''})" stroke="#fff" stroke-width="4"/>
+      <ellipse cx="26" cy="20" rx="12" ry="6" fill="#fff" opacity=".3" transform="rotate(-25 26 20)"/>
+      <g opacity="${locked ? 0.55 : 1}">${icon}</g>${lock}</svg>`;
+  }
+
+  // ---------- Startbildschirm ----------
+  function startBackground(){
+    return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
+      ${hillShape(118, 34, '#b4e3a2', 0.6)}
+      ${tree(70, 128, 0.62)}${tree(345, 122, 0.7)}
+      ${hillShape(160, 30, '#8fd27f', 2.1)}
+      ${hillShape(205, 22, '#6fc46a', 3.3)}
+      ${flowerField(16, 180, 296, ['#ff8ab3','#fff176','#ffffff'], 7)}
+      ${fence(262, 222, 4)}
+      ${bush(52, 236, 0.9, '')}${bush(360, 244, 1, '')}
+    </svg>`;
+  }
+  function logoSVG(){
+    return `<svg viewBox="0 0 380 110" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lg-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6b0"/><stop offset=".45" stop-color="#ffc83d"/><stop offset="1" stop-color="#ff8a1a"/></linearGradient>
+        <linearGradient id="lg-quest" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8f2ff"/><stop offset=".5" stop-color="#62cbe9"/><stop offset="1" stop-color="#2f86c8"/></linearGradient>
+      </defs>
+      <g class="logo-bounce">
+        <g font-family="'Baloo 2', 'Trebuchet MS', sans-serif" font-weight="800" font-size="66" text-anchor="middle">
+          <text x="190" y="84" fill="#5a2a00" stroke="#5a2a00" stroke-width="14" stroke-linejoin="round" transform="translate(0 6)">MonsterQuest</text>
+          <text x="190" y="84" fill="#7a3d00" stroke="#7a3d00" stroke-width="12" stroke-linejoin="round">MonsterQuest</text>
+          <text x="190" y="84" fill="url(#lg-fill)"><tspan>Monster</tspan><tspan fill="url(#lg-quest)">Quest</tspan></text>
+        </g>
+        <path d="M58 40 Q62 30 72 28" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/>
+        <g transform="translate(338 14)">${ART.ICON.sparkle('#fff6a8').replace('<svg ', '<svg width="22" height="22" ')}</g>
+        <g transform="translate(18 64)">${ART.ICON.sparkle('#ffffff').replace('<svg ', '<svg width="14" height="14" ')}</g>
+      </g>
+    </svg>`;
+  }
+  const ladybug = () => `<svg viewBox="0 0 26 26"><circle cx="13" cy="6" r="4" fill="#2b2140"/><ellipse cx="13" cy="15" rx="9" ry="9.5" fill="#e2453a" stroke="#2b2140" stroke-width="1.5"/><path d="M13 6 V24" stroke="#2b2140" stroke-width="1.5"/><circle cx="9" cy="13" r="2" fill="#2b2140"/><circle cx="17" cy="13" r="2" fill="#2b2140"/><circle cx="9" cy="19" r="1.6" fill="#2b2140"/><circle cx="17" cy="19" r="1.6" fill="#2b2140"/></svg>`;
+
+  return { DEFS, FAR, MID, FORE, PROP, critters, weather, skyExtras, thumb, mapSVG, NODES, badge, startBackground, logoSVG, ladybug, butterflySVG };
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const app = $('app');
+  const rand = n => Math.floor(Math.random() * n);
+
+  // Gemeinsame SVG-Definitionen einmalig einsetzen
+  $('defs').innerHTML = ART.DEFS.join('') + WORLD.DEFS.join('');
+
+  // ======================================================
+  // DATEN: Karten
+  // Die ersten 8 Karten bilden das feste Kampfdeck (unverändert).
+  // Weitere Karten erscheinen nur im Deck-Menü.
+  // ======================================================
+  const CARDS = [
+    { id:'krallenhieb', name:'Krallenhieb', cost:2, dmg:5,  icon:'🐾', r:'standard', deck:true },
+    { id:'feuerball',   name:'Feuerball',   cost:3, dmg:8,  icon:'🔥', r:'silber',   deck:true },
+    { id:'flammenstoss',name:'Flammenstoß', cost:4, dmg:11, icon:'💥', r:'silber',   deck:true },
+    { id:'biss',        name:'Biss',        cost:2, dmg:6,  icon:'🦷', r:'standard', deck:true },
+    { id:'feuersturm',  name:'Feuersturm',  cost:5, dmg:15, icon:'🌪️', r:'gold',     deck:true, kind:'storm' },
+    { id:'schutzschild',name:'Schutzschild',cost:4, dmg:0,  heal:8, icon:'🛡️', r:'silber', deck:true, kind:'heal' },
+    { id:'lavabombe',   name:'Lavabombe',   cost:7, dmg:20, icon:'☄️', r:'gold',     deck:true },
+    { id:'meteor',      name:'Meteor',      cost:9, dmg:26, icon:'🌠', r:'glitzer',  deck:true, kind:'star' },
+    { id:'wirbelhieb',  name:'Wirbelhieb',  cost:3, dmg:7,  icon:'🌀', r:'standard', deck:false, kind:'storm' },
+    { id:'donnerschlag',name:'Donnerschlag',cost:5, dmg:14, icon:'⚡', r:'gold',     deck:false, kind:'storm' },
+    { id:'sternenknall',name:'Sternenknall',cost:8, dmg:23, icon:'💫', r:'glitzer',  deck:false, kind:'star' }
+  ];
+  // Anzeigenamen mit weichen Trennstellen, damit lange Namen auf schmalen Karten sauber umbrechen
+  const SHY = { krallenhieb:'Krallen\u00ADhieb', feuerball:'Feuer\u00ADball', flammenstoss:'Flammen\u00ADstoß', feuersturm:'Feuer\u00ADsturm',
+                schutzschild:'Schutz\u00ADschild', lavabombe:'Lava\u00ADbombe', wirbelhieb:'Wirbel\u00ADhieb', donnerschlag:'Donner\u00ADschlag', sternenknall:'Sternen\u00ADknall' };
+  const CARD = {};
+  CARDS.forEach(c => { CARD[c.id] = c; });
+  const BATTLE_DECK = CARDS.filter(c => c.deck).map(c => c.id);
+  const HAND_SIZE = 4;
+
+  // ======================================================
+  // DATEN: Gebiete und Monster
+  // ======================================================
+  const AREAS = [
+    { id:'grass',  no:1, name:'Grasland',   label:'Grasland', requires:null,
+      enemies:['grollzahn','pustepuff','kleehops','knuffhorn'],
+      variants:['Blumenwiese','Bachrand','Sonnige Lichtung'],
+      color:'#5fbf5f', bg:'linear-gradient(180deg,#dff3fb,#c9eeb8)', trBg:'#3f9a4f', particle:'petal' },
+    { id:'forest', no:2, name:'Wald',       label:'Wald', requires:'grass',
+      enemies:['moosling','pilzbert','wurzelwusel','flatterflaum'],
+      variants:['Pilzwald','Alte Baumlichtung','Moosiger Waldpfad'],
+      color:'#2f6a43', bg:'linear-gradient(180deg,#cfe8c8,#9fcf8f)', trBg:'#1f4a2e', particle:'leaf' },
+    { id:'hills',  no:3, name:'Hügel',      label:'Hügel', requires:'forest',
+      enemies:['steinmops','kieselknirps','felsflaus','rollbrocken'],
+      variants:['Steinplateau','Bergwiese','Felsiger Pfad'],
+      color:'#9a8c74', bg:'linear-gradient(180deg,#e6eef6,#d6ceb8)', trBg:'#6e604a', particle:'pebble' },
+    { id:'boss',   no:4, name:'Bossgebiet', label:'BOSS', requires:'hills',
+      enemies:['glutdrache'],
+      variants:['Vulkankrater'],
+      color:'#d9361c', bg:'linear-gradient(180deg,#3d1838,#8e2f25)', trBg:'#1d1030', particle:'ember' }
+  ];
+  const AREA = {};
+  AREAS.forEach(a => { AREA[a.id] = a; });
+
+  const MONSTERS = {
+    flauschi:     { no:1,  name:'Flauschi',     hp:30, area:null,     idle:'i-player' },
+    grollzahn:    { no:2,  name:'Grollzahn',    hp:24, area:'grass',  entrance:'bush',  idle:'i-breathe' },
+    pustepuff:    { no:3,  name:'Pustepuff',    hp:26, area:'grass',  entrance:'glide', idle:'i-float' },
+    kleehops:     { no:4,  name:'Kleehops',     hp:28, area:'grass',  entrance:'bush',  idle:'i-hop' },
+    knuffhorn:    { no:5,  name:'Knuffhorn',    hp:30, area:'grass',  entrance:'drop',  idle:'i-stomp' },
+    moosling:     { no:6,  name:'Moosling',     hp:32, area:'forest', entrance:'bush',  idle:'i-breathe' },
+    pilzbert:     { no:7,  name:'Pilzbert',     hp:34, area:'forest', entrance:'drop',  idle:'i-wobble' },
+    wurzelwusel:  { no:8,  name:'Wurzelwusel',  hp:36, area:'forest', entrance:'rock',  idle:'i-breathe' },
+    flatterflaum: { no:9,  name:'Flatterflaum', hp:38, area:'forest', entrance:'glide', idle:'i-float' },
+    steinmops:    { no:10, name:'Steinmops',    hp:42, area:'hills',  entrance:'drop',  idle:'i-breathe', attack:'stomp' },
+    kieselknirps: { no:11, name:'Kieselknirps', hp:40, area:'hills',  entrance:'rock',  idle:'i-wobble' },
+    felsflaus:    { no:12, name:'Felsflaus',    hp:44, area:'hills',  entrance:'rock',  idle:'i-heavy' },
+    rollbrocken:  { no:13, name:'Rollbrocken',  hp:45, area:'hills',  entrance:'roll',  idle:'i-heavy' },
+    glutdrache:   { no:14, name:'Glutdrache',   hp:65, area:'boss',   entrance:'land',  idle:'i-dragon', boss:true }
+  };
+  const DEX_ORDER = Object.keys(MONSTERS).sort((a, b) => MONSTERS[a].no - MONSTERS[b].no);
+
+  // ======================================================
+  // SPEICHERN (lokal im Browser) mit Sicherung und Migration
+  // ======================================================
+  const STORE_KEY = 'monsterquest.v1';          // bestehender Schlüssel bleibt
+  const BACKUP_KEY = 'monsterquest.v1.backup';
+  const CORRUPT_KEY = 'monsterquest.v1.defekt';
+  const SAVE_VERSION = 2;
+  const SPEEDS = [300, 550, 900];
+  const SORTS = ['name','cost-asc','cost-desc','dmg-asc','dmg-desc'];
+
+  function defaults(){
+    return { ver:SAVE_VERSION, name:'Flauschi', anim:true, enemyDelay:550, wins:0, losses:0,
+             seenGrollzahn:false, seen:{ flauschi:true }, defeated:{}, cleared:{}, deckSort:null, welcomeClosed:false };
+  }
+  function readKey(key){
+    let raw = null;
+    try { raw = localStorage.getItem(key); } catch(e){ return { ok:false, raw:null, blocked:true }; }
+    if(raw == null) return { ok:true, data:null };
+    try {
+      const d = JSON.parse(raw);
+      if(!d || typeof d !== 'object' || Array.isArray(d)) return { ok:false, raw };
+      return { ok:true, data:d };
+    } catch(e){ return { ok:false, raw }; }
+  }
+  const isInt = v => typeof v === 'number' && isFinite(v) && v >= 0 && Math.floor(v) === v;
+
+  // Bringt alte (v1) und neue Daten in die aktuelle Form. Unbekannte Werte fallen auf Standardwerte zurück.
+  function normalize(d){
+    const out = defaults();
+    if(typeof d.name === 'string' && d.name.trim()) out.name = d.name.trim().slice(0, 14);
+    if(typeof d.anim === 'boolean') out.anim = d.anim;
+    if(SPEEDS.indexOf(d.enemyDelay) >= 0) out.enemyDelay = d.enemyDelay;
+    if(isInt(d.wins)) out.wins = d.wins;
+    if(isInt(d.losses)) out.losses = d.losses;
+    if(SORTS.indexOf(d.deckSort) >= 0) out.deckSort = d.deckSort;
+    if(typeof d.welcomeClosed === 'boolean') out.welcomeClosed = d.welcomeClosed;
+
+    if(!isInt(d.ver) || d.ver < 2){
+      // Migration v1 → v2: alle bisherigen Siege waren Siege gegen Grollzahn im Grasland.
+      if(d.seenGrollzahn === true) out.seen.grollzahn = true;
+      if(out.wins > 0){ out.defeated.grollzahn = out.wins; out.cleared.grass = true; out.seen.grollzahn = true; }
+    } else {
+      if(d.seen && typeof d.seen === 'object') Object.keys(MONSTERS).forEach(k => { if(d.seen[k] === true) out.seen[k] = true; });
+      if(d.defeated && typeof d.defeated === 'object') Object.keys(MONSTERS).forEach(k => { if(isInt(d.defeated[k]) && d.defeated[k] > 0) out.defeated[k] = d.defeated[k]; });
+      if(d.cleared && typeof d.cleared === 'object') AREAS.forEach(a => { if(d.cleared[a.id] === true) out.cleared[a.id] = true; });
+    }
+    out.seen.flauschi = true;
+    out.seenGrollzahn = !!out.seen.grollzahn;  // für ältere Versionen weiter mitschreiben
+    return out;
+  }
+  function loadSave(){
+    const main = readKey(STORE_KEY);
+    if(main.ok && main.data) return normalize(main.data);
+    if(!main.ok && main.raw){
+      // Beschädigte Daten nicht wegwerfen: einmalig zur Ansicht aufbewahren
+      try { if(localStorage.getItem(CORRUPT_KEY) == null) localStorage.setItem(CORRUPT_KEY, main.raw); } catch(e){}
+    }
+    const backup = readKey(BACKUP_KEY);
+    if(backup.ok && backup.data) return normalize(backup.data);
+    return defaults();
+  }
+  let save = loadSave();
+  function persist(){
+    let json;
+    try { json = JSON.stringify(save); } catch(e){ return; }
+    try {
+      localStorage.setItem(STORE_KEY, json);
+      // Sicherung nur schreiben, wenn der Hauptspeicher lesbar zurückkommt
+      if(localStorage.getItem(STORE_KEY) === json) localStorage.setItem(BACKUP_KEY, json);
+    } catch(e){}
+  }
+  persist();
+
+  const reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches:false };
+  const animOn = () => save.anim && !reduceMotion.matches;
+  function applyAnim(){ app.classList.toggle('no-anim', !save.anim); }
+  applyAnim();
+
+  const isUnlocked = areaId => { const a = AREA[areaId]; return !a.requires || !!save.cleared[a.requires]; };
+
+  // ======================================================
+  // GRAFIK-HELFER
+  // ======================================================
+  function fillMonsters(root){
+    (root || document).querySelectorAll('[data-mon]').forEach(el => {
+      el.innerHTML = ART.monster(el.getAttribute('data-mon'));
+    });
+  }
+  fillMonsters();
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  function particleIcon(kind){
+    if(kind === 'leaf') return ART.ICON.leaf(Math.random() < 0.5 ? '#8edc63' : '#e8b04a');
+    if(kind === 'pebble') return ART.ICON.pebble(Math.random() < 0.5 ? '#a9a092' : '#c9c0b2');
+    if(kind === 'ember') return ART.ICON.ember();
+    return ART.ICON.petal(['#ffb3d1','#fff176','#ffffff'][rand(3)]);
+  }
+
+  // ======================================================
+  // NAVIGATION mit Übergängen (Doppelklicks werden abgefangen)
+  // ======================================================
+  let navBusy = false;
+  function showScreen(id, opts){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'enter', 'enter-zoom'));
+    const el = $(id);
+    el.classList.add('active');
+    if(animOn()){
+      void el.offsetWidth;
+      el.classList.add(opts && opts.zoom ? 'enter-zoom' : 'enter');
+    }
+    onScreenShown(id);
+  }
+  function nav(id, opts){
+    if(navBusy) return;
+    navBusy = true;
+    showScreen(id, opts);
+    setTimeout(() => { navBusy = false; }, animOn() ? 330 : 0);
+  }
+  function onScreenShown(id){
+    if(id === 'screen-map') renderMap();
+    else if(id === 'screen-monster') renderMonster();
+    else if(id === 'screen-deck') renderDeck(false);
+    else if(id === 'screen-dex') renderDex();
+    else if(id === 'screen-settings') renderSettings();
+  }
+
+  $('btn-play').addEventListener('click', () => nav('screen-map'));
+  $('map-back').addEventListener('click', () => { closeSheets(); nav('screen-start'); });
+  document.querySelectorAll('[data-back]').forEach(btn => btn.addEventListener('click', () => nav('screen-start')));
+  document.querySelectorAll('.quick-nav button').forEach(btn => {
+    btn.addEventListener('click', () => nav(btn.getAttribute('data-screen')));
+  });
+
+  // ======================================================
+  // STARTBILDSCHIRM
+  // ======================================================
+  (function buildStart(){
+    const bg = $('start-bg');
+    let html = WORLD.startBackground();
+    html += `<button class="start-cloud c1" aria-label="Wolke">${ART.cloud()}</button>`;
+    html += `<button class="start-cloud c2" aria-label="Wolke">${ART.cloud()}</button>`;
+    html += `<button class="start-cloud c3" aria-label="Wolke">${ART.cloud()}</button>`;
+    const stars = [[12,30],[84,26],[22,52],[78,46],[52,6]];
+    stars.forEach((p, i) => {
+      html += `<button class="star-float" style="left:${p[0]}%; top:${p[1]}%; animation-delay:${-i * 0.9}s" aria-label="Stern">${ART.ICON.sparkle(i % 2 ? '#ffffff' : '#fff6a8')}</button>`;
+    });
+    html += `<button class="ladybug" aria-label="Marienkäfer">${WORLD.ladybug()}</button>`;
+    bg.innerHTML = html;
+    $('logo').innerHTML = WORLD.logoSVG();
+    $('mascot-art').innerHTML = ART.monster('flauschi');
+
+    bg.addEventListener('click', e => {
+      const cloud = e.target.closest('.start-cloud');
+      if(cloud){ cloud.classList.toggle('morph'); return; }
+      const star = e.target.closest('.star-float');
+      if(star){ star.classList.remove('flash'); void star.offsetWidth; star.classList.add('flash'); return; }
+      const bug = e.target.closest('.ladybug');
+      if(bug){ bug.classList.remove('walk'); void bug.offsetWidth; bug.classList.add('walk'); }
+    });
+    $('mascot').addEventListener('click', () => {
+      const m = $('mascot');
+      m.classList.remove('boop'); void m.offsetWidth; m.classList.add('boop');
+      setTimeout(() => m.classList.remove('boop'), 520);
+    });
+  })();
+
+  // ======================================================
+  // WELTKARTE
+  // ======================================================
+  let mapBuilt = false;
+  let selectedArea = null;
+  let justUnlocked = null;
+  const lastEnemyInArea = {};
+
+  function buildMap(){
+    const wrap = $('map-wrap');
+    let html = WORLD.mapSVG();
+    AREAS.forEach(a => {
+      const n = WORLD.NODES[a.id];
+      html += `<button class="map-node${a.id === 'boss' ? ' boss' : ''}" data-area="${a.id}" style="left:${(n.x / 360 * 100).toFixed(2)}%; top:${(n.y / 640 * 100).toFixed(2)}%" aria-label="${a.name}">
+        <span class="node-badge"><span class="ring"></span><span class="badge-art"></span></span>
+        <span class="node-label">${a.label}</span></button>`;
+    });
+    wrap.innerHTML = html;
+    wrap.addEventListener('click', e => {
+      const node = e.target.closest('.map-node');
+      if(node){ selectArea(node.getAttribute('data-area'), node); return; }
+      const stone = e.target.closest('#map-stone');
+      if(stone){ stone.classList.remove('wobble'); void stone.getBoundingClientRect(); stone.classList.add('wobble'); return; }
+      const bush = e.target.closest('#map-bush');
+      if(bush){ $('map-snail').classList.toggle('out'); }
+    });
+    $('welcome-close').addEventListener('click', () => {
+      save.welcomeClosed = true; persist();
+      $('map-welcome').hidden = true;
+    });
+    mapBuilt = true;
+  }
+
+  function renderMap(){
+    if(!mapBuilt) buildMap();
+    $('map-welcome').hidden = !!save.welcomeClosed;
+    let focus = 'grass';
+    AREAS.forEach(a => {
+      const node = document.querySelector(`.map-node[data-area="${a.id}"]`);
+      const locked = !isUnlocked(a.id);
+      node.classList.toggle('locked', locked);
+      node.classList.toggle('cleared', !!save.cleared[a.id]);
+      node.classList.toggle('selected', selectedArea === a.id);
+      node.querySelector('.badge-art').innerHTML = WORLD.badge(a.id, locked);
+      node.setAttribute('aria-label', `${a.name}${locked ? ' (gesperrt)' : ''}`);
+      if(!locked) focus = a.id;
+    });
+    if(justUnlocked){
+      const fresh = justUnlocked;
+      justUnlocked = null;
+      const node = document.querySelector(`.map-node[data-area="${fresh}"]`);
+      focus = fresh;
+      if(node && animOn()){
+        node.classList.remove('unlocking'); void node.offsetWidth; node.classList.add('unlocking');
+        burstAt(fresh);
+        setTimeout(() => node.classList.remove('unlocking'), 950);
+      }
+    }
+    requestAnimationFrame(() => {
+      const sc = $('map-scroll'), wrap = $('map-wrap');
+      const y = WORLD.NODES[focus].y / 640 * wrap.offsetHeight;
+      sc.scrollTop = Math.max(0, y - sc.clientHeight * 0.55);
+    });
+  }
+
+  function burstAt(areaId){
+    if(!animOn()) return;
+    const n = WORLD.NODES[areaId], wrap = $('map-wrap');
+    const b = document.createElement('div');
+    b.className = 'map-burst';
+    b.style.left = (n.x / 360 * 100) + '%';
+    b.style.top = (n.y / 640 * 100) + '%';
+    let h = '';
+    for(let i = 0; i < 8; i++){
+      const ang = i / 8 * Math.PI * 2;
+      h += `<i style="--bx:${Math.round(Math.cos(ang) * 56)}px; --by:${Math.round(Math.sin(ang) * 56)}px; --br:${rand(360)}deg">${particleIcon(AREA[areaId].particle)}</i>`;
+    }
+    b.innerHTML = h;
+    wrap.appendChild(b);
+    setTimeout(() => b.remove(), 800);
+  }
+
+  function selectArea(areaId, node){
+    if(navBusy) return;
+    selectedArea = areaId;
+    document.querySelectorAll('.map-node').forEach(n => n.classList.toggle('selected', n === node));
+    if(isUnlocked(areaId)) burstAt(areaId);
+    else if(animOn()){ const b = node.querySelector('.node-badge'); b.animate && b.animate([{ transform:'rotate(0)' },{ transform:'rotate(-10deg)' },{ transform:'rotate(8deg)' },{ transform:'rotate(0)' }], { duration:360 }); }
+    openAreaSheet(areaId);
+  }
+
+  // ---------- Bottom-Sheets ----------
+  function openSheet(id){
+    ['area-sheet','preview-sheet'].forEach(s => { const el = $(s); const on = s === id; el.classList.toggle('open', on); el.setAttribute('aria-hidden', on ? 'false' : 'true'); });
+    $('sheet-backdrop').classList.add('open');
+  }
+  function closeSheets(){
+    ['area-sheet','preview-sheet'].forEach(s => { $(s).classList.remove('open'); $(s).setAttribute('aria-hidden', 'true'); });
+    $('sheet-backdrop').classList.remove('open');
+    selectedArea = null;
+    document.querySelectorAll('.map-node.selected').forEach(n => n.classList.remove('selected'));
+  }
+  $('sheet-backdrop').addEventListener('click', closeSheets);
+
+  function openAreaSheet(areaId){
+    const a = AREA[areaId];
+    const unlocked = isUnlocked(areaId);
+    const cleared = !!save.cleared[areaId];
+    const status = !unlocked ? ['Gesperrt','grey'] : (cleared ? ['Abgeschlossen','green'] : ['Offen','gold']);
+    const roster = a.enemies.map(id => {
+      const seen = !!save.seen[id];
+      return `<div class="mini${seen ? '' : ' unknown'}" title="${seen ? esc(MONSTERS[id].name) : 'Unbekannt'}">${ART.monster(id)}</div>`;
+    }).join('');
+    const need = a.requires ? AREA[a.requires] : null;
+    $('area-sheet').innerHTML = `
+      <div class="grab"></div>
+      <div class="sheet-head">
+        <div class="area-thumb">${WORLD.thumb(areaId)}</div>
+        <div class="sheet-title">
+          <div class="eyebrow">Level ${a.no}</div>
+          <h2>${a.name}</h2>
+          <span class="badge ${status[1]}">${status[0]}</span>
+        </div>
+      </div>
+      <div class="sheet-facts">
+        <div class="fact"><div class="k">${a.enemies.length === 1 ? 'Gegner' : 'Gegnertypen'}</div><div class="v">${a.enemies.length}</div></div>
+        <div class="fact"><div class="k">${a.variants.length === 1 ? 'Arena' : 'Arenen'}</div><div class="v">${a.variants.length}</div></div>
+      </div>
+      <div class="sheet-roster">${roster}</div>
+      ${unlocked ? '' : `<p class="lock-note">Gewinne einen Kampf im Gebiet <b>${need.name}</b>, um ${a.name === 'Bossgebiet' ? 'das Bossgebiet' : 'dieses Gebiet'} freizuschalten.</p>`}
+      <div class="sheet-actions">
+        <button class="btn secondary" data-act="close">Schließen</button>
+        ${unlocked ? `<button class="btn" data-act="explore">${a.id === 'boss' ? 'Zum Boss' : 'Gegner suchen'}</button>` : ''}
+      </div>`;
+    openSheet('area-sheet');
+  }
+  $('area-sheet').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if(!b) return;
+    const act = b.getAttribute('data-act');
+    if(act === 'close') closeSheets();
+    if(act === 'explore' && selectedArea) openPreview(selectedArea, pickEnemy(selectedArea));
+  });
+
+  function pickEnemy(areaId){
+    const list = AREA[areaId].enemies;
+    if(list.length === 1) return list[0];
+    let id;
+    do { id = list[rand(list.length)]; } while(id === lastEnemyInArea[areaId]);
+    lastEnemyInArea[areaId] = id;
+    return id;
+  }
+
+  let pendingFight = null;
+  function openPreview(areaId, monId){
+    const a = AREA[areaId], m = MONSTERS[monId];
+    pendingFight = { areaId, monId };
+    $('preview-sheet').innerHTML = `
+      <div class="grab"></div>
+      <div class="preview-card">
+        <div class="sheet-title"><div class="eyebrow">${m.boss ? 'Bosskampf' : 'Ein Gegner taucht auf'}</div></div>
+        <div class="preview-portrait${m.boss ? ' boss' : ''}" style="background:${a.bg}"><div class="pv-in">${ART.monster(monId)}</div></div>
+        <h2>${m.name}</h2>
+        <div class="facts">
+          <span class="badge red">❤ ${m.hp} HP</span>
+          <span class="badge">${a.name}</span>
+          ${m.boss ? '<span class="badge gold">👑 Boss</span>' : ''}
+          ${save.defeated[monId] ? `<span class="badge green">${save.defeated[monId]}× besiegt</span>` : ''}
+        </div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn secondary" data-act="back">Zurück</button>
+        <button class="btn" data-act="fight">Kampf starten</button>
+      </div>`;
+    openSheet('preview-sheet');
+  }
+  $('preview-sheet').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if(!b) return;
+    const act = b.getAttribute('data-act');
+    if(act === 'back'){ pendingFight = null; closeSheets(); }
+    if(act === 'fight' && pendingFight){ const f = pendingFight; pendingFight = null; startBattleFlow(f.areaId, f.monId); }
+  });
+
+  // ======================================================
+  // ÜBERGANG Karte → Kampf
+  // ======================================================
+  function playTransition(areaId, mid){
+    const tr = $('transition');
+    if(!animOn()){ mid(); return; }
+    const a = AREA[areaId];
+    tr.style.setProperty('--tr-bg', a.trBg);
+    const node = document.querySelector(`.map-node[data-area="${areaId}"]`);
+    if(node){
+      const r = node.getBoundingClientRect(), ar = app.getBoundingClientRect();
+      tr.style.setProperty('--tx', (r.left + r.width / 2 - ar.left) + 'px');
+      tr.style.setProperty('--ty', (r.top + r.height / 2 - ar.top) + 'px');
+    }
+    let p = '';
+    for(let i = 0; i < 12; i++){
+      p += `<i class="tp" style="left:${rand(100)}%; --sx:${rand(80) - 40}px; --r:${rand(720) - 360}deg; --dl:${(i * 0.04).toFixed(2)}s">${particleIcon(a.particle)}</i>`;
+    }
+    tr.innerHTML = '<div class="iris"></div>' + p;
+    tr.classList.remove('opening');
+    tr.classList.add('on');
+    setTimeout(() => {
+      mid();
+      tr.classList.add('opening');
+      setTimeout(() => { tr.classList.remove('on', 'opening'); tr.innerHTML = '<div class="iris"></div>'; }, 440);
+    }, 440);
+  }
+
+  // ======================================================
+  // KAMPF
+  // ======================================================
+  let battle = null;
+  let raf = 0;
+  let lastTs = 0;
+  const battleScreen = $('screen-battle');
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function timeOfDay(){
+    const h = new Date().getHours();
+    if(h >= 5 && h < 11) return 'morning';
+    if(h >= 11 && h < 18) return 'day';
+    return 'evening';
+  }
+  function rollEnv(areaId){
+    const a = AREA[areaId];
+    const r = Math.random();
+    const wx = r < 0.4 ? 'sunny' : r < 0.65 ? 'cloudy' : r < 0.85 ? 'rain' : 'fog';
+    return { variant: rand(a.variants.length), tod: timeOfDay(), wx };
+  }
+  const TOD_NAME = { morning:'Morgen', day:'Tag', evening:'Abend' };
+  const WX_NAME = { sunny:'☀️ Sonnig', cloudy:'☁️ Bewölkt', rain:'🌧️ Leichter Regen', fog:'🌫️ Leichter Nebel' };
+
+  function startBattleFlow(areaId, monId, env){
+    if(navBusy) return;
+    navBusy = true;
+    closeSheets();
+    playTransition(areaId, () => {
+      setupBattle(areaId, monId, env || rollEnv(areaId));
+      showScreen('screen-battle', { zoom:true });
+      navBusy = false;
+      startIntro();
+    });
+  }
+
+  function buildArena(areaId, env){
+    const a = AREA[areaId];
+    const arena = $('arena');
+    arena.dataset.area = areaId;
+    arena.dataset.tod = areaId === 'boss' ? 'boss' : env.tod;
+    arena.dataset.wx = areaId === 'boss' ? 'glow' : env.wx;
+    $('layer-sky').innerHTML = WORLD.skyExtras(areaId, env.wx);
+    $('layer-far').innerHTML = WORLD.FAR[areaId]();
+    $('layer-mid').innerHTML = WORLD.MID[areaId][env.variant % WORLD.MID[areaId].length]();
+    $('layer-fore').innerHTML = WORLD.FORE[areaId]();
+    $('critters').innerHTML = WORLD.critters(areaId, env.tod);
+    $('wx').innerHTML = WORLD.weather(areaId, env.wx);
+    $('env-chip').textContent = areaId === 'boss'
+      ? `${a.variants[0]} · 🔥 Glut`
+      : `${a.variants[env.variant]} · ${WX_NAME[env.wx]} · ${TOD_NAME[env.tod]}`;
+    $('battle-title').textContent = `Level ${a.no} · ${a.name}`;
+  }
+
+  function setupBattle(areaId, monId, env){
+    teardownBattle();
+    const m = MONSTERS[monId], a = AREA[areaId];
+    const deckOrder = shuffle(BATTLE_DECK);
+    battle = {
+      areaId, monId, env,
+      xp: 10, xpMax: 10, xpAcc: 0,
+      player: { name:save.name, lv:1, hp:30, hpMax:30 },
+      enemy:  { name:m.name, lv:a.no, hp:m.hp, hpMax:m.hp, boss:!!m.boss },
+      deck: deckOrder.slice(HAND_SIZE),   // restliche 4 Karten im Deck
+      hand: deckOrder.slice(0, HAND_SIZE),// 4 Karten auf der Hand
+      over: false, ended: false, paused: false,
+      phase: 'intro',
+      time: 0, fightTime: 0, inputLockUntil: 0,
+      events: [],
+      stats: { cards:0, dmg:0 }
+    };
+    save.seen[monId] = true;
+    save.seenGrollzahn = !!save.seen.grollzahn;
+    persist();
+
+    buildArena(areaId, env);
+    $('player-sprite').innerHTML = `<div class="idle i-player">${ART.monster('flauschi')}</div>`;
+    $('enemy-sprite').innerHTML = `<div class="idle ${m.idle}">${ART.monster(monId)}</div>`;
+    $('enemy-spot').classList.toggle('is-boss', !!m.boss);
+    $('enemy-anchor').className = 'sprite-anchor';
+    $('enemy-sprite').className = 'sprite';
+    $('entry-prop').hidden = true;
+    $('entry-prop').className = 'entry-prop';
+    $('cam').className = 'cam';
+    $('intro-dim').classList.remove('on');
+    $('intro-layer').innerHTML = '';
+    $('player-name').textContent = battle.player.name;
+    $('enemy-name').textContent = battle.enemy.name;
+    const lv = $('enemy-lv-tag');
+    lv.textContent = m.boss ? 'BOSS' : 'Lv.' + battle.enemy.lv;
+    lv.classList.toggle('boss', !!m.boss);
+    $('player-lv-tag').textContent = 'Lv.' + battle.player.lv;
+    $('battle-overlay').classList.remove('active', 'win', 'lose');
+    $('pause-overlay').classList.remove('active');
+    battleScreen.classList.remove('paused');
+    $('btn-pause').disabled = false;
+    $('fx-layer').innerHTML = '';
+    $('confetti').innerHTML = '';
+    log(m.boss ? `Der Boss ${m.name} erscheint!` : `Ein wilder ${m.name} erscheint!`);
+    renderHp();
+    renderXp();
+    renderHandFull();
+    renderDeckCounter();
+    $('hand').classList.add('locked');
+
+    lastTs = performance.now();
+    if(!raf) raf = requestAnimationFrame(loop);
+  }
+
+  function teardownBattle(){
+    if(battle) battle.ended = true;
+    if(raf){ cancelAnimationFrame(raf); raf = 0; }
+    battle = null;
+    $('fx-layer').innerHTML = '';
+    battleScreen.classList.remove('paused');
+    $('pause-overlay').classList.remove('active');
+  }
+
+  // ---------- Spieluhr: eine einzige Schleife, pausierbar ----------
+  function schedule(ms, fn){
+    if(!battle) return;
+    const b = battle;
+    b.events.push({ at: b.time + Math.max(0, ms), fn: () => { if(battle === b && !b.ended) fn(); } });
+  }
+  function loop(now){
+    raf = 0;
+    const b = battle;
+    if(!b || b.ended || b.phase === 'result') return;
+    const dt = Math.min(100, Math.max(0, now - lastTs));
+    lastTs = now;
+    if(!b.paused){
+      b.time += dt;
+      if(b.phase === 'fight' && !b.over){
+        b.fightTime += dt;
+        b.xpAcc += dt;
+        let changed = false;
+        while(b.xpAcc >= 1000){
+          b.xpAcc -= 1000;
+          if(b.xp < b.xpMax){ b.xp = Math.min(b.xpMax, b.xp + 1); changed = true; }
+        }
+        if(changed){ renderXp(); updateHandState(); }
+      }
+      if(b.events.length){
+        const due = b.events.filter(e => e.at <= b.time).sort((x, y) => x.at - y.at);
+        if(due.length){
+          b.events = b.events.filter(e => e.at > b.time);
+          due.forEach(e => e.fn());
+        }
+      }
+    }
+    if(battle === b && !b.ended && b.phase !== 'result') raf = requestAnimationFrame(loop);
+  }
+
+  // ---------- Intro ----------
+  function startIntro(){
+    const b = battle;
+    if(!b) return;
+    const m = MONSTERS[b.monId];
+    const anchor = $('enemy-anchor'), sprite = $('enemy-sprite');
+    if(!animOn()){
+      beginFight();
+      return;
+    }
+    if(m.boss){ bossIntro(); return; }
+
+    const type = m.entrance;
+    if(type === 'bush' || type === 'rock'){
+      const prop = $('entry-prop');
+      prop.innerHTML = type === 'rock' ? WORLD.PROP.rock() : (b.areaId === 'forest' ? WORLD.PROP.forestbush() : WORLD.PROP.bush());
+      prop.hidden = false;
+    }
+    sprite.classList.add('silhouette');
+    anchor.classList.add('ent-' + type);
+    schedule(150, () => showBanner('Wildes Monster', m.name));
+    schedule(800, () => {
+      sprite.classList.remove('silhouette');
+      if(!$('entry-prop').hidden) $('entry-prop').classList.add('out');
+    });
+    schedule(1250, hideBanner);
+    schedule(1500, beginFight);
+  }
+  function bossIntro(){
+    const m = MONSTERS[battle.monId];
+    const anchor = $('enemy-anchor'), sprite = $('enemy-sprite'), cam = $('cam');
+    sprite.classList.add('hidden');
+    $('intro-dim').classList.add('on');
+    schedule(200, () => {
+      const c = document.createElement('div');
+      c.className = 'boss-crown'; c.id = 'boss-crown';
+      c.innerHTML = ART.ICON.crown();
+      $('intro-layer').appendChild(c);
+    });
+    schedule(650, () => { cam.classList.add('cam-zoom'); });
+    schedule(1050, () => { sprite.classList.remove('hidden'); anchor.classList.add('ent-land'); });
+    schedule(1750, () => { cam.classList.remove('cam-land'); void cam.offsetWidth; cam.classList.add('cam-land'); rustle(); });
+    schedule(1850, () => {
+      const c = $('boss-crown'); if(c) c.classList.add('out');
+      const bb = document.createElement('div');
+      bb.className = 'boss-banner'; bb.id = 'boss-banner';
+      bb.innerHTML = `<div class="bb"><small>BOSS</small><b>${m.name}</b></div>`;
+      $('intro-layer').appendChild(bb);
+    });
+    schedule(2900, () => {
+      const bb = $('boss-banner'); if(bb) bb.classList.add('out');
+      cam.classList.remove('cam-zoom', 'cam-land');
+      cam.classList.add('cam-unzoom');
+      $('intro-dim').classList.remove('on');
+    });
+    schedule(3500, () => { cam.classList.remove('cam-unzoom'); beginFight(); });
+  }
+  function showBanner(small, big){
+    const el = document.createElement('div');
+    el.className = 'intro-banner'; el.id = 'intro-banner';
+    el.innerHTML = `<div class="ib"><small>${esc(small)}</small><b>${esc(big)}</b></div>`;
+    $('intro-layer').appendChild(el);
+  }
+  function hideBanner(){ const el = $('intro-banner'); if(el) el.classList.add('out'); }
+  function beginFight(){
+    const b = battle;
+    if(!b) return;
+    $('enemy-anchor').className = 'sprite-anchor';
+    $('enemy-sprite').className = 'sprite';
+    $('entry-prop').hidden = true;
+    $('entry-prop').className = 'entry-prop';
+    $('intro-layer').innerHTML = '';
+    $('intro-dim').classList.remove('on');
+    b.phase = 'fight';
+    $('hand').classList.remove('locked');
+    updateHandState();
+  }
+
+  // ---------- Darstellung ----------
+  function renderHp(){
+    const b = battle;
+    setHp('player-hp-fill', 'player-hp-text', b.player.hp, b.player.hpMax);
+    setHp('enemy-hp-fill', 'enemy-hp-text', b.enemy.hp, b.enemy.hpMax);
+  }
+  function setHp(fillId, textId, hp, hpMax){
+    const pct = Math.max(0, Math.min(1, hp / hpMax));
+    const fill = $(fillId);
+    fill.style.transform = `scaleX(${pct})`;
+    fill.classList.toggle('low', pct <= 0.3);
+    $(textId).textContent = Math.max(0, hp) + '/' + hpMax;
+  }
+  function renderXp(){
+    const b = battle;
+    $('xp-fill').style.transform = `scaleX(${b.xp / b.xpMax})`;
+    $('xp-text').textContent = b.xp + '/' + b.xpMax;
+  }
+  function renderDeckCounter(){
+    const n = battle.deck.length;
+    $('deck-counter').textContent = 'Deck: ' + n + ' Karten übrig';
+    $('deck-pile').classList.toggle('empty', n === 0);
+  }
+  function log(msg){ $('battle-log').textContent = msg; }
+
+  function cardInner(c){
+    return `<span class="cost">${c.cost}</span><span class="face"><span class="rar"></span><span class="art">${c.icon}</span>` +
+           `<span class="cname">${SHY[c.id] || c.name}</span><span class="ceff${c.heal ? ' heal' : ''}">${c.heal ? '+' + c.heal + ' HP' : c.dmg + ' Schaden'}</span></span>`;
+  }
+  function makeCard(id, tag){
+    const c = CARD[id];
+    const el = document.createElement(tag || 'button');
+    el.className = 'card';
+    el.dataset.id = id;
+    el.dataset.r = c.r;
+    el.dataset.kind = c.kind || 'dmg';
+    el.setAttribute('aria-label', `${c.name}, kostet ${c.cost} Energie, ${c.heal ? 'heilt ' + c.heal + ' HP' : c.dmg + ' Schaden'}`);
+    el.innerHTML = cardInner(c);
+    return el;
+  }
+  function renderHandFull(){
+    const hand = $('hand');
+    hand.innerHTML = '';
+    battle.hand.forEach(id => hand.appendChild(makeCard(id)));
+    updateHandState();
+  }
+  function updateHandState(){
+    const b = battle;
+    if(!b) return;
+    Array.prototype.forEach.call($('hand').children, el => {
+      const c = CARD[el.dataset.id];
+      const ok = b.xp >= c.cost && !b.over;
+      el.classList.toggle('disabled', !ok);
+    });
+  }
+
+  function floatText(target, text, kind){
+    if(!animOn()) return;
+    const anchor = target === 'enemy' ? $('enemy-anchor') : $('player-sprite').parentNode;
+    const f = document.createElement('div');
+    f.className = 'floatie' + (kind ? ' ' + kind : '');
+    f.textContent = text;
+    anchor.appendChild(f);
+    schedule(900, () => f.remove());
+  }
+  function hitFx(target, kind){
+    const sprite = target === 'enemy' ? $('enemy-sprite') : $('player-sprite');
+    if(kind !== 'heal'){
+      sprite.classList.remove('hit'); void sprite.offsetWidth; sprite.classList.add('hit');
+      schedule(400, () => sprite.classList.remove('hit'));
+    }
+    if(!animOn()) return;
+    const anchor = sprite.parentNode;
+    const fx = document.createElement('div');
+    fx.className = 'impact';
+    fx.innerHTML = kind === 'heal' ? ART.ICON.heal() : ART.ICON.impact(kind === 'big' ? '#ffe08a' : '#fff6c0');
+    anchor.appendChild(fx);
+    schedule(420, () => fx.remove());
+  }
+  function rustle(){
+    if(!animOn()) return;
+    const ar = $('arena');
+    ar.classList.remove('rustle'); void ar.offsetWidth; ar.classList.add('rustle');
+    schedule(600, () => ar.classList.remove('rustle'));
+  }
+  function camHit(){
+    if(!animOn()) return;
+    const cam = $('cam');
+    cam.classList.remove('cam-hit'); void cam.offsetWidth; cam.classList.add('cam-hit');
+    schedule(520, () => cam.classList.remove('cam-hit'));
+  }
+  function lunge(target, cls){
+    if(!animOn()) return;
+    const s = target === 'enemy' ? $('enemy-sprite') : $('player-sprite');
+    s.classList.remove('lunge', 'stomp'); void s.offsetWidth; s.classList.add(cls || 'lunge');
+    schedule(460, () => s.classList.remove('lunge', 'stomp'));
+  }
+
+  // ---------- Karte ausspielen ----------
+  $('hand').addEventListener('click', e => {
+    const el = e.target.closest('.card');
+    if(!el || !battle) return;
+    const idx = Array.prototype.indexOf.call($('hand').children, el);
+    if(idx >= 0) useCard(idx, el);
+  });
+
+  function useCard(idx, el){
+    const b = battle;
+    if(!b || b.over || b.paused || b.phase !== 'fight') return;
+    if(el.classList.contains('drawing') || b.time < b.inputLockUntil) return;
+    const id = b.hand[idx];
+    const atk = CARD[id];
+    if(!atk || el.dataset.id !== id) return;
+    if(b.xp < atk.cost) return; // nicht genug Energie
+
+    // Energie bezahlen
+    b.xp -= atk.cost;
+    // Karte aus der Hand entfernen
+    b.hand.splice(idx, 1);
+    b.stats.cards++;
+    // Neue Karte aus dem Deck ziehen, damit die Hand wieder 4 Karten hat
+    let drawn = null;
+    if(b.deck.length > 0){ drawn = b.deck.shift(); b.hand.push(drawn); }
+
+    // Effekt anwenden
+    if(atk.dmg && atk.dmg > 0){
+      const before = b.enemy.hp;
+      b.enemy.hp = Math.max(0, b.enemy.hp - atk.dmg);
+      b.stats.dmg += before - b.enemy.hp;
+      log(b.player.name + ' setzt ' + atk.name + ' ein! (' + atk.dmg + ' Schaden)');
+    }
+    if(atk.heal && atk.heal > 0){
+      b.player.hp = Math.min(b.player.hpMax, b.player.hp + atk.heal);
+      log(b.player.name + ' nutzt ' + atk.name + ' und heilt sich! (+' + atk.heal + ')');
+    }
+
+    const A = animOn();
+    b.inputLockUntil = b.time + (A ? 180 : 0);
+    renderXp();
+    renderDeckCounter();
+    animateHand(el, drawn);
+    lunge('player');
+
+    const impactAt = A ? 230 : 0;
+    schedule(impactAt, () => {
+      if(atk.dmg > 0){
+        hitFx('enemy', atk.dmg >= 11 ? 'big' : '');
+        floatText('enemy', '-' + atk.dmg, atk.dmg >= 15 ? 'big' : '');
+        rustle();
+        if(atk.dmg >= 11) camHit();
+      }
+      if(atk.heal > 0){
+        hitFx('player', 'heal');
+        floatText('player', '+' + atk.heal, 'heal');
+      }
+      renderHp();
+    });
+
+    if(b.enemy.hp <= 0){
+      b.over = true;
+      updateHandState();
+      schedule(impactAt + 700, () => endBattle(true));
+      return;
+    }
+    // Gegner antwortet nach der eingestellten Verzögerung
+    schedule(save.enemyDelay, enemyTurn);
+  }
+
+  function animateHand(playedEl, drawnId){
+    const hand = $('hand');
+    const A = animOn();
+    const others = Array.prototype.filter.call(hand.children, c => c !== playedEl);
+    const before = A ? others.map(c => c.getBoundingClientRect().left) : null;
+    if(A){
+      const r = playedEl.getBoundingClientRect(), fr = $('fx-layer').getBoundingClientRect();
+      const clone = playedEl.cloneNode(true);
+      clone.classList.remove('disabled');
+      clone.style.left = (r.left - fr.left) + 'px';
+      clone.style.top = (r.top - fr.top) + 'px';
+      clone.style.width = r.width + 'px';
+      clone.style.height = r.height + 'px';
+      clone.classList.add('play-out');
+      $('fx-layer').appendChild(clone);
+      schedule(340, () => clone.remove());
+    }
+    playedEl.remove();
+    let newEl = null;
+    if(drawnId){ newEl = makeCard(drawnId); hand.appendChild(newEl); }
+    updateHandState();
+    if(!A || !hand.animate) return;
+    others.forEach((c, i) => {
+      const dx = before[i] - c.getBoundingClientRect().left;
+      if(Math.abs(dx) > 1) c.animate([{ transform:`translateX(${dx}px)` }, { transform:'none' }], { duration:260, easing:'cubic-bezier(.2,.8,.3,1)' });
+    });
+    if(newEl){
+      newEl.classList.add('drawing');
+      const pile = $('deck-pile').getBoundingClientRect(), to = newEl.getBoundingClientRect();
+      const dx = pile.left + pile.width / 2 - (to.left + to.width / 2);
+      const dy = pile.top + pile.height / 2 - (to.top + to.height / 2);
+      const an = newEl.animate([
+        { transform:`translate(${dx}px, ${dy}px) scale(.3) rotate(-14deg)`, opacity:0.3 },
+        { transform:'translate(0,-12px) scale(1.06)', opacity:1, offset:0.75 },
+        { transform:'none', opacity:1 }
+      ], { duration:380, delay:110, easing:'cubic-bezier(.3,.7,.4,1)', fill:'backwards' });
+      const done = () => newEl.classList.remove('drawing');
+      an.onfinish = done; an.oncancel = done;
+    }
+  }
+
+  function enemyTurn(){
+    const b = battle;
+    if(!b || b.over) return;
+    const dmg = 3 + Math.floor(Math.random() * 4); // 3-6 Schaden
+    b.player.hp = Math.max(0, b.player.hp - dmg);
+    log(b.enemy.name + ' greift an! (' + dmg + ' Schaden)');
+    const m = MONSTERS[b.monId];
+    lunge('enemy', m.attack === 'stomp' ? 'stomp' : 'lunge');
+    const A = animOn();
+    schedule(A ? 160 : 0, () => {
+      hitFx('player');
+      floatText('player', '-' + dmg);
+      if(A){ const h = $('hurt'); h.classList.remove('on'); void h.offsetWidth; h.classList.add('on'); }
+      if(m.attack === 'stomp') rustle();
+      renderHp();
+    });
+    if(b.player.hp <= 0){
+      b.over = true;
+      updateHandState();
+      schedule(A ? 800 : 0, () => endBattle(false));
+    }
+  }
+
+  // ---------- Kampfende ----------
+  function fmtTime(ms){
+    const s = Math.round(ms / 1000);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+  function endBattle(won){
+    const b = battle;
+    if(!b || b.phase === 'result') return;
+    b.over = true;
+    b.phase = 'result';
+    $('btn-pause').disabled = true;
+    const m = MONSTERS[b.monId], a = AREA[b.areaId];
+
+    let unlockedNow = null;
+    if(won){
+      save.wins++;
+      save.defeated[b.monId] = (save.defeated[b.monId] || 0) + 1;
+      if(!save.cleared[b.areaId]){
+        save.cleared[b.areaId] = true;
+        const next = AREAS.find(x => x.requires === b.areaId);
+        if(next){ unlockedNow = next; justUnlocked = next.id; }
+      }
+    } else {
+      save.losses++;
+    }
+    persist();
+
+    const ov = $('battle-overlay');
+    ov.classList.remove('win', 'lose');
+    ov.classList.add(won ? 'win' : 'lose');
+    $('overlay-title').textContent = won ? 'Sieg!' : 'Niederlage';
+    $('result-stars').innerHTML = won ? ART.ICON.star() + ART.ICON.star() + ART.ICON.star() : '';
+    const rm = $('result-monster');
+    rm.style.background = a.bg;
+    rm.classList.toggle('ko', won);
+    rm.innerHTML = `<div class="pv-in">${ART.monster(b.monId)}</div>`;
+    $('overlay-text').textContent = won
+      ? 'Du hast ' + b.enemy.name + ' besiegt.'
+      : b.enemy.name + ' war zu stark. Versuch es noch einmal!';
+    const note = $('unlock-note');
+    if(unlockedNow){
+      note.hidden = false;
+      note.textContent = `🔓 Neues Gebiet freigeschaltet: ${unlockedNow.name}`;
+    } else if(won && m.boss){
+      note.hidden = false;
+      note.textContent = '👑 Du hast den Boss besiegt!';
+    } else {
+      note.hidden = true;
+    }
+    $('st-result').textContent = won ? 'Sieg' : 'Niederlage';
+    $('st-time').textContent = fmtTime(b.fightTime);
+    $('st-cards').textContent = b.stats.cards;
+    $('st-dmg').textContent = b.stats.dmg;
+    $('overlay-retry').hidden = won;
+    $('overlay-btn').textContent = 'Zurück zur Karte';
+    $('overlay-btn').classList.toggle('secondary', !won);
+    ov.classList.add('active');
+    if(won && animOn()) confetti();
+  }
+  function confetti(){
+    const cols = ['#ffb400','#ff6b4a','#4aa8ff','#57c26b','#c49bff','#ff8ab3'];
+    let h = '';
+    for(let i = 0; i < 34; i++){
+      h += `<i style="left:${rand(100)}%; background:${cols[i % cols.length]}; --sx:${rand(120) - 60}px; --r:${rand(900) - 450}deg; --d:${(1.8 + Math.random() * 1.4).toFixed(2)}s; --dl:${(Math.random() * 0.4).toFixed(2)}s"></i>`;
+    }
+    $('confetti').innerHTML = h;
+    setTimeout(() => { $('confetti').innerHTML = ''; }, 3800);
+  }
+
+  function leaveBattleToMap(){
+    teardownBattle();
+    $('battle-overlay').classList.remove('active');
+    nav('screen-map');
+  }
+  $('overlay-btn').addEventListener('click', leaveBattleToMap);
+  $('overlay-retry').addEventListener('click', () => {
+    if(!battle) return;
+    const { areaId, monId, env } = battle;
+    setupBattle(areaId, monId, env);
+    startIntro();
+  });
+  $('battle-flee').addEventListener('click', () => {
+    if(battle && battle.phase === 'result') return;
+    leaveBattleToMap();
+  });
+
+  // ---------- Pause ----------
+  function scriptAnimations(){
+    if(!battleScreen.getAnimations) return [];
+    return battleScreen.getAnimations({ subtree:true }).filter(a =>
+      !(typeof CSSAnimation !== 'undefined' && a instanceof CSSAnimation) &&
+      !(typeof CSSTransition !== 'undefined' && a instanceof CSSTransition));
+  }
+  function pauseBattle(){
+    const b = battle;
+    if(!b || b.paused || b.phase === 'result') return;
+    b.paused = true;
+    battleScreen.classList.add('paused');
+    scriptAnimations().forEach(a => { try { a.pause(); } catch(e){} });
+    $('pause-overlay').classList.add('active');
+  }
+  function resumeBattle(){
+    const b = battle;
+    if(!b || !b.paused) return;
+    b.paused = false;
+    battleScreen.classList.remove('paused');
+    scriptAnimations().forEach(a => { try { a.play(); } catch(e){} });
+    $('pause-overlay').classList.remove('active');
+    lastTs = performance.now();
+    if(!raf) raf = requestAnimationFrame(loop);
+  }
+  $('btn-pause').addEventListener('click', pauseBattle);
+  $('pause-resume').addEventListener('click', resumeBattle);
+  $('pause-exit').addEventListener('click', leaveBattleToMap);
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden && battle && battle.phase === 'fight' && !battle.over) pauseBattle();
+  });
+
+  // ---------- Umgebung antippen ----------
+  $('arena').addEventListener('click', e => {
+    const bf = e.target.closest('[data-bf]');
+    if(bf){
+      bf.classList.add('flee');
+      setTimeout(() => bf.classList.remove('flee'), 6000);
+      return;
+    }
+    const t = e.target.closest('.tappable');
+    if(t){ t.classList.remove('wobble'); void t.getBoundingClientRect(); t.classList.add('wobble'); setTimeout(() => t.classList.remove('wobble'), 650); }
+  });
+
+  // ======================================================
+  // MENÜ-SCREENS
+  // ======================================================
+  function renderMonster(){
+    $('mon-name').textContent = save.name;
+    $('mon-wins').textContent = save.wins;
+    $('mon-losses').textContent = save.losses;
+  }
+
+  function sortCards(list, mode){
+    const byName = (a, b) => a.name.localeCompare(b.name, 'de');
+    const healLast = (a, b) => (a.heal ? 1 : 0) - (b.heal ? 1 : 0);
+    const cmp = {
+      'name':      byName,
+      'cost-asc':  (a, b) => a.cost - b.cost || byName(a, b),
+      'cost-desc': (a, b) => b.cost - a.cost || byName(a, b),
+      'dmg-asc':   (a, b) => healLast(a, b) || a.dmg - b.dmg || byName(a, b),
+      'dmg-desc':  (a, b) => healLast(a, b) || b.dmg - a.dmg || byName(a, b)
+    }[mode];
+    return cmp ? list.slice().sort(cmp) : list.slice();
+  }
+  function renderDeck(animate){
+    const mode = save.deckSort;
+    document.querySelectorAll('#sort-bar button').forEach(btn => btn.setAttribute('aria-pressed', btn.getAttribute('data-sort') === mode ? 'true' : 'false'));
+    const fill = (gridId, list) => {
+      const grid = $(gridId);
+      grid.classList.toggle('anim', !!animate && animOn());
+      grid.innerHTML = '';
+      sortCards(list, mode).forEach((c, i) => {
+        const el = makeCard(c.id, 'div');
+        el.setAttribute('role', 'img');
+        el.style.setProperty('--i', i);
+        grid.appendChild(el);
+      });
+    };
+    const inDeck = CARDS.filter(c => c.deck), extra = CARDS.filter(c => !c.deck);
+    $('deck-heading').textContent = `Kampfdeck · ${inDeck.length} Karten`;
+    $('extra-heading').textContent = `Weitere Karten · ${extra.length}`;
+    fill('deck-grid', inDeck);
+    fill('extra-grid', extra);
+  }
+  $('sort-bar').addEventListener('click', e => {
+    const btn = e.target.closest('[data-sort]');
+    if(!btn) return;
+    const m = btn.getAttribute('data-sort');
+    save.deckSort = save.deckSort === m ? null : m;
+    persist();
+    renderDeck(true);
+  });
+
+  function renderDex(){
+    const list = $('dex-list');
+    let found = 0;
+    DEX_ORDER.forEach(id => { if(save.seen[id]) found++; });
+    const badgeFor = id => {
+      if(id === 'flauschi') return '<span class="badge">Partner</span>';
+      if(save.defeated[id]) return `<span class="badge gold">${save.defeated[id]}× besiegt</span>`;
+      if(save.seen[id]) return '<span class="badge red">Gesehen</span>';
+      return '<span class="badge grey">Unbekannt</span>';
+    };
+    const entry = (id, area) => {
+      const m = MONSTERS[id], known = !!save.seen[id];
+      const name = id === 'flauschi' ? esc(save.name) : (known ? m.name : '???');
+      const style = area ? `--area-col:${area.color}; --area-bg:${area.bg}` : '--area-col:#62cbe9; --area-bg:linear-gradient(180deg,#e6f8ff,#a8def0)';
+      if(id === 'flauschi'){
+        return `<div class="dex-entry partner" style="${style}"><div class="pic"><div class="pv-in">${ART.monster(id)}</div></div><div class="txt"><span class="no">Nr. ${String(m.no).padStart(3, '0')}</span><div class="dn">${name}</div>${badgeFor(id)}</div></div>`;
+      }
+      return `<div class="dex-entry${known ? '' : ' unknown'}" style="${style}"><span class="no">Nr. ${String(m.no).padStart(3, '0')}</span><div class="pic"><div class="pv-in">${ART.monster(id)}</div></div><div class="dn">${name}</div>${badgeFor(id)}</div>`;
+    };
+    let html = `<div class="dex-grid">${entry('flauschi', null)}</div>`;
+    AREAS.forEach(a => {
+      html += `<div class="dex-group" style="--area-col:${a.color}"><h4><span class="dot"></span>${a.name}</h4><div class="dex-grid">${a.enemies.map(id => entry(id, a)).join('')}</div></div>`;
+    });
+    list.innerHTML = html;
+    list.style.display = 'flex'; list.style.flexDirection = 'column'; list.style.gap = '14px';
+    $('dex-fill').style.transform = `scaleX(${found / DEX_ORDER.length})`;
+    $('dex-num').textContent = found + ' / ' + DEX_ORDER.length + ' entdeckt';
+  }
+
+  function renderSettings(){
+    $('set-name').value = save.name;
+    $('name-note').textContent = '';
+    $('reset-note').textContent = '';
+    $('set-anim').setAttribute('aria-checked', save.anim ? 'true' : 'false');
+    document.querySelectorAll('#set-speed button').forEach(b => {
+      b.setAttribute('aria-pressed', Number(b.getAttribute('data-speed')) === save.enemyDelay ? 'true' : 'false');
+    });
+    $('reset-confirm').hidden = true;
+    $('reset-btn').hidden = false;
+  }
+  function commitName(){
+    const input = $('set-name');
+    const v = input.value.trim().slice(0, 14);
+    if(!v){
+      input.value = save.name;
+      $('name-note').textContent = 'Der Name darf nicht leer sein.';
+      return;
+    }
+    if(v !== save.name){
+      save.name = v;
+      persist();
+      $('player-name').textContent = v;
+      $('name-note').textContent = 'Name gespeichert.';
+    }
+    input.value = v;
+  }
+  $('name-form').addEventListener('submit', e => { e.preventDefault(); commitName(); $('set-name').blur(); });
+  $('set-name').addEventListener('change', commitName);
+  $('set-anim').addEventListener('click', function(){
+    save.anim = !save.anim;
+    persist();
+    applyAnim();
+    this.setAttribute('aria-checked', save.anim ? 'true' : 'false');
+  });
+  document.querySelectorAll('#set-speed button').forEach(b => {
+    b.addEventListener('click', () => {
+      save.enemyDelay = Number(b.getAttribute('data-speed'));
+      persist();
+      document.querySelectorAll('#set-speed button').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
+    });
+  });
+  $('reset-btn').addEventListener('click', function(){
+    this.hidden = true;
+    $('reset-confirm').hidden = false;
+    $('reset-note').textContent = '';
+  });
+  $('reset-no').addEventListener('click', () => { $('reset-confirm').hidden = true; $('reset-btn').hidden = false; });
+  $('reset-yes').addEventListener('click', () => {
+    save.wins = 0; save.losses = 0;
+    save.seen = { flauschi:true }; save.seenGrollzahn = false;
+    save.defeated = {}; save.cleared = {};
+    persist();
+    $('reset-confirm').hidden = true;
+    $('reset-btn').hidden = false;
+    $('reset-note').textContent = 'Fortschritt zurückgesetzt.';
+  });
+
+  $('player-name').textContent = save.name;
+})();
+</script>
+</body>
+</html>
