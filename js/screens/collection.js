@@ -128,6 +128,8 @@ function baueMonster(content) {
       return {
         monster,
         bekannt: sichtbar && entdeckt.has(level.enemyId),
+        silhouette: sichtbar,
+        farbe: world.farben?.wiese,
         notiz: `${monster.maxHp} LP`,
       };
     });
@@ -146,16 +148,23 @@ function gruppe(titel, eintraege) {
   const grid = document.createElement('div');
   grid.className = 'collection';
 
-  eintraege.forEach(({ monster, bekannt, notiz }) => {
+  eintraege.forEach(({ monster, bekannt, notiz, silhouette = false, farbe = null }, nr) => {
     const item = document.createElement('div');
     item.className = `collection-item${bekannt ? '' : ' is-locked'}${monster.isBoss ? ' is-boss' : ''}`;
+    // Die Einträge erscheinen leicht versetzt nacheinander.
+    item.style.animationDelay = `${Math.min(nr, 12) * 0.03}s`;
+    // Jede Welt färbt den Lichthof hinter ihren Kreaturen.
+    if (farbe) item.style.setProperty('--welt-farbe', farbe);
     item.innerHTML = `
       <span class="collection-item__sprite"></span>
       <span class="collection-item__name">${bekannt ? monster.name : '???'}</span>
       <span class="collection-item__note">${bekannt ? notiz : 'Unentdeckt'}</span>
     `;
     const bild = item.querySelector('.collection-item__sprite');
+    // Unentdeckte Gegner einer offenen Welt zeigen ihre Silhouette - man
+    // ahnt, was einen erwartet. In gesperrten Welten bleibt es ein Rätsel.
     if (bekannt) bild.appendChild(createSprite(monster));
+    else if (silhouette) bild.appendChild(createSprite(monster, { className: 'pixel-sprite--silhouette' }));
     else bild.textContent = '❓';
     grid.appendChild(item);
   });

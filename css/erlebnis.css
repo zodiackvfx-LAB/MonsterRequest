@@ -1307,3 +1307,170 @@
   font-size: 0.8rem;
   animation: float-up 0.6s ease-out forwards;
 }
+
+/* =========================================================================
+   5. Menüs
+   ========================================================================= */
+
+/* ---------- Sortierleiste im Deckmenü ---------- */
+.sortier-leiste {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+@media (max-width: 420px) {
+  .sortier-leiste {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sortier-knopf {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-height: 40px;
+  padding: 6px 4px;
+  color: var(--text-dim);
+  border-radius: 999px;
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(42, 58, 114, 0.94), rgba(17, 24, 58, 0.94));
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.sortier-knopf:active {
+  transform: scale(0.95);
+}
+
+.sortier-knopf.is-active {
+  color: #fff;
+  border-color: var(--gold-2);
+  box-shadow: 0 0 10px rgba(255, 190, 60, 0.35);
+}
+
+.deck-list > * {
+  animation: pop-in 0.22s ease-out both;
+}
+
+/* ---------- Lokale Sicherung in den Einstellungen ---------- */
+.stat-row--sicherung {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stat-row--sicherung .stat-row__label {
+  display: grid;
+  gap: 3px;
+}
+
+.stat-row--sicherung .stat-row__value {
+  white-space: nowrap;
+}
+
+/* ---------- Bildschirmwechsel ----------
+   Sanft einblenden, leicht anheben und aus 98,5 % aufziehen. Solange das
+   läuft, nimmt der neue Bildschirm keine Tipps an (js/core/screens.js). */
+@keyframes screen-rein {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.screen {
+  animation: screen-rein 0.26s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.screen.ist-im-uebergang {
+  pointer-events: none;
+}
+
+/* ---------- Sammlung: Silhouetten und Weltfarben ---------- */
+.collection-item {
+  animation: pop-in 0.25s ease-out both;
+}
+
+.collection-item__sprite {
+  background: radial-gradient(circle, color-mix(in srgb, var(--welt-farbe, #6d92ff) 55%, transparent), transparent 68%);
+}
+
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .collection-item__sprite {
+    background: radial-gradient(circle, rgba(109, 146, 255, 0.34), transparent 68%);
+  }
+}
+
+.pixel-sprite--silhouette {
+  filter: brightness(0) drop-shadow(0 0 4px rgba(160, 190, 255, 0.45));
+  opacity: 0.75;
+}
+
+/* Die Silhouette soll schwarz bleiben, nicht grau gefiltert werden. */
+.collection-item.is-locked .collection-item__sprite:has(.pixel-sprite--silhouette) {
+  filter: none;
+}
+
+/* ---------- Weltkarte: Ring in der Weltfarbe ---------- */
+.screen--map .node__circle::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 3px solid var(--welt-farbe, transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.screen--map .node.is-locked .node__circle::before {
+  opacity: 0.18;
+  border-style: dashed;
+}
+
+.screen--map .node.is-selected .node__circle::before {
+  opacity: 1;
+  inset: -10px;
+  box-shadow: 0 0 14px var(--welt-farbe, transparent);
+}
+
+/* ---------- Teilchen beim Betreten einer Welt ---------- */
+.welt-teilchen {
+  position: absolute !important;
+  inset: 0;
+  z-index: 4 !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.welt-teilchen__stueck {
+  position: absolute;
+  top: -20px;
+  width: 12px;
+  height: 8px;
+  opacity: 0;
+  animation: teilchen-fallen 1.6s ease-in forwards;
+}
+
+.welt-teilchen--steigen .welt-teilchen__stueck {
+  top: auto;
+  bottom: -20px;
+  animation-name: teilchen-steigen;
+}
+
+@keyframes teilchen-fallen {
+  0%   { transform: translate(0, 0) rotate(0); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--weg), 70vh) rotate(var(--dreh)); opacity: 0; }
+}
+
+@keyframes teilchen-steigen {
+  0%   { transform: translate(0, 0) rotate(0); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--weg), -70vh) rotate(var(--dreh)); opacity: 0; }
+}
+
+.welt-teilchen--blatt .welt-teilchen__stueck { border-radius: 0 70% 0 70%; background: #6fc04a; }
+.welt-teilchen--splitter .welt-teilchen__stueck { width: 8px; height: 12px; background: linear-gradient(160deg, #cdf3ff, #6fd0ff); clip-path: polygon(50% 0, 100% 40%, 70% 100%, 30% 100%, 0 40%); }
+.welt-teilchen--glut .welt-teilchen__stueck { width: 6px; height: 6px; border-radius: 50%; background: #ffd36b; box-shadow: 0 0 8px 2px rgba(255, 110, 40, 0.8); }
+.welt-teilchen--flocke .welt-teilchen__stueck { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.8); }
+.welt-teilchen--schatten .welt-teilchen__stueck { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #b28cff, rgba(80, 40, 140, 0)); }
+.welt-teilchen--sand .welt-teilchen__stueck { width: 5px; height: 5px; border-radius: 50%; background: #f2d28c; }
+.welt-teilchen--feder .welt-teilchen__stueck { width: 6px; height: 16px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; background: linear-gradient(90deg, #ffffff, #dfe8ff); }

@@ -15,6 +15,7 @@ import {
   resetProgress,
   setSetting,
   setSpielername,
+  sicherungsInfo,
   NAME_MAX,
 } from '../core/state.js';
 import {
@@ -229,6 +230,7 @@ function baueSpiel(content, screen) {
       <span class="stat-row__label">Münzen</span>
       <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
     </div>
+    ${sicherungZeile()}
   `;
   content.appendChild(progress);
 
@@ -242,8 +244,36 @@ function baueSpiel(content, screen) {
   const note = document.createElement('p');
   note.className = 'map__info-text';
   note.style.textAlign = 'center';
-  note.textContent = 'MonsterQuest · Phase 1';
+  note.textContent = 'MonsterQuest';
   content.appendChild(note);
+}
+
+/**
+ * Anzeige der zweiten, lokalen Sicherung. Ehrlich: Sie liegt im selben
+ * Browser und hilft nur gegen beschädigte Daten - nicht gegen das Löschen
+ * der Browserdaten.
+ */
+function sicherungZeile() {
+  const info = sicherungsInfo();
+  const wann = info.zeit
+    ? new Date(info.zeit).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    : '–';
+  const wiederhergestellt = info.geladenAus === 'sicherung'
+    ? '<br><strong>Beim Start wurde dein Stand aus dieser Sicherung wiederhergestellt.</strong>'
+    : '';
+  return `
+    <div class="stat-row stat-row--sicherung">
+      <span class="stat-row__label">
+        Lokale Sicherung
+        <small class="setting-row__hint">
+          Eine zweite Kopie im selben Browser - springt ein, falls der Spielstand
+          beschädigt wird. Gegen das Löschen der Browserdaten hilft sie nicht;
+          dafür gibt es den Übertragungscode unter „Datenbank“.${wiederhergestellt}
+        </small>
+      </span>
+      <span class="stat-row__value">${info.vorhanden ? `✓ ${wann}` : '–'}</span>
+    </div>
+  `;
 }
 
 /* ------------------------------------------------------------------ */

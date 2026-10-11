@@ -184,3 +184,45 @@ export function konfetti(box, anzahl = 16) {
     setTimeout(() => stueck.remove(), 2000);
   }
 }
+
+/**
+ * Teilchen je Welt für den kurzen Übergang beim Betreten einer Weltkarte:
+ * Blätter im Tal, Splitter in den Kristallhöhlen, Glut im Vulkan ...
+ * [Klasse, ob sie steigen statt fallen]
+ */
+const WELT_TEILCHEN = {
+  1: ['blatt', false],
+  2: ['splitter', false],
+  3: ['glut', true],
+  4: ['flocke', false],
+  5: ['schatten', true],
+  6: ['sand', false],
+  7: ['feder', false],
+};
+
+/**
+ * Lässt beim Betreten einer Welt für gut eine Sekunde passende Teilchen
+ * über den Bildschirm wehen. Danach räumt sich alles selbst auf.
+ *
+ * @param {HTMLElement} screen
+ * @param {number} weltId
+ */
+export function weltTeilchen(screen, weltId) {
+  if (!screen || !animationenAn()) return;
+  const [art, steigen] = WELT_TEILCHEN[weltId] ?? WELT_TEILCHEN[1];
+
+  const ebene = document.createElement('div');
+  ebene.className = `welt-teilchen welt-teilchen--${art}${steigen ? ' welt-teilchen--steigen' : ''}`;
+  ebene.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 14; i++) {
+    const t = document.createElement('span');
+    t.className = 'welt-teilchen__stueck';
+    t.style.left = `${(i * 7.3 + Math.random() * 6) % 100}%`;
+    t.style.animationDelay = `${Math.random() * 0.5}s`;
+    t.style.setProperty('--weg', `${(Math.random() * 2 - 1) * 60}px`);
+    t.style.setProperty('--dreh', `${180 + Math.random() * 360}deg`);
+    ebene.appendChild(t);
+  }
+  screen.appendChild(ebene);
+  setTimeout(() => ebene.remove(), 2000);
+}

@@ -47,4 +47,16 @@ export function showScreen(name, params = {}) {
   rootElement.innerHTML = '';
   currentScreen = screen;
   screen.mount(rootElement, params);
+
+  // Während der neue Bildschirm hereingleitet, nimmt er kurz keine Tipps an.
+  // So löst ein schneller Doppeltipp (z. B. auf "Weiter") nicht gleich den
+  // Knopf aus, der auf dem NEUEN Bildschirm an derselben Stelle liegt.
+  const neu = rootElement.querySelector(':scope > .screen');
+  if (neu && !document.body.classList.contains('no-animations')) {
+    neu.classList.add('ist-im-uebergang');
+    setTimeout(() => neu.classList.remove('ist-im-uebergang'), UEBERGANG_MS);
+  }
 }
+
+/** So lange (ms) dauert der Auftritt eines Bildschirms (siehe .screen in css/ui.css). */
+const UEBERGANG_MS = 260;

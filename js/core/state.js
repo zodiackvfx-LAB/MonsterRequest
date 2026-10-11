@@ -16,6 +16,27 @@ import { cloudMerken } from './cloud.js';
 const STORAGE_KEY = 'monsterquest.save.v3';
 const ALTER_KEY = 'monsterquest.save.v2'; // Vorgängerversion, wird übernommen
 
+/**
+ * Zweite, lokale Sicherung des Spielstands.
+ *
+ * Sie liegt im SELBEN Browser wie der Spielstand. Sie hilft, wenn der
+ * Hauptspeicher einmal kaputtgeht (abgebrochenes Schreiben, beschädigte
+ * Daten) - NICHT, wenn jemand alle Browserdaten löscht. Dafür gibt es die
+ * Übertragungscodes (Einstellungen → Datenbank).
+ *
+ * Inhalt: { zeit: Millisekunden, stand: <Spielstand> }
+ */
+const SICHERUNG_KEY = 'monsterquest.save.v3.sicherung';
+/** Höchstens so oft wird die Sicherung während des Spielens erneuert. */
+const SICHERUNG_ABSTAND = 60 * 1000;
+let letzteSicherung = 0;
+
+/** Woher der Stand beim Start kam - die Einstellungen zeigen das an. */
+let geladenAus = null; // null | 'speicher' | 'sicherung' | 'alt'
+
+/** Version des Speicherformats. Steigt, wenn sich der Aufbau ändert. */
+const SPEICHER_VERSION = 4;
+
 /** Frischer Spielstand - auch die Grundlage fürs Zurücksetzen. */
 function createNewGame() {
   return {
@@ -23,6 +44,7 @@ function createNewGame() {
        Start, ob der Stand aus der Datenbank neuer ist als der im Browser -
        siehe js/core/cloud.js. */
     revision: 0,
+    version: SPEICHER_VERSION, // Speicherformat (siehe uebernehmen)
     name: '', // vom Spieler beim ersten Start gewählt (siehe js/ui/willkommen.js)
     aktiveFigur: 'timo', // die gewählte Spielfigur (siehe js/data/monsters.js)
     unlockedWorld: 1, // höchste freigeschaltete Welt
@@ -66,6 +88,7 @@ function createNewGame() {
       animations: true,
       vibration: true, // kurzes Vibrieren bei Treffern (nur wo das Gerät es kann)
       schwierigkeit: 'normal', // 'leicht' | 'normal' | 'schwer' (siehe js/data/schwierigkeit.js)
+      deckSortierung: 'deck', // Anzeige im Deckmenü (siehe js/core/sortierung.js)
     },
   };
 }
@@ -80,34 +103,93 @@ export const gameState = createNewGame();
  *   (siehe js/main.js und js/ui/willkommen.js).
  */
 export function loadProgress() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      uebernehmen(JSON.parse(raw));
-      return true;
-    }
+  // 1. Der normale Spielstand. Nur ein lesbares Objekt zählt - kaputte
+  //    oder abgeschnittene Daten fallen auf die Sicherung zurück.
+  const haupt = lesen(STORAGE_KEY);
+  if (haupt) {
+    uebernehmen(haupt);
+    geladenAus = 'speicher';
+    sicherungSchreiben(true); // gelesen und gültig: gleich als Sicherung ablegen
+    return true;
+  }
 
-    // Alter Spielstand (3 Level ohne Welten): in die neue Form bringen.
-    const alt = localStorage.getItem(ALTER_KEY);
-    if (alt) {
-      const saved = JSON.parse(alt);
-      uebernehmen({
-        unlockedWorld: 1,
-        clearedLevels: (saved.clearedLevels ?? []).map((nummer) => `1-${nummer}`),
-        stars: Object.fromEntries(
-          Object.entries(saved.stars ?? {}).map(([nummer, wert]) => [`1-${nummer}`, wert])
-        ),
-        coins: saved.coins,
-        settings: saved.settings,
-      });
-      saveProgress();
-      return true;
-    }
-  } catch (error) {
-    // Ein kaputter oder gesperrter Speicher darf das Spiel nicht blockieren.
-    console.warn('Spielstand konnte nicht geladen werden:', error);
+  // 2. Der Hauptspeicher fehlt oder ist kaputt: die zweite Sicherung.
+  const sicherung = lesen(SICHERUNG_KEY);
+  if (sicherung?.stand && typeof sicherung.stand === 'object') {
+    uebernehmen(sicherung.stand);
+    geladenAus = 'sicherung';
+    console.warn('Spielstand war beschädigt - aus der lokalen Sicherung wiederhergestellt.');
+    speichernLokal(); // den Hauptspeicher reparieren
+    return true;
+  }
+
+  // 3. Alter Spielstand (3 Level ohne Welten): in die neue Form bringen.
+  const saved = lesen(ALTER_KEY);
+  if (saved) {
+    uebernehmen({
+      unlockedWorld: 1,
+      clearedLevels: (saved.clearedLevels ?? []).map((nummer) => `1-${nummer}`),
+      stars: Object.fromEntries(
+        Object.entries(saved.stars ?? {}).map(([nummer, wert]) => [`1-${nummer}`, wert])
+      ),
+      coins: saved.coins,
+      settings: saved.settings,
+    });
+    geladenAus = 'alt';
+    saveProgress();
+    return true;
   }
   return false;
+}
+
+/**
+ * Liest einen Eintrag aus dem Browser-Speicher. Gibt nur ein echtes Objekt
+ * zurück - alles andere (fehlt, kaputtes JSON, gesperrter Speicher) wird null.
+ */
+function lesen(schluessel) {
+  try {
+    const raw = localStorage.getItem(schluessel);
+    if (!raw) return null;
+    const daten = JSON.parse(raw);
+    return daten && typeof daten === 'object' && !Array.isArray(daten) ? daten : null;
+  } catch (error) {
+    console.warn(`Gespeicherte Daten unter "${schluessel}" sind unlesbar:`, error);
+    return null;
+  }
+}
+
+/** Schreibt die Sicherung - höchstens einmal pro Minute, außer erzwungen. */
+function sicherungSchreiben(erzwingen = false) {
+  const jetzt = Date.now();
+  if (!erzwingen && jetzt - letzteSicherung < SICHERUNG_ABSTAND) return;
+  try {
+    localStorage.setItem(SICHERUNG_KEY, JSON.stringify({ zeit: jetzt, stand: gameState }));
+    letzteSicherung = jetzt;
+  } catch (error) {
+    console.warn('Lokale Sicherung konnte nicht geschrieben werden:', error);
+  }
+}
+
+/** Schreibt den Spielstand in den Browser (ohne Datenbank). */
+function speichernLokal() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+  } catch (error) {
+    console.warn('Spielstand konnte nicht gespeichert werden:', error);
+  }
+}
+
+/**
+ * Stand der lokalen Sicherung - für die Anzeige in den Einstellungen.
+ * @returns {{vorhanden: boolean, zeit: number|null, geladenAus: string|null}}
+ */
+export function sicherungsInfo() {
+  const sicherung = lesen(SICHERUNG_KEY);
+  return {
+    vorhanden: Boolean(sicherung?.stand),
+    zeit: Number(sicherung?.zeit) || null,
+    geladenAus,
+  };
 }
 
 /** Frueherer Name der Spielerfigur -> heutiger Name. */
@@ -152,6 +234,9 @@ function figurUmbenennen(eintrag) {
 
 function uebernehmen(saved) {
   gameState.revision = Number(saved.revision) || 0;
+  // Ältere Stände (ohne Versionsnummer) laufen durch dieselben Umzüge wie
+  // bisher - fehlende Felder bekommen unten ihre Standardwerte.
+  gameState.version = SPEICHER_VERSION;
   gameState.name = typeof saved.name === 'string' ? saved.name : '';
   gameState.aktiveFigur =
     typeof saved.aktiveFigur === 'string' && MONSTERS[saved.aktiveFigur] ? saved.aktiveFigur : 'timo';
@@ -206,7 +291,14 @@ function uebernehmen(saved) {
     arenaBest: Number(st.arenaBest) || 0,
     erfolge: Array.isArray(st.erfolge) ? st.erfolge.map(String) : [],
   };
-  gameState.settings = { ...gameState.settings, ...(saved.settings ?? {}) };
+  // Einstellungen: neue Schalter behalten ihren Standardwert, wenn ein alter
+  // Stand sie noch nicht kennt. Nur Einträge mit passendem Typ zählen.
+  const standard = createNewGame().settings;
+  const gespeichert = saved.settings && typeof saved.settings === 'object' ? saved.settings : {};
+  gameState.settings = { ...standard };
+  Object.keys(standard).forEach((key) => {
+    if (typeof gespeichert[key] === typeof standard[key]) gameState.settings[key] = gespeichert[key];
+  });
 }
 
 /** Wurde dieser Einmal-Hinweis schon gezeigt? */
@@ -231,11 +323,8 @@ export function merkeHinweis(id) {
 export function saveProgress() {
   gameState.revision = (Number(gameState.revision) || 0) + 1;
 
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
-  } catch (error) {
-    console.warn('Spielstand konnte nicht gespeichert werden:', error);
-  }
+  speichernLokal();
+  sicherungSchreiben();
 
   cloudMerken(JSON.parse(JSON.stringify(gameState)));
 }
@@ -255,12 +344,9 @@ export function spielstandUebernehmen(daten, speichern = true) {
   if (speichern) {
     saveProgress();
   } else {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
-    } catch (error) {
-      console.warn('Spielstand konnte nicht gespeichert werden:', error);
-    }
+    speichernLokal();
   }
+  sicherungSchreiben(true);
   return true;
 }
 
@@ -570,4 +656,7 @@ export function resetProgress() {
   Object.assign(gameState, createNewGame());
   gameState.revision = bisher;
   saveProgress();
+  // Die Sicherung sofort mit zurücksetzen - sonst holte ein späterer
+  // Speicherfehler den alten Stand wieder hervor.
+  sicherungSchreiben(true);
 }

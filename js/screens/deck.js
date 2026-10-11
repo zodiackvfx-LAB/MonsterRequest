@@ -13,7 +13,8 @@ import { BEUTE_ATTACKEN, MUENZE, SELTENHEITEN } from '../data/items.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { HAND_SIZE } from '../core/deck.js';
-import { besitztAttacke, gameState, getAktiveFigur, getDeck, setDeck } from '../core/state.js';
+import { besitztAttacke, gameState, getAktiveFigur, getDeck, setDeck, setSetting } from '../core/state.js';
+import { SORTIERUNGEN, sortiereAttacken } from '../core/sortierung.js';
 import { spieleKlang } from '../core/audio.js';
 import {
   MAX_ATTACKEN_LEVEL,
@@ -56,11 +57,15 @@ export const deckScreen = {
         </p>
       `;
       content.appendChild(intro);
+      content.appendChild(sortierLeiste());
 
       const liste = document.createElement('div');
       liste.className = 'deck-list';
 
-      deck.forEach((attackId, platz) => {
+      // Sortiert wird nur die Anzeige - jede Zeile kennt weiter ihren echten
+      // Deckplatz, Tauschen trifft also immer den richtigen.
+      const eintraege = deck.map((attackId, platz) => ({ attackId, platz, attacke: attackeMitLevel(getAttack(attackId)) }));
+      sortiereAttacken(eintraege, sortierung(), (e) => e.attacke).forEach(({ attackId, platz }) => {
         liste.appendChild(deckZeile(attackId, platz, deck));
       });
 
@@ -76,6 +81,34 @@ export const deckScreen = {
         </p>
       `;
       content.appendChild(info);
+    }
+
+    /** Die gewählte Sortierung (gespeichert, damit sie beim nächsten Mal bleibt). */
+    function sortierung() {
+      const id = gameState.settings.deckSortierung;
+      return SORTIERUNGEN.some((s) => s.id === id) ? id : 'deck';
+    }
+
+    /** Knöpfe zum Sortieren der Anzeige. */
+    function sortierLeiste() {
+      const leiste = document.createElement('div');
+      leiste.className = 'sortier-leiste';
+      leiste.setAttribute('role', 'group');
+      leiste.setAttribute('aria-label', 'Karten sortieren');
+      SORTIERUNGEN.forEach(({ id, label }) => {
+        const knopf = document.createElement('button');
+        knopf.type = 'button';
+        knopf.className = `sortier-knopf${id === sortierung() ? ' is-active' : ''}`;
+        knopf.textContent = label;
+        knopf.setAttribute('aria-pressed', String(id === sortierung()));
+        knopf.addEventListener('click', () => {
+          if (id === sortierung()) return;
+          setSetting('deckSortierung', id);
+          zeichnen();
+        });
+        leiste.appendChild(knopf);
+      });
+      return leiste;
     }
 
     /** Eine Zeile: links die Attacke (antippen zum Tauschen), rechts Aufwerten. */
@@ -128,7 +161,8 @@ export const deckScreen = {
 
     /** Auswahl, womit ein Deckplatz belegt werden soll. */
     function tauschDialog(platz, deck) {
-      const auswahl = verfuegbareAttacken();
+      // Auch die Auswahl folgt der Sortierung ("Deck" = Fundreihenfolge).
+      const auswahl = sortiereAttacken(verfuegbareAttacken(), sortierung(), (a) => attackeMitLevel(a));
 
       const overlay = document.createElement('div');
       overlay.className = 'overlay';

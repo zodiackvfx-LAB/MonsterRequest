@@ -15,6 +15,7 @@ import { getEnemy } from '../data/enemies.js';
 import { applyRegion, createScenery } from '../ui/scenery.js';
 import { createHud, createStars } from '../ui/hud.js';
 import { createSprite } from '../ui/sprite.js';
+import { weltTeilchen } from '../ui/effekte.js';
 import { MUENZE } from '../data/items.js';
 import {
   clearedInWorld,
@@ -181,6 +182,12 @@ export const mapScreen = {
     screen.appendChild(map);
     screen.appendChild(footer);
     root.appendChild(screen);
+
+    // Die Stationen tragen einen Ring in der Farbe ihrer Welt - so sieht
+    // man sofort, wo man ist. Dazu wehen beim Betreten kurz Teilchen der
+    // Welt über die Karte (Blätter, Glut, Schnee ...).
+    if (world.farben?.wiese) screen.style.setProperty('--welt-farbe', world.farben.wiese);
+    weltTeilchen(screen, world.id);
 
     // Sterne dieser Welt in der Kopfleiste ergänzen
     const hud = screen.querySelector('.hud');
