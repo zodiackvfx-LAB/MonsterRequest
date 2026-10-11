@@ -17,12 +17,16 @@
  *   - Bosse geben deutlich mehr: die Grundbelohnung ist bereits vervierfacht
  *     (js/data/levels.js), dazu kommt sicher Material und beim ersten Sieg
  *     eine Bosstruhe.
+ *   - Jeder 2. Sieg bringt zusätzlich eine Gratis-Truhe (Holztruhe) - auch
+ *     beim Wiederholen. Sie kommt getrennt zurück (gratisTruhe), damit das
+ *     Ergebnisfenster sie als eigene Truhe zeigen kann.
  */
 
 import { MATERIAL_BEUTE, MUENZE } from '../data/items.js';
-import { BOSS_TRUHE } from '../data/shop.js';
+import { BOSS_TRUHE, GRATIS_TRUHE_ID, SIEGE_PRO_GRATIS_TRUHE, getTruhe } from '../data/shop.js';
 import { truheOeffnen } from './loot.js';
-import { beuteGutschreiben, bossKraftFreischalten, completeLevel, isLevelCleared } from './state.js';
+import { beuteGutschreiben, bossKraftFreischalten, completeLevel, gameState, isLevelCleared, saveProgress } from './state.js';
+import { fortschrittMelden } from './aufgaben.js';
 import { xpGutschreiben } from './progression.js';
 
 /** Wie oft ein normaler Kampf Material abwirft. */
@@ -88,7 +92,38 @@ export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) 
   // Beim ERSTEN Boss-Sieg gibt es die Boss-Kraft dieser Welt.
   const neueKraft = level.isBoss && erstesMal ? bossKraftFreischalten(level.worldId) : null;
 
-  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft };
+  // Erst NACH der übrigen Beute öffnen: truheOeffnen() überspringt, was man
+  // besitzt - so kommt nichts aus der Bosstruhe gleich noch einmal.
+  const gratisTruhe = gratisTruheZaehlen();
+
+  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft, gratisTruhe };
+}
+
+/**
+ * Zählt einen Sieg für die Gratis-Truhe. Ist es der 2. Sieg, wird die Truhe
+ * geöffnet und gutgeschrieben.
+ *
+ * @returns {{truhe: object, stuecke: Array}|null} die geöffnete Truhe oder null
+ */
+function gratisTruheZaehlen() {
+  gameState.gratisTruheZaehler = (Number(gameState.gratisTruheZaehler) || 0) + 1;
+  if (gameState.gratisTruheZaehler < SIEGE_PRO_GRATIS_TRUHE) {
+    saveProgress();
+    return null;
+  }
+
+  gameState.gratisTruheZaehler = 0;
+  const truhe = getTruhe(GRATIS_TRUHE_ID);
+  const stuecke = truheOeffnen(truhe);
+  stuecke.forEach((eintrag) => beuteGutschreiben(eintrag));
+  // Zählt wie jede geöffnete Truhe für die Tagesaufgabe "Schatzsucher".
+  fortschrittMelden('truhe');
+  return { truhe, stuecke };
+}
+
+/** Wie viele Siege noch bis zur nächsten Gratis-Truhe fehlen (1 oder 2). */
+export function siegeBisGratisTruhe() {
+  return SIEGE_PRO_GRATIS_TRUHE - (Number(gameState.gratisTruheZaehler) || 0);
 }
 
 /** Wie viel Material dieser Kampf abwirft (0, wenn keins). */

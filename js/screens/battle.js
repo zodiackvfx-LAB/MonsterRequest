@@ -24,7 +24,7 @@ import { calculateStars, figurAnzeigeName, gameState, getAktiveFigur, getBossKra
 import { zeigeKampfTutorial } from '../ui/tutorial.js';
 import { statErhoehen, pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
-import { siegBelohnung } from '../core/belohnung.js';
+import { siegBelohnung, siegeBisGratisTruhe } from '../core/belohnung.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
 import { spieleBeute, spieleKlang, spieleTreffer } from '../core/audio.js';
 import { vibriere } from '../core/haptik.js';
@@ -868,6 +868,14 @@ export const battleScreen = {
             ? `<div class="boss-truhe">${truheSvg(BOSS_TRUHE.design, { offen: true })}<span class="boss-truhe__name">${BOSS_TRUHE.name} geöffnet!</span></div>`
             : ''}
           ${sieg ? '<div class="belohnung" id="belohnung"></div>' : ''}
+          ${belohnung?.gratisTruhe
+            ? `<div class="gratis-truhe">
+                 <div class="boss-truhe">${truheSvg(belohnung.gratisTruhe.truhe.design, { offen: true })}<span class="boss-truhe__name gratis-truhe__name">🎁 Gratis-Truhe für 2 Siege!</span></div>
+                 <div class="belohnung" id="gratis-beute"></div>
+               </div>`
+            : sieg
+              ? `<p class="gratis-hinweis">🎁 Noch ${siegeBisGratisTruhe()} Sieg bis zur Gratis-Truhe</p>`
+              : ''}
           ${belohnung?.xpErgebnis?.aufgestiegen
             ? `<p class="overlay__unlock">🌟 <strong>Level ${belohnung.xpErgebnis.levelNachher} erreicht!</strong></p>`
             : ''}
@@ -889,6 +897,10 @@ export const battleScreen = {
         const box = overlay.querySelector('.overlay__box');
         box.insertBefore(createStars(stars), box.querySelector('.ergebnis-portrait'));
         fuelleBelohnung(overlay.querySelector('#belohnung'), belohnung.stuecke);
+        if (belohnung.gratisTruhe) {
+          // Die Gratis-Beute klingt nach der normalen Beute.
+          fuelleBelohnung(overlay.querySelector('#gratis-beute'), belohnung.gratisTruhe.stuecke, belohnung.stuecke.length);
+        }
         // Konfetti zum Feiern - erst, wenn das Fenster steht.
         setTimeout(() => konfetti(box, 26), 120);
       }
@@ -939,8 +951,9 @@ export const battleScreen = {
      * Zeigt die Belohnungen als Reihe von Feldern - eins nach dem anderen,
      * damit man jedes einzeln wahrnimmt.
      */
-    function fuelleBelohnung(behaelter, stuecke) {
-      stuecke.forEach((stueck, index) => {
+    function fuelleBelohnung(behaelter, stuecke, versatz = 0) {
+      stuecke.forEach((stueck, nr) => {
+        const index = nr + versatz;
         const seltenheit = SELTENHEITEN[stueck.seltenheit] ?? SELTENHEITEN.gewoehnlich;
         const feld = document.createElement('div');
         feld.className = 'loot-item';

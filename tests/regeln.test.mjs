@@ -50,7 +50,7 @@ import {
 } from '../js/core/state.js';
 import { TRUHEN } from '../js/data/shop.js';
 import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
-import { BOSS_MATERIAL, materialBelohnung, siegBelohnung } from '../js/core/belohnung.js';
+import { BOSS_MATERIAL, materialBelohnung, siegBelohnung, siegeBisGratisTruhe } from '../js/core/belohnung.js';
 import { BOSS_KRAEFTE, getKraft, kraftFuerWelt } from '../js/data/kraefte.js';
 import { ERFOLGE } from '../js/data/erfolge.js';
 import { getSchwierigkeit } from '../js/data/schwierigkeit.js';
@@ -1124,6 +1124,30 @@ console.log('\nLokale Sicherung');
     gameState.settings.animations === true && gameState.settings.sound === false &&
     gameState.settings.deckSortierung === 'deck');
   resetProgress();
+}
+
+console.log('\nGratis-Truhe');
+{
+  resetProgress();
+  const kampf = levelsOfWorld(1)[0];
+  pruefe('Zu Beginn fehlen 2 Siege bis zur Gratis-Truhe', siegeBisGratisTruhe() === 2);
+  const erster = siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  pruefe('Der 1. Sieg bringt noch keine Truhe', erster.gratisTruhe === null && siegeBisGratisTruhe() === 1);
+  const muenzenVorher = gameState.coins;
+  const zweiter = siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  pruefe('Der 2. Sieg bringt eine Holztruhe',
+    zweiter.gratisTruhe?.truhe.id === 'holztruhe' && zweiter.gratisTruhe.stuecke.length === 5);
+  const truhenMuenzen = zweiter.gratisTruhe.stuecke.find((b) => b.art === 'muenzen').menge;
+  pruefe('Die Truhen-Beute ist gutgeschrieben',
+    gameState.coins === muenzenVorher + zweiter.stuecke[0].menge + truhenMuenzen);
+  pruefe('Danach beginnt die Zählung neu', siegeBisGratisTruhe() === 2);
+  siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  pruefe('Auch der 4. Sieg bringt wieder eine', siegBelohnung(kampf, 3, 'timo', () => 0.99).gratisTruhe !== null);
+  siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  loadProgress();
+  pruefe('Der Zähler übersteht das Neuladen', siegeBisGratisTruhe() === 1);
+  resetProgress();
+  pruefe('Zurücksetzen setzt auch den Zähler zurück', siegeBisGratisTruhe() === 2);
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

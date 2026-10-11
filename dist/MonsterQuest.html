@@ -6543,6 +6543,27 @@ body.no-animations *::after {
   opacity: 1;
 }
 
+/* ---------- Gratis-Truhe nach jedem 2. Sieg ---------- */
+.gratis-truhe {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: rgba(255, 197, 61, 0.08);
+  border: 1px dashed rgba(255, 197, 61, 0.5);
+}
+
+.gratis-truhe__name {
+  color: var(--gold-1);
+}
+
+.gratis-hinweis {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
   </style>
 </head>
 <body>
@@ -8498,6 +8519,8 @@ function createNewGame() {
     // Material (💠) für Aufwertungen - siehe js/core/progression.js
     ownedAttacks: [],
     // aus Truhen freigeschaltete Attacken
+    gratisTruheZaehler: 0,
+    // Siege seit der letzten Gratis-Truhe (siehe js/core/belohnung.js)
     bossPowers: [],
     // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null,
@@ -8656,6 +8679,7 @@ function uebernehmen(saved) {
   gameState.coins = Number(saved.coins) || 0;
   gameState.materials = Number(saved.materials) || 0;
   gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
+  gameState.gratisTruheZaehler = Math.max(0, Math.floor(Number(saved.gratisTruheZaehler) || 0));
   gameState.bossPowers = Array.isArray(saved.bossPowers) ? saved.bossPowers.filter((id) => getKraft(id)) : [];
   gameState.bossPower = saved.bossPower && gameState.bossPowers.includes(saved.bossPower) ? saved.bossPower : null;
   gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ["skin-standard"];
@@ -11201,6 +11225,11 @@ var BOSS_TRUHE = {
   chancen: { gewoehnlich: 35, selten: 42, episch: 19, legendaer: 4 },
   garantie: "selten"
 };
+var SIEGE_PRO_GRATIS_TRUHE = 2;
+var GRATIS_TRUHE_ID = "holztruhe";
+function getTruhe(id) {
+  return TRUHEN.find((truhe) => truhe.id === id);
+}
 
 // js/core/loot.js
 function zwischen(min, max) {
@@ -11307,7 +11336,24 @@ function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) {
   nochBuchen.push(...truhenBeute);
   nochBuchen.forEach((eintrag) => beuteGutschreiben(eintrag));
   const neueKraft = level.isBoss && erstesMal ? bossKraftFreischalten(level.worldId) : null;
-  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft };
+  const gratisTruhe = gratisTruheZaehlen();
+  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft, gratisTruhe };
+}
+function gratisTruheZaehlen() {
+  gameState.gratisTruheZaehler = (Number(gameState.gratisTruheZaehler) || 0) + 1;
+  if (gameState.gratisTruheZaehler < SIEGE_PRO_GRATIS_TRUHE) {
+    saveProgress();
+    return null;
+  }
+  gameState.gratisTruheZaehler = 0;
+  const truhe = getTruhe(GRATIS_TRUHE_ID);
+  const stuecke = truheOeffnen(truhe);
+  stuecke.forEach((eintrag) => beuteGutschreiben(eintrag));
+  fortschrittMelden("truhe");
+  return { truhe, stuecke };
+}
+function siegeBisGratisTruhe() {
+  return SIEGE_PRO_GRATIS_TRUHE - (Number(gameState.gratisTruheZaehler) || 0);
 }
 function materialBelohnung(level, erstesMal, wuerfeln = Math.random) {
   if (level.isBoss) return zwischen2(...BOSS_MATERIAL, wuerfeln);
@@ -12391,6 +12437,10 @@ var battleScreen = {
           ${statistikHtml(result)}
           ${sieg && level.isBoss && belohnung?.erstesMal ? `<div class="boss-truhe">${truheSvg(BOSS_TRUHE.design, { offen: true })}<span class="boss-truhe__name">${BOSS_TRUHE.name} geöffnet!</span></div>` : ""}
           ${sieg ? '<div class="belohnung" id="belohnung"></div>' : ""}
+          ${belohnung?.gratisTruhe ? `<div class="gratis-truhe">
+                 <div class="boss-truhe">${truheSvg(belohnung.gratisTruhe.truhe.design, { offen: true })}<span class="boss-truhe__name gratis-truhe__name">🎁 Gratis-Truhe für 2 Siege!</span></div>
+                 <div class="belohnung" id="gratis-beute"></div>
+               </div>` : sieg ? `<p class="gratis-hinweis">🎁 Noch ${siegeBisGratisTruhe()} Sieg bis zur Gratis-Truhe</p>` : ""}
           ${belohnung?.xpErgebnis?.aufgestiegen ? `<p class="overlay__unlock">🌟 <strong>Level ${belohnung.xpErgebnis.levelNachher} erreicht!</strong></p>` : ""}
           ${belohnung?.neueKraft ? `<p class="overlay__unlock overlay__unlock--kraft">${belohnung.neueKraft.icon} <strong>Neue Boss-Kraft: ${belohnung.neueKraft.name}!</strong><br>${belohnung.neueKraft.text}<br><small>Ausrüsten unter „Figur“.</small></p>` : ""}
           ${newWorld ? `<p class="overlay__unlock">🎉 Neue Welt freigeschaltet:<br><strong>${newWorld.icon} ${newWorld.name}</strong></p>` : ""}
@@ -12406,6 +12456,9 @@ var battleScreen = {
         const box = overlay.querySelector(".overlay__box");
         box.insertBefore(createStars(stars), box.querySelector(".ergebnis-portrait"));
         fuelleBelohnung(overlay.querySelector("#belohnung"), belohnung.stuecke);
+        if (belohnung.gratisTruhe) {
+          fuelleBelohnung(overlay.querySelector("#gratis-beute"), belohnung.gratisTruhe.stuecke, belohnung.stuecke.length);
+        }
         setTimeout(() => konfetti(box, 26), 120);
       }
       spieleKlang(sieg ? "sieg" : "niederlage");
@@ -12438,8 +12491,9 @@ var battleScreen = {
         </div>
       `;
     }
-    function fuelleBelohnung(behaelter, stuecke) {
-      stuecke.forEach((stueck2, index) => {
+    function fuelleBelohnung(behaelter, stuecke, versatz = 0) {
+      stuecke.forEach((stueck2, nr) => {
+        const index = nr + versatz;
         const seltenheit = SELTENHEITEN[stueck2.seltenheit] ?? SELTENHEITEN.gewoehnlich;
         const feld2 = document.createElement("div");
         feld2.className = "loot-item";
@@ -13842,6 +13896,8 @@ var shopScreen = {
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
           <strong>5 Beutestücke</strong>: genau einmal <strong>150 bis 500 Münzen</strong>,
           dazu Material, Attacken oder Skins. Was du schon besitzt, kommt nicht mehr vor.
+          <br>🎁 <strong>Jeder 2. Sieg</strong> bringt eine Holztruhe gratis –
+          noch ${siegeBisGratisTruhe()} Sieg${siegeBisGratisTruhe() === 1 ? "" : "e"}.
         </p>
       `;
       content2.appendChild(hinweis);

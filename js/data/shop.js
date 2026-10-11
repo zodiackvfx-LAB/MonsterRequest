@@ -67,6 +67,14 @@ export const BOSS_TRUHE = {
   garantie: 'selten',
 };
 
+/**
+ * Gratis-Truhe: Nach jedem 2. gewonnenen Kampf im Abenteuer gibt es eine
+ * Holztruhe geschenkt (siehe js/core/belohnung.js). Niederlagen zählen nicht
+ * mit, die Endlos-Arena auch nicht - sie läuft bewusst ohne Belohnungen.
+ */
+export const SIEGE_PRO_GRATIS_TRUHE = 2;
+export const GRATIS_TRUHE_ID = 'holztruhe';
+
 export function getTruhe(id) {
   return TRUHEN.find((truhe) => truhe.id === id);
 }

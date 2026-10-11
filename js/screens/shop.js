@@ -12,6 +12,7 @@ import { showScreen } from '../core/screens.js';
 import { TRUHEN } from '../data/shop.js';
 import { MUENZE, SELTENHEITEN } from '../data/items.js';
 import { truheOeffnen } from '../core/loot.js';
+import { siegeBisGratisTruhe } from '../core/belohnung.js';
 import { truheSvg } from '../ui/truhen.js';
 import { bezahlen, beuteGutschreiben, gameState, kannBezahlen } from '../core/state.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
@@ -79,6 +80,8 @@ export const shopScreen = {
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
           <strong>5 Beutestücke</strong>: genau einmal <strong>150 bis 500 Münzen</strong>,
           dazu Material, Attacken oder Skins. Was du schon besitzt, kommt nicht mehr vor.
+          <br>🎁 <strong>Jeder 2. Sieg</strong> bringt eine Holztruhe gratis –
+          noch ${siegeBisGratisTruhe()} Sieg${siegeBisGratisTruhe() === 1 ? '' : 'e'}.
         </p>
       `;
       content.appendChild(hinweis);

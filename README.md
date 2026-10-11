@@ -126,6 +126,8 @@ beim Gegner zeigt dir, wann bei ihm ein großer Schlag kommt.
 
 **Nach dem Kampf:** Sterne je nach verbliebenen Lebenspunkten (3 Sterne ab 70 %),
 Münzen als Belohnung, und das nächste Level wird freigeschaltet.
+**Jeder 2. Sieg** im Abenteuer bringt zusätzlich eine Holztruhe gratis
+(Niederlagen und die Endlos-Arena zählen nicht mit).
 
 ---
 

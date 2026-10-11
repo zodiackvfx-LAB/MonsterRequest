@@ -53,6 +53,7 @@ function createNewGame() {
     coins: 0,
     materials: 0, // Material (💠) für Aufwertungen - siehe js/core/progression.js
     ownedAttacks: [], // aus Truhen freigeschaltete Attacken
+    gratisTruheZaehler: 0, // Siege seit der letzten Gratis-Truhe (siehe js/core/belohnung.js)
     bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
@@ -246,6 +247,7 @@ function uebernehmen(saved) {
   gameState.coins = Number(saved.coins) || 0;
   gameState.materials = Number(saved.materials) || 0;
   gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
+  gameState.gratisTruheZaehler = Math.max(0, Math.floor(Number(saved.gratisTruheZaehler) || 0));
   // Nur bekannte Kraft-ids übernehmen, damit ein alter Spielstand keine
   // Geister-Kraft einschleppt.
   gameState.bossPowers = Array.isArray(saved.bossPowers)
