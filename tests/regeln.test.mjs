@@ -58,6 +58,11 @@ import { arenaGegner, arenaLevel, istBossRunde } from '../js/data/arena.js';
 import { statErhoehen, pruefeNeueErfolge, erfolgFrei, erfolgErreicht } from '../js/core/statistik.js';
 import { BOSS_TRUHE } from '../js/data/shop.js';
 import { AUFGABEN, AUFGABEN_PRO_TAG } from '../js/data/aufgaben.js';
+import { SORTIERUNGEN, sortiereAttacken } from '../js/core/sortierung.js';
+import { ALLE_STIMMUNGEN, tageszeitFuer, waehleStimmung } from '../js/ui/umgebung.js';
+import { bewegungVon } from '../js/ui/kampfintro.js';
+import { createBattle } from '../js/core/battle.js';
+import { saveProgress, sicherungsInfo } from '../js/core/state.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
@@ -993,6 +998,112 @@ console.log('\nEndlos-Arena');
     lvl.arena === true && lvl.gegner && lvl.enemyId === lvl.gegner.id && lvl.isBoss === true);
   pruefe('Die Reaktionszeit bleibt auch in hohen Runden positiv',
     arenaGegner(40).reactionTime >= 0.4);
+}
+
+console.log('\nKarten nachziehen');
+{
+  const deck = createDeck(getMonster('timo').deck);
+  const vorher = [...deck.hand];
+  deck.play(1);
+  pruefe('Die neue Karte landet auf dem frei gewordenen Platz',
+    deck.hand.length === HAND_SIZE && deck.hand[0] === vorher[0] &&
+    deck.hand[2] === vorher[2] && deck.hand[3] === vorher[3]);
+  let immer8 = true;
+  for (let i = 0; i < 40; i++) {
+    deck.play(i % HAND_SIZE);
+    if (deck.hand.length + deck.drawCount + deck.discardCount !== DECK_SIZE) immer8 = false;
+  }
+  pruefe('Auch nach 40 Zügen bleiben es genau 8 Karten', immer8);
+}
+
+console.log('\nPause und Kampfstatistik');
+{
+  // Die Schleife braucht requestAnimationFrame - hier genügt eine Attrappe,
+  // die nichts von selbst aufruft.
+  let rafNr = 0;
+  globalThis.requestAnimationFrame = () => ++rafNr;
+  globalThis.cancelAnimationFrame = () => {};
+  resetProgress();
+  const kampf = createBattle({
+    playerMonster: { ...getMonster('timo'), deck: getMonster('timo').deck },
+    enemyMonster: ENEMIES[Object.keys(ENEMIES)[0]],
+  });
+  kampf.start();
+  pruefe('Kampf läuft nach dem Start', kampf.state.running && !kampf.state.pausiert);
+  pruefe('Pause hält den Kampf an', kampf.pause() && !kampf.state.running && kampf.state.pausiert);
+  kampf.state.player.energie = 10;
+  pruefe('In der Pause lässt sich keine Karte spielen', kampf.playCard(0) === false);
+  pruefe('Ein zweites Pausieren ändert nichts', kampf.pause() === false);
+  pruefe('Fortsetzen läuft weiter', kampf.resume() && kampf.state.running && !kampf.state.pausiert);
+  pruefe('Fortsetzen ohne Pause ändert nichts', kampf.resume() === false);
+  pruefe('Statistik startet bei null', kampf.state.statistik.karten === 0 && kampf.state.statistik.schaden === 0);
+  kampf.stop();
+}
+
+console.log('\nSortierung im Deckmenü');
+{
+  const attacken = getMonster('timo').deck.map(getAttack);
+  pruefe('Es gibt sechs Sortierarten', SORTIERUNGEN.length === 6);
+  const ab = sortiereAttacken(attacken, 'schaden-ab');
+  const auf = sortiereAttacken(attacken, 'schaden-auf');
+  pruefe('Schaden absteigend: stärkste zuerst, Schildkarte zuletzt',
+    ab[0].id === 'sturmfaust' && ab[ab.length - 1].id === 'deckung');
+  pruefe('Schaden aufsteigend: Schildkarte trotzdem zuletzt',
+    auf[0].id === 'fausthieb' && auf[auf.length - 1].id === 'deckung');
+  const kosten = sortiereAttacken(attacken, 'kosten-auf').map((a) => a.cost);
+  pruefe('Kosten aufsteigend sind sortiert', kosten.every((k, i) => i === 0 || kosten[i - 1] <= k));
+  pruefe('Sortieren verändert das Deck selbst nicht',
+    getMonster('timo').deck.join() === attacken.map((a) => a.id).join());
+  pruefe('Unbekannte Sortierung = Deck-Reihenfolge',
+    sortiereAttacken(attacken, 'gibtsnicht').map((a) => a.id).join() === attacken.map((a) => a.id).join());
+}
+
+console.log('\nArena-Stimmung');
+{
+  const alleDrei = WORLDS.every((w) => ALLE_STIMMUNGEN[w.id]?.varianten.length === 3);
+  pruefe('Jede Welt hat drei Arena-Varianten', alleDrei);
+  let gueltig = true;
+  WORLDS.forEach((w) => {
+    for (let i = 0; i < 20; i++) {
+      const st = waehleStimmung(w);
+      if (!ALLE_STIMMUNGEN[w.id].wetter[st.wetter] || !st.variantenName) gueltig = false;
+    }
+  });
+  pruefe('Gewürfeltes Wetter passt immer zur Welt', gueltig);
+  pruefe('Tageszeit nach Uhr',
+    tageszeitFuer(7) === 'morgen' && tageszeitFuer(13) === 'tag' &&
+    tageszeitFuer(20) === 'abend' && tageszeitFuer(2) === 'abend');
+  const bekannt = ['wabbeln', 'stampfen', 'flattern', 'atmen', 'schlaengeln', 'wackeln', 'schweben'];
+  const auftritte = ['busch', 'rollen', 'landen', 'stein', 'gleiten'];
+  const gegner = Object.values(ENEMIES);
+  pruefe('Jeder Gegner hat eine Bewegung und einen Auftritt',
+    gegner.every((g) => bekannt.includes(bewegungVon(g).ruhe) && auftritte.includes(bewegungVon(g).auftritt)));
+  pruefe('Bosse landen immer', gegner.filter((g) => g.isBoss).every((g) => bewegungVon(g).auftritt === 'landen'));
+  const benutzt = new Set(gegner.map((g) => bewegungVon(g).auftritt));
+  pruefe('Alle fünf Auftrittsarten kommen vor', auftritte.every((a) => benutzt.has(a)));
+}
+
+console.log('\nLokale Sicherung');
+{
+  resetProgress();
+  gameState.coins = 777;
+  saveProgress();
+  pruefe('Nach dem Zurücksetzen liegt eine Sicherung vor', sicherungsInfo().vorhanden);
+  // Sicherung erzwingen: frisch laden schreibt sie neu.
+  loadProgress();
+  // Hauptspeicher beschädigen - die Sicherung muss einspringen.
+  localStorage.setItem('monsterquest.save.v3', '{"kaputt":');
+  gameState.coins = 0;
+  pruefe('Kaputter Spielstand wird aus der Sicherung geladen', loadProgress() === true && gameState.coins === 777);
+  pruefe('...und der Hauptspeicher ist danach repariert',
+    JSON.parse(localStorage.getItem('monsterquest.save.v3')).coins === 777);
+  pruefe('Die Einstellungen kennen die Herkunft', sicherungsInfo().geladenAus === 'sicherung');
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ settings: { animations: 'ja', sound: false } }));
+  loadProgress();
+  pruefe('Falsche Typen in Einstellungen fallen auf den Standard zurück',
+    gameState.settings.animations === true && gameState.settings.sound === false &&
+    gameState.settings.deckSortierung === 'deck');
+  resetProgress();
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

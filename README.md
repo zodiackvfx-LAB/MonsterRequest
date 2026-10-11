@@ -4,7 +4,8 @@ Ein 2D-Mobile-Game im Browser: Cartoon-Monster-RPG mit Weltkarte und
 taktischem Echtzeit-Kampfsystem. Gebaut mit reinem HTML, CSS und JavaScript –
 ohne Framework, ohne Build-Schritt.
 
-**Stand: Phase 1** – Startbildschirm, Weltkarte, Kampf, Menüseiten.
+**Stand:** 7 Welten mit je 12 Kämpfen, zwei Spielfiguren (Timo und Rocco),
+Endlos-Arena, Shop, Tagesaufgaben, Erfolge und Spielstand-Übertragung.
 
 ---
 
@@ -38,6 +39,8 @@ css/
   scenery.css           Kulissen: Himmel, Wolken, Berge, Hügel, Boden
   ui.css                Bausteine: Logo, Buttons, Panels, Balken, Karten
   screens.css           Aufbau der einzelnen Bildschirme
+  erlebnis.css          Pause, Ergebnisfenster, Kampf-Intros, Auftritte,
+                        Kartenrahmen, Wetter, Tageszeit, Weltkarten-Teilchen
 
 fonts/                  Spielschrift Fredoka (lokal, kein externer Aufruf)
 
@@ -64,12 +67,15 @@ js/
     cloud.js            Leitung zur Datenbank (Spielernummer, Senden, Codes)
     sync.js             Bringt Browser und Datenbank beim Start zusammen
     deck.js             8-Karten-Deck, Hand mit 4 Karten, Nachziehen
+    sortierung.js       Sortierung der Karten im Deckmenü (nur Anzeige)
     fighter.js          Ein Kämpfer: XP, Deck, Hand, Schaden, Schild
     battle.js           Kampfablauf, Zeitsteuerung, Gegner-KI
 
   ui/                   Bausteine, die mehrere Bildschirme nutzen
     scenery.js          Baut die Hintergrund-Kulisse
     hud.js              Spielerleiste, Kopfzeile, Sterne
+    kampfintro.js       Intro vor dem Kampf, Auftritte, Bewegung je Gegnerform
+    umgebung.js         Arena-Varianten, Tageszeit, Wetter, kleine Tiere
 
   screens/              NUR Darstellung – baut HTML, reagiert auf Tipps
     start.js            Startbildschirm
@@ -93,7 +99,8 @@ Kampf aussieht – der Kampfbildschirm kennt keine Kampfregeln.
 
 * Jeder Kämpfer besitzt ein Deck aus **genau 8 Attacken**.
 * Im Kampf liegen immer **4 Attacken auf der Hand**.
-* Eine benutzte Attacke verschwindet und wird **sofort nachgezogen**.
+* Eine benutzte Attacke verschwindet und wird **sofort nachgezogen** – die
+  neue Karte landet auf dem frei gewordenen Platz.
 * Ist der Nachziehstapel leer, wird der Ablagestapel neu gemischt.
 * Jeder Kämpfer hat **maximal 10 XP** und bekommt **1 XP pro Sekunde**.
   XP steigen nie über 10 und fallen nie unter 0.
@@ -110,18 +117,41 @@ Münzen als Belohnung, und das nächste Level wird freigeschaltet.
 
 ## Das Deck des Spielers
 
-| Attacke | XP | Wirkung |
-|---|---|---|
-| Krallenhieb | 2 | 11 Schaden |
-| Biss | 2 | 12 Schaden |
-| Feuerball | 3 | 17 Schaden |
-| Flammenstoß | 4 | 23 Schaden |
-| Schutzschild | 4 | fängt 26 Schaden ab |
-| Feuersturm | 5 | 30 Schaden |
-| Lavabombe | 7 | 45 Schaden |
-| Meteor | 9 | 62 Schaden |
+| Timo | Rocco | Energie | Wirkung |
+|---|---|---|---|
+| Fausthieb | Steinfaust | 2 | 11 Schaden |
+| Ellbogenstoß | Schulterramme | 2 | 12 Schaden |
+| Wirbelkick | Felsstampfer | 3 | 17 Schaden |
+| Aufwärtshaken | Brockenwurf | 4 | 23 Schaden |
+| Deckung | Steinhaut | 4 | fängt 26 Schaden ab |
+| Energiestoß | Erdstoß | 5 | 30 Schaden |
+| Druckwelle | Felslawine | 7 | 45 Schaden |
+| Sturmfaust | Bergsturz | 9 | 62 Schaden |
 
-Teure Attacken sind pro XP etwas stärker – Sparen lohnt sich, ist aber riskant.
+Teure Attacken sind pro Energie etwas stärker – Sparen lohnt sich, ist aber
+riskant. Roccos Attacken wirken genau wie Timos und teilen ihr Level: Wer
+Fausthieb aufwertet, hat auch Steinfaust aufgewertet.
+
+Die Rahmenfarbe einer Karte (Standard, Silber, Gold, Glitzer) zeigt nur ihre
+Seltenheit an – sie ändert keine Werte.
+
+---
+
+## Im Kampf
+
+* **Intro:** Vor jedem Kampf erscheint die Silhouette des Gegners, dann sein
+  Name und sein Auftritt (aus dem Busch, rollend, landend, hinter einem Stein
+  hervor oder gleitend – je nach Körperform). Bosse bekommen ein längeres
+  Intro mit Krone, Zoom und Banner. Ein Tipp überspringt es.
+* **Pause:** Der Knopf oben rechts hält alles an – Energie, Gegner,
+  Animationen. Wechselt man die App, pausiert der Kampf von selbst.
+* **Stimmung:** Jede Welt hat drei Arena-Varianten und eigenes Wetter (Regen,
+  Nebel, Schnee, Glutregen ...). Die Tageszeit folgt der Uhr des Geräts.
+  Das alles ist reine Optik und ändert keine Kampfwerte.
+* **Statistik:** Nach dem Kampf zeigt das Ergebnisfenster ausgespielte
+  Karten, angerichteten Schaden und die Kampfdauer.
+* Schalter **„Animationen“** in den Einstellungen schaltet Intros, Wetter,
+  Kamera und alle Bewegungen ab; der Kampf startet dann sofort.
 
 ---
 
@@ -159,6 +189,11 @@ einem kurzen Code auf ein anderes Gerät holen. Eingerichtet wird das einmalig
 
 **Solange dort nichts eingetragen ist, ändert sich nichts** – das Spiel
 verhält sich genau wie vorher und schickt nichts ins Netz.
+
+Zusätzlich legt das Spiel eine **zweite, lokale Sicherung** an
+(`monsterquest.save.v3.sicherung`). Ist der Spielstand beim Start beschädigt,
+wird er daraus wiederhergestellt. Diese Sicherung liegt im selben Browser –
+gegen das Löschen der Browserdaten hilft nur der Übertragungscode.
 
 ---
 
