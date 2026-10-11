@@ -76,8 +76,8 @@ export const shopScreen = {
       hinweis.innerHTML = `
         <p class="map__info-text">
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
-          <strong>5 Beutestücke</strong>: Münzen, Material, Attacken oder Skins.
-          Was du schon besitzt, wird in Münzen umgewandelt.
+          <strong>5 Beutestücke</strong>: genau einmal <strong>150 bis 500 Münzen</strong>,
+          dazu Material, Attacken oder Skins. Was du schon besitzt, kommt nicht mehr vor.
         </p>
       `;
       content.appendChild(hinweis);

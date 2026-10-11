@@ -5,7 +5,7 @@
  * Der Shop-Bildschirm (js/screens/shop.js) zeigt das Ergebnis an.
  */
 
-import { BEUTE_ATTACKEN, MATERIAL_BEUTE, MUENZE, MUENZ_BEUTE, SKINS } from '../data/items.js';
+import { BEUTE_ATTACKEN, MATERIAL_BEUTE, MUENZE, SKINS, TRUHEN_MUENZEN } from '../data/items.js';
 import { besitztAttacke, besitztSkin } from './state.js';
 
 /** Zufallszahl zwischen min und max (beide eingeschlossen). */
@@ -29,10 +29,12 @@ function wuerfleSeltenheit(chancen) {
 }
 
 /**
- * Zieht ein Beutestück einer bestimmten Seltenheit.
+ * Zieht ein Beutestück einer bestimmten Seltenheit - Material, eine Attacke
+ * oder einen Skin. Münzen kommen hier NIE heraus: Die gibt es pro Truhe
+ * genau einmal (siehe muenzStueck).
  *
- * Attacken und Skins, die man schon hat, werden zu Münzen - sonst wäre eine
- * Truhe irgendwann wertlos.
+ * Attacken und Skins, die man schon hat, kommen nicht mehr in den Topf -
+ * dann wird es Material.
  */
 function ziehe(seltenheit) {
   const attacken = BEUTE_ATTACKEN.filter(
@@ -40,10 +42,9 @@ function ziehe(seltenheit) {
   );
   const skins = SKINS.filter((s) => s.seltenheit === seltenheit && !besitztSkin(s.id));
 
-  // Gewichte: Münzen und Material kommen immer vor, Attacken und Skins nur,
-  // solange es noch welche zu holen gibt.
+  // Gewichte: Material kommt immer vor, Attacken und Skins nur, solange es
+  // noch welche zu holen gibt.
   const topf = [
-    { art: 'muenzen', gewicht: 35 },
     { art: 'material', gewicht: 30 },
     ...(attacken.length ? [{ art: 'attacke', gewicht: 22 }] : []),
     ...(skins.length ? [{ art: 'skin', gewicht: 16 }] : []),
@@ -51,7 +52,7 @@ function ziehe(seltenheit) {
 
   const summe = topf.reduce((a, b) => a + b.gewicht, 0);
   let wurf = Math.random() * summe;
-  let art = 'muenzen';
+  let art = 'material';
   for (const eintrag of topf) {
     wurf -= eintrag.gewicht;
     if (wurf <= 0) {
@@ -70,12 +71,17 @@ function ziehe(seltenheit) {
     return { art: 'skin', seltenheit, id: skin.id, name: `Skin: ${skin.name}`, icon: '🎨', skin };
   }
 
-  if (art === 'material') {
-    const menge = zwischen(...MATERIAL_BEUTE[seltenheit]);
-    return { art: 'material', seltenheit, menge, name: `${menge} Material`, icon: '💠' };
-  }
+  const menge = zwischen(...MATERIAL_BEUTE[seltenheit]);
+  return { art: 'material', seltenheit, menge, name: `${menge} Material`, icon: '💠' };
+}
 
-  const menge = zwischen(...MUENZ_BEUTE[seltenheit]);
+/**
+ * Das eine Münzstück einer Truhe: 150 bis 500 Münzen. Die Farbe des Feldes
+ * richtet sich nach der Höhe - ein großer Betrag leuchtet heller.
+ */
+function muenzStueck() {
+  const menge = zwischen(TRUHEN_MUENZEN.min, TRUHEN_MUENZEN.max);
+  const seltenheit = menge >= 400 ? 'episch' : menge >= 250 ? 'selten' : 'gewoehnlich';
   return { art: 'muenzen', seltenheit, menge, name: `${menge} Münzen`, icon: MUENZE };
 }
 
@@ -95,9 +101,10 @@ function mischen(liste) {
  * sie einzeln aufdecken kann.
  */
 export function truheOeffnen(truhe) {
-  const stuecke = [];
+  // Genau ein Münzstück pro Truhe - der Rest sind Material, Attacken, Skins.
+  const stuecke = [muenzStueck()];
 
-  for (let i = 0; i < truhe.anzahl; i++) {
+  for (let i = 0; i < truhe.anzahl - 1; i++) {
     const seltenheit =
       i === 0 && truhe.garantie ? truhe.garantie : wuerfleSeltenheit(truhe.chancen);
     stuecke.push(ziehe(seltenheit));

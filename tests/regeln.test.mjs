@@ -213,6 +213,16 @@ console.log('\nShop und Truhen');
       `${truhe.name}: jedes Stueck hat Art und Seltenheit`,
       beute.every((b) => b.art && b.seltenheit && b.name)
     );
+    let einmalMuenzen = true;
+    let imRahmen = true;
+    for (let i = 0; i < 300; i++) {
+      const probe = truheOeffnen(truhe);
+      const muenzen = probe.filter((b) => b.art === 'muenzen');
+      if (muenzen.length !== 1) einmalMuenzen = false;
+      if (muenzen.some((m) => m.menge < 150 || m.menge > 500)) imRahmen = false;
+    }
+    pruefe(`${truhe.name}: genau ein Muenzstueck pro Truhe (300 Durchlaeufe)`, einmalMuenzen);
+    pruefe(`${truhe.name}: Muenzen immer zwischen 150 und 500`, imRahmen);
     if (truhe.garantie) {
       // Ueber viele Durchlaeufe muss die Garantie immer halten.
       const rang = { gewoehnlich: 0, selten: 1, episch: 2, legendaer: 3 };

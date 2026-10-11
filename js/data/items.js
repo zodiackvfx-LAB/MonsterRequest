@@ -116,13 +116,12 @@ export const SKINS = [
   },
 ];
 
-/** Münzbeträge je Seltenheit. */
-export const MUENZ_BEUTE = {
-  gewoehnlich: [60, 120],
-  selten: [180, 320],
-  episch: [450, 700],
-  legendaer: [1200, 2000],
-};
+/**
+ * Münzen in einer Truhe: Jede Truhe enthält GENAU EIN Münzstück, mit
+ * mindestens 150 und höchstens 500 Münzen - egal welche Truhe. Die übrigen
+ * Plätze sind Material, Attacken oder Skins.
+ */
+export const TRUHEN_MUENZEN = { min: 150, max: 500 };
 
 /** Aufwertungs-Material je Seltenheit (für Attacken- und Charakter-Upgrades). */
 export const MATERIAL_BEUTE = {

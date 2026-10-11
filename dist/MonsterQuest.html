@@ -9289,12 +9289,7 @@ var SKINS = [
     filter: "saturate(2.3) brightness(1.08) contrast(1.12) hue-rotate(-10deg)"
   }
 ];
-var MUENZ_BEUTE = {
-  gewoehnlich: [60, 120],
-  selten: [180, 320],
-  episch: [450, 700],
-  legendaer: [1200, 2e3]
-};
+var TRUHEN_MUENZEN = { min: 150, max: 500 };
 var MATERIAL_BEUTE = {
   gewoehnlich: [1, 2],
   selten: [3, 5],
@@ -11056,7 +11051,7 @@ var TRUHEN = [
     id: "holztruhe",
     name: "Holztruhe",
     icon: "🧰",
-    text: "Die einfache Truhe. Meist Münzen und Material, manchmal mehr.",
+    text: "Die einfache Truhe. 150 bis 500 Münzen, dazu Material - manchmal mehr.",
     preis: 250,
     anzahl: 5,
     chancen: { gewoehnlich: 70, selten: 25, episch: 4.5, legendaer: 0.5 },
@@ -11116,14 +11111,13 @@ function ziehe(seltenheit) {
   );
   const skins = SKINS.filter((s) => s.seltenheit === seltenheit && !besitztSkin(s.id));
   const topf = [
-    { art: "muenzen", gewicht: 35 },
     { art: "material", gewicht: 30 },
     ...attacken.length ? [{ art: "attacke", gewicht: 22 }] : [],
     ...skins.length ? [{ art: "skin", gewicht: 16 }] : []
   ];
   const summe = topf.reduce((a, b) => a + b.gewicht, 0);
   let wurf = Math.random() * summe;
-  let art = "muenzen";
+  let art = "material";
   for (const eintrag of topf) {
     wurf -= eintrag.gewicht;
     if (wurf <= 0) {
@@ -11139,11 +11133,12 @@ function ziehe(seltenheit) {
     const skin = zufall(skins);
     return { art: "skin", seltenheit, id: skin.id, name: `Skin: ${skin.name}`, icon: "🎨", skin };
   }
-  if (art === "material") {
-    const menge2 = zwischen(...MATERIAL_BEUTE[seltenheit]);
-    return { art: "material", seltenheit, menge: menge2, name: `${menge2} Material`, icon: "💠" };
-  }
-  const menge = zwischen(...MUENZ_BEUTE[seltenheit]);
+  const menge = zwischen(...MATERIAL_BEUTE[seltenheit]);
+  return { art: "material", seltenheit, menge, name: `${menge} Material`, icon: "💠" };
+}
+function muenzStueck() {
+  const menge = zwischen(TRUHEN_MUENZEN.min, TRUHEN_MUENZEN.max);
+  const seltenheit = menge >= 400 ? "episch" : menge >= 250 ? "selten" : "gewoehnlich";
   return { art: "muenzen", seltenheit, menge, name: `${menge} Münzen`, icon: MUENZE };
 }
 function mischen(liste) {
@@ -11155,8 +11150,8 @@ function mischen(liste) {
   return kopie2;
 }
 function truheOeffnen(truhe) {
-  const stuecke = [];
-  for (let i = 0; i < truhe.anzahl; i++) {
+  const stuecke = [muenzStueck()];
+  for (let i = 0; i < truhe.anzahl - 1; i++) {
     const seltenheit = i === 0 && truhe.garantie ? truhe.garantie : wuerfleSeltenheit(truhe.chancen);
     stuecke.push(ziehe(seltenheit));
   }
@@ -13603,8 +13598,8 @@ var shopScreen = {
       hinweis.innerHTML = `
         <p class="map__info-text">
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
-          <strong>5 Beutestücke</strong>: Münzen, Material, Attacken oder Skins.
-          Was du schon besitzt, wird in Münzen umgewandelt.
+          <strong>5 Beutestücke</strong>: genau einmal <strong>150 bis 500 Münzen</strong>,
+          dazu Material, Attacken oder Skins. Was du schon besitzt, kommt nicht mehr vor.
         </p>
       `;
       content2.appendChild(hinweis);

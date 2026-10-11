@@ -8,7 +8,9 @@
  *
  * Felder:
  *   preis     - Kosten in Münzen
- *   anzahl    - wie viele Beutestücke die Truhe enthält
+ *   anzahl    - wie viele Beutestücke die Truhe enthält - davon ist immer
+ *               genau eines Münzen (150 bis 500, siehe TRUHEN_MUENZEN in
+ *               js/data/items.js), die übrigen Material, Attacken oder Skins
  *   chancen   - Wahrscheinlichkeit je Seltenheit in Prozent (Summe 100)
  *   garantie  - mindestens ein Stück dieser Seltenheit ist enthalten
  */
@@ -17,7 +19,7 @@ export const TRUHEN = [
     id: 'holztruhe',
     name: 'Holztruhe',
     icon: '🧰',
-    text: 'Die einfache Truhe. Meist Münzen und Material, manchmal mehr.',
+    text: 'Die einfache Truhe. 150 bis 500 Münzen, dazu Material - manchmal mehr.',
     preis: 250,
     anzahl: 5,
     chancen: { gewoehnlich: 70, selten: 25, episch: 4.5, legendaer: 0.5 },
