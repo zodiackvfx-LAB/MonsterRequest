@@ -1779,3 +1779,281 @@
   font-size: 0.78rem;
   color: var(--text-dim);
 }
+
+/* =========================================================================
+   8. Lobby: Seiten zum Wischen und die Leiste unten (js/screens/lobby.js)
+   ========================================================================= */
+
+.lobby {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Die Seiten liegen nebeneinander und rasten beim Wischen ein. */
+.lobby__seiten {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lobby__seiten::-webkit-scrollbar {
+  display: none;
+}
+
+.lobby__seite {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Unten sitzt die Leiste - die Seiten brauchen dort keinen Rand für die
+   Home-Leiste des iPhones mehr. */
+.lobby__seite > .screen {
+  padding-bottom: 10px;
+}
+
+/* Zurück-Knöpfe braucht in der Lobby niemand - dafür gibt es die Leiste. */
+.lobby__seite .topbar > .btn:first-child {
+  visibility: hidden;
+}
+
+/* Fenster (Truhe, Tauschen, Spielmodi ...) liegen über allem, auch über
+   der Leiste - sonst könnte man mitten im Öffnen wegblättern. */
+.lobby__seite .overlay {
+  position: fixed;
+  z-index: 20;
+}
+
+/* ---------- Die Leiste ---------- */
+.lobby__leiste {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #2c3f83 0%, var(--fantasy-tief) 55%, #111a40 100%);
+  border-top: 2px solid var(--fantasy-gold);
+  box-shadow: 0 -6px 18px rgba(8, 14, 40, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.lobby__tab {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-height: 58px;
+  padding: 6px 0 4px;
+  font: inherit;
+  color: var(--text-dim);
+  background: none;
+  border: 0;
+  border-radius: 12px 12px 6px 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.lobby__tab-symbol {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 1.35rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 197, 61, 0.4);
+  background: linear-gradient(180deg, #2c3f83 0%, var(--fantasy-tief) 100%);
+  box-shadow: 0 3px 0 #0f1838;
+  transition: transform 0.22s cubic-bezier(0.3, 1.5, 0.5, 1), border-color 0.2s ease;
+}
+
+.lobby__tab-symbol img {
+  width: 118%;
+  height: 118%;
+  min-width: 0;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Die Mitte (Start) bekommt ein goldenes Abzeichen mit gekreuzten Schwertern. */
+.lobby__tab--start .lobby__tab-symbol {
+  background: radial-gradient(circle at 50% 35%, #ffe27a 0%, #ffb32b 55%, #c9750d 100%);
+  border-color: #fff3c4;
+}
+
+/* Name nur beim aktiven Punkt - wie bei Clash Royale. */
+.lobby__tab-name {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.lobby__tab.is-aktiv {
+  background: linear-gradient(180deg, rgba(109, 146, 255, 0.55) 0%, rgba(60, 95, 208, 0.25) 100%);
+  color: #fff;
+}
+
+.lobby__tab.is-aktiv .lobby__tab-symbol {
+  transform: translateY(-12px) scale(1.28);
+  border-color: var(--fantasy-gold);
+}
+
+.lobby__tab.is-aktiv .lobby__tab-name {
+  height: auto;
+  opacity: 1;
+  margin-top: -8px;
+}
+
+.lobby__tab:active .lobby__tab-symbol {
+  scale: 0.92;
+}
+
+/* ---------- Startseite: Modi-Knopf neben "Spiel starten" ---------- */
+.start__reihe {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.modi-knopf {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0;
+  min-width: 74px;
+  padding: 6px 10px;
+  color: #fff;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #7a54c9 0%, #5a3aa0 55%, #3d2775 100%);
+  border: 2px solid #b98cff;
+  text-shadow: 0 2px 3px rgba(8, 14, 40, 0.7);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -3px 0 rgba(8, 14, 40, 0.35),
+    0 4px 0 #2c1c55,
+    0 8px 16px rgba(10, 16, 44, 0.4);
+}
+
+.modi-knopf:active {
+  transform: translateY(3px) scale(0.98);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 1px 0 #2c1c55;
+}
+
+.modi-knopf__icon {
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.modi-knopf__text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ---------- Das Auswahlfenster ---------- */
+.spielmodi {
+  max-width: 340px;
+  gap: 12px;
+}
+
+.spielmodi__zu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  border-radius: 50%;
+  border: 2px solid var(--panel-border);
+  background: rgba(8, 14, 40, 0.45);
+  cursor: pointer;
+}
+
+.spielmodi__liste {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.spielmodus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  border-radius: 14px;
+  border: 2px solid #b98cff;
+  background: linear-gradient(180deg, #4a3590 0%, #2c2066 100%);
+  box-shadow: 0 4px 0 #1c1440;
+  cursor: pointer;
+  animation: pop-in 0.25s ease-out both;
+}
+
+.spielmodus:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #1c1440;
+}
+
+.spielmodus__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.spielmodus__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.spielmodus__name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.spielmodus__text {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.spielmodus__info {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gold-1);
+}
+
+.spielmodus__pfeil {
+  font-size: 1.4rem;
+  color: #d9c2ff;
+}
+
+.spielmodi__hinweis {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}

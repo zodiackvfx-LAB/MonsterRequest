@@ -28,8 +28,31 @@ export function registerScreen(name, screen) {
   screens.set(name, screen);
 }
 
+/**
+ * Die Lobby (js/screens/lobby.js): ein Bildschirm mit mehreren Seiten zum
+ * Wischen. Wird einer dieser Seiten-Namen aufgerufen, öffnet sich die Lobby
+ * auf dieser Seite - oder blättert dorthin, wenn sie schon zu sehen ist.
+ */
+let lobby = null; // { name, seiten: [...] }
+
+/** Meldet die Lobby an: name = ihr Bildschirm, seiten = Namen ihrer Seiten. */
+export function registerLobby(name, seiten) {
+  lobby = { name, seiten };
+}
+
 /** Wechselt zum Screen mit diesem Namen. params wird an mount() durchgereicht. */
 export function showScreen(name, params = {}) {
+  if (lobby && lobby.seiten.includes(name)) {
+    const lobbyScreen = screens.get(lobby.name);
+    // Neu bauen erzwingen (z. B. nach dem Laden aus der Datenbank).
+    if (currentScreen === lobbyScreen && !params.neu) {
+      lobbyScreen.zeigeSeite(name, params);
+      return;
+    }
+    params = { tab: name, tabParams: params };
+    name = lobby.name;
+  }
+
   const screen = screens.get(name);
   if (!screen) {
     throw new Error(`Unbekannter Screen: "${name}" (in js/main.js registrieren)`);

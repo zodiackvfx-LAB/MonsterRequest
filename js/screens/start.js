@@ -1,5 +1,10 @@
 /**
- * Startbildschirm: Logo, Spielerleiste, großer Startknopf und das Hauptmenü.
+ * Startbildschirm: Logo, Spielerleiste, Tagesaufgaben, großer Startknopf
+ * und der Knopf für die Spielmodi.
+ *
+ * Das Menü (Shop, Deck, Figur ...) steht nicht mehr hier, sondern in der
+ * Leiste am unteren Rand - siehe js/screens/lobby.js. Dieser Bildschirm ist
+ * dort die mittlere Seite.
  */
 
 import { showScreen } from '../core/screens.js';
@@ -11,16 +16,7 @@ import { parallaxAktivieren } from '../ui/parallax.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../ui/logo-pfade.js';
 import { figurAnzeigeName, gameState, getAktiveFigur } from '../core/state.js';
 import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
-
-/** Die vier Menüknöpfe. Neuer Menüpunkt = hier einen Eintrag ergänzen. */
-const MENU = [
-  { bild: 'bilder/menue/welten.png', label: 'Welten', screen: 'worlds' },
-  { bild: 'bilder/menue/figur.png', label: 'Figur', screen: 'monster' },
-  { bild: 'bilder/menue/deck.png', label: 'Deck', screen: 'deck' },
-  { bild: 'bilder/menue/sammlung.png', label: 'Sammlung', screen: 'collection' },
-  { bild: 'bilder/menue/shop.png', label: 'Shop', screen: 'shop' },
-  { bild: 'bilder/menue/einstellungen.png', label: 'Einstellungen', screen: 'settings' },
-];
+import { zeigeSpielmodi } from '../ui/spielmodi.js';
 
 /** Raeumt den Tiefeneffekt beim Verlassen der Lobby wieder weg. */
 let parallaxAus = () => {};
@@ -53,9 +49,6 @@ function funkenStreuen(knopf) {
     setTimeout(() => funke.remove(), 520);
   }
 }
-
-/** Die Adressen der Menuegrafiken - main.js laedt sie beim Start vor. */
-export const MENU_BILDER = MENU.map((eintrag) => eintrag.bild).filter(Boolean);
 
 export const startScreen = {
   mount(root) {
@@ -177,6 +170,19 @@ export const startScreen = {
     aufgabenKnopf.addEventListener('click', () => showScreen('daily'));
     actions.appendChild(aufgabenKnopf);
 
+    // Eine Reihe wie bei Clash Royale: links der kleine Knopf für die
+    // Spielmodi, rechts der große Startknopf fürs Abenteuer.
+    const startReihe = document.createElement('div');
+    startReihe.className = 'start__reihe';
+
+    const modiKnopf = document.createElement('button');
+    modiKnopf.className = 'btn modi-knopf';
+    modiKnopf.type = 'button';
+    modiKnopf.setAttribute('aria-label', 'Spielmodi');
+    modiKnopf.innerHTML = '<span class="modi-knopf__icon">🎮</span><span class="modi-knopf__text">Modi</span>';
+    modiKnopf.addEventListener('click', () => zeigeSpielmodi(screen));
+    startReihe.appendChild(modiKnopf);
+
     const startButton = document.createElement('button');
     startButton.className = 'btn btn--big btn--abenteuer';
     startButton.type = 'button';
@@ -192,47 +198,8 @@ export const startScreen = {
         START_EFFEKT
       );
     });
-    actions.appendChild(startButton);
-
-    // Zweiter Spielmodus: die Endlos-Arena. Als eigener Knopf, damit er neben
-    // dem Abenteuer klar sichtbar ist.
-    const arenaButton = document.createElement('button');
-    arenaButton.className = 'btn btn--arena';
-    arenaButton.type = 'button';
-    arenaButton.innerHTML = '🏟️&nbsp; Endlos-Arena';
-    arenaButton.addEventListener('click', () => showScreen('arena'));
-    actions.appendChild(arenaButton);
-
-    const menu = document.createElement('div');
-    menu.className = 'start__menu';
-    MENU.forEach((entry) => {
-      const button = document.createElement('button');
-      button.className = 'icon-btn';
-      button.type = 'button';
-      // Die Knöpfe schweben leicht versetzt - wie eine kleine Welle.
-      button.style.setProperty('--schwebe-verzug', `${-(MENU.indexOf(entry) * 0.45)}s`);
-      button.innerHTML = `
-        <span class="icon-btn__circle"></span>
-        <span class="icon-btn__label">${entry.label}</span>
-      `;
-
-      const kreis = button.querySelector('.icon-btn__circle');
-      if (entry.bild) {
-        // Die Grafik bringt ihren eigenen runden Rahmen mit - der Knopf
-        // zeichnet deshalb keinen zweiten (siehe .icon-btn__circle--bild).
-        kreis.classList.add('icon-btn__circle--bild');
-        const bild = document.createElement('img');
-        bild.src = entry.bild;
-        bild.alt = '';
-        bild.draggable = false;
-        kreis.appendChild(bild);
-      } else {
-        kreis.textContent = entry.icon;
-      }
-      button.addEventListener('click', () => showScreen(entry.screen));
-      menu.appendChild(button);
-    });
-    actions.appendChild(menu);
+    startReihe.appendChild(startButton);
+    actions.appendChild(startReihe);
 
     screen.appendChild(actions);
     root.appendChild(screen);

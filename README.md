@@ -73,6 +73,7 @@ js/
     monsters.js         Spielermonster und Gegner samt Decks
     levels.js           Level der Weltkarte inkl. Position auf der Karte
     kraefte.js          Boss-Kräfte – je Welt eine, beim Boss-Sieg freigeschaltet
+    spielmodi.js        Spielmodi im Auswahlfenster (z. B. Endlos-Arena)
 
   core/                 NUR Logik – kennt kein HTML
     screens.js          Bildschirmverwaltung
@@ -92,7 +93,10 @@ js/
     truhen.js           Die gezeichneten Truhen (Holz, Silber, Gold, Boss)
 
   screens/              NUR Darstellung – baut HTML, reagiert auf Tipps
-    start.js            Startbildschirm
+    lobby.js            Lobby wie bei Clash Royale: Seiten zum Wischen und
+                        die Leiste unten (Shop, Figur, Deck, Start, Welten,
+                        Sammlung, Optionen)
+    start.js            Startbildschirm (die mittlere Seite der Lobby)
     map.js              Weltkarte
     battle.js           Kampfbildschirm
     monster.js          Monsterübersicht

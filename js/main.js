@@ -9,7 +9,7 @@
  * Neuer Bildschirm = Datei in js/screens/ anlegen und hier registrieren.
  */
 
-import { initScreens, registerScreen, showScreen } from './core/screens.js';
+import { initScreens, registerLobby, registerScreen, showScreen } from './core/screens.js';
 import { getAktiverSkin, getAktiveFigur, loadProgress, setSpielername } from './core/state.js';
 import { cloudStart } from './core/sync.js';
 import { zeigeWillkommen } from './ui/willkommen.js';
@@ -17,16 +17,11 @@ import { getSkin } from './data/items.js';
 import { getMonster } from './data/monsters.js';
 import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
 import { spieleKlang, tonFreischalten } from './core/audio.js';
-import { startScreen } from './screens/start.js';
-import { worldsScreen } from './screens/worlds.js';
+import { LOBBY_SEITEN, lobbyScreen } from './screens/lobby.js';
 import { mapScreen } from './screens/map.js';
 import { battleScreen } from './screens/battle.js';
-import { monsterScreen } from './screens/monster.js';
-import { deckScreen } from './screens/deck.js';
-import { collectionScreen } from './screens/collection.js';
 import { dailyScreen } from './screens/daily.js';
-import { settingsScreen, applySettings } from './screens/settings.js';
-import { shopScreen } from './screens/shop.js';
+import { applySettings } from './screens/settings.js';
 import { arenaScreen } from './screens/arena.js';
 
 const hatSpielstand = loadProgress();
@@ -99,15 +94,14 @@ app.addEventListener('scroll', () => {
 
 initScreens(app);
 
-registerScreen('start', startScreen);
-registerScreen('worlds', worldsScreen);
+// Die Lobby: Startbildschirm, Shop, Figur, Deck, Welten, Sammlung und
+// Einstellungen als Seiten zum Wischen (siehe js/screens/lobby.js). Wer
+// showScreen('shop') o. Ä. aufruft, landet auf der passenden Seite.
+registerScreen('lobby', lobbyScreen);
+registerLobby('lobby', LOBBY_SEITEN);
+
 registerScreen('map', mapScreen);
 registerScreen('battle', battleScreen);
-registerScreen('monster', monsterScreen);
-registerScreen('deck', deckScreen);
-registerScreen('collection', collectionScreen);
-registerScreen('settings', settingsScreen);
-registerScreen('shop', shopScreen);
 registerScreen('daily', dailyScreen);
 registerScreen('arena', arenaScreen);
 
@@ -141,7 +135,8 @@ cloudStart(() => {
     const skinId = getAktiverSkin(monster.id);
     return skinId ? getSkin(skinId) : null;
   });
-  showScreen('start');
+  // neu: die ganze Lobby frisch bauen - alle Seiten zeigen den neuen Stand.
+  showScreen('start', { neu: true });
 });
 
 /*
