@@ -78,3 +78,8 @@ export const GRATIS_TRUHE_ID = 'holztruhe';
 export function getTruhe(id) {
   return TRUHEN.find((truhe) => truhe.id === id);
 }
+
+/** Jede Truhe per id - auch die Bosstruhe, die man nicht kaufen kann. */
+export function truheNachId(id) {
+  return id === BOSS_TRUHE.id ? BOSS_TRUHE : getTruhe(id);
+}

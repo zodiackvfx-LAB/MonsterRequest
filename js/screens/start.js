@@ -14,7 +14,13 @@ import { getMonster } from '../data/monsters.js';
 import { createSprite } from '../ui/sprite.js';
 import { parallaxAktivieren } from '../ui/parallax.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../ui/logo-pfade.js';
-import { figurAnzeigeName, gameState, getAktiveFigur } from '../core/state.js';
+import { figurAnzeigeName, gameState, getAktiveFigur, truheAusLager } from '../core/state.js';
+import { BOSS_TRUHE, truheNachId } from '../data/shop.js';
+import { truheSvg } from '../ui/truhen.js';
+import { zeigeTruhenOeffnung } from '../ui/truhe-oeffnen.js';
+import { spritesNeuZeichnen } from '../ui/sprite.js';
+import { pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
+import { zeigeErfolgToast } from '../ui/toast.js';
 import { getTagesAufgaben, offeneBelohnungen } from '../core/aufgaben.js';
 import { zeigeSpielmodi } from '../ui/spielmodi.js';
 
@@ -48,6 +54,28 @@ function funkenStreuen(knopf) {
     knopf.appendChild(funke);
     setTimeout(() => funke.remove(), 520);
   }
+}
+
+/**
+ * Öffnet die nächste Truhe aus dem Lager. Liegen danach noch weitere dort,
+ * kann man direkt die nächste öffnen; sonst wird die Startseite neu gebaut.
+ */
+function naechsteTruheOeffnen(screen) {
+  const id = truheAusLager();
+  if (!id) return;
+  zeigeTruhenOeffnung(screen, truheNachId(id), {
+    weitere: gameState.truhenLager.length,
+    fertig: (naechste) => {
+      spritesNeuZeichnen();
+      const neueErfolge = pruefeNeueErfolge();
+      if (neueErfolge.length) {
+        statistikSpeichern();
+        zeigeErfolgToast(neueErfolge);
+      }
+      if (naechste && gameState.truhenLager.length) naechsteTruheOeffnen(screen);
+      else showScreen('start');
+    },
+  });
 }
 
 export const startScreen = {
@@ -130,6 +158,25 @@ export const startScreen = {
       schnuppenTimer = setTimeout(() => stern.classList.remove('ist-schnuppe'), 6000);
     });
     screen.appendChild(stern);
+
+    // Truhenlager: gewonnene Truhen warten hier, bis man sie selbst öffnet.
+    // Das Symbol zeigt die wertvollste Truhe und wie viele es sind.
+    const lager = gameState.truhenLager;
+    if (lager.length) {
+      const vorn = lager.includes(BOSS_TRUHE.id) ? BOSS_TRUHE : truheNachId(lager[0]);
+      const lagerKnopf = document.createElement('button');
+      lagerKnopf.type = 'button';
+      lagerKnopf.className = 'truhenlager';
+      lagerKnopf.dataset.klang = 'keiner';
+      lagerKnopf.setAttribute('aria-label', `${lager.length} ungeöffnete Truhe${lager.length === 1 ? '' : 'n'} öffnen`);
+      lagerKnopf.innerHTML = `
+        <span class="truhenlager__truhe">${truheSvg(vorn.design)}</span>
+        <span class="truhenlager__zahl">${lager.length}</span>
+        <span class="truhenlager__text">Öffnen!</span>
+      `;
+      lagerKnopf.addEventListener('click', () => naechsteTruheOeffnen(screen));
+      screen.appendChild(lagerKnopf);
+    }
 
     const hero = document.createElement('div');
     hero.className = 'start__hero';

@@ -864,14 +864,15 @@ export const battleScreen = {
               : `${playerMonster.name} ist erschöpft. ${MUT_SAETZE[Math.floor(Math.random() * MUT_SAETZE.length)]}`}
           </p>
           ${statistikHtml(result)}
-          ${sieg && level.isBoss && belohnung?.erstesMal
-            ? `<div class="boss-truhe">${truheSvg(BOSS_TRUHE.design, { offen: true })}<span class="boss-truhe__name">${BOSS_TRUHE.name} geöffnet!</span></div>`
-            : ''}
           ${sieg ? '<div class="belohnung" id="belohnung"></div>' : ''}
-          ${belohnung?.gratisTruhe
-            ? `<div class="gratis-truhe">
-                 <div class="boss-truhe">${truheSvg(belohnung.gratisTruhe.truhe.design, { offen: true })}<span class="boss-truhe__name gratis-truhe__name">🎁 Gratis-Truhe für 2 Siege!</span></div>
-                 <div class="belohnung" id="gratis-beute"></div>
+          ${belohnung?.neueTruhen?.length
+            ? `<div class="gewonnene-truhen">
+                 ${belohnung.neueTruhen.map((truhe) => `
+                   <div class="gewonnene-truhe">
+                     ${truheSvg(truhe.design)}
+                     <span class="gewonnene-truhe__name">${truhe.id === BOSS_TRUHE.id ? '👑' : '🎁'} ${truhe.name} gewonnen!</span>
+                   </div>`).join('')}
+                 <p class="gewonnene-truhen__hinweis">Öffne sie auf der Startseite.</p>
                </div>`
             : sieg
               ? `<p class="gratis-hinweis">🎁 Noch ${siegeBisGratisTruhe()} Sieg bis zur Gratis-Truhe</p>`
@@ -897,10 +898,6 @@ export const battleScreen = {
         const box = overlay.querySelector('.overlay__box');
         box.insertBefore(createStars(stars), box.querySelector('.ergebnis-portrait'));
         fuelleBelohnung(overlay.querySelector('#belohnung'), belohnung.stuecke);
-        if (belohnung.gratisTruhe) {
-          // Die Gratis-Beute klingt nach der normalen Beute.
-          fuelleBelohnung(overlay.querySelector('#gratis-beute'), belohnung.gratisTruhe.stuecke, belohnung.stuecke.length);
-        }
         // Konfetti zum Feiern - erst, wenn das Fenster steht.
         setTimeout(() => konfetti(box, 26), 120);
       }
@@ -929,22 +926,12 @@ export const battleScreen = {
     }
 
     /**
-     * Die Kampfstatistik: ausgespielte Karten, angerichteter Schaden und
-     * Dauer. Die Werte zählt die Engine mit (state.statistik, state.zeit) -
-     * sie fließen in keine Rechnung ein.
+     * Die Kampfdauer - gezählt von der Engine (state.zeit, ohne Pausen).
      */
-    function statistikHtml(result) {
-      const st = battle.state.statistik;
+    function statistikHtml() {
       const sekunden = Math.round(battle.state.zeit);
       const dauer = `${Math.floor(sekunden / 60)}:${String(sekunden % 60).padStart(2, '0')}`;
-      return `
-        <div class="kampf-statistik" aria-label="Kampfstatistik">
-          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">🃏</span><strong>${st.karten}</strong><small>Karten</small></span>
-          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">💥</span><strong>${st.schaden}</strong><small>Schaden</small></span>
-          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">⏱️</span><strong>${dauer}</strong><small>Dauer</small></span>
-          <span class="kampf-statistik__feld"><span class="kampf-statistik__icon">${result === 'win' ? '🏆' : '💤'}</span><strong>${result === 'win' ? 'Sieg' : 'K.O.'}</strong><small>Ergebnis</small></span>
-        </div>
-      `;
+      return `<p class="kampf-dauer">⏱️ Kampfdauer <strong>${dauer}</strong></p>`;
     }
 
     /**

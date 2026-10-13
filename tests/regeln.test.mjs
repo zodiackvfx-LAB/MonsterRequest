@@ -62,7 +62,7 @@ import { SORTIERUNGEN, sortiereAttacken } from '../js/core/sortierung.js';
 import { ALLE_STIMMUNGEN, tageszeitFuer, waehleStimmung } from '../js/ui/umgebung.js';
 import { bewegungVon } from '../js/ui/kampfintro.js';
 import { createBattle } from '../js/core/battle.js';
-import { saveProgress, sicherungsInfo } from '../js/core/state.js';
+import { saveProgress, sicherungsInfo, truheAusLager, truheEinlagern } from '../js/core/state.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
@@ -522,11 +522,13 @@ console.log('\nBelohnungen');
   pruefe('Boss gibt mehr Erfahrung', bossLohn.stuecke[1].menge > erstesMal.stuecke[1].menge);
   pruefe('Boss oeffnet eine neue Welt', bossLohn.newWorld?.id === 2);
 
-  // Bosstruhe nur beim ersten Sieg
-  const mitTruhe = bossLohn.stuecke.length;
+  // Bosstruhe nur beim ersten Sieg - und sie kommt ungeöffnet ins Lager
+  pruefe('Der erste Boss-Sieg legt die Bosstruhe ins Lager',
+    bossLohn.neueTruhen.some((t) => t.id === BOSS_TRUHE.id) && gameState.truhenLager.includes(BOSS_TRUHE.id));
   const bossZweimal = siegBelohnung(boss, 3, SPIELFIGUR.id, nieGlueck);
-  pruefe('Bosstruhe gibt es nur beim ersten Sieg', bossZweimal.stuecke.length < mitTruhe);
-  pruefe('Bosstruhe enthaelt 3 Stuecke', mitTruhe - bossZweimal.stuecke.length === BOSS_TRUHE.anzahl);
+  pruefe('Bosstruhe gibt es nur beim ersten Sieg',
+    !bossZweimal.neueTruhen.some((t) => t.id === BOSS_TRUHE.id) &&
+    gameState.truhenLager.filter((id) => id === BOSS_TRUHE.id).length === 1);
 
   // Material
   pruefe(
@@ -1126,28 +1128,38 @@ console.log('\nLokale Sicherung');
   resetProgress();
 }
 
-console.log('\nGratis-Truhe');
+console.log('\nGratis-Truhe und Truhenlager');
 {
   resetProgress();
   const kampf = levelsOfWorld(1)[0];
   pruefe('Zu Beginn fehlen 2 Siege bis zur Gratis-Truhe', siegeBisGratisTruhe() === 2);
+  pruefe('Das Truhenlager ist anfangs leer', gameState.truhenLager.length === 0);
   const erster = siegBelohnung(kampf, 3, 'timo', () => 0.99);
-  pruefe('Der 1. Sieg bringt noch keine Truhe', erster.gratisTruhe === null && siegeBisGratisTruhe() === 1);
+  pruefe('Der 1. Sieg bringt noch keine Truhe',
+    erster.neueTruhen.length === 0 && siegeBisGratisTruhe() === 1);
   const muenzenVorher = gameState.coins;
   const zweiter = siegBelohnung(kampf, 3, 'timo', () => 0.99);
   pruefe('Der 2. Sieg bringt eine Holztruhe',
-    zweiter.gratisTruhe?.truhe.id === 'holztruhe' && zweiter.gratisTruhe.stuecke.length === 5);
-  const truhenMuenzen = zweiter.gratisTruhe.stuecke.find((b) => b.art === 'muenzen').menge;
-  pruefe('Die Truhen-Beute ist gutgeschrieben',
-    gameState.coins === muenzenVorher + zweiter.stuecke[0].menge + truhenMuenzen);
+    zweiter.neueTruhen.length === 1 && zweiter.neueTruhen[0].id === 'holztruhe');
+  pruefe('...die ungeöffnet ins Lager kommt (keine Münzen aus der Truhe)',
+    gameState.truhenLager.join() === 'holztruhe' && gameState.coins === muenzenVorher + zweiter.stuecke[0].menge);
   pruefe('Danach beginnt die Zählung neu', siegeBisGratisTruhe() === 2);
   siegBelohnung(kampf, 3, 'timo', () => 0.99);
-  pruefe('Auch der 4. Sieg bringt wieder eine', siegBelohnung(kampf, 3, 'timo', () => 0.99).gratisTruhe !== null);
+  siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  pruefe('Nach 4 Siegen liegen 2 Truhen im Lager', gameState.truhenLager.length === 2);
   siegBelohnung(kampf, 3, 'timo', () => 0.99);
   loadProgress();
-  pruefe('Der Zähler übersteht das Neuladen', siegeBisGratisTruhe() === 1);
+  pruefe('Lager und Zähler überstehen das Neuladen',
+    siegeBisGratisTruhe() === 1 && gameState.truhenLager.length === 2);
+  truheEinlagern('bosstruhe');
+  pruefe('Die Bosstruhe wird zuerst geöffnet', truheAusLager() === 'bosstruhe');
+  pruefe('Danach die Holztruhen', truheAusLager() === 'holztruhe' && gameState.truhenLager.length === 1);
+  pruefe('Eine unbekannte Truhe kommt nicht ins Lager', truheEinlagern('gibtsnicht') === false);
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ truhenLager: ['holztruhe', 'quatsch', 7] }));
+  loadProgress();
+  pruefe('Beim Laden bleiben nur bekannte Truhen im Lager', gameState.truhenLager.join() === 'holztruhe');
   resetProgress();
-  pruefe('Zurücksetzen setzt auch den Zähler zurück', siegeBisGratisTruhe() === 2);
+  pruefe('Zurücksetzen leert Lager und Zähler', siegeBisGratisTruhe() === 2 && gameState.truhenLager.length === 0);
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

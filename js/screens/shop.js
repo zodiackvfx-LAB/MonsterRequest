@@ -4,27 +4,23 @@
  *   Truhen  Truhen kaufen und öffnen
  *   Besitz  Münzen, Material, gefundene Attacken und Skins auf einen Blick
  *
- * Bezahlt wird nur mit Münzen aus Kämpfen. Beim Öffnen erscheinen genau
- * fünf Beutestücke, die nacheinander aufgedeckt werden.
+ * Bezahlt wird nur mit Münzen aus Kämpfen. Geöffnet wird mit der großen
+ * Animation aus js/ui/truhe-oeffnen.js.
  */
 
 import { showScreen } from '../core/screens.js';
 import { TRUHEN } from '../data/shop.js';
 import { MUENZE, SELTENHEITEN } from '../data/items.js';
-import { truheOeffnen } from '../core/loot.js';
+import { zeigeTruhenOeffnung } from '../ui/truhe-oeffnen.js';
 import { siegeBisGratisTruhe } from '../core/belohnung.js';
 import { truheSvg } from '../ui/truhen.js';
-import { bezahlen, beuteGutschreiben, gameState, kannBezahlen } from '../core/state.js';
-import { fortschrittMelden } from '../core/aufgaben.js';
-import { spieleBeute, spieleKlang } from '../core/audio.js';
+import { bezahlen, gameState, kannBezahlen } from '../core/state.js';
+import { spieleKlang } from '../core/audio.js';
 import { pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { zeigeErfolgToast } from '../ui/toast.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
-
-/** Wie lange zwischen zwei aufgedeckten Stücken gewartet wird. */
-const AUFDECK_TAKT = 520;
 
 export const shopScreen = {
   mount(root, params = {}) {
@@ -108,7 +104,7 @@ export const shopScreen = {
             spieleKlang('gesperrt');
             return;
           }
-          oeffnungZeigen(screen, truhe);
+          zeigeTruhenOeffnung(screen, truhe, { fertig: nachDemOeffnen });
         });
 
         karte.appendChild(kaufen);
@@ -158,98 +154,15 @@ function chancenText(truhe) {
   return teile.join(' · ') + garantie;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Die Öffnungs-Animation                                             */
-/* ------------------------------------------------------------------ */
-
-/**
- * Zeigt das Öffnen einer Truhe:
- *   1. Die Truhe erscheint und wackelt
- *   2. Sie springt auf
- *   3. Die fünf Stücke werden nacheinander aufgedeckt
- *   4. Danach sieht man alles auf einen Blick
- */
-function oeffnungZeigen(screen, truhe) {
-  const stuecke = truheOeffnen(truhe);
-  const timer = [];
-
-  // Zaehlt fuer die Tagesaufgabe "Schatzsucher".
-  fortschrittMelden('truhe');
-
-  const overlay = document.createElement('div');
-  overlay.className = 'overlay overlay--chest';
-  overlay.innerHTML = `
-    <div class="chest-open">
-      <div class="chest-open__chest" id="chest">${truheSvg(truhe.design)}</div>
-      <div class="chest-open__title" id="chest-title">${truhe.name} wird geöffnet…</div>
-      <div class="loot-grid" id="loot"></div>
-      <button class="btn btn--big btn--green chest-open__done" id="btn-done" type="button" hidden>
-        Alles einsammeln
-      </button>
-    </div>
-  `;
-  screen.appendChild(overlay);
-
-  const chest = overlay.querySelector('#chest');
-  const titel = overlay.querySelector('#chest-title');
-  const gitter = overlay.querySelector('#loot');
-  const fertig = overlay.querySelector('#btn-done');
-
-  // Platzhalter für die fünf Stücke - damit die Fläche nicht springt.
-  stuecke.forEach(() => {
-    const feld = document.createElement('div');
-    feld.className = 'loot-item is-hidden';
-    feld.innerHTML = '<span class="loot-item__icon">?</span>';
-    gitter.appendChild(feld);
-  });
-
-  chest.classList.add('is-shaking');
-
-  timer.push(
-    setTimeout(() => {
-      chest.classList.remove('is-shaking');
-      chest.classList.add('is-open');
-      titel.textContent = 'Du erhältst:';
-      spieleKlang('truhe');
-      stuecke.forEach((stueck, index) => {
-        timer.push(setTimeout(() => aufdecken(gitter, stueck, index), index * AUFDECK_TAKT));
-      });
-      timer.push(
-        setTimeout(() => {
-          fertig.hidden = false;
-        }, stuecke.length * AUFDECK_TAKT)
-      );
-    }, 850)
-  );
-
-  fertig.addEventListener('click', () => {
-    timer.forEach(clearTimeout);
-    // Ein Skin kann das Aussehen ändern - die gezeichneten Figuren neu bauen.
-    spritesNeuZeichnen();
-    overlay.remove();
-    // Neue Attacken/Skins können einen Sammel-Erfolg auslösen.
-    const neueErfolge = pruefeNeueErfolge();
-    if (neueErfolge.length) {
-      statistikSpeichern();
-      zeigeErfolgToast(neueErfolge);
-    }
-    showScreen('shop');
-  });
-}
-
-/** Deckt ein einzelnes Beutestück auf und schreibt es gut. */
-function aufdecken(gitter, stueck, index) {
-  beuteGutschreiben(stueck);
-  // Seltene Stuecke klingen hoerbar wertvoller.
-  spieleBeute(stueck.seltenheit);
-
-  const seltenheit = SELTENHEITEN[stueck.seltenheit];
-  const feld = gitter.children[index];
-  feld.className = `loot-item is-${stueck.seltenheit}`;
-  feld.style.setProperty('--rarity', seltenheit.farbe);
-  feld.innerHTML = `
-    <span class="loot-item__icon">${stueck.icon}</span>
-    <span class="loot-item__name">${stueck.name}</span>
-    <span class="loot-item__rarity">${seltenheit.name}</span>
-  `;
+/** Nach dem Öffnen: Skins neu zeichnen, Erfolge prüfen, Shop neu zeigen. */
+function nachDemOeffnen() {
+  // Ein Skin kann das Aussehen ändern - die gezeichneten Figuren neu bauen.
+  spritesNeuZeichnen();
+  // Neue Attacken/Skins können einen Sammel-Erfolg auslösen.
+  const neueErfolge = pruefeNeueErfolge();
+  if (neueErfolge.length) {
+    statistikSpeichern();
+    zeigeErfolgToast(neueErfolge);
+  }
+  showScreen('shop');
 }

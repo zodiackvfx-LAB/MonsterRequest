@@ -18,15 +18,16 @@
  *     (js/data/levels.js), dazu kommt sicher Material und beim ersten Sieg
  *     eine Bosstruhe.
  *   - Jeder 2. Sieg bringt zusätzlich eine Gratis-Truhe (Holztruhe) - auch
- *     beim Wiederholen. Sie kommt getrennt zurück (gratisTruhe), damit das
- *     Ergebnisfenster sie als eigene Truhe zeigen kann.
+ *     beim Wiederholen.
+ *   - Gewonnene Truhen werden NICHT sofort geöffnet: Sie kommen ins
+ *     Truhenlager (Symbol auf dem Startbildschirm), und der Spieler öffnet
+ *     sie selbst. Zurück kommen sie als neueTruhen, damit das
+ *     Ergebnisfenster sie zeigen kann.
  */
 
 import { MATERIAL_BEUTE, MUENZE } from '../data/items.js';
 import { BOSS_TRUHE, GRATIS_TRUHE_ID, SIEGE_PRO_GRATIS_TRUHE, getTruhe } from '../data/shop.js';
-import { truheOeffnen } from './loot.js';
-import { beuteGutschreiben, bossKraftFreischalten, completeLevel, gameState, isLevelCleared, saveProgress } from './state.js';
-import { fortschrittMelden } from './aufgaben.js';
+import { beuteGutschreiben, bossKraftFreischalten, completeLevel, gameState, isLevelCleared, saveProgress, truheEinlagern } from './state.js';
 import { xpGutschreiben } from './progression.js';
 
 /** Wie oft ein normaler Kampf Material abwirft. */
@@ -60,10 +61,6 @@ export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) 
   // Vor completeLevel abfragen - danach gilt der Level als geschafft.
   const erstesMal = !isLevelCleared(level.id);
 
-  // Die Bosstruhe wird VOR dem Gutschreiben geöffnet: truheOeffnen()
-  // überspringt Attacken und Skins, die man schon besitzt.
-  const truhenBeute = level.isBoss && erstesMal ? truheOeffnen(BOSS_TRUHE) : [];
-
   const muenzBonus = 1 + sterne * STERN_BONUS;
   const { coins, newWorld } = completeLevel(level.id, {
     stars: sterne,
@@ -86,24 +83,28 @@ export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) 
   if (material > 0) {
     nochBuchen.push(stueck('material', material, `${material} Material`, '💠', 'gewoehnlich'));
   }
-  nochBuchen.push(...truhenBeute);
   nochBuchen.forEach((eintrag) => beuteGutschreiben(eintrag));
 
   // Beim ERSTEN Boss-Sieg gibt es die Boss-Kraft dieser Welt.
   const neueKraft = level.isBoss && erstesMal ? bossKraftFreischalten(level.worldId) : null;
 
-  // Erst NACH der übrigen Beute öffnen: truheOeffnen() überspringt, was man
-  // besitzt - so kommt nichts aus der Bosstruhe gleich noch einmal.
-  const gratisTruhe = gratisTruheZaehlen();
+  // Gewonnene Truhen kommen ungeöffnet ins Lager.
+  const neueTruhen = [];
+  if (level.isBoss && erstesMal) {
+    truheEinlagern(BOSS_TRUHE.id);
+    neueTruhen.push(BOSS_TRUHE);
+  }
+  const gratis = gratisTruheZaehlen();
+  if (gratis) neueTruhen.push(gratis);
 
-  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft, gratisTruhe };
+  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft, neueTruhen };
 }
 
 /**
- * Zählt einen Sieg für die Gratis-Truhe. Ist es der 2. Sieg, wird die Truhe
- * geöffnet und gutgeschrieben.
+ * Zählt einen Sieg für die Gratis-Truhe. Ist es der 2. Sieg, kommt eine
+ * Holztruhe ins Lager.
  *
- * @returns {{truhe: object, stuecke: Array}|null} die geöffnete Truhe oder null
+ * @returns {object|null} die gewonnene Truhe oder null
  */
 function gratisTruheZaehlen() {
   gameState.gratisTruheZaehler = (Number(gameState.gratisTruheZaehler) || 0) + 1;
@@ -113,12 +114,8 @@ function gratisTruheZaehlen() {
   }
 
   gameState.gratisTruheZaehler = 0;
-  const truhe = getTruhe(GRATIS_TRUHE_ID);
-  const stuecke = truheOeffnen(truhe);
-  stuecke.forEach((eintrag) => beuteGutschreiben(eintrag));
-  // Zählt wie jede geöffnete Truhe für die Tagesaufgabe "Schatzsucher".
-  fortschrittMelden('truhe');
-  return { truhe, stuecke };
+  truheEinlagern(GRATIS_TRUHE_ID);
+  return getTruhe(GRATIS_TRUHE_ID);
 }
 
 /** Wie viele Siege noch bis zur nächsten Gratis-Truhe fehlen (1 oder 2). */

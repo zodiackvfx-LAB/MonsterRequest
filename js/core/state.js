@@ -11,6 +11,10 @@ import { LEVELS, bossLevelOf } from '../data/levels.js';
 import { WORLDS } from '../data/worlds.js';
 import { getKraft, kraftFuerWelt } from '../data/kraefte.js';
 import { MONSTERS } from '../data/monsters.js';
+import { BOSS_TRUHE, TRUHEN } from '../data/shop.js';
+
+/** Alle Truhen, die im Lager liegen dürfen. */
+const TRUHEN_IDS = [...TRUHEN.map((truhe) => truhe.id), BOSS_TRUHE.id];
 import { cloudMerken } from './cloud.js';
 
 const STORAGE_KEY = 'monsterquest.save.v3';
@@ -54,6 +58,7 @@ function createNewGame() {
     materials: 0, // Material (💠) für Aufwertungen - siehe js/core/progression.js
     ownedAttacks: [], // aus Truhen freigeschaltete Attacken
     gratisTruheZaehler: 0, // Siege seit der letzten Gratis-Truhe (siehe js/core/belohnung.js)
+    truhenLager: [], // gewonnene, noch ungeöffnete Truhen (ids) - der Spieler öffnet sie selbst
     bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
@@ -248,6 +253,10 @@ function uebernehmen(saved) {
   gameState.materials = Number(saved.materials) || 0;
   gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
   gameState.gratisTruheZaehler = Math.max(0, Math.floor(Number(saved.gratisTruheZaehler) || 0));
+  // Nur bekannte Truhen übernehmen - eine unbekannte id ließe sich nie öffnen.
+  gameState.truhenLager = Array.isArray(saved.truhenLager)
+    ? saved.truhenLager.filter((id) => TRUHEN_IDS.includes(id))
+    : [];
   // Nur bekannte Kraft-ids übernehmen, damit ein alter Spielstand keine
   // Geister-Kraft einschleppt.
   gameState.bossPowers = Array.isArray(saved.bossPowers)
@@ -629,6 +638,30 @@ export function setBossKraft(id) {
     gameState.bossPower = id;
     saveProgress();
   }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Truhenlager: gewonnene Truhen, die der Spieler selbst öffnet        */
+/* ------------------------------------------------------------------ */
+
+/** Legt eine gewonnene Truhe ins Lager (geöffnet wird sie später). */
+export function truheEinlagern(id) {
+  if (!TRUHEN_IDS.includes(id)) return false;
+  gameState.truhenLager.push(id);
+  saveProgress();
+  return true;
+}
+
+/**
+ * Nimmt die nächste Truhe aus dem Lager - die Bosstruhe zuerst, sie ist die
+ * wertvollste. Gibt die id zurück oder null, wenn das Lager leer ist.
+ */
+export function truheAusLager() {
+  if (!gameState.truhenLager.length) return null;
+  const boss = gameState.truhenLager.indexOf(BOSS_TRUHE.id);
+  const [id] = gameState.truhenLager.splice(boss >= 0 ? boss : 0, 1);
+  saveProgress();
+  return id;
 }
 
 /** Eine Einstellung ändern (z. B. Ton an/aus). */

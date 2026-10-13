@@ -91,6 +91,8 @@ js/
     kampfintro.js       Intro vor dem Kampf, Auftritte, Bewegung je Gegnerform
     umgebung.js         Arena-Varianten, Tageszeit, Wetter, kleine Tiere
     truhen.js           Die gezeichneten Truhen (Holz, Silber, Gold, Boss)
+    truhe-oeffnen.js    Die Öffnungs-Animation (Landen, Rütteln, Aufspringen,
+                        Beute fliegt heraus)
 
   screens/              NUR Darstellung – baut HTML, reagiert auf Tipps
     lobby.js            Lobby wie bei Clash Royale: Seiten zum Wischen und
@@ -131,7 +133,9 @@ beim Gegner zeigt dir, wann bei ihm ein großer Schlag kommt.
 **Nach dem Kampf:** Sterne je nach verbliebenen Lebenspunkten (3 Sterne ab 70 %),
 Münzen als Belohnung, und das nächste Level wird freigeschaltet.
 **Jeder 2. Sieg** im Abenteuer bringt zusätzlich eine Holztruhe gratis
-(Niederlagen und die Endlos-Arena zählen nicht mit).
+(Niederlagen und die Endlos-Arena zählen nicht mit). Gewonnene Truhen (auch
+die Bosstruhe) werden nicht sofort geöffnet: Sie warten im **Truhenlager** –
+dem Truhen-Symbol links auf der Startseite – bis man sie selbst öffnet.
 
 ---
 
