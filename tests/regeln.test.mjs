@@ -62,7 +62,7 @@ import { SORTIERUNGEN, sortiereAttacken } from '../js/core/sortierung.js';
 import { ALLE_STIMMUNGEN, tageszeitFuer, waehleStimmung } from '../js/ui/umgebung.js';
 import { bewegungVon } from '../js/ui/kampfintro.js';
 import { createBattle } from '../js/core/battle.js';
-import { saveProgress, sicherungsInfo, truheAusLager, truheEinlagern } from '../js/core/state.js';
+import { karteGutschreiben, saveProgress, sicherungsInfo, truheAusLager, truheEinlagern } from '../js/core/state.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
@@ -89,6 +89,7 @@ import {
 } from '../js/core/progression.js';
 import { truheOeffnen } from '../js/core/loot.js';
 import { TRUHEN_DESIGNS } from '../js/ui/truhen.js';
+import { KARTEN_MAX_LEVEL, KOPIEN_FUER_LEVEL, levelFaktor } from '../js/data/karten.js';
 
 /** Die Spielerfigur - ueber die id geholt, damit ein Figurenwechsel
     (frueher Glutwelpe, jetzt Timo) die Tests nicht bricht. */
@@ -223,6 +224,15 @@ console.log('\nShop und Truhen');
       if (muenzen.some((m) => m.menge < 150 || m.menge > 500)) imRahmen = false;
     }
     pruefe(`${truhe.name}: genau ein Muenzstueck pro Truhe (300 Durchlaeufe)`, einmalMuenzen);
+    let einmalMaterial = true;
+    let immerKarte = true;
+    for (let i = 0; i < 300; i++) {
+      const probe = truheOeffnen(truhe);
+      if (probe.filter((b) => b.art === 'material').length !== 1) einmalMaterial = false;
+      if (!probe.some((b) => b.art === 'karte' || b.art === 'attacke')) immerKarte = false;
+    }
+    pruefe(`${truhe.name}: genau einmal Material`, einmalMaterial);
+    pruefe(`${truhe.name}: immer mindestens eine Faehigkeitskarte`, immerKarte);
     pruefe(`${truhe.name}: Muenzen immer zwischen 150 und 500`, imRahmen);
     let nieDoppelt = true;
     for (let i = 0; i < 300; i++) {
@@ -347,6 +357,7 @@ console.log('\nAttacken-Level');
     [1, 2, 3].every((l) => attackenKosten(l).muenzen < attackenKosten(l + 1).muenzen)
   );
 
+  gameState.coins = 10000000;
   for (let i = 0; i < MAX_ATTACKEN_LEVEL + 3; i++) attackeAufwerten(PROBE);
   pruefe(
     `Attacken enden bei Level ${MAX_ATTACKEN_LEVEL}`,
@@ -661,8 +672,8 @@ console.log('\nSpielfigur');
     gameState.decks[SPIELFIGUR.id]?.length === 8);
   pruefe('Alter Spielstand: alte Attackennamen werden uebersetzt',
     gameState.decks[SPIELFIGUR.id]?.every((id) => ATTACKS[id]));
-  pruefe('Alter Spielstand: Attacken-Level wandert auf den neuen Namen',
-    getAttackenLevel('sturmfaust') === 3);
+  pruefe('Alter Spielstand: Attacken-Level wandert auf den neuen Namen (altes Lv. 3 = neues Lv. 7)',
+    getAttackenLevel('sturmfaust') === 7);
   pruefe('Alter Spielstand: getragener Skin bleibt',
     gameState.activeSkin[SPIELFIGUR.id] === 'skin-gold');
   pruefe('Alter Spielstand: Muenzen bleiben', gameState.coins === 777);
@@ -1160,6 +1171,42 @@ console.log('\nGratis-Truhe und Truhenlager');
   pruefe('Beim Laden bleiben nur bekannte Truhen im Lager', gameState.truhenLager.join() === 'holztruhe');
   resetProgress();
   pruefe('Zurücksetzen leert Lager und Zähler', siegeBisGratisTruhe() === 2 && gameState.truhenLager.length === 0);
+}
+
+console.log('\nKarten-Level bis 15');
+{
+  resetProgress();
+  pruefe('Max-Level ist 15', KARTEN_MAX_LEVEL === 15 && MAX_ATTACKEN_LEVEL === 15);
+  pruefe('Für jeden Schritt bis 15 ist eine Kopienzahl festgelegt',
+    KOPIEN_FUER_LEVEL.length === KARTEN_MAX_LEVEL && KOPIEN_FUER_LEVEL.slice(1).every((k) => k > 0));
+  pruefe('Spätere Level brauchen mindestens so viele Kopien wie frühere',
+    KOPIEN_FUER_LEVEL.slice(2).every((k, i) => k >= KOPIEN_FUER_LEVEL[i + 1]));
+  const k1 = karteGutschreiben('fausthieb', 1);
+  pruefe('1 Kopie hebt Fausthieb von Level 1 auf 2', k1.levelVorher === 1 && k1.level === 2 && k1.kopien === 0);
+  const k2 = karteGutschreiben('fausthieb', 1);
+  pruefe('Danach fehlt noch eine Kopie', k2.level === 2 && k2.kopien === 1 && k2.benoetigt === 2);
+  const k3 = karteGutschreiben('fausthieb', 50);
+  pruefe('Viele Kopien auf einmal: mehrere Level hintereinander', k3.level > 5);
+  karteGutschreiben('fausthieb', 999);
+  pruefe('Mehr als Level 15 geht nicht, Kopien laufen nicht über',
+    getAttackenLevel('fausthieb') === 15 && gameState.kartenKopien.fausthieb === 0);
+  pruefe('Roccos Steinfaust zieht mit (geteiltes Level)', getAttackenLevel('steinfaust') === 15);
+  pruefe('Level 15 macht gut doppelt so viel Schaden, nicht zwölfmal so viel',
+    levelFaktor(15) > 2 && levelFaktor(15) < 2.3);
+  const fh = getAttack('fausthieb');
+  pruefe('Schaden auf Level 15 entspricht dem Faktor',
+    attackeMitLevel(fh).damage === Math.round(fh.damage * levelFaktor(15)) && attackeMitLevel(fh).cost === fh.cost);
+  pruefe('Ein Level kaufen ist teurer als früher (Lv. 1→2: mind. 800 Münzen)', attackenKosten(1).muenzen >= 800);
+  saveProgress();
+  loadProgress();
+  pruefe('Kopien und Level bleiben nach dem Neuladen', getAttackenLevel('fausthieb') === 15);
+  resetProgress();
+  gameState.coins = 10000000;
+  gameState.materials = 100000;
+  for (let i = 0; i < 40; i++) beuteGutschreiben(truheOeffnen(TRUHEN[0]).find((b) => b.art === 'karte') ?? { art: 'nichts' });
+  pruefe('Kopien aus Truhen leveln Karten hoch',
+    Object.values(gameState.attackLevels).some((l) => l >= 3));
+  resetProgress();
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

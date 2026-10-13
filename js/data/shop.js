@@ -21,7 +21,7 @@ export const TRUHEN = [
     name: 'Holztruhe',
     icon: '🧰',
     design: 'holz',
-    text: 'Die einfache Truhe. 150 bis 500 Münzen, dazu Material - manchmal mehr.',
+    text: 'Die einfache Truhe: Münzen, Material und Fähigkeitskarten.',
     preis: 250,
     anzahl: 5,
     chancen: { gewoehnlich: 70, selten: 25, episch: 4.5, legendaer: 0.5 },

@@ -29,6 +29,32 @@ import { truheSvg } from './truhen.js';
 
 const RANG = { gewoehnlich: 0, selten: 1, episch: 2, legendaer: 3 };
 
+/**
+ * Was in einem Feld steht. Fähigkeitskarten zeigen ihre Kopien und wie weit
+ * es bis zum nächsten Level ist - steigt die Karte, gibt es "LEVEL UP".
+ */
+function inhaltFuer(stueck, seltenheit) {
+  const kopf = `
+    <span class="loot-item__icon">${stueck.icon}</span>
+    <span class="loot-item__name">${stueck.name}</span>
+  `;
+  if (stueck.art === 'attacke') {
+    return `${kopf}<span class="loot-item__neu">NEUE KARTE!</span>`;
+  }
+  if (stueck.art === 'karte' && stueck.ergebnis) {
+    const { levelVorher, level, kopien, benoetigt } = stueck.ergebnis;
+    const anteil = benoetigt ? Math.min(1, kopien / benoetigt) : 1;
+    return `${kopf}
+      <span class="loot-item__kopien">+${stueck.menge} ${stueck.menge === 1 ? 'Karte' : 'Karten'}</span>
+      ${level > levelVorher ? `<span class="loot-item__levelup">LEVEL UP! Lv. ${level}</span>` : ''}
+      <span class="kartenbalken" style="--anteil:${anteil}">
+        <span class="kartenbalken__text">${benoetigt ? `Lv. ${level} · ${kopien}/${benoetigt}` : `Lv. ${level} · MAX`}</span>
+      </span>
+    `;
+  }
+  return `${kopf}<span class="loot-item__rarity">${seltenheit.name}</span>`;
+}
+
 /** Takt zwischen zwei Stücken (ms) - seltene Stücke bekommen mehr Zeit. */
 const TAKT = 380;
 const TAKT_SELTEN = 820;
@@ -118,11 +144,7 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
     const seltenheit = SELTENHEITEN[stueck.seltenheit] ?? SELTENHEITEN.gewoehnlich;
     feld.className = `loot-item is-${stueck.seltenheit}`;
     feld.style.setProperty('--rarity', seltenheit.farbe);
-    feld.innerHTML = `
-      <span class="loot-item__icon">${stueck.icon}</span>
-      <span class="loot-item__name">${stueck.name}</span>
-      <span class="loot-item__rarity">${seltenheit.name}</span>
-    `;
+    feld.innerHTML = inhaltFuer(stueck, seltenheit);
     if (!sofort && bewegt) {
       // Startpunkt = Mitte der Truhe, damit das Stück sichtbar aus ihr kommt.
       const t = truheEl.getBoundingClientRect();
@@ -130,7 +152,10 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
       feld.style.setProperty('--von-x', `${t.left + t.width / 2 - (f.left + f.width / 2)}px`);
       feld.style.setProperty('--von-y', `${t.top + t.height / 2 - (f.top + f.height / 2)}px`);
       feld.classList.add('fliegt');
-      if (RANG[stueck.seltenheit] >= 2) feld.classList.add('ist-besonders');
+      // Seltene Stücke, neue Karten und Level-Ups bekommen den großen Auftritt.
+      const levelUp = stueck.ergebnis && stueck.ergebnis.level > stueck.ergebnis.levelVorher;
+      if (RANG[stueck.seltenheit] >= 2 || stueck.art === 'attacke' || levelUp) feld.classList.add('ist-besonders');
+      if (levelUp) spaeter(() => spieleKlang('levelauf'), 260);
       spieleBeute(stueck.seltenheit);
       if (RANG[stueck.seltenheit] >= 2) vibriere('krit');
     }
@@ -145,7 +170,9 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
     }
     const index = naechstes++;
     aufdecken(index);
-    const selten = RANG[stuecke[index].seltenheit] >= 2;
+    const stueck = stuecke[index];
+    const selten = RANG[stueck.seltenheit] >= 2 || stueck.art === 'attacke' ||
+      (stueck.ergebnis && stueck.ergebnis.level > stueck.ergebnis.levelVorher);
     spaeter(weiter, selten ? TAKT_SELTEN : TAKT);
   }
 

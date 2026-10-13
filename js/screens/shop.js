@@ -74,8 +74,9 @@ export const shopScreen = {
       hinweis.innerHTML = `
         <p class="map__info-text">
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
-          <strong>5 Beutestücke</strong>: genau einmal <strong>150 bis 500 Münzen</strong>,
-          dazu Material, Attacken oder Skins. Was du schon besitzt, kommt nicht mehr vor.
+          <strong>5 Beutestücke</strong>: einmal <strong>150 bis 500 Münzen</strong>,
+          einmal Material und <strong>Fähigkeitskarten</strong> (ab und zu ein Skin).
+          Doppelte Karten leveln deine Karte hoch - bis Level 15.
           <br>🎁 <strong>Jeder 2. Sieg</strong> bringt eine Holztruhe gratis –
           noch ${siegeBisGratisTruhe()} Sieg${siegeBisGratisTruhe() === 1 ? '' : 'e'}.
         </p>

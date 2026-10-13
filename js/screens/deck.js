@@ -22,6 +22,7 @@ import {
   attackeMitLevel,
   attackenKosten,
   getAttackenLevel,
+  kartenFortschritt,
 } from '../core/progression.js';
 
 export const deckScreen = {
@@ -51,8 +52,9 @@ export const deckScreen = {
       intro.innerHTML = `
         <p class="map__info-text">
           Genau ${deck.length} Attacken, im Kampf ${HAND_SIZE} auf der Hand.
-          <strong>Antippen</strong> zum Tauschen, <strong>Aufwerten</strong> macht
-          eine Attacke stärker - die Energiekosten bleiben gleich.
+          <strong>Antippen</strong> zum Tauschen. Doppelte Karten aus Truhen
+          leveln eine Karte bis <strong>Level 15</strong> hoch - oder du kaufst
+          ein Level direkt (teuer). Die Energiekosten bleiben immer gleich.
           <br>${MUENZE} ${gameState.coins} · 💠 ${gameState.materials}
         </p>
       `;
@@ -217,6 +219,12 @@ function inhaltFuer(attacke, level, hinweis = null) {
   const beute = BEUTE_ATTACKEN.find((a) => a.id === attacke.id);
   const seltenheit = beute ? SELTENHEITEN[beute.seltenheit] : null;
 
+  // Fortschritt zum nächsten Level durch Kopien aus Truhen.
+  const { kopien, benoetigt } = kartenFortschritt(attacke.id);
+  const balken = benoetigt
+    ? `<span class="kartenbalken kartenbalken--klein" style="--anteil:${Math.min(1, kopien / benoetigt)}"><span class="kartenbalken__text">🃏 ${kopien}/${benoetigt}</span></span>`
+    : '<span class="kartenbalken kartenbalken--klein kartenbalken--max" style="--anteil:1"><span class="kartenbalken__text">MAX</span></span>';
+
   return `
     <span class="deck-item__icon">${attacke.icon}</span>
     <span class="deck-item__body">
@@ -228,6 +236,7 @@ function inhaltFuer(attacke, level, hinweis = null) {
         ${seltenheit ? `<span class="deck-item__rarity" style="color:${seltenheit.farbe}">${seltenheit.name}</span>` : ''}
         <span>${hinweis ?? wirkung}</span>
       </span>
+      ${balken}
     </span>
     <span class="deck-item__cost">${attacke.cost}</span>
   `;

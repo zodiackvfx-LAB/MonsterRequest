@@ -6478,7 +6478,7 @@ body.no-animations *::after {
 /* ---------- Beim Öffnen ---------- */
 .chest-open__chest {
   width: 150px;
-  height: 130px;
+  height: 162px;
   font-size: 0;
 }
 
@@ -6491,7 +6491,7 @@ body.no-animations *::after {
 
 .boss-truhe .truhe {
   width: 96px;
-  height: 84px;
+  height: 104px;
   animation: pop-in 0.45s 0.3s cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
 
@@ -6834,7 +6834,7 @@ body.no-animations *::after {
 
 .truhenlager__truhe {
   width: 70px;
-  height: 62px;
+  height: 76px;
   animation: lager-hopsen 2.4s ease-in-out infinite;
 }
 
@@ -6920,7 +6920,7 @@ body.no-animations *::after {
 
 .gewonnene-truhe .truhe {
   width: 84px;
-  height: 74px;
+  height: 91px;
   animation: pop-in 0.5s 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) both, lager-hopsen 2.4s 1s ease-in-out infinite;
 }
 
@@ -6953,7 +6953,7 @@ body.no-animations *::after {
 .oeffnung__buehne {
   position: relative;
   width: 190px;
-  height: 170px;
+  height: 196px;
   display: grid;
   place-items: center;
 }
@@ -6987,7 +6987,7 @@ body.no-animations *::after {
 .oeffnung__truhe {
   position: relative;
   width: 160px;
-  height: 140px;
+  height: 173px;
 }
 
 /* 1. Landen: aus dem Himmel, federnd aufsetzen. */
@@ -7164,6 +7164,93 @@ body.no-animations *::after {
   .overlay--oeffnung .loot-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+
+/* =========================================================================
+   10. Karten-Level: Kopien, Fortschrittsbalken, Level-Up
+   ========================================================================= */
+
+/* Balken: wie viele Kopien bis zum nächsten Level (--anteil 0..1). */
+.kartenbalken {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 14px;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(8, 14, 40, 0.6);
+  border: 1px solid rgba(126, 224, 106, 0.55);
+}
+
+.kartenbalken::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--anteil, 0));
+  background: linear-gradient(180deg, #a6f08f 0%, #3fa62a 100%);
+  transition: transform 0.6s ease 0.3s;
+}
+
+.kartenbalken__text {
+  position: relative;
+  display: block;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 12px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+}
+
+.kartenbalken--max::before {
+  background: linear-gradient(180deg, #ffe27a 0%, #c9750d 100%);
+}
+
+/* Im Deckmenü sitzt der Balken schmal unter der Zeile. */
+.kartenbalken--klein {
+  grid-column: 1 / -1;
+  max-width: 150px;
+  height: 13px;
+}
+
+.deck-item__body {
+  min-width: 0;
+}
+
+.loot-item__kopien {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #a6f08f;
+}
+
+.loot-item__neu,
+.loot-item__levelup {
+  padding: 1px 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+  color: #1b2450;
+  background: linear-gradient(180deg, #ffe27a, #ffb32b);
+  animation: levelup-puls 0.9s ease-in-out infinite;
+}
+
+.loot-item__neu {
+  background: linear-gradient(180deg, #9fe8ff, #4fb4ff);
+}
+
+@keyframes levelup-puls {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+.overlay--oeffnung .loot-item {
+  min-height: 112px;
+  align-content: start;
 }
 
   </style>
@@ -8939,7 +9026,7 @@ var TRUHEN = [
     name: "Holztruhe",
     icon: "🧰",
     design: "holz",
-    text: "Die einfache Truhe. 150 bis 500 Münzen, dazu Material - manchmal mehr.",
+    text: "Die einfache Truhe: Münzen, Material und Fähigkeitskarten.",
     preis: 250,
     anzahl: 5,
     chancen: { gewoehnlich: 70, selten: 25, episch: 4.5, legendaer: 0.5 },
@@ -8987,6 +9074,24 @@ function getTruhe(id) {
 function truheNachId(id) {
   return id === BOSS_TRUHE.id ? BOSS_TRUHE : getTruhe(id);
 }
+
+// js/data/karten.js
+var KARTEN_MAX_LEVEL = 15;
+var KOPIEN_FUER_LEVEL = [0, 1, 2, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10, 12];
+var KOPIEN_JE_SELTENHEIT = {
+  gewoehnlich: [1, 2],
+  selten: [1, 1],
+  episch: [1, 1],
+  legendaer: [1, 1]
+};
+var STAERKE_JE_LEVEL = 0.08;
+function kopienFuer(level) {
+  return level >= KARTEN_MAX_LEVEL ? 0 : KOPIEN_FUER_LEVEL[level] ?? 0;
+}
+function levelFaktor(level) {
+  return 1 + STAERKE_JE_LEVEL * (Math.max(1, level) - 1);
+}
+var ALTES_LEVEL_NEU = { 1: 1, 2: 4, 3: 7, 4: 10, 5: 14 };
 
 // js/data/cloud-config.js
 var CLOUD = {
@@ -9154,7 +9259,7 @@ var SICHERUNG_KEY = "monsterquest.save.v3.sicherung";
 var SICHERUNG_ABSTAND = 60 * 1e3;
 var letzteSicherung = 0;
 var geladenAus = null;
-var SPEICHER_VERSION = 4;
+var SPEICHER_VERSION = 5;
 function createNewGame() {
   return {
     /* Zaehler, der bei jedem Speichern um eins steigt. Er entscheidet beim
@@ -9194,7 +9299,9 @@ function createNewGame() {
     characters: {},
     // { monsterId: { level, xp, upgrades } } - siehe progression.js
     attackLevels: {},
-    // { attackId: level }
+    // { attackId: level } - 1 bis 15
+    kartenKopien: {},
+    // { attackId: Kopien für das nächste Level } (siehe js/data/karten.js)
     // Einmal-Hinweise (z. B. das Kampf-Tutorial), die nur beim ersten Mal
     // erscheinen. Schlüssel = Hinweis-id, Wert = true, sobald gesehen.
     gesehen: {},
@@ -9353,8 +9460,16 @@ function uebernehmen(saved) {
     ])
   );
   gameState.characters = figurUmbenennen(saved.characters ?? {});
+  const alteLevel = (Number(saved.version) || 0) < 5;
   gameState.attackLevels = Object.fromEntries(
-    Object.entries(saved.attackLevels ?? {}).map(([id, level]) => [attackeUmbenennen(id), level])
+    Object.entries(saved.attackLevels ?? {}).map(([id, level]) => {
+      const zahl = Math.max(1, Math.floor(Number(level) || 1));
+      const neu = alteLevel ? ALTES_LEVEL_NEU[Math.min(5, zahl)] ?? 1 : zahl;
+      return [attackeUmbenennen(id), Math.min(KARTEN_MAX_LEVEL, neu)];
+    })
+  );
+  gameState.kartenKopien = Object.fromEntries(
+    Object.entries(saved.kartenKopien && typeof saved.kartenKopien === "object" ? saved.kartenKopien : {}).map(([id, anzahl]) => [id, Math.max(0, Math.floor(Number(anzahl) || 0))])
   );
   gameState.dailies = {
     datum: saved.dailies?.datum ?? null,
@@ -9512,6 +9627,9 @@ function beuteGutschreiben(stueck2) {
     case "attacke":
       if (!besitztAttacke(stueck2.id)) gameState.ownedAttacks.push(stueck2.id);
       break;
+    case "karte":
+      stueck2.ergebnis = karteGutschreiben(stueck2.id, stueck2.menge ?? 1);
+      break;
     case "skin":
       if (!besitztSkin(stueck2.id)) gameState.ownedSkins.push(stueck2.id);
       break;
@@ -9520,6 +9638,20 @@ function beuteGutschreiben(stueck2) {
   }
   saveProgress();
   return stueck2;
+}
+function karteGutschreiben(attackId, menge = 1) {
+  const key = stufenId(attackId);
+  const levelVorher = Number(gameState.attackLevels[key]) || 1;
+  let level = levelVorher;
+  let kopien = (Number(gameState.kartenKopien[key]) || 0) + Math.max(0, menge);
+  while (level < KARTEN_MAX_LEVEL && kopien >= kopienFuer(level)) {
+    kopien -= kopienFuer(level);
+    level += 1;
+  }
+  if (level >= KARTEN_MAX_LEVEL) kopien = 0;
+  gameState.attackLevels[key] = level;
+  gameState.kartenKopien[key] = kopien;
+  return { levelVorher, level, kopien, benoetigt: kopienFuer(level) };
 }
 function getDeck(monster) {
   const eigenes = gameState.decks[monster.id];
@@ -10492,14 +10624,22 @@ function monsterMitFortschritt(monster) {
     energieProSekunde: werte.energieProSekunde
   };
 }
-var MAX_ATTACKEN_LEVEL = 5;
+var MAX_ATTACKEN_LEVEL = KARTEN_MAX_LEVEL;
 function getAttackenLevel(attackId) {
   return gameState.attackLevels[stufenId(attackId)] ?? 1;
 }
 function attackenKosten(level) {
   return {
-    muenzen: Math.round(500 * Math.pow(1.65, level - 1) / 5) * 5,
-    material: level * 3
+    muenzen: Math.round(800 * Math.pow(1.35, level - 1) / 50) * 50,
+    material: level * 4
+  };
+}
+function kartenFortschritt(attackId) {
+  const level = getAttackenLevel(attackId);
+  return {
+    level,
+    kopien: gameState.kartenKopien?.[stufenId(attackId)] ?? 0,
+    benoetigt: kopienFuer(level)
   };
 }
 function attackeAufwerten(attackId) {
@@ -10517,7 +10657,7 @@ function attackeAufwerten(attackId) {
 function attackeMitLevel(attacke) {
   const level = getAttackenLevel(attacke.id);
   if (level === 1) return attacke;
-  const faktor = Math.pow(1.2, level - 1);
+  const faktor = levelFaktor(level);
   return {
     ...attacke,
     level,
@@ -10701,7 +10841,7 @@ function truheSvg(design, { offen: offen2 = false, className = "" } = {}) {
        <path class="truhe__funkeln truhe__funkeln--2" d="M18 34 L19.5 38 L23 39.5 L19.5 41 L18 45 L16.5 41 L13 39.5 L16.5 38 Z" fill="#fff6c9" />` : "";
   return `
     <svg class="truhe truhe--${design}${offen2 ? " ist-offen" : ""}${className ? ` ${className}` : ""}"
-         viewBox="0 0 120 104" role="img" aria-hidden="true">
+         viewBox="0 -26 120 130" role="img" aria-hidden="true">
       <defs>
         <linearGradient id="${id("holz")}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="${d.holz}" />
@@ -10781,36 +10921,41 @@ function wuerfleSeltenheit(chancen) {
   }
   return "gewoehnlich";
 }
-function ziehe(seltenheit, schonGezogen = /* @__PURE__ */ new Set()) {
-  const attacken = BEUTE_ATTACKEN.filter(
-    (a) => a.seltenheit === seltenheit && !besitztAttacke(a.id) && !schonGezogen.has(a.id)
+var SELTENHEIT_REIHE = ["gewoehnlich", "selten", "episch", "legendaer"];
+function kartenPool() {
+  const figur = MONSTERS[getAktiveFigur()] ?? MONSTERS.timo;
+  return [...figur.deck.map((id) => getAttack(id)), ...BEUTE_ATTACKEN.map((a) => getAttack(a.id))];
+}
+function zieheKarte(seltenheit, schonGezogen) {
+  const pool = kartenPool().filter((a) => !schonGezogen.has(a.id));
+  const nochOffen = pool.filter((a) => getAttackenLevel(a.id) < MAX_ATTACKEN_LEVEL || !istGefunden(a));
+  const quelle = nochOffen.length ? nochOffen : pool;
+  if (!quelle.length) return null;
+  const start = SELTENHEIT_REIHE.indexOf(seltenheit);
+  const reihe = [...SELTENHEIT_REIHE].sort(
+    (a, b) => Math.abs(SELTENHEIT_REIHE.indexOf(a) - start) - Math.abs(SELTENHEIT_REIHE.indexOf(b) - start)
   );
+  const stufe = reihe.find((s) => quelle.some((a) => (a.seltenheit ?? "gewoehnlich") === s));
+  const karte = zufall(quelle.filter((a) => (a.seltenheit ?? "gewoehnlich") === stufe));
+  const echteSeltenheit = karte.seltenheit ?? "gewoehnlich";
+  if (!istGefunden(karte)) {
+    return { art: "attacke", seltenheit: echteSeltenheit, id: karte.id, name: karte.name, icon: karte.icon, neu: true };
+  }
+  const menge = zwischen(...KOPIEN_JE_SELTENHEIT[echteSeltenheit]);
+  return { art: "karte", seltenheit: echteSeltenheit, id: karte.id, name: karte.name, icon: karte.icon, menge };
+}
+function istGefunden(attacke) {
+  return !BEUTE_ATTACKEN.some((b) => b.id === attacke.id) || besitztAttacke(attacke.id);
+}
+function zieheSkin(seltenheit, schonGezogen) {
   const skins = SKINS.filter(
     (s) => s.seltenheit === seltenheit && !besitztSkin(s.id) && !schonGezogen.has(s.id)
   );
-  const topf = [
-    { art: "material", gewicht: 30 },
-    ...attacken.length ? [{ art: "attacke", gewicht: 22 }] : [],
-    ...skins.length ? [{ art: "skin", gewicht: 16 }] : []
-  ];
-  const summe = topf.reduce((a, b) => a + b.gewicht, 0);
-  let wurf = Math.random() * summe;
-  let art = "material";
-  for (const eintrag of topf) {
-    wurf -= eintrag.gewicht;
-    if (wurf <= 0) {
-      art = eintrag.art;
-      break;
-    }
-  }
-  if (art === "attacke") {
-    const attacke = zufall(attacken);
-    return { art: "attacke", seltenheit, id: attacke.id, name: attacke.name, icon: attacke.icon };
-  }
-  if (art === "skin") {
-    const skin = zufall(skins);
-    return { art: "skin", seltenheit, id: skin.id, name: `Skin: ${skin.name}`, icon: "🎨", skin };
-  }
+  if (!skins.length) return null;
+  const skin = zufall(skins);
+  return { art: "skin", seltenheit, id: skin.id, name: `Skin: ${skin.name}`, icon: "🎨", skin };
+}
+function materialStueck(seltenheit) {
   const menge = zwischen(...MATERIAL_BEUTE[seltenheit]);
   return { art: "material", seltenheit, menge, name: `${menge} Material`, icon: "💠" };
 }
@@ -10828,16 +10973,20 @@ function mischen(liste) {
   return kopie2;
 }
 function truheOeffnen(truhe) {
-  const stuecke = [muenzStueck()];
+  const stuecke = [muenzStueck(), materialStueck(wuerfleSeltenheit(truhe.chancen))];
   const gezogen = /* @__PURE__ */ new Set();
-  for (let i = 0; i < truhe.anzahl - 1; i++) {
+  const plaetze = Math.max(1, truhe.anzahl - 2);
+  for (let i = 0; i < plaetze; i++) {
     const seltenheit = i === 0 && truhe.garantie ? truhe.garantie : wuerfleSeltenheit(truhe.chancen);
-    const stueck2 = ziehe(seltenheit, gezogen);
-    if (stueck2.id) gezogen.add(stueck2.id);
+    const skin = i > 0 && Math.random() < SKIN_CHANCE ? zieheSkin(seltenheit, gezogen) : null;
+    const stueck2 = skin ?? zieheKarte(seltenheit, gezogen);
+    if (!stueck2) continue;
+    gezogen.add(stueck2.id);
     stuecke.push(stueck2);
   }
   return mischen(stuecke);
 }
+var SKIN_CHANCE = 0.25;
 
 // js/core/haptik.js
 var MUSTER2 = {
@@ -10868,6 +11017,27 @@ function vibriere(name) {
 
 // js/ui/truhe-oeffnen.js
 var RANG = { gewoehnlich: 0, selten: 1, episch: 2, legendaer: 3 };
+function inhaltFuer(stueck2, seltenheit) {
+  const kopf = `
+    <span class="loot-item__icon">${stueck2.icon}</span>
+    <span class="loot-item__name">${stueck2.name}</span>
+  `;
+  if (stueck2.art === "attacke") {
+    return `${kopf}<span class="loot-item__neu">NEUE KARTE!</span>`;
+  }
+  if (stueck2.art === "karte" && stueck2.ergebnis) {
+    const { levelVorher, level, kopien, benoetigt } = stueck2.ergebnis;
+    const anteil = benoetigt ? Math.min(1, kopien / benoetigt) : 1;
+    return `${kopf}
+      <span class="loot-item__kopien">+${stueck2.menge} ${stueck2.menge === 1 ? "Karte" : "Karten"}</span>
+      ${level > levelVorher ? `<span class="loot-item__levelup">LEVEL UP! Lv. ${level}</span>` : ""}
+      <span class="kartenbalken" style="--anteil:${anteil}">
+        <span class="kartenbalken__text">${benoetigt ? `Lv. ${level} · ${kopien}/${benoetigt}` : `Lv. ${level} · MAX`}</span>
+      </span>
+    `;
+  }
+  return `${kopf}<span class="loot-item__rarity">${seltenheit.name}</span>`;
+}
 var TAKT = 380;
 var TAKT_SELTEN = 820;
 function animationenAn() {
@@ -10935,18 +11105,16 @@ function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = () => {
     const seltenheit = SELTENHEITEN[stueck2.seltenheit] ?? SELTENHEITEN.gewoehnlich;
     feld2.className = `loot-item is-${stueck2.seltenheit}`;
     feld2.style.setProperty("--rarity", seltenheit.farbe);
-    feld2.innerHTML = `
-      <span class="loot-item__icon">${stueck2.icon}</span>
-      <span class="loot-item__name">${stueck2.name}</span>
-      <span class="loot-item__rarity">${seltenheit.name}</span>
-    `;
+    feld2.innerHTML = inhaltFuer(stueck2, seltenheit);
     if (!sofort && bewegt) {
       const t = truheEl.getBoundingClientRect();
       const f = feld2.getBoundingClientRect();
       feld2.style.setProperty("--von-x", `${t.left + t.width / 2 - (f.left + f.width / 2)}px`);
       feld2.style.setProperty("--von-y", `${t.top + t.height / 2 - (f.top + f.height / 2)}px`);
       feld2.classList.add("fliegt");
-      if (RANG[stueck2.seltenheit] >= 2) feld2.classList.add("ist-besonders");
+      const levelUp = stueck2.ergebnis && stueck2.ergebnis.level > stueck2.ergebnis.levelVorher;
+      if (RANG[stueck2.seltenheit] >= 2 || stueck2.art === "attacke" || levelUp) feld2.classList.add("ist-besonders");
+      if (levelUp) spaeter(() => spieleKlang("levelauf"), 260);
       spieleBeute(stueck2.seltenheit);
       if (RANG[stueck2.seltenheit] >= 2) vibriere("krit");
     }
@@ -10959,7 +11127,8 @@ function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = () => {
     }
     const index = naechstes++;
     aufdecken(index);
-    const selten = RANG[stuecke[index].seltenheit] >= 2;
+    const stueck2 = stuecke[index];
+    const selten = RANG[stueck2.seltenheit] >= 2 || stueck2.art === "attacke" || stueck2.ergebnis && stueck2.ergebnis.level > stueck2.ergebnis.levelVorher;
     spaeter(weiter, selten ? TAKT_SELTEN : TAKT);
   }
   function abschliessen() {
@@ -11504,8 +11673,9 @@ var shopScreen = {
       hinweis.innerHTML = `
         <p class="map__info-text">
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
-          <strong>5 Beutestücke</strong>: genau einmal <strong>150 bis 500 Münzen</strong>,
-          dazu Material, Attacken oder Skins. Was du schon besitzt, kommt nicht mehr vor.
+          <strong>5 Beutestücke</strong>: einmal <strong>150 bis 500 Münzen</strong>,
+          einmal Material und <strong>Fähigkeitskarten</strong> (ab und zu ein Skin).
+          Doppelte Karten leveln deine Karte hoch - bis Level 15.
           <br>🎁 <strong>Jeder 2. Sieg</strong> bringt eine Holztruhe gratis –
           noch ${siegeBisGratisTruhe()} Sieg${siegeBisGratisTruhe() === 1 ? "" : "e"}.
         </p>
@@ -11931,8 +12101,9 @@ var deckScreen = {
       intro.innerHTML = `
         <p class="map__info-text">
           Genau ${deck.length} Attacken, im Kampf ${HAND_SIZE} auf der Hand.
-          <strong>Antippen</strong> zum Tauschen, <strong>Aufwerten</strong> macht
-          eine Attacke stärker - die Energiekosten bleiben gleich.
+          <strong>Antippen</strong> zum Tauschen. Doppelte Karten aus Truhen
+          leveln eine Karte bis <strong>Level 15</strong> hoch - oder du kaufst
+          ein Level direkt (teuer). Die Energiekosten bleiben immer gleich.
           <br>${MUENZE} ${gameState.coins} · 💠 ${gameState.materials}
         </p>
       `;
@@ -11991,7 +12162,7 @@ var deckScreen = {
       const info = document.createElement("button");
       info.type = "button";
       info.className = "deck-item__tap";
-      info.innerHTML = inhaltFuer(attacke, level);
+      info.innerHTML = inhaltFuer2(attacke, level);
       info.addEventListener("click", () => tauschDialog(platz, deck));
       zeile2.appendChild(info);
       const knopf = document.createElement("button");
@@ -12040,7 +12211,7 @@ var deckScreen = {
         knopf.type = "button";
         knopf.className = `deck-item deck-item--button${aktuell ? " is-current" : ""}`;
         knopf.disabled = imDeck && !aktuell;
-        knopf.innerHTML = inhaltFuer(
+        knopf.innerHTML = inhaltFuer2(
           attacke,
           getAttackenLevel(attacke.id),
           imDeck && !aktuell ? "bereits im Deck" : null
@@ -12059,12 +12230,14 @@ var deckScreen = {
     }
   }
 };
-function inhaltFuer(attacke, level, hinweis = null) {
+function inhaltFuer2(attacke, level, hinweis = null) {
   let wirkung = `${attacke.damage} Schaden`;
   if (attacke.heal > 0) wirkung = `heilt ${attacke.heal} LP`;
   if (attacke.shield > 0) wirkung = `fängt ${attacke.shield} Schaden ab`;
   const beute = BEUTE_ATTACKEN.find((a) => a.id === attacke.id);
   const seltenheit = beute ? SELTENHEITEN[beute.seltenheit] : null;
+  const { kopien, benoetigt } = kartenFortschritt(attacke.id);
+  const balken = benoetigt ? `<span class="kartenbalken kartenbalken--klein" style="--anteil:${Math.min(1, kopien / benoetigt)}"><span class="kartenbalken__text">🃏 ${kopien}/${benoetigt}</span></span>` : '<span class="kartenbalken kartenbalken--klein kartenbalken--max" style="--anteil:1"><span class="kartenbalken__text">MAX</span></span>';
   return `
     <span class="deck-item__icon">${attacke.icon}</span>
     <span class="deck-item__body">
@@ -12076,6 +12249,7 @@ function inhaltFuer(attacke, level, hinweis = null) {
         ${seltenheit ? `<span class="deck-item__rarity" style="color:${seltenheit.farbe}">${seltenheit.name}</span>` : ""}
         <span>${hinweis ?? wirkung}</span>
       </span>
+      ${balken}
     </span>
     <span class="deck-item__cost">${attacke.cost}</span>
   `;

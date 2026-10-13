@@ -16,6 +16,7 @@
 import { gameState, saveProgress } from './state.js';
 import { fortschrittMelden } from './aufgaben.js';
 import { stufenId } from '../data/attacks.js';
+import { KARTEN_MAX_LEVEL, kopienFuer, levelFaktor } from '../data/karten.js';
 
 /* ------------------------------------------------------------------ */
 /*  Charakter-Level                                                    */
@@ -167,8 +168,8 @@ export function monsterMitFortschritt(monster) {
 /*  Attacken-Level                                                     */
 /* ------------------------------------------------------------------ */
 
-/** Höchstes Attacken-Level. */
-export const MAX_ATTACKEN_LEVEL = 5;
+/** Höchstes Attacken-Level (siehe js/data/karten.js). */
+export const MAX_ATTACKEN_LEVEL = KARTEN_MAX_LEVEL;
 
 /**
  * Das Level einer Attacke (1, wenn noch nie aufgewertet). Roccos Attacken
@@ -179,13 +180,27 @@ export function getAttackenLevel(attackId) {
 }
 
 /**
- * Was die nächste Stufe einer Attacke kostet.
- * Level 1→2: 500 Münzen, 2→3: 825, 3→4: 1360, 4→5: 2250
+ * Was es kostet, ein Level mit Münzen zu KAUFEN - statt auf Kopien aus
+ * Truhen zu warten. Absichtlich teuer:
+ * Level 1→2: 800 Münzen, 5→6: 2.650, 10→11: 11.900, 14→15: 39.450.
  */
 export function attackenKosten(level) {
   return {
-    muenzen: Math.round((500 * Math.pow(1.65, level - 1)) / 5) * 5,
-    material: level * 3,
+    muenzen: Math.round((800 * Math.pow(1.35, level - 1)) / 50) * 50,
+    material: level * 4,
+  };
+}
+
+/**
+ * Wie weit eine Karte ist: Level, gesammelte Kopien und wie viele für das
+ * nächste Level nötig sind (0 auf Max-Level).
+ */
+export function kartenFortschritt(attackId) {
+  const level = getAttackenLevel(attackId);
+  return {
+    level,
+    kopien: gameState.kartenKopien?.[stufenId(attackId)] ?? 0,
+    benoetigt: kopienFuer(level),
   };
 }
 
@@ -210,14 +225,14 @@ export function attackeAufwerten(attackId) {
 
 /**
  * Eine Attacke mit ihrem aktuellen Level: Schaden, Heilung und Schild
- * steigen um 20 Prozent je Stufe. Die Energiekosten bleiben gleich - sonst
+ * steigen um 8 Prozent je Level (siehe js/data/karten.js). Die Energiekosten bleiben gleich - sonst
  * würde eine aufgewertete Attacke im Kampf langsamer statt stärker.
  */
 export function attackeMitLevel(attacke) {
   const level = getAttackenLevel(attacke.id);
   if (level === 1) return attacke;
 
-  const faktor = Math.pow(1.2, level - 1);
+  const faktor = levelFaktor(level);
   return {
     ...attacke,
     level,

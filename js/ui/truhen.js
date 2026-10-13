@@ -6,6 +6,10 @@
  * per CSS nach oben, und aus dem Inneren strahlt Licht (.truhe__licht).
  * Gestaltet wird die Bewegung in css/erlebnis.css (Abschnitt 7).
  *
+ * Die Zeichenfläche hat oben 26 Einheiten Luft (viewBox beginnt bei -26):
+ * Dort hinein klappt der Deckel. Ohne diesen Platz schneidet Safari den
+ * offenen Deckel am Bildrand ab.
+ *
  * Neue Truhe = einen Eintrag in DESIGNS ergänzen und in js/data/shop.js
  * als "design" eintragen.
  */
@@ -81,7 +85,7 @@ export function truheSvg(design, { offen = false, className = '' } = {}) {
 
   return `
     <svg class="truhe truhe--${design}${offen ? ' ist-offen' : ''}${className ? ` ${className}` : ''}"
-         viewBox="0 0 120 104" role="img" aria-hidden="true">
+         viewBox="0 -26 120 130" role="img" aria-hidden="true">
       <defs>
         <linearGradient id="${id('holz')}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="${d.holz}" />

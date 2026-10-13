@@ -73,6 +73,7 @@ js/
     monsters.js         Spielermonster und Gegner samt Decks
     levels.js           Level der Weltkarte inkl. Position auf der Karte
     kraefte.js          Boss-Kräfte – je Welt eine, beim Boss-Sieg freigeschaltet
+    karten.js           Karten-Level: Kopien je Level, Stärke je Level
     spielmodi.js        Spielmodi im Auswahlfenster (z. B. Endlos-Arena)
 
   core/                 NUR Logik – kennt kein HTML
@@ -158,6 +159,16 @@ Fausthieb aufwertet, hat auch Steinfaust aufgewertet.
 
 Die Rahmenfarbe einer Karte (Standard, Silber, Gold, Glitzer) zeigt nur ihre
 Seltenheit an – sie ändert keine Werte.
+
+**Karten-Level (wie bei Clash Royale):** Jede Karte hat ein Level von 1 bis 15
+und wird pro Level 8 % stärker (Level 15 = gut doppelt so stark). Truhen
+enthalten immer Fähigkeitskarten; doppelte Karten sind Kopien, und genug
+Kopien heben die Karte automatisch ein Level höher. Wer nicht warten will,
+kauft ein Level im Deckmenü – absichtlich teuer (800 Münzen für Level 2, rund
+39.000 für Level 15). Die Abstände stehen in `js/data/karten.js`.
+
+**Truhen** enthalten genau einmal Münzen (150–500), genau einmal Material und
+auf den übrigen Plätzen Fähigkeitskarten (ab und zu einen Skin).
 
 ---
 

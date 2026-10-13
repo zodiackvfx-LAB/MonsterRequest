@@ -12,6 +12,8 @@ import { WORLDS } from '../data/worlds.js';
 import { getKraft, kraftFuerWelt } from '../data/kraefte.js';
 import { MONSTERS } from '../data/monsters.js';
 import { BOSS_TRUHE, TRUHEN } from '../data/shop.js';
+import { stufenId } from '../data/attacks.js';
+import { ALTES_LEVEL_NEU, KARTEN_MAX_LEVEL, kopienFuer } from '../data/karten.js';
 
 /** Alle Truhen, die im Lager liegen dürfen. */
 const TRUHEN_IDS = [...TRUHEN.map((truhe) => truhe.id), BOSS_TRUHE.id];
@@ -39,7 +41,7 @@ let letzteSicherung = 0;
 let geladenAus = null; // null | 'speicher' | 'sicherung' | 'alt'
 
 /** Version des Speicherformats. Steigt, wenn sich der Aufbau ändert. */
-const SPEICHER_VERSION = 4;
+const SPEICHER_VERSION = 5; // 5: Karten-Level bis 15 (siehe js/data/karten.js)
 
 /** Frischer Spielstand - auch die Grundlage fürs Zurücksetzen. */
 function createNewGame() {
@@ -65,7 +67,8 @@ function createNewGame() {
     activeSkin: {}, // { monsterId: skinId }
     decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     characters: {}, // { monsterId: { level, xp, upgrades } } - siehe progression.js
-    attackLevels: {}, // { attackId: level }
+    attackLevels: {}, // { attackId: level } - 1 bis 15
+    kartenKopien: {}, // { attackId: Kopien für das nächste Level } (siehe js/data/karten.js)
     // Einmal-Hinweise (z. B. das Kampf-Tutorial), die nur beim ersten Mal
     // erscheinen. Schlüssel = Hinweis-id, Wert = true, sobald gesehen.
     gesehen: {},
@@ -277,8 +280,19 @@ function uebernehmen(saved) {
   );
   gameState.characters = figurUmbenennen(saved.characters ?? {});
   // Aufgewertete Attacken behalten ihr Level unter dem neuen Namen.
+  // Vor Version 5 gab es nur 5 Level mit +20 % - umrechnen, damit keine
+  // Karte durch den Umstieg schwächer wird (siehe ALTES_LEVEL_NEU).
+  const alteLevel = (Number(saved.version) || 0) < 5;
   gameState.attackLevels = Object.fromEntries(
-    Object.entries(saved.attackLevels ?? {}).map(([id, level]) => [attackeUmbenennen(id), level])
+    Object.entries(saved.attackLevels ?? {}).map(([id, level]) => {
+      const zahl = Math.max(1, Math.floor(Number(level) || 1));
+      const neu = alteLevel ? ALTES_LEVEL_NEU[Math.min(5, zahl)] ?? 1 : zahl;
+      return [attackeUmbenennen(id), Math.min(KARTEN_MAX_LEVEL, neu)];
+    })
+  );
+  gameState.kartenKopien = Object.fromEntries(
+    Object.entries(saved.kartenKopien && typeof saved.kartenKopien === 'object' ? saved.kartenKopien : {})
+      .map(([id, anzahl]) => [id, Math.max(0, Math.floor(Number(anzahl) || 0))])
   );
   // Fehlt der Block in einem aelteren Spielstand, legt aufgaben.js ihn beim
   // ersten Blick auf die Aufgaben selbst an.
@@ -552,6 +566,10 @@ export function beuteGutschreiben(stueck) {
     case 'attacke':
       if (!besitztAttacke(stueck.id)) gameState.ownedAttacks.push(stueck.id);
       break;
+    case 'karte':
+      // Kopien einer Karte - genug davon heben sie ein Level höher.
+      stueck.ergebnis = karteGutschreiben(stueck.id, stueck.menge ?? 1);
+      break;
     case 'skin':
       if (!besitztSkin(stueck.id)) gameState.ownedSkins.push(stueck.id);
       break;
@@ -561,6 +579,27 @@ export function beuteGutschreiben(stueck) {
 
   saveProgress();
   return stueck;
+}
+
+/**
+ * Schreibt Kopien einer Karte gut. Reichen sie für das nächste Level, steigt
+ * die Karte - auch mehrere Level auf einmal. Auf Level 15 ist Schluss.
+ *
+ * @returns {{levelVorher: number, level: number, kopien: number, benoetigt: number}}
+ */
+export function karteGutschreiben(attackId, menge = 1) {
+  const key = stufenId(attackId);
+  const levelVorher = Number(gameState.attackLevels[key]) || 1;
+  let level = levelVorher;
+  let kopien = (Number(gameState.kartenKopien[key]) || 0) + Math.max(0, menge);
+  while (level < KARTEN_MAX_LEVEL && kopien >= kopienFuer(level)) {
+    kopien -= kopienFuer(level);
+    level += 1;
+  }
+  if (level >= KARTEN_MAX_LEVEL) kopien = 0;
+  gameState.attackLevels[key] = level;
+  gameState.kartenKopien[key] = kopien;
+  return { levelVorher, level, kopien, benoetigt: kopienFuer(level) };
 }
 
 /* ------------------------------------------------------------------ */
