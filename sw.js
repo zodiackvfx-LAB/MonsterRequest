@@ -17,7 +17,7 @@
  *   werden dann alle alten Caches gelöscht.
  */
 
-const CACHE = 'monsterquest-v19';
+const CACHE = 'monsterquest-v20';
 
 // Das komplette Spiel, das schon beim ersten Besuch fest in den Cache soll -
 // alle Seiten, Daten, Bilder. So läuft es auch offline vollständig, sobald die
@@ -159,7 +159,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     (async () => {
       try {
-        const antwort = await fetch(request);
+        // cache: 'no-cache' = beim Server nachfragen, ob es eine neuere
+        // Fassung gibt. Ohne das nahm der Browser bis zu 10 Minuten lang
+        // seine alte Kopie (GitHub Pages: max-age=600) - und mischte dabei
+        // alte und neue Dateien. Ist nichts neu, kommt nur ein kurzes "304".
+        const antwort = await fetch(request, { cache: 'no-cache' });
         // Nur brauchbare Antworten cachen.
         if (antwort && antwort.ok && antwort.type === 'basic') {
           const cache = await caches.open(CACHE);

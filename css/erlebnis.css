@@ -2468,3 +2468,26 @@
   min-height: 112px;
   align-content: start;
 }
+
+/* ---------- Hinweis auf eine neue Version (js/main.js) ---------- */
+.update-hinweis {
+  position: fixed;
+  z-index: 100;
+  /* Über der Leiste unten - dort verdeckt es weder Münzen noch Namen. */
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  left: 16px;
+  right: 16px;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1b2450;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: linear-gradient(180deg, #ffe27a, #ffb32b);
+  box-shadow: 0 6px 16px rgba(8, 14, 40, 0.5);
+  cursor: pointer;
+  animation: pop-in 0.3s ease-out both;
+}

@@ -7253,6 +7253,29 @@ body.no-animations *::after {
   align-content: start;
 }
 
+/* ---------- Hinweis auf eine neue Version (js/main.js) ---------- */
+.update-hinweis {
+  position: fixed;
+  z-index: 100;
+  /* Über der Leiste unten - dort verdeckt es weder Münzen noch Namen. */
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  left: 16px;
+  right: 16px;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1b2450;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: linear-gradient(180deg, #ffe27a, #ffb32b);
+  box-shadow: 0 6px 16px rgba(8, 14, 40, 0.5);
+  cursor: pointer;
+  animation: pop-in 0.3s ease-out both;
+}
+
   </style>
 </head>
 <body>
@@ -15214,10 +15237,28 @@ cloudStart(() => {
   showScreen("start", { neu: true });
 });
 if ("serviceWorker" in navigator) {
+  const hatteVersion = Boolean(navigator.serviceWorker.controller);
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {
+    navigator.serviceWorker.register("sw.js").then((registrierung) => {
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) registrierung.update().catch(() => {
+        });
+      });
+    }).catch(() => {
     });
   });
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hatteVersion) zeigeUpdateHinweis();
+  });
+}
+function zeigeUpdateHinweis() {
+  if (document.querySelector(".update-hinweis")) return;
+  const hinweis = document.createElement("button");
+  hinweis.type = "button";
+  hinweis.className = "update-hinweis";
+  hinweis.textContent = "🔄 Neue Version da – tippen zum Laden";
+  hinweis.addEventListener("click", () => window.location.reload());
+  document.body.appendChild(hinweis);
 }
 
   </script>

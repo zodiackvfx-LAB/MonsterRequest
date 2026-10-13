@@ -148,9 +148,39 @@ cloudStart(() => {
  * dann läuft das Spiel eben wie bisher, nur ohne Offline-Funktion.
  */
 if ('serviceWorker' in navigator) {
+  // Lief schon ein Service Worker? Nur dann ist ein Wechsel ein UPDATE -
+  // beim allerersten Besuch soll kein Hinweis erscheinen.
+  const hatteVersion = Boolean(navigator.serviceWorker.controller);
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {
-      /* Kein Service Worker möglich (z. B. privater Modus) - kein Problem. */
-    });
+    navigator.serviceWorker
+      .register('sw.js')
+      .then((registrierung) => {
+        // Kommt die App aus dem Hintergrund zurück (auf dem iPhone läuft sie
+        // dort oft stundenlang weiter), gleich nach einer neuen Version fragen.
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) registrierung.update().catch(() => {});
+        });
+      })
+      .catch(() => {
+        /* Kein Service Worker möglich (z. B. privater Modus) - kein Problem. */
+      });
   });
+
+  // Eine neue Version hat übernommen: Hinweis zeigen. Neu geladen wird erst
+  // auf Tipp - so reißt ein Update niemanden aus einem laufenden Kampf.
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hatteVersion) zeigeUpdateHinweis();
+  });
+}
+
+/** Kleines Band oben: "Neue Version da - tippen zum Laden". */
+function zeigeUpdateHinweis() {
+  if (document.querySelector('.update-hinweis')) return;
+  const hinweis = document.createElement('button');
+  hinweis.type = 'button';
+  hinweis.className = 'update-hinweis';
+  hinweis.textContent = '🔄 Neue Version da – tippen zum Laden';
+  hinweis.addEventListener('click', () => window.location.reload());
+  document.body.appendChild(hinweis);
 }
