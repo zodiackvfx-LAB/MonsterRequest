@@ -7276,6 +7276,18 @@ body.no-animations *::after {
   animation: pop-in 0.3s ease-out both;
 }
 
+/* Tipp auf die Leiste: Die Zielseite gleitet kurz aus ihrer Richtung herein
+   (siehe blaettern in js/screens/lobby.js). Nur Inhalt bewegen, nicht die
+   Seite selbst - sonst verschiebt sich die Einrast-Position. */
+.lobby__seite--rein > .screen {
+  animation: seite-rein 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes seite-rein {
+  from { opacity: 0.35; transform: translateX(var(--rein-von, 0)); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
   </style>
 </head>
 <body>
@@ -13103,15 +13115,31 @@ var lobbyScreen = {
       const seite = seiten[index];
       if (!seite.gebaut || seite.stand !== gameState.revision) bauen(seite);
     }
+    let sprungTimer = null;
     function blaettern(index, sanft) {
       const ziel = Math.max(0, Math.min(seiten.length - 1, index));
-      const weich = sanft && !document.body.classList.contains("no-animations");
-      seitenBereich.scrollTo({ left: ziel * seitenBereich.clientWidth, behavior: weich ? "smooth" : "auto" });
+      const richtung = Math.sign(ziel - aktiv);
+      springt = true;
+      clearTimeout(sprungTimer);
+      sprungTimer = setTimeout(() => {
+        springt = false;
+      }, 200);
+      seitenBereich.scrollTo({ left: ziel * seitenBereich.clientWidth, behavior: "auto" });
       ankommen(ziel);
+      if (sanft && richtung !== 0 && !document.body.classList.contains("no-animations")) {
+        const seite = seiten[ziel].behaelter;
+        seite.style.setProperty("--rein-von", `${richtung * 28}px`);
+        seite.classList.remove("lobby__seite--rein");
+        void seite.offsetWidth;
+        seite.classList.add("lobby__seite--rein");
+        setTimeout(() => seite.classList.remove("lobby__seite--rein"), 320);
+      }
     }
     let rafId = null;
     let ruheTimer = null;
+    let springt = false;
     function beimScrollen() {
+      if (springt) return;
       if (rafId === null) {
         rafId = requestAnimationFrame(() => {
           rafId = null;
@@ -13154,6 +13182,7 @@ var lobbyScreen = {
       abbauen() {
         vorbauTimer.forEach(clearTimeout);
         clearTimeout(ruheTimer);
+        clearTimeout(sprungTimer);
         if (rafId !== null) cancelAnimationFrame(rafId);
         beobachter.disconnect();
         seiten.forEach((seite) => {

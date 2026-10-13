@@ -17,7 +17,7 @@
  *   werden dann alle alten Caches gelöscht.
  */
 
-const CACHE = 'monsterquest-v20';
+const CACHE = 'monsterquest-v21';
 
 // Das komplette Spiel, das schon beim ersten Besuch fest in den Cache soll -
 // alle Seiten, Daten, Bilder. So läuft es auch offline vollständig, sobald die

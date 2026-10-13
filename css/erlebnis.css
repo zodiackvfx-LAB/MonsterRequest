@@ -2491,3 +2491,15 @@
   cursor: pointer;
   animation: pop-in 0.3s ease-out both;
 }
+
+/* Tipp auf die Leiste: Die Zielseite gleitet kurz aus ihrer Richtung herein
+   (siehe blaettern in js/screens/lobby.js). Nur Inhalt bewegen, nicht die
+   Seite selbst - sonst verschiebt sich die Einrast-Position. */
+.lobby__seite--rein > .screen {
+  animation: seite-rein 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes seite-rein {
+  from { opacity: 0.35; transform: translateX(var(--rein-von, 0)); }
+  to   { opacity: 1; transform: translateX(0); }
+}

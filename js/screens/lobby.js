@@ -112,19 +112,47 @@ export const lobbyScreen = {
       if (!seite.gebaut || seite.stand !== gameState.revision) bauen(seite);
     }
 
-    /** Zu einer Seite blättern - per Tipp sanft, sonst sofort. */
+    /**
+     * Zu einer Seite springen (Tipp auf die Leiste).
+     *
+     * Bewusst KEIN weiches Scrollen: Das wischte sichtbar durch alle Seiten
+     * dazwischen, die Hervorhebung hüpfte über jeden Punkt der Leiste, und
+     * auf dem iPhone blieb es am Einrasten einzelner Seiten hängen. Stattdessen
+     * springt die Lobby direkt hin, und die Zielseite gleitet kurz aus der
+     * Richtung herein, aus der sie kommt.
+     */
+    let sprungTimer = null;
     function blaettern(index, sanft) {
       const ziel = Math.max(0, Math.min(seiten.length - 1, index));
-      const weich = sanft && !document.body.classList.contains('no-animations');
-      seitenBereich.scrollTo({ left: ziel * seitenBereich.clientWidth, behavior: weich ? 'smooth' : 'auto' });
+      const richtung = Math.sign(ziel - aktiv);
+
+      // Das Springen löst Scroll-Ereignisse aus - die sollen hier nichts
+      // markieren oder bauen, das erledigt ankommen() direkt.
+      springt = true;
+      clearTimeout(sprungTimer);
+      sprungTimer = setTimeout(() => {
+        springt = false;
+      }, 200);
+      seitenBereich.scrollTo({ left: ziel * seitenBereich.clientWidth, behavior: 'auto' });
       ankommen(ziel);
+
+      if (sanft && richtung !== 0 && !document.body.classList.contains('no-animations')) {
+        const seite = seiten[ziel].behaelter;
+        seite.style.setProperty('--rein-von', `${richtung * 28}px`);
+        seite.classList.remove('lobby__seite--rein');
+        void seite.offsetWidth; // Animation neu starten
+        seite.classList.add('lobby__seite--rein');
+        setTimeout(() => seite.classList.remove('lobby__seite--rein'), 320);
+      }
     }
 
     // Wischen: Die Seiten rasten per CSS ein (scroll-snap). Hier wird nur
     // mitgezählt, welche Seite gerade vorn ist.
     let rafId = null;
     let ruheTimer = null;
+    let springt = false; // true, solange ein Sprung per Tipp läuft
     function beimScrollen() {
+      if (springt) return;
       if (rafId === null) {
         rafId = requestAnimationFrame(() => {
           rafId = null;
@@ -178,6 +206,7 @@ export const lobbyScreen = {
       abbauen() {
         vorbauTimer.forEach(clearTimeout);
         clearTimeout(ruheTimer);
+        clearTimeout(sprungTimer);
         if (rafId !== null) cancelAnimationFrame(rafId);
         beobachter.disconnect();
         seiten.forEach((seite) => {
