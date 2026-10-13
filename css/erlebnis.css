@@ -1759,30 +1759,37 @@
   flex-direction: column;
 }
 
-/* Die Seiten liegen nebeneinander und rasten beim Wischen ein. */
+/* Die Seiten liegen übereinander; js/screens/lobby.js schiebt sie per
+   transform an ihren Platz. Waagrechtes Wischen übernimmt das Spiel,
+   senkrechtes Scrollen in den Seiten bleibt beim Browser (pan-y). */
 .lobby__seiten {
+  position: relative;
   flex: 1;
   min-height: 0;
-  display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  touch-action: pan-y;
 }
 
-.lobby__seiten::-webkit-scrollbar {
-  display: none;
+.lobby__seiten * {
+  touch-action: pan-y;
+}
+
+/* Waagrecht scrollende Leisten in einer Seite (z. B. die Reiter der
+   Sammlung) dürfen selbst seitlich scrollen. */
+.lobby__seiten .tabs {
+  touch-action: pan-x pan-y;
 }
 
 .lobby__seite {
-  position: relative;
-  flex: 0 0 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+  backface-visibility: hidden;
+}
+
+.lobby__seiten.ist-gleitend .lobby__seite {
+  transition: transform 0.3s cubic-bezier(0.22, 0.8, 0.3, 1);
+  will-change: transform;
 }
 
 /* Unten sitzt die Leiste - die Seiten brauchen dort keinen Rand für die
@@ -1831,6 +1838,7 @@
   border-radius: 12px 12px 6px 6px;
   cursor: pointer;
   transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .lobby__tab-symbol {
@@ -1844,7 +1852,8 @@
   border: 2px solid rgba(255, 197, 61, 0.4);
   background: linear-gradient(180deg, #2c3f83 0%, var(--fantasy-tief) 100%);
   box-shadow: 0 3px 0 #0f1838;
-  transition: transform 0.22s cubic-bezier(0.3, 1.5, 0.5, 1), border-color 0.2s ease;
+  /* Ruhig anheben, ohne Überfedern - das sah auf dem Handy nach Wackeln aus. */
+  transition: transform 0.2s ease-out, border-color 0.2s ease;
 }
 
 .lobby__tab-symbol img {
@@ -1880,7 +1889,7 @@
 }
 
 .lobby__tab.is-aktiv .lobby__tab-symbol {
-  transform: translateY(-12px) scale(1.28);
+  transform: translateY(-9px) scale(1.2);
   border-color: var(--fantasy-gold);
 }
 
@@ -1890,9 +1899,6 @@
   margin-top: -8px;
 }
 
-.lobby__tab:active .lobby__tab-symbol {
-  scale: 0.92;
-}
 
 /* ---------- Startseite: Modi-Knopf neben "Spiel starten" ---------- */
 .start__reihe {
@@ -2492,14 +2498,4 @@
   animation: pop-in 0.3s ease-out both;
 }
 
-/* Tipp auf die Leiste: Die Zielseite gleitet kurz aus ihrer Richtung herein
-   (siehe blaettern in js/screens/lobby.js). Nur Inhalt bewegen, nicht die
-   Seite selbst - sonst verschiebt sich die Einrast-Position. */
-.lobby__seite--rein > .screen {
-  animation: seite-rein 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
-}
 
-@keyframes seite-rein {
-  from { opacity: 0.35; transform: translateX(var(--rein-von, 0)); }
-  to   { opacity: 1; transform: translateX(0); }
-}

@@ -5,6 +5,9 @@
  * nebeneinander: Man wischt nach links und rechts oder tippt auf einen
  * Punkt in der Leiste. In der Mitte liegt der Startbildschirm.
  *
+ * Der Wechsel ist selbst gebaut (transform + Fingerverfolgung) statt mit
+ * dem Scroll-Einrasten des Browsers - das wippte auf dem iPhone nach.
+ *
  * Jede Seite ist ein ganz normaler Bildschirm (Shop, Deck, ...). Die Lobby
  * baut ihn nur in ihre Seite statt über den ganzen Bildschirm. Alles, was
  * diese Bildschirme können, funktioniert deshalb unverändert.
@@ -73,7 +76,7 @@ export const lobbyScreen = {
         <span class="lobby__tab-symbol">${seite.bild ? `<img src="${seite.bild}" alt="" draggable="false">` : seite.icon}</span>
         <span class="lobby__tab-name">${seite.label}</span>
       `;
-      knopf.addEventListener('click', () => blaettern(index, true));
+      knopf.addEventListener('click', () => blaettern(index));
       leiste.appendChild(knopf);
 
       return { ...seite, behaelter, knopf, gebaut: false, stand: -1, params: {} };
@@ -112,74 +115,151 @@ export const lobbyScreen = {
       if (!seite.gebaut || seite.stand !== gameState.revision) bauen(seite);
     }
 
+    /* ---------- Seitenwechsel ----------
+       Die Seiten liegen übereinander und werden per transform verschoben -
+       ohne das Scroll-Einrasten des Browsers. Das hatte auf dem iPhone beim
+       Antippen nachgewippt und geflackert. So läuft jeder Wechsel gleich:
+       eine Seitenbreite, sanft, und nur die beiden beteiligten Seiten sind
+       dabei sichtbar. */
+    const GLEIT_MS = 300;
+    let gleitTimer = null;
+    const bewegt = () => !document.body.classList.contains('no-animations');
+
     /**
-     * Zu einer Seite springen (Tipp auf die Leiste).
-     *
-     * Bewusst KEIN weiches Scrollen: Das wischte sichtbar durch alle Seiten
-     * dazwischen, die Hervorhebung hüpfte über jeden Punkt der Leiste, und
-     * auf dem iPhone blieb es am Einrasten einzelner Seiten hängen. Stattdessen
-     * springt die Lobby direkt hin, und die Zielseite gleitet kurz aus der
-     * Richtung herein, aus der sie kommt.
+     * Legt jede Seite an ihren Platz: versatz in Seitenbreiten relativ zur
+     * Mitte, zug = zusätzliche Fingerbewegung in Pixeln.
      */
-    let sprungTimer = null;
-    function blaettern(index, sanft) {
+    function lage(seite, versatz, zug = 0, sichtbar = true) {
+      const el = seite.behaelter;
+      el.style.visibility = sichtbar ? 'visible' : 'hidden';
+      // Die ruhende, aktive Seite bekommt GAR KEIN transform - sonst würden
+      // Fenster darin (position: fixed) nur noch die Seite statt den ganzen
+      // Bildschirm abdecken.
+      el.style.transform = versatz === 0 && zug === 0 ? 'none' : `translate3d(calc(${versatz * 100}% + ${zug}px), 0, 0)`;
+    }
+
+    /** Ruhezustand: nur die aktive Seite ist zu sehen. */
+    function ruhen(index) {
+      seitenBereich.classList.remove('ist-gleitend');
+      seiten.forEach((seite, i) => lage(seite, i - index, 0, i === index));
+    }
+
+    /** Gleitet zu einer Seite. von = Seite, die gerade vorn ist. */
+    function gleiten(von, nach, zug = 0) {
+      clearTimeout(gleitTimer);
+      ankommen(nach);
+      if (!bewegt() || von === nach && zug === 0) {
+        ruhen(nach);
+        return;
+      }
+      const richtung = Math.sign(nach - von) || Math.sign(-zug) || 1;
+      // Ausgangslage ohne Übergang: die Zielseite direkt NEBEN die aktuelle
+      // legen - auch wenn sie in der Leiste weiter weg ist. So gleitet immer
+      // genau eine Seite herein, nie ein Stapel Zwischenseiten.
+      seitenBereich.classList.remove('ist-gleitend');
+      seiten.forEach((seite, i) => {
+        if (i === von) lage(seite, 0, zug, true);
+        else if (i === nach) lage(seite, richtung, zug, true);
+        else lage(seite, 0, 0, false);
+      });
+      void seitenBereich.offsetWidth; // Ausgangslage festschreiben
+      seitenBereich.classList.add('ist-gleitend');
+      if (von !== nach) lage(seiten[von], -richtung, 0, true);
+      lage(seiten[nach], 0, 0.0001, true); // 0.0001: transform bleibt während des Gleitens gesetzt
+      gleitTimer = setTimeout(() => ruhen(nach), GLEIT_MS + 30);
+    }
+
+    /** Tipp auf die Leiste. */
+    function blaettern(index) {
       const ziel = Math.max(0, Math.min(seiten.length - 1, index));
-      const richtung = Math.sign(ziel - aktiv);
-
-      // Das Springen löst Scroll-Ereignisse aus - die sollen hier nichts
-      // markieren oder bauen, das erledigt ankommen() direkt.
-      springt = true;
-      clearTimeout(sprungTimer);
-      sprungTimer = setTimeout(() => {
-        springt = false;
-      }, 200);
-      seitenBereich.scrollTo({ left: ziel * seitenBereich.clientWidth, behavior: 'auto' });
-      ankommen(ziel);
-
-      if (sanft && richtung !== 0 && !document.body.classList.contains('no-animations')) {
-        const seite = seiten[ziel].behaelter;
-        seite.style.setProperty('--rein-von', `${richtung * 28}px`);
-        seite.classList.remove('lobby__seite--rein');
-        void seite.offsetWidth; // Animation neu starten
-        seite.classList.add('lobby__seite--rein');
-        setTimeout(() => seite.classList.remove('lobby__seite--rein'), 320);
-      }
+      if (ziel === aktiv) return;
+      gleiten(aktiv, ziel);
     }
 
-    // Wischen: Die Seiten rasten per CSS ein (scroll-snap). Hier wird nur
-    // mitgezählt, welche Seite gerade vorn ist.
-    let rafId = null;
-    let ruheTimer = null;
-    let springt = false; // true, solange ein Sprung per Tipp läuft
-    function beimScrollen() {
-      if (springt) return;
-      if (rafId === null) {
-        rafId = requestAnimationFrame(() => {
-          rafId = null;
-          const index = Math.round(seitenBereich.scrollLeft / (seitenBereich.clientWidth || 1));
-          markieren(index);
-        });
-      }
-      // Erst wenn das Wischen zur Ruhe kommt, gilt die Seite als angekommen.
-      clearTimeout(ruheTimer);
-      ruheTimer = setTimeout(() => {
-        const index = Math.round(seitenBereich.scrollLeft / (seitenBereich.clientWidth || 1));
-        if (index !== aktiv || seiten[index].stand !== gameState.revision) ankommen(index);
-      }, 140);
-    }
-    seitenBereich.addEventListener('scroll', beimScrollen, { passive: true });
+    /* ---------- Wischen mit dem Finger ----------
+       Waagrechte Bewegung verschiebt die Seiten mit; senkrechte bleibt dem
+       Scrollen in der Seite überlassen (touch-action: pan-y im CSS). */
+    let ziehen = null; // { x, y, zeit, richtungFest, waagrecht, dx }
+    let gerade_gezogen = false;
 
-    // Dreht man das Gerät, bleibt man auf derselben Seite.
-    const beobachter = new ResizeObserver(() => {
-      seitenBereich.scrollLeft = aktiv * seitenBereich.clientWidth;
+    seitenBereich.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      // Liegt ein Fenster über der Seite (Truhe, Tauschen ...), nicht blättern.
+      if (seiten[aktiv].behaelter.querySelector('.overlay')) return;
+      ziehen = { x: event.clientX, y: event.clientY, zeit: performance.now(), waagrecht: null, dx: 0, id: event.pointerId };
     });
-    beobachter.observe(seitenBereich);
+
+    seitenBereich.addEventListener('pointermove', (event) => {
+      if (!ziehen || event.pointerId !== ziehen.id) return;
+      const dx = event.clientX - ziehen.x;
+      const dy = event.clientY - ziehen.y;
+      if (ziehen.waagrecht === null) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        ziehen.waagrecht = Math.abs(dx) > Math.abs(dy);
+        if (!ziehen.waagrecht) {
+          ziehen = null; // senkrecht: das ist Scrollen, kein Blättern
+          return;
+        }
+        seitenBereich.setPointerCapture?.(event.pointerId);
+        clearTimeout(gleitTimer);
+        seitenBereich.classList.remove('ist-gleitend');
+      }
+      // Am Rand (erste/letzte Seite) gibt es nur etwas Widerstand.
+      const amRand = (dx > 0 && aktiv === 0) || (dx < 0 && aktiv === seiten.length - 1);
+      ziehen.dx = amRand ? dx * 0.25 : dx;
+      seiten.forEach((seite, i) => {
+        const versatz = i - aktiv;
+        lage(seite, versatz, ziehen.dx, Math.abs(versatz) <= 1);
+      });
+    });
+
+    function loslassen(event) {
+      if (!ziehen || event.pointerId !== ziehen.id) return;
+      const { dx, waagrecht, zeit } = ziehen;
+      ziehen = null;
+      if (!waagrecht) return;
+      gerade_gezogen = true;
+      const breite = seitenBereich.clientWidth || 1;
+      const tempo = Math.abs(dx) / Math.max(1, performance.now() - zeit); // Pixel je ms
+      let ziel = aktiv;
+      if (Math.abs(dx) > breite * 0.22 || (tempo > 0.45 && Math.abs(dx) > 24)) ziel = aktiv + (dx < 0 ? 1 : -1);
+      ziel = Math.max(0, Math.min(seiten.length - 1, ziel));
+      if (ziel === aktiv) {
+        // Zurückfedern an die alte Stelle.
+        if (bewegt()) {
+          seitenBereich.classList.add('ist-gleitend');
+          seiten.forEach((seite, i) => lage(seite, i - aktiv, 0.0001, Math.abs(i - aktiv) <= 1));
+          gleitTimer = setTimeout(() => ruhen(aktiv), GLEIT_MS + 30);
+        } else {
+          ruhen(aktiv);
+        }
+      } else {
+        gleiten(aktiv, ziel, dx);
+      }
+    }
+    seitenBereich.addEventListener('pointerup', loslassen);
+    seitenBereich.addEventListener('pointercancel', loslassen);
+
+    // Nach einem Wisch darf der Finger beim Loslassen nichts antippen.
+    seitenBereich.addEventListener(
+      'click',
+      (event) => {
+        if (!gerade_gezogen) return;
+        gerade_gezogen = false;
+        event.stopPropagation();
+        event.preventDefault();
+      },
+      true
+    );
+    seitenBereich.addEventListener('pointerdown', () => {
+      gerade_gezogen = false;
+    }, true);
 
     // Die gewünschte Seite sofort zeigen, die Nachbarn gleich danach bauen
     // (damit beim Wischen schon etwas zu sehen ist), den Rest im Leerlauf.
     bauen(seiten[start]);
     markieren(start);
-    seitenBereich.scrollLeft = start * seitenBereich.clientWidth;
+    ruhen(start);
     const reihenfolge = SEITEN.map((_, i) => i)
       .filter((i) => i !== start)
       .sort((a, b) => Math.abs(a - start) - Math.abs(b - start));
@@ -201,14 +281,11 @@ export const lobbyScreen = {
         // Ein Bildschirm, der sich selbst neu aufruft (z. B. der Shop nach
         // einer Truhe), wird frisch gebaut - genau wie früher.
         bauen(seite);
-        blaettern(index, index !== aktiv);
+        blaettern(index);
       },
       abbauen() {
         vorbauTimer.forEach(clearTimeout);
-        clearTimeout(ruheTimer);
-        clearTimeout(sprungTimer);
-        if (rafId !== null) cancelAnimationFrame(rafId);
-        beobachter.disconnect();
+        clearTimeout(gleitTimer);
         seiten.forEach((seite) => {
           if (seite.gebaut) seite.screen.unmount?.();
         });
