@@ -20,7 +20,8 @@ const fertigeBilder = new Map();
 
 /** Ändert sich das Rezept, passen die alten Bilder nicht mehr. */
 export function rezeptSchluessel(rezept) {
-  return JSON.stringify([rezept.kleidung, rezept.helligkeit, rezept.hut, rezept.hutFarbe]);
+  return JSON.stringify([rezept.kleidung, rezept.helligkeit, rezept.muster, rezept.musterFarbe,
+    rezept.hut, rezept.hutFarbe, rezept.hutGroesse, rezept.hutSitz]);
 }
 
 /** Alle eigenen Outfits (die neuesten zuerst). */
@@ -47,6 +48,8 @@ export function outfitSpeichern(outfit) {
   const eintrag = {
     id,
     name: String(outfit.name ?? '').trim().slice(0, 20) || 'Mein Outfit',
+    seltenheit: outfit.seltenheit ?? 'episch',
+    text: String(outfit.text ?? '').trim().slice(0, 80),
     rezept: { ...outfit.rezept },
   };
   if (alt >= 0) liste.splice(alt, 1);
@@ -99,7 +102,8 @@ function alsSkin(outfit) {
     id: outfit.id,
     name: outfit.name,
     monsterId: 'timo',
-    seltenheit: 'legendaer',
+    seltenheit: outfit.seltenheit ?? 'episch',
+    text: outfit.text ?? '',
     eigen: true,
     look: {},
     filter: null,
@@ -107,5 +111,88 @@ function alsSkin(outfit) {
     // null, solange die Bilder noch gebaut werden - dann zeigt das Spiel
     // kurz das Original (siehe skinBild in js/ui/sprite.js).
     bilder: outfitBilder(outfit),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Importierte Bilder (Hüte und Muster)                                */
+/*  Sie liegen nur auf diesem Gerät - im Spielstand wären sie zu groß.  */
+/*  Das Rezept merkt sich nur die Kennung ("import:<id>").              */
+/* ------------------------------------------------------------------ */
+
+const BILDER_SCHLUESSEL = 'monsterquest.studio.bilder.v1';
+
+/** Höchstens so viele importierte Bilder. */
+export const MAX_IMPORT_BILDER = 24;
+
+/** Alle importierten Bilder: { id: { art: 'hut'|'muster', name, bild } }. */
+export function importBilder() {
+  try {
+    const alle = JSON.parse(localStorage.getItem(BILDER_SCHLUESSEL) ?? '{}');
+    return alle && typeof alle === 'object' ? alle : {};
+  } catch {
+    return {};
+  }
+}
+
+export function importBild(id) {
+  return importBilder()[id] ?? null;
+}
+
+/**
+ * Ein importiertes Bild ablegen.
+ * @param {{art: 'hut'|'muster', name: string, bild: string}} eintrag - bild als data:-Adresse
+ * @returns {{ok: true, id: string} | {ok: false, grund: string}}
+ */
+export function importBildSpeichern(eintrag) {
+  const alle = importBilder();
+  if (Object.keys(alle).length >= MAX_IMPORT_BILDER) {
+    return { ok: false, grund: `Höchstens ${MAX_IMPORT_BILDER} Bilder - lösche zuerst eins.` };
+  }
+  const id = `${eintrag.art}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  alle[id] = { art: eintrag.art, name: String(eintrag.name || 'Bild').slice(0, 24), bild: eintrag.bild };
+  try {
+    localStorage.setItem(BILDER_SCHLUESSEL, JSON.stringify(alle));
+  } catch {
+    return { ok: false, grund: 'Der Speicher ist voll - lösche ein Bild.' };
+  }
+  return { ok: true, id };
+}
+
+export function importBildLoeschen(id) {
+  const alle = importBilder();
+  delete alle[id];
+  localStorage.setItem(BILDER_SCHLUESSEL, JSON.stringify(alle));
+}
+
+/** Die Kennung hinter "import:<id>" - oder null. */
+export function importId(wert) {
+  return typeof wert === 'string' && wert.startsWith('import:') ? wert.slice(7) : null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Skin-Paket: alles, was ins Spiel eingebaut werden soll              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Packt Outfits samt den Bildern, die sie brauchen, in ein Paket - zum
+ * Herunterladen und Einbauen mit werkzeuge/skins-einbauen.mjs.
+ * @param {string[]} [ids] - nur diese Outfits (sonst alle)
+ */
+export function skinPaket(ids) {
+  const outfits = eigeneOutfits().filter((o) => !ids || ids.includes(o.id));
+  const bilder = {};
+  outfits.forEach((o) => {
+    [importId(o.rezept.hut), importId(o.rezept.muster)].filter(Boolean).forEach((id) => {
+      const b = importBild(id);
+      if (b) bilder[id] = b;
+    });
+  });
+  return {
+    format: 'monsterquest-skins',
+    version: 1,
+    erstellt: new Date().toISOString(),
+    skins: outfits.map(({ name, seltenheit, text, rezept }) => ({ name, seltenheit, text, rezept })),
+    bilder,
   };
 }

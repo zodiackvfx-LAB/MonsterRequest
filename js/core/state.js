@@ -15,7 +15,7 @@ import { BOSS_TRUHE, TRUHEN, TRUHEN_PLAETZE, ZEIT_TRUHEN } from '../data/shop.js
 import { stufenId } from '../data/attacks.js';
 import { ALTES_LEVEL_NEU, KARTEN_MAX_LEVEL, kopienFuer } from '../data/karten.js';
 import { TROPHAEEN_MAX, trophaeenFuerSieg } from '../data/trophaeen.js';
-import { HUETE } from './outfit.js';
+import { HUETE, MUSTER } from './outfit.js';
 
 /** Alle Truhen, die in einem Truhenplatz liegen dürfen. */
 const TRUHEN_IDS = [...TRUHEN.map((truhe) => truhe.id), BOSS_TRUHE.id];
@@ -81,7 +81,7 @@ function createNewGame() {
     activeSkin: {}, // { monsterId: skinId }
     // Selbst gebaute Outfits aus der Skin-Werkstatt (werkstatt.html) - nur
     // das Rezept, die Bilder baut das Spiel daraus (js/core/eigene-skins.js).
-    eigeneOutfits: [], // [{ id: 'eigen-…', name, rezept: { kleidung, helligkeit, hut, hutFarbe } }]
+    eigeneOutfits: [], // [{ id: 'eigen-…', name, seltenheit, text, rezept: {…} }] - Rezept siehe js/core/outfit.js
     decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     characters: {}, // { monsterId: { level, xp, upgrades } } - siehe progression.js
     attackLevels: {}, // { attackId: level } - 1 bis 15
@@ -381,17 +381,30 @@ function truhenUebernehmen(saved) {
 function eigeneOutfitsPruefen(liste) {
   if (!Array.isArray(liste)) return [];
   const farbe = (wert) => (typeof wert === 'string' && /^#[0-9a-f]{6}$/i.test(wert) ? wert.toLowerCase() : null);
+  const zahl = (wert, min, max, standard) => {
+    const n = Number(wert);
+    return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : standard;
+  };
+  // Eingebaut (Schlüssel aus der Liste) oder importiert ("import:<kennung>").
+  const auswahl = (wert, liste, standard) =>
+    (typeof wert === 'string' && (Object.hasOwn(liste, wert) || /^import:[a-z0-9-]{1,40}$/.test(wert)) ? wert : standard);
   return liste
     .filter((e) => e && typeof e.id === 'string' && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === 'object')
     .slice(0, 8)
     .map((e) => ({
       id: e.id,
       name: String(e.name ?? '').trim().slice(0, 20) || 'Mein Outfit',
+      seltenheit: ['gewoehnlich', 'selten', 'episch', 'legendaer'].includes(e.seltenheit) ? e.seltenheit : 'episch',
+      text: String(e.text ?? '').trim().slice(0, 80),
       rezept: {
         kleidung: farbe(e.rezept.kleidung),
-        helligkeit: Math.max(-0.2, Math.min(0.2, Number(e.rezept.helligkeit) || 0)),
-        hut: Object.hasOwn(HUETE, e.rezept.hut) ? e.rezept.hut : 'keiner',
+        helligkeit: zahl(e.rezept.helligkeit, -0.2, 0.2, 0),
+        muster: auswahl(e.rezept.muster, MUSTER, 'keins'),
+        musterFarbe: farbe(e.rezept.musterFarbe),
+        hut: auswahl(e.rezept.hut, HUETE, 'keiner'),
         hutFarbe: farbe(e.rezept.hutFarbe),
+        hutGroesse: zahl(e.rezept.hutGroesse, 0.5, 2, 1),
+        hutSitz: zahl(e.rezept.hutSitz, -0.5, 0.5, 0),
       },
     }));
 }

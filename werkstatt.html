@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d1430">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Skin-Werkstatt</title>
+  <title>Skin-Studio</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="bilder/app/apple-touch-icon.png">
   <link rel="icon" type="image/png" href="bilder/app/icon-192.png">
@@ -16,16 +16,18 @@
 </head>
 <body class="werkstatt-seite">
   <!--
-    Die Skin-Werkstatt: eigene Outfits für Timo bauen.
-    Die Logik steht in js/werkstatt.js (Seite) und js/core/outfit.js (Pixel).
+    Das Skin-Studio: neue Skins für Timo erstellen, ohne Code.
+    Seite: js/werkstatt.js - Pixel: js/core/outfit.js - Speicher: js/core/eigene-skins.js
+    Einbauen ins Spiel: werkzeuge/skins-einbauen.mjs (mit dem exportierten Skin-Paket)
   -->
   <header class="ws-kopf">
     <a class="btn btn--ghost btn--small" href="index.html">‹ Zum Spiel</a>
-    <h1 class="ws-kopf__titel">🎨 Skin-Werkstatt</h1>
+    <h1 class="ws-kopf__titel">🎨 Skin-Studio</h1>
   </header>
 
   <main class="ws">
     <section class="ws-buehne" aria-label="Vorschau">
+      <span class="ws-buehne__seltenheit" id="seltenheit-marke"></span>
       <div class="ws-buehne__front"><canvas id="vorschau-front" aria-label="Timo von vorn"></canvas></div>
       <div class="ws-buehne__posen" id="vorschau-posen"></div>
       <button class="ws-buehne__alle" id="alle-posen" type="button">Alle 14 Posen zeigen</button>
@@ -33,8 +35,10 @@
 
     <div class="ws-spalte">
       <section class="panel">
-        <label class="panel__title" for="name">✏️ Name</label>
-        <input class="ws-name" id="name" type="text" maxlength="20" placeholder="Mein Outfit" autocomplete="off">
+        <label class="panel__title" for="name">✏️ Name und Seltenheit</label>
+        <input class="ws-name" id="name" type="text" maxlength="20" placeholder="Name des Skins" autocomplete="off">
+        <div class="ws-seltenheiten" id="seltenheiten" role="radiogroup" aria-label="Seltenheit"></div>
+        <input class="ws-name ws-text" id="text" type="text" maxlength="80" placeholder="Beschreibung (z. B. Rote Jacke und Piratenhut)" autocomplete="off">
       </section>
 
       <section class="panel">
@@ -48,11 +52,30 @@
       </section>
 
       <section class="panel">
+        <div class="panel__title">🧵 Muster</div>
+        <div class="ws-huete" id="muster" role="radiogroup" aria-label="Muster"></div>
+        <div class="ws-hutfarbe" id="musterfarbe-block">
+          <span class="ws-unterzeile">Farbe vom Muster</span>
+          <div class="ws-farben" id="muster-farben" role="radiogroup" aria-label="Musterfarbe"></div>
+        </div>
+      </section>
+
+      <section class="panel">
         <div class="panel__title">🎩 Kopfbedeckung</div>
         <div class="ws-huete" id="huete" role="radiogroup" aria-label="Kopfbedeckung"></div>
         <div class="ws-hutfarbe" id="hutfarbe-block">
           <span class="ws-unterzeile">Farbe vom Hut</span>
           <div class="ws-farben" id="hut-farben" role="radiogroup" aria-label="Hutfarbe"></div>
+        </div>
+        <div class="ws-hutfarbe" id="hutlage-block">
+          <label class="ws-regler">
+            <span class="ws-regler__name">Größe</span>
+            <input id="hut-groesse" type="range" min="0.5" max="2" step="0.05" value="1" aria-label="Hutgröße">
+          </label>
+          <label class="ws-regler">
+            <span class="ws-regler__name">Sitz</span>
+            <input id="hut-sitz" type="range" min="-0.5" max="0.5" step="0.02" value="0" aria-label="Wie hoch der Hut sitzt">
+          </label>
         </div>
       </section>
 
@@ -60,15 +83,26 @@
         <button class="btn btn--ghost" id="zufall" type="button">🎲 Zufall</button>
         <button class="btn btn--green" id="speichern" type="button">💾 Speichern &amp; tragen</button>
       </div>
+      <button class="btn btn--ghost btn--small ws-neu" id="neu" type="button">＋ Neuen Skin anfangen</button>
 
       <section class="panel">
-        <div class="panel__title">📁 Meine Outfits</div>
+        <div class="panel__title">📁 Meine Skins</div>
         <div class="ws-liste" id="liste"></div>
-        <p class="ws-hinweis">Gespeicherte Outfits findest du im Spiel unter <strong>Figur → Aussehen</strong>.
-          Sie stecken in deinem Spielstand und kommen mit auf andere Geräte.</p>
+      </section>
+
+      <section class="panel ws-export">
+        <div class="panel__title">📦 Ins Spiel bringen</div>
+        <p class="ws-hinweis">Lade das Skin-Paket herunter und schick es Claude mit
+          „<strong>Bring die Skins ins Spiel</strong>“. Dann gibt es sie für alle in Truhen und in der Sammlung -
+          mit der Seltenheit, die du gewählt hast.</p>
+        <button class="btn" id="exportieren" type="button">📦 Skin-Paket herunterladen</button>
       </section>
     </div>
   </main>
+
+  <!-- Unsichtbare Dateiwähler für den Import von Hut- und Musterbildern. -->
+  <input id="datei-hut" type="file" accept="image/*" hidden>
+  <input id="datei-muster" type="file" accept="image/*" hidden>
 
   <div class="ws-meldung" id="meldung" role="status" aria-live="polite"></div>
 

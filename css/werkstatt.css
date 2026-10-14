@@ -355,3 +355,97 @@ body.werkstatt-seite {
   color: #fff;
   background: var(--danger);
 }
+
+/* ---------- Skin-Studio: Seltenheit, Import, Export ---------- */
+.ws-seltenheiten {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.ws-seltenheit {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 8px 2px;
+  border-radius: 12px;
+  color: var(--farbe);
+  border: 2px solid color-mix(in srgb, var(--farbe) 45%, transparent);
+  background: rgba(8, 14, 40, 0.5);
+  cursor: pointer;
+}
+
+.ws-seltenheit[aria-checked='true'] {
+  color: var(--text-dark);
+  border-color: var(--farbe);
+  background: var(--farbe);
+}
+
+.ws-buehne__seltenheit {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  background: var(--farbe);
+  box-shadow: 0 2px 0 rgba(8, 14, 40, 0.45);
+}
+
+.ws-hut {
+  position: relative;
+}
+
+.ws-hut__icon img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+
+.ws-hut__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Kleines ✕ zum Löschen eines importierten Bilds. */
+.ws-hut__weg {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--danger);
+  box-shadow: 0 2px 0 rgba(8, 14, 40, 0.5);
+}
+
+.ws-regler__name {
+  width: 52px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ws-neu {
+  justify-self: center;
+}
+
+.ws-export .btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.ws-eintrag {
+  border-left: 4px solid var(--farbe, transparent);
+}

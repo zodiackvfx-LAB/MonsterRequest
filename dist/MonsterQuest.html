@@ -8932,7 +8932,14 @@ var SKIN_BILDER = {
   ]
 };
 
+// js/data/studio-skins.js
+var STUDIO_SKINS = [];
+
 // js/ui/sprite.js
+var SKIN_BILDER2 = {
+  ...SKIN_BILDER,
+  ...Object.fromEntries(STUDIO_SKINS.map((skin) => [skin.ordner, skin.bilder]))
+};
 var GROESSE = 32;
 var FORMEN = {
   klecks: [
@@ -9396,7 +9403,7 @@ var POSE_VON = (() => {
 function skinBild(pfad, skin) {
   if (skin?.eigen) return skin.bilder?.[POSE_VON.get(pfad)] ?? pfad;
   if (!skin?.ordner) return pfad;
-  return SKIN_BILDER[skin.ordner]?.[POSE_VON.get(pfad)] ?? pfad;
+  return SKIN_BILDER2[skin.ordner]?.[POSE_VON.get(pfad)] ?? pfad;
 }
 function spritesNeuZeichnen() {
   zwischenspeicher.clear();
@@ -10246,6 +10253,98 @@ function stirnband(l, cx, y0, u, f, hell, baender) {
     vieleck(l, [[x, oben + 0.06 * u], [x - 0.4 * u, oben + 0.22 * u], [x - 0.3 * u, oben + 0.3 * u], [x, oben + 0.13 * u]], f);
   }
 }
+function wuerfel(a, b) {
+  let h = Math.imul(a, 374761393) ^ Math.imul(b, 668265263);
+  h = Math.imul(h ^ h >>> 13, 1274126177);
+  return ((h ^ h >>> 16) >>> 0) / 4294967296;
+}
+var MUSTER2 = {
+  keins: { name: "Einfarbig", icon: "⬛", feld: () => 0 },
+  streifen: { name: "Streifen", icon: "🦓", feld: (x, y, s) => Math.floor(y / (1.5 * s)) % 2 },
+  laengs: { name: "Längsstreifen", icon: "📏", feld: (x, y, s) => Math.floor(x / (1.5 * s)) % 2 },
+  karo: {
+    name: "Karo",
+    icon: "🏁",
+    feld: (x, y, s) => (Math.floor(x / (2 * s)) + Math.floor(y / (2 * s))) % 2
+  },
+  punkte: {
+    name: "Punkte",
+    icon: "⚪",
+    feld: (x, y, s) => {
+      const g = Math.round(3 * s);
+      const versatz = Math.floor(y / g) % 2 ? Math.round(g / 2) : 0;
+      return (x + versatz) % g < s && y % g < s ? 1 : 0;
+    }
+  },
+  zickzack: {
+    name: "Zickzack",
+    icon: "⚡",
+    feld: (x, y, s) => {
+      const g = Math.round(4 * s);
+      return Math.floor((y + Math.abs(x % g - g / 2)) / (1.5 * s)) % 2;
+    }
+  },
+  tarn: {
+    name: "Tarnmuster",
+    icon: "🌿",
+    feld: (x, y, s) => {
+      const z = wuerfel(Math.floor(x / (2 * s)), Math.floor(y / (2 * s)));
+      return z < 0.35 ? 1 : z < 0.6 ? 2 : 0;
+    }
+  },
+  flammen: {
+    name: "Flammen",
+    icon: "🔥",
+    feld: (x, y, s, unten) => {
+      const g = Math.round(3 * s);
+      const zunge = Math.abs(x % g - g / 2) / (g / 2);
+      return unten - y < (0.12 + 0.18 * (1 - zunge) + 0.06 * wuerfel(Math.floor(x / g), 7)) * unten ? 1 : 0;
+    }
+  }
+};
+var RAMPEN = /* @__PURE__ */ new Map();
+function rampe(hex, helligkeit) {
+  const schluessel = `${hex}|${helligkeit}`;
+  if (!RAMPEN.has(schluessel)) RAMPEN.set(schluessel, kleidungAusFarbe(hex, helligkeit));
+  return RAMPEN.get(schluessel);
+}
+function rgbZuHex(r, g, b) {
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+function kleidungsFarbe(rezept, extras, x, y, l, s, unten) {
+  const hell = rezept.helligkeit ?? 0;
+  let hex = rezept.kleidung;
+  let dunkler = 0;
+  if (rezept.muster?.startsWith("import:") && extras.musterBild) {
+    const m = extras.musterBild;
+    const p = Math.max(1, Math.round(s / 2));
+    const mi = (Math.floor(y / p) % m.height * m.width + Math.floor(x / p) % m.width) * 4;
+    if (m.data[mi + 3] >= 128) hex = rgbZuHex(m.data[mi], m.data[mi + 1], m.data[mi + 2]);
+  } else {
+    const feld2 = (MUSTER2[rezept.muster] ?? MUSTER2.keins).feld(x, y, s, unten);
+    if (feld2 === 1) hex = rezept.musterFarbe ?? "#ffffff";
+    if (feld2 === 2) dunkler = 0.1;
+  }
+  if (!hex) return null;
+  const k = rampe(hex, hell - dunkler);
+  const anteil = (l - 0.07) / 0.35;
+  return hlsZuRgb(k.ton, k.dunkel + anteil * (k.hell - k.dunkel), k.satt);
+}
+function hutBildMalen(ebene, cx, y0, u, bildPx, groesse = 1, sitz = 0) {
+  const breite = Math.max(4, Math.round(u * groesse));
+  const hoehe = Math.max(1, Math.round(breite * bildPx.height / bildPx.width));
+  const links = Math.round(cx - breite / 2);
+  const unten = Math.round(y0 + (0.3 + sitz * 0.8) * u);
+  for (let dy = 0; dy < hoehe; dy++) {
+    for (let dx = 0; dx < breite; dx++) {
+      const sx = Math.floor(dx * bildPx.width / breite);
+      const sy = Math.floor(dy * bildPx.height / hoehe);
+      const i = (sy * bildPx.width + sx) * 4;
+      if (bildPx.data[i + 3] < 128) continue;
+      setze(ebene, links + dx, unten - hoehe + dy, [bildPx.data[i], bildPx.data[i + 1], bildPx.data[i + 2], 255]);
+    }
+  }
+}
 var KLEIDUNG_CACHE = /* @__PURE__ */ new WeakMap();
 function kleidungsKarte(original, kopf) {
   if (KLEIDUNG_CACHE.has(original)) return KLEIDUNG_CACHE.get(original);
@@ -10262,21 +10361,21 @@ function kleidungsKarte(original, kopf) {
   KLEIDUNG_CACHE.set(original, karte);
   return karte;
 }
-function poseBauen(original, kopf, rezept) {
+function poseBauen(original, kopf, rezept, extras = {}) {
   const { width: w, height: h } = original;
   const raum = Math.round(h * HUT_RAUM);
   const bild = leinwand(w, h + raum);
-  const kleidung = rezept.kleidung ? kleidungAusFarbe(rezept.kleidung, rezept.helligkeit ?? 0) : null;
   const karte = kleidungsKarte(original, kopf);
+  const s = Math.max(1, kopf.breite / 14);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       if (original.data[i + 3] < 128) continue;
       let [r, g, b] = [original.data[i], original.data[i + 1], original.data[i + 2]];
       const l = karte[y * w + x];
-      if (kleidung && l >= 0) {
-        const anteil = (l - 0.07) / 0.35;
-        [r, g, b] = hlsZuRgb(kleidung.ton, kleidung.dunkel + anteil * (kleidung.hell - kleidung.dunkel), kleidung.satt);
+      if (l >= 0) {
+        const neu = kleidungsFarbe(rezept, extras, x, y, l, s, h);
+        if (neu) [r, g, b] = neu;
       }
       const o = ((y + raum) * w + x) * 4;
       bild.data[o] = r;
@@ -10285,10 +10384,16 @@ function poseBauen(original, kopf, rezept) {
       bild.data[o + 3] = 255;
     }
   }
-  const hut = HUETE[rezept.hut] ?? HUETE.keiner;
-  if (hut.malen && rezept.hut !== "keiner") {
+  const importiert = rezept.hut?.startsWith("import:");
+  const hut = importiert ? null : HUETE[rezept.hut] ?? HUETE.keiner;
+  if (importiert && extras.hutBild || hut && rezept.hut !== "keiner") {
     const ebene = leinwand(w, h + raum);
-    hut.malen(ebene, kopf.mitte, kopf.y0 + raum, kopf.breite * 1.08, rezept.hutFarbe ?? hut.farbe);
+    const u = kopf.breite * 1.08;
+    if (importiert) {
+      hutBildMalen(ebene, kopf.mitte, kopf.y0 + raum, u, extras.hutBild, rezept.hutGroesse ?? 1, rezept.hutSitz ?? 0);
+    } else {
+      hut.malen(ebene, kopf.mitte, kopf.y0 + raum, u, rezept.hutFarbe ?? hut.farbe);
+    }
     const d = ebene.data;
     const kontur = [];
     for (let y = 0; y < ebene.height; y++) {
@@ -10310,10 +10415,10 @@ function poseBauen(original, kopf, rezept) {
   }
   return bild;
 }
-function poseImOutfit(originale, pose, rezept, koepfe2 = /* @__PURE__ */ new Map()) {
+function poseImOutfit(originale, pose, rezept, koepfe2 = /* @__PURE__ */ new Map(), extras = {}) {
   const quelle = KOPF_WIE[pose] ?? pose;
   if (!koepfe2.has(quelle)) koepfe2.set(quelle, kopfFinden(originale[quelle]));
-  return poseBauen(originale[pose], koepfe2.get(quelle), rezept);
+  return poseBauen(originale[pose], koepfe2.get(quelle), rezept, extras);
 }
 
 // js/data/cloud-config.js
@@ -10546,7 +10651,7 @@ function createNewGame() {
     // Selbst gebaute Outfits aus der Skin-Werkstatt (werkstatt.html) - nur
     // das Rezept, die Bilder baut das Spiel daraus (js/core/eigene-skins.js).
     eigeneOutfits: [],
-    // [{ id: 'eigen-…', name, rezept: { kleidung, helligkeit, hut, hutFarbe } }]
+    // [{ id: 'eigen-…', name, seltenheit, text, rezept: {…} }] - Rezept siehe js/core/outfit.js
     decks: {},
     // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     characters: {},
@@ -10776,14 +10881,25 @@ function truhenUebernehmen(saved) {
 function eigeneOutfitsPruefen(liste) {
   if (!Array.isArray(liste)) return [];
   const farbe2 = (wert) => typeof wert === "string" && /^#[0-9a-f]{6}$/i.test(wert) ? wert.toLowerCase() : null;
+  const zahl = (wert, min, max, standard) => {
+    const n = Number(wert);
+    return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : standard;
+  };
+  const auswahl = (wert, liste2, standard) => typeof wert === "string" && (Object.hasOwn(liste2, wert) || /^import:[a-z0-9-]{1,40}$/.test(wert)) ? wert : standard;
   return liste.filter((e) => e && typeof e.id === "string" && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === "object").slice(0, 8).map((e) => ({
     id: e.id,
     name: String(e.name ?? "").trim().slice(0, 20) || "Mein Outfit",
+    seltenheit: ["gewoehnlich", "selten", "episch", "legendaer"].includes(e.seltenheit) ? e.seltenheit : "episch",
+    text: String(e.text ?? "").trim().slice(0, 80),
     rezept: {
       kleidung: farbe2(e.rezept.kleidung),
-      helligkeit: Math.max(-0.2, Math.min(0.2, Number(e.rezept.helligkeit) || 0)),
-      hut: Object.hasOwn(HUETE, e.rezept.hut) ? e.rezept.hut : "keiner",
-      hutFarbe: farbe2(e.rezept.hutFarbe)
+      helligkeit: zahl(e.rezept.helligkeit, -0.2, 0.2, 0),
+      muster: auswahl(e.rezept.muster, MUSTER2, "keins"),
+      musterFarbe: farbe2(e.rezept.musterFarbe),
+      hut: auswahl(e.rezept.hut, HUETE, "keiner"),
+      hutFarbe: farbe2(e.rezept.hutFarbe),
+      hutGroesse: zahl(e.rezept.hutGroesse, 0.5, 2, 1),
+      hutSitz: zahl(e.rezept.hutSitz, -0.5, 0.5, 0)
     }
   }));
 }
@@ -11632,7 +11748,10 @@ var SKINS = [
     filter: null,
     ordner: "koenig",
     text: "Königsrot und eine goldene Krone."
-  }
+  },
+  // Skins aus dem Skin-Studio (werkstatt.html), eingebaut mit
+  // werkzeuge/skins-einbauen.mjs.
+  ...STUDIO_SKINS
 ];
 var TRUHEN_MUENZEN = { min: 150, max: 500 };
 var MATERIAL_BEUTE = {
@@ -11649,7 +11768,16 @@ function getSkin(id) {
 // js/core/eigene-skins.js
 var fertigeBilder = /* @__PURE__ */ new Map();
 function rezeptSchluessel(rezept) {
-  return JSON.stringify([rezept.kleidung, rezept.helligkeit, rezept.hut, rezept.hutFarbe]);
+  return JSON.stringify([
+    rezept.kleidung,
+    rezept.helligkeit,
+    rezept.muster,
+    rezept.musterFarbe,
+    rezept.hut,
+    rezept.hutFarbe,
+    rezept.hutGroesse,
+    rezept.hutSitz
+  ]);
 }
 function eigeneOutfits() {
   return gameState.eigeneOutfits ?? [];
@@ -11677,7 +11805,8 @@ function alsSkin(outfit) {
     id: outfit.id,
     name: outfit.name,
     monsterId: "timo",
-    seltenheit: "legendaer",
+    seltenheit: outfit.seltenheit ?? "episch",
+    text: outfit.text ?? "",
     eigen: true,
     look: {},
     filter: null,
@@ -11686,6 +11815,21 @@ function alsSkin(outfit) {
     // kurz das Original (siehe skinBild in js/ui/sprite.js).
     bilder: outfitBilder(outfit)
   };
+}
+var BILDER_SCHLUESSEL = "monsterquest.studio.bilder.v1";
+function importBilder() {
+  try {
+    const alle = JSON.parse(localStorage.getItem(BILDER_SCHLUESSEL) ?? "{}");
+    return alle && typeof alle === "object" ? alle : {};
+  } catch {
+    return {};
+  }
+}
+function importBild(id) {
+  return importBilder()[id] ?? null;
+}
+function importId(wert) {
+  return typeof wert === "string" && wert.startsWith("import:") ? wert.slice(7) : null;
 }
 
 // js/ui/outfit-bilder.js
@@ -11717,6 +11861,34 @@ function originaleLaden() {
   });
   return originaleVersprechen;
 }
+function bildZuPixel(adresse) {
+  return new Promise((fertig, fehler) => {
+    const img = new Image();
+    img.onload = () => {
+      const leinwand2 = document.createElement("canvas");
+      leinwand2.width = img.naturalWidth;
+      leinwand2.height = img.naturalHeight;
+      const ctx2 = leinwand2.getContext("2d");
+      ctx2.drawImage(img, 0, 0);
+      fertig(ctx2.getImageData(0, 0, leinwand2.width, leinwand2.height));
+    };
+    img.onerror = () => fehler(new Error("Bild nicht lesbar"));
+    img.src = adresse;
+  });
+}
+var importPixel = /* @__PURE__ */ new Map();
+async function extrasFuer(rezept) {
+  const laden = async (id) => {
+    if (!id) return void 0;
+    if (!importPixel.has(id)) {
+      const eintrag = importBild(id);
+      if (!eintrag) return void 0;
+      importPixel.set(id, await bildZuPixel(eintrag.bild).catch(() => void 0));
+    }
+    return importPixel.get(id);
+  };
+  return { hutBild: await laden(importId(rezept.hut)), musterBild: await laden(importId(rezept.muster)) };
+}
 function aufLeinwand(canvas, bild) {
   canvas.width = bild.width;
   canvas.height = bild.height;
@@ -11730,7 +11902,8 @@ function alsBildAdresse(bild) {
 async function outfitVorbereiten(outfit) {
   if (!outfit || outfitBilder(outfit)) return;
   const originale = await originaleLaden();
-  const bilder = POSEN.map((pose) => alsBildAdresse(poseImOutfit(originale, pose, outfit.rezept, koepfe)));
+  const extras = await extrasFuer(outfit.rezept);
+  const bilder = POSEN.map((pose) => alsBildAdresse(poseImOutfit(originale, pose, outfit.rezept, koepfe, extras)));
   outfitBilderSetzen(outfit.id, outfit.rezept, bilder);
 }
 async function outfitVorbereitenId(id) {
@@ -12602,7 +12775,7 @@ function truheOeffnen(truhe) {
 var SKIN_CHANCE = 0.25;
 
 // js/core/haptik.js
-var MUSTER2 = {
+var MUSTER3 = {
   treffer: 12,
   // normaler Treffer: ein kurzer Stups
   krit: [22, 30, 22],
@@ -12620,7 +12793,7 @@ function vibrationAn() {
 }
 function vibriere(name) {
   if (!vibrationAn()) return;
-  const muster = MUSTER2[name];
+  const muster = MUSTER3[name];
   if (muster === void 0) return;
   try {
     navigator.vibrate(muster);
@@ -13986,7 +14159,7 @@ var monsterScreen = {
         const werkstatt = document.createElement("a");
         werkstatt.className = "btn werkstatt-knopf";
         werkstatt.href = "werkstatt.html";
-        werkstatt.innerHTML = "🎨 Eigenes Outfit bauen";
+        werkstatt.innerHTML = "🎨 Skin-Studio: neuen Skin bauen";
         skinBlock.appendChild(werkstatt);
       }
       content2.appendChild(skinBlock);

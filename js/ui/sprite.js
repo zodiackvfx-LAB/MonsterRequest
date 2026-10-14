@@ -25,7 +25,14 @@
  */
 
 import { MONSTERS } from '../data/monsters.js';
-import { SKIN_BILDER, SKIN_POSEN } from '../data/timo-skins.js';
+import { SKIN_BILDER as FESTE_SKIN_BILDER, SKIN_POSEN } from '../data/timo-skins.js';
+import { STUDIO_SKINS } from '../data/studio-skins.js';
+
+/** Bilder aller Outfit-Skins: die festen und die aus dem Skin-Studio. */
+const SKIN_BILDER = {
+  ...FESTE_SKIN_BILDER,
+  ...Object.fromEntries(STUDIO_SKINS.map((skin) => [skin.ordner, skin.bilder])),
+};
 
 /** Kantenlänge einer Figur in Feldern. */
 export const GROESSE = 32;

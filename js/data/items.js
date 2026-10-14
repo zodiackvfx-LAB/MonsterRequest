@@ -1,4 +1,5 @@
 import { registerAttack } from './attacks.js';
+import { STUDIO_SKINS } from './studio-skins.js';
 
 /**
  * Seltenheiten und Beutestücke (Loot).
@@ -164,6 +165,10 @@ export const SKINS = [
     look: { hue: 350, sattheit: 55, akzentHue: 45 }, filter: null, ordner: 'koenig',
     text: 'Königsrot und eine goldene Krone.',
   },
+
+  // Skins aus dem Skin-Studio (werkstatt.html), eingebaut mit
+  // werkzeuge/skins-einbauen.mjs.
+  ...STUDIO_SKINS,
 ];
 
 /**

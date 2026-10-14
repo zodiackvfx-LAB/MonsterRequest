@@ -26,8 +26,10 @@ import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { SKIN_BILDER, SKIN_POSEN } from '../js/data/timo-skins.js';
-import { HUETE, POSEN as OUTFIT_POSEN, kleidungAusFarbe, poseBauen } from '../js/core/outfit.js';
-import { MAX_EIGENE, eigenerSkin, eigeneSkins, outfitLoeschen, outfitSpeichern } from '../js/core/eigene-skins.js';
+import { HUETE, POSEN as OUTFIT_POSEN, importBildSaeubern, kleidungAusFarbe, poseBauen } from '../js/core/outfit.js';
+import { STUDIO_SKINS } from '../js/data/studio-skins.js';
+import { pngLesen, pngSchreiben } from '../werkzeuge/png.mjs';
+import { MAX_EIGENE, eigenerSkin, eigeneSkins, outfitLoeschen, outfitSpeichern, skinPaket } from '../js/core/eigene-skins.js';
 import { skinBild } from '../js/ui/sprite.js';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
@@ -666,8 +668,8 @@ console.log('\nSpielfigur');
   const outfits = meine.filter((skin) => skin.ordner);
   pruefe('Es gibt mindestens 7 Outfits mit Hut und Kleidung', outfits.length >= 7);
   pruefe('Jedes Outfit hat alle 14 Posen als Datei',
-    outfits.every((skin) => SKIN_BILDER[skin.ordner]?.length === SKIN_POSEN.length &&
-      SKIN_BILDER[skin.ordner].every((pfad) => existsSync(new URL(`../${pfad}`, import.meta.url)))));
+    outfits.every((skin) => (SKIN_BILDER[skin.ordner] ?? skin.bilder)?.length === SKIN_POSEN.length &&
+      (SKIN_BILDER[skin.ordner] ?? skin.bilder).every((pfad) => existsSync(new URL(`../${pfad}`, import.meta.url)))));
   pruefe('Outfit: jede Pose von Timo bekommt ihr Outfit-Bild',
     outfits.every((skin) => [SPIELFIGUR.image, SPIELFIGUR.bildKampf, ...SPIELFIGUR.bildSchlag, ...SPIELFIGUR.bildStrahl, ...SPIELFIGUR.bildTreffer]
       .every((pfad) => skinBild(pfad, skin) === pfad.replace('bilder/timo/', `bilder/timo/skins/${skin.ordner}/`))));
@@ -1479,6 +1481,44 @@ console.log('\nSkin-Werkstatt: eigene Outfits');
   pruefe('Kaputte Outfits werden beim Laden bereinigt',
     geladen.length === 1 && geladen[0].name.length === 20 && geladen[0].rezept.kleidung === '#abcdef' &&
     geladen[0].rezept.helligkeit === 0.2 && geladen[0].rezept.hut === 'keiner' && geladen[0].rezept.hutFarbe === null);
+
+  // Skin-Studio: Muster, importierte Bilder, Seltenheit
+  const mitMuster = poseBauen(original, kopf, { kleidung: '#ffffff', helligkeit: 0, muster: 'streifen', musterFarbe: '#000000', hut: 'keiner' });
+  const farbenDerJacke = new Set();
+  for (let y = 14; y < 40; y++) farbenDerJacke.add(px(mitMuster, 8, y + raum).slice(0, 3).join());
+  pruefe('Streifenmuster: die Jacke hat zwei Farben', farbenDerJacke.size >= 2);
+  const kachelBild = { width: 2, height: 1, data: new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 255]) };
+  const mitImport = poseBauen(original, kopf, { kleidung: null, helligkeit: 0, muster: 'import:x', hut: 'keiner' }, { musterBild: kachelBild });
+  const imp = new Set();
+  for (let x = 4; x < 16; x++) imp.add(px(mitImport, x, 30 + raum).slice(0, 3).join());
+  pruefe('Importiertes Muster färbt die Kleidung in seinen Farben', imp.size >= 2);
+  const hutPx = { width: 4, height: 2, data: new Uint8ClampedArray(4 * 2 * 4).fill(200) };
+  const mitHut = poseBauen(original, kopf, { kleidung: null, hut: 'import:h', hutGroesse: 1, hutSitz: 0 }, { hutBild: hutPx });
+  let hutGezeichnet = 0;
+  for (let i = 0; i < mitHut.data.length; i += 4) if (mitHut.data[i] === 200 && mitHut.data[i + 3] === 255) hutGezeichnet++;
+  pruefe('Importierter Hut wird auf den Kopf gesetzt', hutGezeichnet > 10);
+  const foto = { width: 6, height: 6, data: new Uint8ClampedArray(6 * 6 * 4).fill(255) };
+  foto.data.set([10, 200, 10, 255], (2 * 6 + 3) * 4);
+  const sauber = importBildSaeubern(foto);
+  pruefe('Import: weißer Hintergrund fällt weg, Ränder werden abgeschnitten', sauber.width === 1 && sauber.height === 1 && sauber.data[1] === 200);
+
+  outfitSpeichern({ name: 'Studio', seltenheit: 'selten', text: 'Test', rezept: { ...rezept, muster: 'import:muster-abc', hut: 'import:hut-xyz', hutGroesse: 1.4, hutSitz: -0.2 } });
+  saveProgress();
+  loadProgress();
+  const st = gameState.eigeneOutfits[0];
+  pruefe('Studio-Skin: Seltenheit, Text, Muster und importierter Hut bleiben erhalten',
+    st.seltenheit === 'selten' && st.text === 'Test' && st.rezept.muster === 'import:muster-abc' &&
+    st.rezept.hut === 'import:hut-xyz' && st.rezept.hutGroesse === 1.4 && st.rezept.hutSitz === -0.2);
+  const paket = skinPaket();
+  pruefe('Skin-Paket enthält Name, Seltenheit und Rezept', paket.format === 'monsterquest-skins' &&
+    paket.skins[0].name === 'Studio' && paket.skins[0].seltenheit === 'selten' && paket.skins[0].rezept.hutGroesse === 1.4);
+
+  // PNG-Werkzeug: Lesen und Schreiben ohne Verlust
+  const front = pngLesen(readFileSync(new URL('../bilder/timo/front.png', import.meta.url)));
+  const zurueck = pngLesen(pngSchreiben(front));
+  pruefe('PNG lesen und schreiben verliert keine Pixel',
+    zurueck.width === front.width && zurueck.data.every((v, i) => (front.data[i - (i % 4) + 3] ? v === front.data[i] : true)));
+  pruefe('Studio-Skins werden in SKINS aufgenommen', STUDIO_SKINS.every((s) => SKINS.includes(s)));
   resetProgress();
   pruefe('Zurücksetzen leert die eigenen Outfits', eigeneSkins().length === 0);
 }
