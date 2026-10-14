@@ -434,10 +434,11 @@ function zeitTruhenUebernehmen(saved) {
   const gespeichert = saved.zeitTruhen && typeof saved.zeitTruhen === 'object' ? saved.zeitTruhen : {};
   const jetzt = Date.now();
   gameState.zeitTruhen = {};
-  ZEIT_TRUHEN.forEach(({ id, minuten }) => {
+  ZEIT_TRUHEN.forEach(({ id }) => {
     const ab = Number(gespeichert[id]);
     if (!Number.isFinite(ab)) return;
-    gameState.zeitTruhen[id] = Math.min(ab, jetzt + minuten * 60 * 1000);
+    // Länger als ein Tag kann man nie warten müssen.
+    gameState.zeitTruhen[id] = Math.min(ab, jetzt + 24 * 60 * 60 * 1000);
   });
 }
 

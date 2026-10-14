@@ -75,7 +75,7 @@ import { LIGEN, ligaVon, naechsteLiga, trophaeenFuerSieg } from '../js/data/trop
 import { alleZustaende, freischaltenStarten, platzZustand, sofortPreis, truheAusPlatz, truheEinlagern } from '../js/core/truhenplaetze.js';
 import { besiegteBossWelten, modusErgebnis, modusFrei, modusGegner, modusInfo, modusLevel, modusStarten, zeitText } from '../js/core/modi.js';
 import { MODI, TAGES_KNIFFE, tagesHerausforderung } from '../js/data/modi.js';
-import { alleZeitTruhen, zeitTruheAbholen, zeitTruheZustand } from '../js/core/zeittruhen.js';
+import { alleZeitTruhen, naechsteMitternacht, zeitTruheAbholen, zeitTruheZustand } from '../js/core/zeittruhen.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
@@ -1473,34 +1473,38 @@ console.log('\nStudio-Teile: Farben gratis, Hüte und Muster freischalten');
   resetProgress();
 }
 
-console.log('\nZeit-Truhen (Holz alle 30 Min, Gold jede Stunde)');
+console.log('\nTägliche Gratis-Truhen (Holz und Gold, je einmal am Tag)');
 {
   resetProgress();
-  const t0 = 1_000_000_000_000;
+  const morgens = new Date(2026, 9, 14, 8, 0).getTime();
+  const mitternacht = new Date(2026, 9, 15, 0, 0).getTime();
   pruefe('Neuer Spielstand: beide Gratis-Truhen sofort bereit',
-    alleZeitTruhen(t0).map((z) => `${z.truhe.id}:${z.bereit}`).join() === 'holztruhe:true,goldtruhe:true');
-  const holz = zeitTruheAbholen('holztruhe', t0);
+    alleZeitTruhen(morgens).map((z) => `${z.truhe.id}:${z.bereit}`).join() === 'holztruhe:true,goldtruhe:true');
+  pruefe('Nächste Mitternacht wird richtig berechnet', naechsteMitternacht(morgens) === mitternacht);
+  const holz = zeitTruheAbholen('holztruhe', morgens);
   pruefe('Abholen gibt die Holztruhe', holz?.id === 'holztruhe');
-  pruefe('Kein zweites Mal direkt danach', zeitTruheAbholen('holztruhe', t0 + 1000) === null);
-  pruefe('Holz ist nach 30 Minuten wieder bereit',
-    !zeitTruheZustand('holztruhe', t0 + 29 * 60000).bereit && zeitTruheZustand('holztruhe', t0 + 30 * 60000).bereit);
-  zeitTruheAbholen('goldtruhe', t0);
-  pruefe('Gold ist nach einer Stunde wieder bereit',
-    !zeitTruheZustand('goldtruhe', t0 + 59 * 60000).bereit && zeitTruheZustand('goldtruhe', t0 + 60 * 60000).bereit);
-  pruefe('Es stapelt sich nichts: nach 5 Stunden genau eine Truhe',
-    zeitTruheAbholen('holztruhe', t0 + 300 * 60000) !== null && zeitTruheAbholen('holztruhe', t0 + 300 * 60000) === null);
-  pruefe('Zeit-Truhen belegen keinen Truhenplatz', gameState.truhenPlaetze.every((p) => p === null));
-  pruefe('Eine unbekannte Zeit-Truhe gibt es nicht', zeitTruheAbholen('silbertruhe', t0) === null);
+  pruefe('Am selben Tag nicht noch einmal - auch nicht nach Stunden',
+    zeitTruheAbholen('holztruhe', morgens + 1000) === null && !zeitTruheZustand('holztruhe', mitternacht - 1000).bereit);
+  pruefe('Die Goldtruhe zählt für sich', zeitTruheZustand('goldtruhe', morgens).bereit);
+  pruefe('Ab Mitternacht ist die Holztruhe wieder da', zeitTruheZustand('holztruhe', mitternacht).bereit);
+  const spaet = new Date(2026, 9, 14, 23, 59).getTime();
+  zeitTruheAbholen('goldtruhe', spaet);
+  pruefe('Kurz vor Mitternacht abgeholt: um Mitternacht schon wieder da',
+    !zeitTruheZustand('goldtruhe', spaet + 30000).bereit && zeitTruheZustand('goldtruhe', mitternacht).bereit);
+  pruefe('Es stapelt sich nichts: nach drei Tagen genau eine Truhe',
+    zeitTruheAbholen('holztruhe', mitternacht + 3 * 864e5) !== null && zeitTruheAbholen('holztruhe', mitternacht + 3 * 864e5) === null);
+  pruefe('Gratis-Truhen belegen keinen Truhenplatz', gameState.truhenPlaetze.every((p) => p === null));
+  pruefe('Eine unbekannte Gratis-Truhe gibt es nicht', zeitTruheAbholen('silbertruhe', morgens) === null);
 
   const bald = Date.now() + 20 * 60000;
   gameState.zeitTruhen = { holztruhe: bald };
   saveProgress();
   loadProgress();
-  pruefe('Die Uhr übersteht das Neuladen', gameState.zeitTruhen.holztruhe === bald);
+  pruefe('Die Wartezeit übersteht das Neuladen', gameState.zeitTruhen.holztruhe === bald);
   localStorage.setItem('monsterquest.save.v3', JSON.stringify({ zeitTruhen: { holztruhe: Date.now() + 9e12, goldtruhe: 'x', quatsch: 5 } }));
   loadProgress();
-  pruefe('Verstellte Uhr: höchstens eine Wartezeit, Unsinn fliegt raus',
-    gameState.zeitTruhen.holztruhe <= Date.now() + 30 * 60000 && !('goldtruhe' in gameState.zeitTruhen) && !('quatsch' in gameState.zeitTruhen));
+  pruefe('Verstellte Uhr: höchstens ein Tag Wartezeit, Unsinn fliegt raus',
+    gameState.zeitTruhen.holztruhe <= Date.now() + 864e5 && !('goldtruhe' in gameState.zeitTruhen) && !('quatsch' in gameState.zeitTruhen));
   resetProgress();
 }
 

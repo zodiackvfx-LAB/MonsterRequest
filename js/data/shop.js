@@ -106,19 +106,14 @@ export const SOFORT_WERT = { holztruhe: 250, silbertruhe: 800, goldtruhe: 2000, 
 export const SOFORT_MINDESTPREIS = 5;
 
 /**
- * Zeit-Truhen: gibt es einfach so, ohne Kampf - alle paar Minuten eine.
- *
- *   id      - welche Truhe (aus TRUHEN oben)
- *   minuten - so lange dauert es, bis die nächste bereitsteht
+ * Tägliche Gratis-Truhen: gibt es einfach so, ohne Kampf - jede EINMAL AM
+ * TAG. Um Mitternacht (Uhrzeit des Geräts) liegt die nächste bereit.
  *
  * Sie belegen keinen Truhenplatz und werden direkt geöffnet. Holt man eine
- * bereite Truhe nicht ab, wartet sie - es stapeln sich aber keine weiteren.
- * Die Uhr für die nächste startet erst beim Abholen (js/core/zeittruhen.js).
+ * an einem Tag nicht ab, verfällt sie nicht - es stapeln sich aber auch
+ * keine weiteren (js/core/zeittruhen.js).
  */
-export const ZEIT_TRUHEN = [
-  { id: 'holztruhe', minuten: 30 },
-  { id: 'goldtruhe', minuten: 60 },
-];
+export const ZEIT_TRUHEN = [{ id: 'holztruhe' }, { id: 'goldtruhe' }];
 
 export function getTruhe(id) {
   return TRUHEN.find((truhe) => truhe.id === id);

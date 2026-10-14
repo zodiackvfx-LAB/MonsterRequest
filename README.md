@@ -95,7 +95,7 @@ js/
     battle.js           Kampfablauf, Zeitsteuerung, Gegner-KI
     modi.js             Regeln der Kampf-Modi: wer darf, was gibt es
     truhenplaetze.js    Die 4 Truhenplätze: Freischalten, Sofort-Öffnen
-    zeittruhen.js       Gratis-Truhen mit Uhr (Holz 30 Min, Gold 1 Std)
+    zeittruhen.js       Tägliche Gratis-Truhen (Holz und Gold, je einmal am Tag)
     trophaeen.js        Trophäen gewinnen und verlieren
 
   ui/                   Bausteine, die mehrere Bildschirme nutzen
@@ -216,11 +216,11 @@ Liga und Rangliste (Tipp auf den Pokal oben).
 Die Werte stehen in `js/data/modi.js`. Gewonnene Truhen kommen in die
 Truhenplätze; sind alle belegt, warten sie, bis einer frei wird.
 
-**Gratis-Truhen mit Uhr:** Neben der Figur auf der Startseite gibt es
-**alle 30 Minuten eine Holztruhe** und **jede Stunde eine Goldtruhe** – ohne
-Kampf. Sie belegen keinen Truhenplatz und öffnen sich direkt. Die Uhr für die
-nächste läuft ab dem Abholen; nicht abgeholte Truhen stapeln sich nicht.
-Einstellbar in `ZEIT_TRUHEN` (`js/data/shop.js`).
+**Tägliche Gratis-Truhen:** Neben der Figur auf der Startseite gibt es
+**einmal am Tag eine Holztruhe** und **einmal am Tag eine Goldtruhe** – ohne
+Kampf. Um Mitternacht (Uhrzeit des Geräts) liegen die nächsten bereit. Sie
+belegen keinen Truhenplatz und öffnen sich direkt; nicht abgeholte Truhen
+stapeln sich nicht. Einstellbar in `ZEIT_TRUHEN` (`js/data/shop.js`).
 
 ---
 

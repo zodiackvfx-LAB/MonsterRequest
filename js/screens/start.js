@@ -248,7 +248,7 @@ function baueTruhenplaetze(screen) {
 }
 
 /**
- * Die Gratis-Truhen mit Uhr: links und rechts neben der Figur. Ist eine
+ * Die täglichen Gratis-Truhen: links und rechts neben der Figur. Ist eine
  * bereit, leuchtet sie und ein Tipp öffnet sie direkt.
  */
 function baueZeitTruhen(screen) {
@@ -261,7 +261,7 @@ function baueZeitTruhen(screen) {
     knopf.dataset.klang = 'keiner';
     knopf.className = `zeit-truhe zeit-truhe--${index === 0 ? 'links' : 'rechts'} zeit-truhe--${truhe.design}`;
     knopf.innerHTML = `
-      <span class="zeit-truhe__marke">Gratis</span>
+      <span class="zeit-truhe__marke">Täglich</span>
       <span class="zeit-truhe__truhe">${truheSvg(truhe.design)}</span>
       <span class="zeit-truhe__text"></span>
     `;
@@ -293,7 +293,7 @@ function baueZeitTruhen(screen) {
       const text = bereit ? 'Öffnen!' : restText(rest);
       const feld = knopf.querySelector('.zeit-truhe__text');
       if (feld.textContent !== text) feld.textContent = text;
-      knopf.setAttribute('aria-label', `Gratis-${truhe.name}: ${bereit ? 'jetzt öffnen' : `bereit in ${text}`}`);
+      knopf.setAttribute('aria-label', `Tägliche Gratis-${truhe.name}: ${bereit ? 'jetzt öffnen' : `wieder da in ${text}`}`);
     });
   }
 
