@@ -1,3 +1,5 @@
+import { MODI } from './modi.js';
+
 /**
  * Die Spielmodi neben dem Abenteuer.
  *
@@ -12,9 +14,17 @@
  *   icon    - Symbol
  *   text    - ein kurzer Satz, worum es geht
  *   screen  - welcher Bildschirm sich öffnet (in js/main.js registriert)
+ *   modus   - ODER: ein Kampf-Modus aus js/data/modi.js - dann startet
+ *             direkt der Kampf, und Infozeile und Sperre kommen aus
+ *             js/core/modi.js
  *   info    - optional: (gameState) => kurzer Text, z. B. der Bestwert
  */
+
+/** Ein Eintrag für einen Kampf-Modus - Name, Symbol und Text aus MODI. */
+const kampfModus = (id) => ({ id, name: MODI[id].name, icon: MODI[id].icon, text: MODI[id].text, modus: id });
+
 export const SPIELMODI = [
+  kampfModus('tages'),
   {
     id: 'arena',
     name: 'Endlos-Arena',
@@ -26,4 +36,6 @@ export const SPIELMODI = [
       return best > 0 ? `Bester Lauf: ${best} ${best === 1 ? 'Runde' : 'Runden'}` : 'Noch nicht gespielt';
     },
   },
+  kampfModus('bossrush'),
+  kampfModus('zeit'),
 ];

@@ -5,7 +5,8 @@ taktischem Echtzeit-Kampfsystem. Gebaut mit reinem HTML, CSS und JavaScript –
 ohne Framework, ohne Build-Schritt.
 
 **Stand:** 7 Welten mit je 12 Kämpfen, zwei Spielfiguren (Timo und Rocco),
-Endlos-Arena, Shop, Tagesaufgaben, Erfolge und Spielstand-Übertragung.
+Endlos-Arena, Tägliche Herausforderung, Boss-Rush, Zeitangriff, Truhenplätze,
+Trophäen mit Rangliste, Shop, Tagesaufgaben, Erfolge und Spielstand-Übertragung.
 
 ---
 
@@ -75,6 +76,10 @@ js/
     kraefte.js          Boss-Kräfte – je Welt eine, beim Boss-Sieg freigeschaltet
     karten.js           Karten-Level: Kopien je Level, Stärke je Level
     spielmodi.js        Spielmodi im Auswahlfenster (z. B. Endlos-Arena)
+    modi.js             Werte der Kampf-Modi (Herausforderung, Boss-Rush,
+                        Zeitangriff) und welche Gegner kommen
+    shop.js             Truhen, Truhenplätze, Gratis-Truhen mit Uhr
+    trophaeen.js        Trophäen je Sieg und die 8 Ligen
 
   core/                 NUR Logik – kennt kein HTML
     screens.js          Bildschirmverwaltung
@@ -85,6 +90,10 @@ js/
     sortierung.js       Sortierung der Karten im Deckmenü (nur Anzeige)
     fighter.js          Ein Kämpfer: XP, Deck, Hand, Schaden, Schild
     battle.js           Kampfablauf, Zeitsteuerung, Gegner-KI
+    modi.js             Regeln der Kampf-Modi: wer darf, was gibt es
+    truhenplaetze.js    Die 4 Truhenplätze: Freischalten, Sofort-Öffnen
+    zeittruhen.js       Gratis-Truhen mit Uhr (Holz 30 Min, Gold 1 Std)
+    trophaeen.js        Trophäen gewinnen und verlieren
 
   ui/                   Bausteine, die mehrere Bildschirme nutzen
     scenery.js          Baut die Hintergrund-Kulisse
@@ -140,6 +149,18 @@ die Bosstruhe) werden nicht sofort geöffnet: Sie kommen in einen der
 (Holz 15 Min, Silber und Boss 1 Std, Gold 3 Std – immer nur eine gleichzeitig)
 oder sofort mit Münzen geöffnet. Siege bringen außerdem **Trophäen** für
 Liga und Rangliste (Tipp auf den Pokal oben).
+
+**Spielmodi** (Knopf „Modi“ neben „Spiel starten“):
+
+| Modus | Worum es geht | Belohnung |
+|---|---|---|
+| 🎯 Tägliche Herausforderung | Jeden Tag ein anderer Gegner aus der höchsten Welt mit einem Kniff (zäh, wild, flink, gepanzert, Riese) | Silbertruhe beim ersten Sieg des Tages |
+| 🏟️ Endlos-Arena | Gegner um Gegner, jede 5. Runde ein Boss | Bestwert |
+| 👑 Boss-Rush | Alle besiegten Bosse hintereinander, dazwischen 30 % Heilung | einmal am Tag: Goldtruhe (ab 3 Bossen), sonst Silbertruhe |
+| ⏱️ Zeitangriff | Drei Gegner der höchsten Welt so schnell wie möglich | Holztruhe für jede neue Bestzeit |
+
+Die Werte stehen in `js/data/modi.js`. Gewonnene Truhen kommen in die
+Truhenplätze; sind alle belegt, warten sie, bis einer frei wird.
 
 **Gratis-Truhen mit Uhr:** Neben der Figur auf der Startseite gibt es
 **alle 30 Minuten eine Holztruhe** und **jede Stunde eine Goldtruhe** – ohne

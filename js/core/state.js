@@ -71,6 +71,9 @@ function createNewGame() {
     // Zeit-Truhen (siehe js/core/zeittruhen.js): je Truhen-id der Zeitpunkt
     // in Millisekunden, ab dem die nächste bereitsteht. Fehlt er: sofort.
     zeitTruhen: {},
+    // Kampf-Modi (siehe js/core/modi.js): an welchem Tag die Tagesbelohnung
+    // zuletzt geholt wurde, und die Bestzeiten im Zeitangriff je Welt.
+    modi: { tagesDatum: null, bossrushDatum: null, zeitRekorde: {} },
     bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
@@ -270,6 +273,7 @@ function uebernehmen(saved) {
   gameState.gratisTruheZaehler = Math.max(0, Math.floor(Number(saved.gratisTruheZaehler) || 0));
   truhenUebernehmen(saved);
   zeitTruhenUebernehmen(saved);
+  modiUebernehmen(saved);
   // Nur bekannte Kraft-ids übernehmen, damit ein alter Spielstand keine
   // Geister-Kraft einschleppt.
   gameState.bossPowers = Array.isArray(saved.bossPowers)
@@ -363,6 +367,20 @@ function truhenUebernehmen(saved) {
     if (frei >= 0) gameState.truhenPlaetze[frei] = { id, bereitAb: 0 };
     else gameState.truhenWarteschlange.push(id);
   });
+}
+
+/** Kampf-Modi übernehmen - nur Daten in der erwarteten Form. */
+function modiUebernehmen(saved) {
+  const m = saved.modi && typeof saved.modi === 'object' ? saved.modi : {};
+  const datum = (wert) => (typeof wert === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(wert) ? wert : null);
+  const zeitRekorde = {};
+  if (m.zeitRekorde && typeof m.zeitRekorde === 'object') {
+    Object.entries(m.zeitRekorde).forEach(([welt, sekunden]) => {
+      const zahl = Number(sekunden);
+      if (WORLDS.some((w) => String(w.id) === welt) && Number.isFinite(zahl) && zahl > 0) zeitRekorde[welt] = zahl;
+    });
+  }
+  gameState.modi = { tagesDatum: datum(m.tagesDatum), bossrushDatum: datum(m.bossrushDatum), zeitRekorde };
 }
 
 /**

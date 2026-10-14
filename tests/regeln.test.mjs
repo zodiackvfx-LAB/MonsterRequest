@@ -66,6 +66,8 @@ import { karteGutschreiben, saveProgress, sicherungsInfo } from '../js/core/stat
 import { trophaeenNiederlage, trophaeenSieg } from '../js/core/trophaeen.js';
 import { LIGEN, ligaVon, naechsteLiga, trophaeenFuerSieg } from '../js/data/trophaeen.js';
 import { alleZustaende, freischaltenStarten, platzZustand, sofortPreis, truheAusPlatz, truheEinlagern } from '../js/core/truhenplaetze.js';
+import { besiegteBossWelten, modusErgebnis, modusFrei, modusGegner, modusInfo, modusLevel, modusStarten, zeitText } from '../js/core/modi.js';
+import { MODI, TAGES_KNIFFE, tagesHerausforderung } from '../js/data/modi.js';
 import { alleZeitTruhen, zeitTruheAbholen, zeitTruheZustand } from '../js/core/zeittruhen.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
@@ -1297,6 +1299,77 @@ console.log('\nKarten-Level bis 15');
   for (let i = 0; i < 40; i++) beuteGutschreiben(truheOeffnen(TRUHEN[0]).find((b) => b.art === 'karte') ?? { art: 'nichts' });
   pruefe('Kopien aus Truhen leveln Karten hoch',
     Object.values(gameState.attackLevels).some((l) => l >= 3));
+  resetProgress();
+}
+
+console.log('\nKampf-Modi: Herausforderung, Boss-Rush, Zeitangriff');
+{
+  resetProgress();
+  const tag = new Date(2026, 9, 14, 12);
+  const belegt = () => gameState.truhenPlaetze.filter(Boolean).map((p) => p.id);
+
+  // Tägliche Herausforderung
+  const a = tagesHerausforderung('2026-10-14', 1);
+  const b = tagesHerausforderung('2026-10-14', 1);
+  pruefe('Herausforderung: derselbe Tag, derselbe Gegner und Kniff', a.gegner.id === b.gegner.id && a.kniff.id === b.kniff.id);
+  const verschieden = new Set(Array.from({ length: 20 }, (_, i) => {
+    const h = tagesHerausforderung(`2026-11-${String(i + 1).padStart(2, '0')}`, 2);
+    return `${h.gegner.id}/${h.kniff.id}`;
+  }));
+  pruefe('Herausforderung: an verschiedenen Tagen wechselt es', verschieden.size >= 5);
+  pruefe('Herausforderung: der Kniff macht den Gegner stärker',
+    TAGES_KNIFFE.every((k) => (k.hp ?? 1) >= 1 && (k.schaden ?? 1) >= 1));
+  const tages = modusStarten('tages', tag);
+  const tl = modusLevel(tages);
+  pruefe('Herausforderung: ein Kampf, Gegner aus der freien Welt, Kniff sichtbar',
+    tl.modus.anzahl === 1 && tl.worldId === 1 && !tl.isBoss && tl.gegner.variante.includes(tl.kniff.name));
+  pruefe('Herausforderung: Niederlage bringt nichts', modusErgebnis(tages, 'lose', { zeit: 30, hp: 0, maxHp: 100 }).truhe === null);
+  const t1 = modusErgebnis(tages, 'win', { zeit: 30, hp: 50, maxHp: 100 });
+  pruefe('Herausforderung: erster Sieg des Tages bringt eine Silbertruhe in einen Platz',
+    t1.truhe?.id === 'silbertruhe' && belegt().join() === 'silbertruhe');
+  const t2 = modusErgebnis(tages, 'win', { zeit: 30, hp: 50, maxHp: 100 });
+  pruefe('Herausforderung: am selben Tag nur einmal', t2.truhe === null && t2.schonGeholt && belegt().length === 1);
+  pruefe('Herausforderung: Info sagt "heute geschafft"', modusInfo('tages', tag).includes('geschafft'));
+
+  // Boss-Rush
+  pruefe('Boss-Rush ist ohne besiegten Boss gesperrt', !modusFrei('bossrush').frei && modusInfo('bossrush').startsWith('🔒'));
+  [1, 2, 3].forEach((w) => completeLevel(bossLevelOf(w).id, 3));
+  pruefe('Nach 3 Bossen ist Boss-Rush frei', modusFrei('bossrush').frei && besiegteBossWelten().join() === '1,2,3');
+  const rush = modusStarten('bossrush', tag);
+  pruefe('Boss-Rush: drei Bosse in Welt-Reihenfolge',
+    modusGegner(rush).map((g) => g.worldId).join() === '1,2,3' && modusGegner(rush).every((g) => g.isBoss));
+  const r1 = modusErgebnis(rush, 'win', { zeit: 40, hp: 20, maxHp: 100 });
+  pruefe('Boss-Rush: nach einem Sieg geht es weiter, mit etwas Heilung',
+    r1.weiter?.schritt === 2 && r1.weiter.hp === 20 + 100 * MODI.bossrush.heilung && r1.truhe === null);
+  pruefe('Boss-Rush: Heilung nie über das Maximum', modusErgebnis(rush, 'win', { zeit: 1, hp: 95, maxHp: 100 }).weiter.hp === 100);
+  const r3 = modusErgebnis({ ...rush, schritt: 3 }, 'win', { zeit: 40, hp: 20, maxHp: 100 });
+  pruefe('Boss-Rush: alle geschafft = Goldtruhe (ab 3 Bossen)', r3.truhe?.id === 'goldtruhe' && !r3.weiter);
+  pruefe('Boss-Rush: nur einmal am Tag', modusErgebnis({ ...rush, schritt: 3 }, 'win', { zeit: 1, hp: 1, maxHp: 1 }).schonGeholt);
+  pruefe('Boss-Rush: Niederlage beendet den Lauf', modusErgebnis(rush, 'lose', { zeit: 1, hp: 0, maxHp: 1 }).weiter === null);
+
+  // Zeitangriff
+  const zeit = modusStarten('zeit', tag);
+  pruefe('Zeitangriff: drei normale Gegner', modusGegner(zeit).length === 3 && modusGegner(zeit).every((g) => !g.isBoss));
+  const z1 = modusErgebnis(zeit, 'win', { zeit: 20.04, hp: 10, maxHp: 100 });
+  pruefe('Zeitangriff: Zeit läuft weiter, Lebenspunkte wieder voll', z1.weiter.zeit === 20 && z1.weiter.hp === null);
+  const z2 = modusErgebnis(z1.weiter, 'win', { zeit: 25, hp: 10, maxHp: 100 });
+  const z3 = modusErgebnis(z2.weiter, 'win', { zeit: 30, hp: 10, maxHp: 100 });
+  pruefe('Zeitangriff: erste Zeit ist Bestzeit und bringt eine Holztruhe',
+    z3.zeitGesamt === 75 && z3.rekord && z3.truhe?.id === 'holztruhe' && gameState.modi.zeitRekorde[zeit.welt] === 75);
+  const langsam = modusErgebnis({ ...zeit, schritt: 3, zeit: 70 }, 'win', { zeit: 10, hp: 1, maxHp: 1 });
+  pruefe('Zeitangriff: langsamer = keine Truhe', !langsam.rekord && langsam.truhe === null && langsam.bestzeit === 75);
+  const schnell = modusErgebnis({ ...zeit, schritt: 3, zeit: 40 }, 'win', { zeit: 10, hp: 1, maxHp: 1 });
+  pruefe('Zeitangriff: schneller = neue Bestzeit + Truhe', schnell.rekord && schnell.truhe && gameState.modi.zeitRekorde[zeit.welt] === 50);
+  pruefe('Zeit als Text', zeitText(75) === '1:15,0' && zeitText(9.35) === '0:09,4');
+
+  saveProgress();
+  loadProgress();
+  pruefe('Tagesdaten und Bestzeiten überstehen das Neuladen',
+    gameState.modi.tagesDatum === '2026-10-14' && gameState.modi.zeitRekorde[zeit.welt] === 50);
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ modi: { tagesDatum: 5, zeitRekorde: { 1: 'x', 99: 3, 2: 12 } } }));
+  loadProgress();
+  pruefe('Kaputte Modus-Daten werden beim Laden bereinigt',
+    gameState.modi.tagesDatum === null && JSON.stringify(gameState.modi.zeitRekorde) === '{"2":12}');
   resetProgress();
 }
 
