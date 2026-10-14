@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1430">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Skin-Werkstatt</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="bilder/app/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="bilder/app/icon-192.png">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/werkstatt.css">
+</head>
+<body class="werkstatt-seite">
+  <!--
+    Die Skin-Werkstatt: eigene Outfits für Timo bauen.
+    Die Logik steht in js/werkstatt.js (Seite) und js/core/outfit.js (Pixel).
+  -->
+  <header class="ws-kopf">
+    <a class="btn btn--ghost btn--small" href="index.html">‹ Zum Spiel</a>
+    <h1 class="ws-kopf__titel">🎨 Skin-Werkstatt</h1>
+  </header>
+
+  <main class="ws">
+    <section class="ws-buehne" aria-label="Vorschau">
+      <div class="ws-buehne__front"><canvas id="vorschau-front" aria-label="Timo von vorn"></canvas></div>
+      <div class="ws-buehne__posen" id="vorschau-posen"></div>
+      <button class="ws-buehne__alle" id="alle-posen" type="button">Alle 14 Posen zeigen</button>
+    </section>
+
+    <div class="ws-spalte">
+      <section class="panel">
+        <label class="panel__title" for="name">✏️ Name</label>
+        <input class="ws-name" id="name" type="text" maxlength="20" placeholder="Mein Outfit" autocomplete="off">
+      </section>
+
+      <section class="panel">
+        <div class="panel__title">👕 Kleidung</div>
+        <div class="ws-farben" id="kleidung-farben" role="radiogroup" aria-label="Kleidungsfarbe"></div>
+        <label class="ws-regler">
+          <span>🌑</span>
+          <input id="helligkeit" type="range" min="-0.2" max="0.2" step="0.02" value="0" aria-label="Helligkeit">
+          <span>☀️</span>
+        </label>
+      </section>
+
+      <section class="panel">
+        <div class="panel__title">🎩 Kopfbedeckung</div>
+        <div class="ws-huete" id="huete" role="radiogroup" aria-label="Kopfbedeckung"></div>
+        <div class="ws-hutfarbe" id="hutfarbe-block">
+          <span class="ws-unterzeile">Farbe vom Hut</span>
+          <div class="ws-farben" id="hut-farben" role="radiogroup" aria-label="Hutfarbe"></div>
+        </div>
+      </section>
+
+      <div class="ws-aktionen">
+        <button class="btn btn--ghost" id="zufall" type="button">🎲 Zufall</button>
+        <button class="btn btn--green" id="speichern" type="button">💾 Speichern &amp; tragen</button>
+      </div>
+
+      <section class="panel">
+        <div class="panel__title">📁 Meine Outfits</div>
+        <div class="ws-liste" id="liste"></div>
+        <p class="ws-hinweis">Gespeicherte Outfits findest du im Spiel unter <strong>Figur → Aussehen</strong>.
+          Sie stecken in deinem Spielstand und kommen mit auf andere Geräte.</p>
+      </section>
+    </div>
+  </main>
+
+  <div class="ws-meldung" id="meldung" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/werkstatt.js"></script>
+</body>
+</html>

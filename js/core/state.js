@@ -15,6 +15,7 @@ import { BOSS_TRUHE, TRUHEN, TRUHEN_PLAETZE, ZEIT_TRUHEN } from '../data/shop.js
 import { stufenId } from '../data/attacks.js';
 import { ALTES_LEVEL_NEU, KARTEN_MAX_LEVEL, kopienFuer } from '../data/karten.js';
 import { TROPHAEEN_MAX, trophaeenFuerSieg } from '../data/trophaeen.js';
+import { HUETE } from './outfit.js';
 
 /** Alle Truhen, die in einem Truhenplatz liegen dürfen. */
 const TRUHEN_IDS = [...TRUHEN.map((truhe) => truhe.id), BOSS_TRUHE.id];
@@ -78,6 +79,9 @@ function createNewGame() {
     bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
     activeSkin: {}, // { monsterId: skinId }
+    // Selbst gebaute Outfits aus der Skin-Werkstatt (werkstatt.html) - nur
+    // das Rezept, die Bilder baut das Spiel daraus (js/core/eigene-skins.js).
+    eigeneOutfits: [], // [{ id: 'eigen-…', name, rezept: { kleidung, helligkeit, hut, hutFarbe } }]
     decks: {}, // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     characters: {}, // { monsterId: { level, xp, upgrades } } - siehe progression.js
     attackLevels: {}, // { attackId: level } - 1 bis 15
@@ -283,6 +287,7 @@ function uebernehmen(saved) {
     saved.bossPower && gameState.bossPowers.includes(saved.bossPower) ? saved.bossPower : null;
   gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ['skin-standard'];
   gameState.activeSkin = figurUmbenennen(saved.activeSkin ?? {});
+  gameState.eigeneOutfits = eigeneOutfitsPruefen(saved.eigeneOutfits);
   // Die Spielerfigur hiess frueher "glutwelpe" und heisst jetzt "timo".
   // Alte Spielstaende werden umgezogen, damit Level, Deck und Skin bleiben.
   // Decks: erst die Figur umziehen, dann die Attacken darin uebersetzen.
@@ -367,6 +372,28 @@ function truhenUebernehmen(saved) {
     if (frei >= 0) gameState.truhenPlaetze[frei] = { id, bereitAb: 0 };
     else gameState.truhenWarteschlange.push(id);
   });
+}
+
+/**
+ * Eigene Outfits übernehmen - nur gültige Rezepte. Ein kaputtes Rezept
+ * fliegt raus, statt später beim Bauen der Bilder abzustürzen.
+ */
+function eigeneOutfitsPruefen(liste) {
+  if (!Array.isArray(liste)) return [];
+  const farbe = (wert) => (typeof wert === 'string' && /^#[0-9a-f]{6}$/i.test(wert) ? wert.toLowerCase() : null);
+  return liste
+    .filter((e) => e && typeof e.id === 'string' && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === 'object')
+    .slice(0, 8)
+    .map((e) => ({
+      id: e.id,
+      name: String(e.name ?? '').trim().slice(0, 20) || 'Mein Outfit',
+      rezept: {
+        kleidung: farbe(e.rezept.kleidung),
+        helligkeit: Math.max(-0.2, Math.min(0.2, Number(e.rezept.helligkeit) || 0)),
+        hut: Object.hasOwn(HUETE, e.rezept.hut) ? e.rezept.hut : 'keiner',
+        hutFarbe: farbe(e.rezept.hutFarbe),
+      },
+    }));
 }
 
 /** Kampf-Modi übernehmen - nur Daten in der erwarteten Form. */

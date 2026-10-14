@@ -7813,6 +7813,13 @@ body.no-animations *::after {
   border-color: var(--gold);
 }
 
+/* Knopf zur Skin-Werkstatt (Figur -> Aussehen, siehe werkstatt.html). */
+.werkstatt-knopf {
+  width: 100%;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
   </style>
 </head>
 <body>
@@ -9387,6 +9394,7 @@ var POSE_VON = (() => {
   return new Map(pfade.map((pfad, i) => [pfad, SKIN_POSEN.indexOf(posen[i])]));
 })();
 function skinBild(pfad, skin) {
+  if (skin?.eigen) return skin.bilder?.[POSE_VON.get(pfad)] ?? pfad;
   if (!skin?.ordner) return pfad;
   return SKIN_BILDER[skin.ordner]?.[POSE_VON.get(pfad)] ?? pfad;
 }
@@ -9422,15 +9430,15 @@ function spriteDataUrl(monster, optionen = {}) {
     for (let x = 0; x < GROESSE; x++) {
       const zeichen = feld(grid, x, y);
       if (zeichen === ".") continue;
-      let farbe = farben[zeichen] ?? farben.B;
+      let farbe2 = farben[zeichen] ?? farben.B;
       if (zeichen === "B") {
-        if (feld(grid, x, y - 1) === ".") farbe = farben.L;
-        else if (feld(grid, x, y + 1) === ".") farbe = farben.S;
+        if (feld(grid, x, y - 1) === ".") farbe2 = farben.L;
+        else if (feld(grid, x, y + 1) === ".") farbe2 = farben.S;
       }
       if (zeichen === "P" && feld(grid, x, y - 1) === "E" && feld(grid, x - 1, y) === "E") {
-        farbe = "#ffffff";
+        farbe2 = "#ffffff";
       }
-      ctx2.fillStyle = farbe;
+      ctx2.fillStyle = farbe2;
       ctx2.fillRect(x, y, 1, 1);
     }
   }
@@ -9849,6 +9857,465 @@ function trophaeenFuerSieg(level, erstesMal) {
   return (TROPHAEEN.GRUND + TROPHAEEN.JE_WELT * (Number(level.worldId) || 1)) * boss;
 }
 
+// js/core/outfit.js
+var HUT_RAUM = 0.35;
+var POSEN = [
+  "front",
+  "stand",
+  "schlag-1",
+  "schlag-2",
+  "schlag-3",
+  "schlag-4",
+  "strahl-1",
+  "strahl-2",
+  "strahl-3",
+  "strahl-4",
+  "treffer-1",
+  "treffer-2",
+  "treffer-3",
+  "treffer-4"
+];
+var KOPF_WIE = { "schlag-3": "schlag-2", "strahl-3": "strahl-2", "strahl-4": "strahl-2" };
+var KONTUR = [18, 14, 20, 255];
+function rgbZuHls(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, l, 0];
+  const d = max - min;
+  const s = l <= 0.5 ? d / (max + min) : d / (2 - max - min);
+  let h;
+  if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return [h / 6, l, s];
+}
+function hlsZuRgb(h, l, s) {
+  if (s === 0) return [l * 255, l * 255, l * 255].map(Math.round);
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const kanal = (t) => {
+    t = (t % 1 + 1) % 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  return [kanal(h + 1 / 3), kanal(h), kanal(h - 1 / 3)].map((v) => Math.round(v * 255));
+}
+function hexZuRgb(hex) {
+  const h = hex.replace("#", "");
+  return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+}
+function schattiert(hex, um) {
+  const [h, l, s] = rgbZuHls(...hexZuRgb(hex));
+  return [...hlsZuRgb(h, Math.max(0, Math.min(1, l + um)), s), 255];
+}
+var farbe = (hex) => [...hexZuRgb(hex), 255];
+function kleidungAusFarbe(hex, helligkeit = 0) {
+  const [h, l, s] = rgbZuHls(...hexZuRgb(hex));
+  const mitte = Math.max(0.12, Math.min(0.75, l + helligkeit));
+  return {
+    ton: h,
+    satt: s,
+    hell: Math.min(0.95, mitte + 0.25),
+    dunkel: Math.max(0.03, mitte - 0.25)
+  };
+}
+function istKleidung(r, g, b) {
+  const [, l, s] = rgbZuHls(r, g, b);
+  return l >= 0.07 && l <= 0.42 && s < 0.26;
+}
+function istWarm(r, g, b) {
+  const [h, l, s] = rgbZuHls(r, g, b);
+  return l >= 0.12 && l <= 0.82 && s >= 0.28 && (h * 360 <= 45 || h * 360 >= 345);
+}
+function istEffekt(r, g, b) {
+  const [h, , s] = rgbZuHls(r, g, b);
+  return h * 360 >= 170 && h * 360 <= 250 && s > 0.35;
+}
+function kopfFinden(bild) {
+  const { width: w, height: hoehe, data } = bild;
+  let oben = Infinity;
+  let unten = -Infinity;
+  const warm = [];
+  for (let y = 0; y < hoehe; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (!data[i + 3]) continue;
+      const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+      if (istEffekt(r, g, b)) continue;
+      oben = Math.min(oben, y);
+      unten = Math.max(unten, y);
+      if (istWarm(r, g, b)) warm.push([x, y]);
+    }
+  }
+  const figur = unten - oben;
+  const spitze = Math.min(...warm.map(([, y]) => y));
+  const spanne = (von, bis, rand = 0.04) => {
+    const xs = warm.filter(([, y]) => y >= von && y <= bis).map(([x]) => x).sort((a, b) => a - b);
+    return [xs[Math.floor(xs.length * rand)], xs[Math.floor(xs.length * (1 - rand)) - 1]];
+  };
+  let [links, rechts] = spanne(spitze + figur * 0.03, spitze + figur * 0.12);
+  const breite = rechts - links + 1;
+  const zeilen = /* @__PURE__ */ new Map();
+  warm.forEach(([, y]) => zeilen.set(y, (zeilen.get(y) ?? 0) + 1));
+  let y0 = spitze;
+  for (let y = spitze; y < unten; y++) {
+    if ((zeilen.get(y) ?? 0) >= breite * 0.35) {
+      y0 = y;
+      break;
+    }
+  }
+  [links, rechts] = spanne(y0, y0 + breite * 0.45, 0.03);
+  return { y0, mitte: (links + rechts) / 2, breite: rechts - links + 1 };
+}
+function imKopf(kopf, x, y) {
+  const rx = kopf.breite * 0.62;
+  const ry = kopf.breite * 0.55;
+  const cy = kopf.y0 + kopf.breite * 0.3;
+  return ((x - kopf.mitte) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
+}
+function leinwand(w, h) {
+  return { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) };
+}
+function setze(l, x, y, f) {
+  x = Math.round(x);
+  y = Math.round(y);
+  if (x < 0 || y < 0 || x >= l.width || y >= l.height) return;
+  const i = (y * l.width + x) * 4;
+  l.data[i] = f[0];
+  l.data[i + 1] = f[1];
+  l.data[i + 2] = f[2];
+  l.data[i + 3] = f[3];
+}
+function fuelle(l, x0, y0, x1, y1, f, test) {
+  for (let y = Math.floor(y0); y <= Math.ceil(y1); y++) {
+    for (let x = Math.floor(x0); x <= Math.ceil(x1); x++) {
+      if (test(x, y)) setze(l, x, y, f);
+    }
+  }
+}
+function rechteck(l, x0, y0, x1, y1, f) {
+  fuelle(l, x0, y0, x1, y1, f, (x, y) => x >= Math.round(x0) && x <= Math.round(x1) && y >= Math.round(y0) && y <= Math.round(y1));
+}
+function ellipse(l, cx, cy, rx, ry, f) {
+  rx = Math.max(rx, 0.5);
+  ry = Math.max(ry, 0.5);
+  fuelle(l, cx - rx, cy - ry, cx + rx, cy + ry, f, (x, y) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1);
+}
+function tortenstueck(l, x0, y0, x1, y1, start, ende, f) {
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  const rx = Math.max((x1 - x0) / 2, 0.5);
+  const ry = Math.max((y1 - y0) / 2, 0.5);
+  fuelle(l, x0, y0, x1, y1, f, (x, y) => {
+    if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 > 1) return false;
+    const winkel = (Math.atan2(y - cy, x - cx) * 180 / Math.PI + 360) % 360;
+    return winkel >= start && winkel <= ende;
+  });
+}
+function vieleck(l, punkte, f) {
+  const xs = punkte.map((p) => p[0]);
+  const ys = punkte.map((p) => p[1]);
+  fuelle(l, Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), f, (x, y) => {
+    let drin = false;
+    for (let i = 0, j = punkte.length - 1; i < punkte.length; j = i++) {
+      const [xi, yi] = punkte[i];
+      const [xj, yj] = punkte[j];
+      if (yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi) drin = !drin;
+    }
+    return drin;
+  });
+}
+function linie(l, x0, y0, x1, y1, f) {
+  const schritte = Math.max(1, Math.round(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))));
+  for (let i = 0; i <= schritte; i++) {
+    setze(l, x0 + (x1 - x0) * i / schritte, y0 + (y1 - y0) * i / schritte, f);
+  }
+}
+function stern(l, x, y, r, f) {
+  r = Math.max(1, Math.round(r));
+  linie(l, x - r, y, x + r, y, f);
+  linie(l, x, y - r, x, y + r, f);
+}
+var HUETE = {
+  keiner: { name: "Kein Hut", icon: "🚫", farbe: null, malen: () => {
+  } },
+  wintermuetze: {
+    name: "Bommelmütze",
+    icon: "🧶",
+    farbe: "#d8323c",
+    malen(l, cx, y0, u, haupt) {
+      const [rot, hell, dunkel] = [farbe(haupt), schattiert(haupt, 0.14), schattiert(haupt, -0.14)];
+      const weiss = farbe("#f4f1ec");
+      const grau = farbe("#c9c3bd");
+      const unten = y0 + 0.4 * u;
+      tortenstueck(l, cx - 0.52 * u, y0 - 0.2 * u, cx + 0.52 * u, unten + 0.3 * u, 180, 360, rot);
+      tortenstueck(l, cx - 0.4 * u, y0 - 0.14 * u, cx + 0.22 * u, unten + 0.1 * u, 200, 290, hell);
+      for (let i = -3; i <= 3; i++) {
+        const x = cx + i * 0.12 * u;
+        linie(l, x, y0 + 0.02 * u + Math.abs(i) * 0.03 * u, x, unten - 0.02 * u, dunkel);
+      }
+      rechteck(l, cx - 0.55 * u, unten - 0.04 * u, cx + 0.55 * u, unten + 0.12 * u, weiss);
+      linie(l, cx - 0.52 * u, unten + 0.1 * u, cx + 0.52 * u, unten + 0.1 * u, grau);
+      ellipse(l, cx, y0 - 0.2 * u, 0.15 * u, 0.15 * u, weiss);
+      ellipse(l, cx + 0.04 * u, y0 - 0.16 * u, 0.07 * u, 0.07 * u, grau);
+    }
+  },
+  krone: {
+    name: "Krone",
+    icon: "👑",
+    farbe: "#ffc93d",
+    malen(l, cx, y0, u, haupt) {
+      const [gold, hell, dunkel] = [farbe(haupt), schattiert(haupt, 0.2), schattiert(haupt, -0.2)];
+      const unten = y0 + 0.16 * u;
+      const b = 0.42 * u;
+      vieleck(l, [
+        [cx - b, unten],
+        [cx - b, y0 - 0.12 * u],
+        [cx - b * 0.55, y0 + 0.02 * u],
+        [cx - b * 0.3, y0 - 0.3 * u],
+        [cx, y0 - 0.02 * u],
+        [cx + b * 0.3, y0 - 0.3 * u],
+        [cx + b * 0.55, y0 + 0.02 * u],
+        [cx + b, y0 - 0.12 * u],
+        [cx + b, unten]
+      ], gold);
+      rechteck(l, cx - b, unten - 0.12 * u, cx + b, unten, dunkel);
+      linie(l, cx - b + 1, unten - 0.12 * u, cx + b - 1, unten - 0.12 * u, hell);
+      [[cx - b, y0 - 0.12 * u], [cx - b * 0.3, y0 - 0.3 * u], [cx + b * 0.3, y0 - 0.3 * u], [cx + b, y0 - 0.12 * u]].forEach(([x, y]) => ellipse(l, x, y, Math.max(1, 0.04 * u), Math.max(1, 0.04 * u), hell));
+      ellipse(l, cx, unten - 0.06 * u, 0.06 * u, 0.045 * u, farbe("#e0294a"));
+      ellipse(l, cx - b * 0.62, unten - 0.06 * u, 0.04 * u, 0.035 * u, farbe("#3a8cff"));
+      ellipse(l, cx + b * 0.62, unten - 0.06 * u, 0.04 * u, 0.035 * u, farbe("#3a8cff"));
+    }
+  },
+  zauberhut: {
+    name: "Zauberhut",
+    icon: "🧙",
+    farbe: "#6b3fc9",
+    malen(l, cx, y0, u, haupt) {
+      const [lila, hell, dunkel] = [farbe(haupt), schattiert(haupt, 0.15), schattiert(haupt, -0.15)];
+      const gelb = farbe("#ffe066");
+      const krempe = y0 + 0.2 * u;
+      const knick = [cx + 0.05 * u, y0 - 0.55 * u];
+      vieleck(l, [[cx - 0.42 * u, krempe], knick, [cx + 0.3 * u, y0 - 1.05 * u], [cx + 0.18 * u, y0 - 0.5 * u], [cx + 0.4 * u, krempe]], lila);
+      vieleck(l, [[cx - 0.42 * u, krempe], knick, [cx - 0.05 * u, y0 - 0.5 * u], [cx - 0.22 * u, krempe]], hell);
+      ellipse(l, cx, krempe, 0.7 * u, 0.12 * u, dunkel);
+      ellipse(l, cx, krempe - 0.03 * u, 0.62 * u, 0.07 * u, lila);
+      rechteck(l, cx - 0.4 * u, krempe - 0.16 * u, cx + 0.4 * u, krempe - 0.08 * u, gelb);
+      stern(l, cx - 0.1 * u, y0 - 0.25 * u, 0.06 * u, gelb);
+      stern(l, cx + 0.18 * u, y0 - 0.05 * u, 0.05 * u, gelb);
+      stern(l, cx + 0.16 * u, y0 - 0.62 * u, 0.04 * u, gelb);
+    }
+  },
+  cowboyhut: {
+    name: "Cowboyhut",
+    icon: "🤠",
+    farbe: "#9a6233",
+    malen(l, cx, y0, u, haupt) {
+      const [braun, hell, dunkel] = [farbe(haupt), schattiert(haupt, 0.12), schattiert(haupt, -0.14)];
+      const band = farbe("#2b1a10");
+      const krempe = y0 + 0.2 * u;
+      vieleck(l, [
+        [cx - 0.4 * u, krempe],
+        [cx - 0.36 * u, y0 - 0.34 * u],
+        [cx - 0.12 * u, y0 - 0.4 * u],
+        [cx, y0 - 0.3 * u],
+        [cx + 0.12 * u, y0 - 0.4 * u],
+        [cx + 0.36 * u, y0 - 0.34 * u],
+        [cx + 0.4 * u, krempe]
+      ], braun);
+      vieleck(l, [[cx - 0.36 * u, krempe], [cx - 0.32 * u, y0 - 0.3 * u], [cx - 0.14 * u, y0 - 0.34 * u], [cx - 0.16 * u, krempe]], hell);
+      rechteck(l, cx - 0.4 * u, krempe - 0.14 * u, cx + 0.4 * u, krempe - 0.04 * u, band);
+      vieleck(l, [
+        [cx - 0.8 * u, krempe - 0.14 * u],
+        [cx - 0.55 * u, krempe + 0.04 * u],
+        [cx + 0.55 * u, krempe + 0.04 * u],
+        [cx + 0.8 * u, krempe - 0.14 * u],
+        [cx + 0.62 * u, krempe + 0.12 * u],
+        [cx - 0.62 * u, krempe + 0.12 * u]
+      ], dunkel);
+      linie(l, cx - 0.55 * u, krempe + 0.04 * u, cx + 0.55 * u, krempe + 0.04 * u, hell);
+    }
+  },
+  wikingerhelm: {
+    name: "Wikingerhelm",
+    icon: "⚔️",
+    farbe: "#9aa6b5",
+    malen(l, cx, y0, u, haupt) {
+      const [metall, hell, dunkel] = [farbe(haupt), schattiert(haupt, 0.2), schattiert(haupt, -0.2)];
+      const horn = farbe("#f1e4c4");
+      const hornDunkel = farbe("#bba57a");
+      const unten = y0 + 0.34 * u;
+      [-1, 1].forEach((s) => {
+        vieleck(l, [
+          [cx + s * 0.38 * u, unten - 0.12 * u],
+          [cx + s * 0.62 * u, unten - 0.26 * u],
+          [cx + s * 0.78 * u, y0 - 0.3 * u],
+          [cx + s * 0.66 * u, y0 - 0.06 * u],
+          [cx + s * 0.44 * u, unten - 0.3 * u]
+        ], horn);
+        linie(l, cx + s * 0.62 * u, unten - 0.24 * u, cx + s * 0.74 * u, y0 - 0.2 * u, hornDunkel);
+      });
+      tortenstueck(l, cx - 0.5 * u, y0 - 0.18 * u, cx + 0.5 * u, unten + 0.34 * u, 180, 360, metall);
+      tortenstueck(l, cx - 0.4 * u, y0 - 0.12 * u, cx + 0.1 * u, unten + 0.1 * u, 200, 280, hell);
+      rechteck(l, cx - 0.52 * u, unten, cx + 0.52 * u, unten + 0.1 * u, dunkel);
+      rechteck(l, cx - 0.05 * u, y0 - 0.16 * u, cx + 0.05 * u, unten, dunkel);
+      for (let i = -2; i <= 2; i++) ellipse(l, cx + i * 0.2 * u, unten + 0.05 * u, Math.max(1, 0.025 * u), Math.max(1, 0.025 * u), hell);
+    }
+  },
+  ninjaband: {
+    name: "Ninja-Band",
+    icon: "🥷",
+    farbe: "#d8283a",
+    malen(l, cx, y0, u, haupt) {
+      stirnband(l, cx, y0, u, farbe(haupt), schattiert(haupt, 0.15), true);
+    }
+  },
+  schweissband: {
+    name: "Schweißband",
+    icon: "🏃",
+    farbe: "#2f7bff",
+    malen(l, cx, y0, u, haupt) {
+      stirnband(l, cx, y0, u, farbe("#f6f6f6"), farbe("#ffffff"), false);
+      const oben = y0 + 0.24 * u;
+      rechteck(l, cx - 0.52 * u, oben + 0.05 * u, cx + 0.52 * u, oben + 0.08 * u, farbe(haupt));
+    }
+  },
+  partyhut: {
+    name: "Partyhut",
+    icon: "🎉",
+    farbe: "#ff4fa3",
+    malen(l, cx, y0, u, haupt) {
+      const grund = farbe(haupt);
+      const streifen = farbe("#ffe066");
+      const basis = y0 + 0.14 * u;
+      const spitze = y0 - 0.8 * u;
+      vieleck(l, [[cx - 0.32 * u, basis], [cx, spitze], [cx + 0.32 * u, basis]], grund);
+      const breiteBei = (y) => 0.32 * u * (y - spitze) / (basis - spitze);
+      for (let k = 0; k < 3; k++) {
+        const ymitte = spitze + (basis - spitze) * (0.3 + k * 0.25);
+        for (let y = Math.round(ymitte - 0.05 * u); y <= Math.round(ymitte + 0.05 * u); y++) {
+          const halb = breiteBei(y);
+          linie(l, cx - halb + 1, y, cx + halb - 1, y, streifen);
+        }
+      }
+      ellipse(l, cx, spitze, 0.1 * u, 0.1 * u, streifen);
+      rechteck(l, cx - 0.34 * u, basis - 0.04 * u, cx + 0.34 * u, basis + 0.02 * u, schattiert(haupt, -0.18));
+    }
+  },
+  piratenhut: {
+    name: "Piratenhut",
+    icon: "🏴‍☠️",
+    farbe: "#2a2a33",
+    malen(l, cx, y0, u, haupt) {
+      const hut = farbe(haupt);
+      const gold = farbe("#e8b84a");
+      const weiss = farbe("#f4f1ec");
+      vieleck(l, [
+        [cx - 0.66 * u, y0 + 0.2 * u],
+        [cx - 0.58 * u, y0 - 0.28 * u],
+        [cx - 0.3 * u, y0 - 0.1 * u],
+        [cx, y0 - 0.36 * u],
+        [cx + 0.3 * u, y0 - 0.1 * u],
+        [cx + 0.58 * u, y0 - 0.28 * u],
+        [cx + 0.66 * u, y0 + 0.2 * u],
+        [cx, y0 + 0.1 * u]
+      ], hut);
+      linie(l, cx - 0.62 * u, y0 + 0.17 * u, cx, y0 + 0.08 * u, gold);
+      linie(l, cx, y0 + 0.08 * u, cx + 0.62 * u, y0 + 0.17 * u, gold);
+      linie(l, cx - 0.14 * u, y0 - 0.2 * u, cx + 0.14 * u, y0 + 0.04 * u, weiss);
+      linie(l, cx + 0.14 * u, y0 - 0.2 * u, cx - 0.14 * u, y0 + 0.04 * u, weiss);
+      ellipse(l, cx, y0 - 0.1 * u, 0.09 * u, 0.08 * u, weiss);
+      setze(l, cx - 0.04 * u, y0 - 0.11 * u, hut);
+      setze(l, cx + 0.04 * u, y0 - 0.11 * u, hut);
+    }
+  }
+};
+function stirnband(l, cx, y0, u, f, hell, baender) {
+  const oben = y0 + 0.24 * u;
+  rechteck(l, cx - 0.52 * u, oben, cx + 0.52 * u, oben + 0.13 * u, f);
+  linie(l, cx - 0.5 * u, oben + 0.02 * u, cx + 0.5 * u, oben + 0.02 * u, hell);
+  if (baender) {
+    const x = cx - 0.5 * u;
+    vieleck(l, [[x, oben + 0.02 * u], [x - 0.45 * u, oben - 0.1 * u], [x - 0.38 * u, oben + 0.06 * u], [x, oben + 0.11 * u]], f);
+    vieleck(l, [[x, oben + 0.06 * u], [x - 0.4 * u, oben + 0.22 * u], [x - 0.3 * u, oben + 0.3 * u], [x, oben + 0.13 * u]], f);
+  }
+}
+var KLEIDUNG_CACHE = /* @__PURE__ */ new WeakMap();
+function kleidungsKarte(original, kopf) {
+  if (KLEIDUNG_CACHE.has(original)) return KLEIDUNG_CACHE.get(original);
+  const { width: w, height: h, data } = original;
+  const karte = new Float32Array(w * h).fill(-1);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (data[i + 3] < 128) continue;
+      const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+      if (istKleidung(r, g, b) && !imKopf(kopf, x, y)) karte[y * w + x] = rgbZuHls(r, g, b)[1];
+    }
+  }
+  KLEIDUNG_CACHE.set(original, karte);
+  return karte;
+}
+function poseBauen(original, kopf, rezept) {
+  const { width: w, height: h } = original;
+  const raum = Math.round(h * HUT_RAUM);
+  const bild = leinwand(w, h + raum);
+  const kleidung = rezept.kleidung ? kleidungAusFarbe(rezept.kleidung, rezept.helligkeit ?? 0) : null;
+  const karte = kleidungsKarte(original, kopf);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (original.data[i + 3] < 128) continue;
+      let [r, g, b] = [original.data[i], original.data[i + 1], original.data[i + 2]];
+      const l = karte[y * w + x];
+      if (kleidung && l >= 0) {
+        const anteil = (l - 0.07) / 0.35;
+        [r, g, b] = hlsZuRgb(kleidung.ton, kleidung.dunkel + anteil * (kleidung.hell - kleidung.dunkel), kleidung.satt);
+      }
+      const o = ((y + raum) * w + x) * 4;
+      bild.data[o] = r;
+      bild.data[o + 1] = g;
+      bild.data[o + 2] = b;
+      bild.data[o + 3] = 255;
+    }
+  }
+  const hut = HUETE[rezept.hut] ?? HUETE.keiner;
+  if (hut.malen && rezept.hut !== "keiner") {
+    const ebene = leinwand(w, h + raum);
+    hut.malen(ebene, kopf.mitte, kopf.y0 + raum, kopf.breite * 1.08, rezept.hutFarbe ?? hut.farbe);
+    const d = ebene.data;
+    const kontur = [];
+    for (let y = 0; y < ebene.height; y++) {
+      for (let x = 0; x < w; x++) {
+        if (d[(y * w + x) * 4 + 3]) continue;
+        const nachbar = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+          const nx = x + dx;
+          const ny = y + dy;
+          return nx >= 0 && ny >= 0 && nx < w && ny < ebene.height && d[(ny * w + nx) * 4 + 3];
+        });
+        if (nachbar) kontur.push([x, y]);
+      }
+    }
+    kontur.forEach(([x, y]) => setze(ebene, x, y, KONTUR));
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      bild.data.set(d.subarray(i, i + 4), i);
+    }
+  }
+  return bild;
+}
+function poseImOutfit(originale, pose, rezept, koepfe2 = /* @__PURE__ */ new Map()) {
+  const quelle = KOPF_WIE[pose] ?? pose;
+  if (!koepfe2.has(quelle)) koepfe2.set(quelle, kopfFinden(originale[quelle]));
+  return poseBauen(originale[pose], koepfe2.get(quelle), rezept);
+}
+
 // js/data/cloud-config.js
 var CLOUD = {
   /** Die Projektadresse, z. B. 'https://abcdefgh.supabase.co' */
@@ -10076,6 +10543,10 @@ function createNewGame() {
     ownedSkins: ["skin-standard"],
     activeSkin: {},
     // { monsterId: skinId }
+    // Selbst gebaute Outfits aus der Skin-Werkstatt (werkstatt.html) - nur
+    // das Rezept, die Bilder baut das Spiel daraus (js/core/eigene-skins.js).
+    eigeneOutfits: [],
+    // [{ id: 'eigen-…', name, rezept: { kleidung, helligkeit, hut, hutFarbe } }]
     decks: {},
     // { monsterId: [8 Attacken-ids] } - leer = Standarddeck
     characters: {},
@@ -10240,6 +10711,7 @@ function uebernehmen(saved) {
   gameState.bossPower = saved.bossPower && gameState.bossPowers.includes(saved.bossPower) ? saved.bossPower : null;
   gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ["skin-standard"];
   gameState.activeSkin = figurUmbenennen(saved.activeSkin ?? {});
+  gameState.eigeneOutfits = eigeneOutfitsPruefen(saved.eigeneOutfits);
   gameState.decks = Object.fromEntries(
     Object.entries(figurUmbenennen(saved.decks ?? {})).map(([figur, deck]) => [
       figur,
@@ -10300,6 +10772,20 @@ function truhenUebernehmen(saved) {
     if (frei >= 0) gameState.truhenPlaetze[frei] = { id, bereitAb: 0 };
     else gameState.truhenWarteschlange.push(id);
   });
+}
+function eigeneOutfitsPruefen(liste) {
+  if (!Array.isArray(liste)) return [];
+  const farbe2 = (wert) => typeof wert === "string" && /^#[0-9a-f]{6}$/i.test(wert) ? wert.toLowerCase() : null;
+  return liste.filter((e) => e && typeof e.id === "string" && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === "object").slice(0, 8).map((e) => ({
+    id: e.id,
+    name: String(e.name ?? "").trim().slice(0, 20) || "Mein Outfit",
+    rezept: {
+      kleidung: farbe2(e.rezept.kleidung),
+      helligkeit: Math.max(-0.2, Math.min(0.2, Number(e.rezept.helligkeit) || 0)),
+      hut: Object.hasOwn(HUETE, e.rezept.hut) ? e.rezept.hut : "keiner",
+      hutFarbe: farbe2(e.rezept.hutFarbe)
+    }
+  }));
 }
 function modiUebernehmen(saved) {
   const m = saved.modi && typeof saved.modi === "object" ? saved.modi : {};
@@ -11160,6 +11646,107 @@ function getSkin(id) {
   return SKINS.find((skin) => skin.id === id);
 }
 
+// js/core/eigene-skins.js
+var fertigeBilder = /* @__PURE__ */ new Map();
+function rezeptSchluessel(rezept) {
+  return JSON.stringify([rezept.kleidung, rezept.helligkeit, rezept.hut, rezept.hutFarbe]);
+}
+function eigeneOutfits() {
+  return gameState.eigeneOutfits ?? [];
+}
+function istEigenerSkin(id) {
+  return typeof id === "string" && id.startsWith("eigen-");
+}
+function outfitBilderSetzen(id, rezept, bilder) {
+  fertigeBilder.set(id, { schluessel: rezeptSchluessel(rezept), bilder });
+}
+function outfitBilder(outfit) {
+  const eintrag = fertigeBilder.get(outfit.id);
+  return eintrag && eintrag.schluessel === rezeptSchluessel(outfit.rezept) ? eintrag.bilder : null;
+}
+function eigenerSkin(id) {
+  if (!istEigenerSkin(id)) return void 0;
+  const outfit = eigeneOutfits().find((e) => e.id === id);
+  return outfit ? alsSkin(outfit) : void 0;
+}
+function eigeneSkins() {
+  return eigeneOutfits().map(alsSkin);
+}
+function alsSkin(outfit) {
+  return {
+    id: outfit.id,
+    name: outfit.name,
+    monsterId: "timo",
+    seltenheit: "legendaer",
+    eigen: true,
+    look: {},
+    filter: null,
+    rezept: outfit.rezept,
+    // null, solange die Bilder noch gebaut werden - dann zeigt das Spiel
+    // kurz das Original (siehe skinBild in js/ui/sprite.js).
+    bilder: outfitBilder(outfit)
+  };
+}
+
+// js/ui/outfit-bilder.js
+var originaleVersprechen = null;
+var koepfe = /* @__PURE__ */ new Map();
+function originaleLaden() {
+  if (originaleVersprechen) return originaleVersprechen;
+  const timo = MONSTERS.timo;
+  const pfade = [timo.image, timo.bildKampf, ...timo.bildSchlag, ...timo.bildStrahl, ...timo.bildTreffer];
+  originaleVersprechen = Promise.all(pfade.map((pfad) => new Promise((fertig, fehler) => {
+    const img = new Image();
+    img.onload = () => fertig(img);
+    img.onerror = () => fehler(new Error(`Bild fehlt: ${pfad}`));
+    img.src = pfad;
+  }))).then((bilder) => {
+    const originale = {};
+    bilder.forEach((img, i) => {
+      const leinwand2 = document.createElement("canvas");
+      leinwand2.width = img.naturalWidth;
+      leinwand2.height = img.naturalHeight;
+      const ctx2 = leinwand2.getContext("2d");
+      ctx2.drawImage(img, 0, 0);
+      originale[POSEN[i]] = ctx2.getImageData(0, 0, leinwand2.width, leinwand2.height);
+    });
+    return originale;
+  });
+  originaleVersprechen.catch(() => {
+    originaleVersprechen = null;
+  });
+  return originaleVersprechen;
+}
+function aufLeinwand(canvas, bild) {
+  canvas.width = bild.width;
+  canvas.height = bild.height;
+  canvas.getContext("2d").putImageData(new ImageData(bild.data, bild.width, bild.height), 0, 0);
+}
+function alsBildAdresse(bild) {
+  const canvas = document.createElement("canvas");
+  aufLeinwand(canvas, bild);
+  return canvas.toDataURL("image/png");
+}
+async function outfitVorbereiten(outfit) {
+  if (!outfit || outfitBilder(outfit)) return;
+  const originale = await originaleLaden();
+  const bilder = POSEN.map((pose) => alsBildAdresse(poseImOutfit(originale, pose, outfit.rezept, koepfe)));
+  outfitBilderSetzen(outfit.id, outfit.rezept, bilder);
+}
+async function outfitVorbereitenId(id) {
+  await outfitVorbereiten(eigeneOutfits().find((e) => e.id === id));
+}
+async function alleOutfitsVorbereiten() {
+  let neu = false;
+  for (const outfit of eigeneOutfits()) {
+    if (outfitBilder(outfit)) continue;
+    await new Promise((weiter) => setTimeout(weiter, 0));
+    await outfitVorbereiten(outfit);
+    neu = true;
+  }
+  return neu;
+}
+
 // js/ui/scenery.js
 function createScenery({ dimmed = false, skyOnly = false, deko = false } = {}) {
   const scenery = document.createElement("div");
@@ -11740,17 +12327,17 @@ var DESIGNS = {
   }
 };
 var TRUHEN_DESIGNS = Object.keys(DESIGNS);
-var KONTUR = "#24160c";
+var KONTUR2 = "#24160c";
 function truheSvg(design, { offen: offen2 = false, className = "" } = {}) {
   const d = DESIGNS[design] ?? DESIGNS.holz;
   const id = (name) => `truhe-${design}-${name}`;
   const maserung = d.bretter ? `<path d="M14 62 H106 M14 76 H106" stroke="${d.holzDunkel}" stroke-width="2" opacity="0.55" />
        <path d="M18 30 Q60 22 102 30" stroke="${d.holzDunkel}" stroke-width="2" fill="none" opacity="0.5" />` : `<path d="M16 50 H104" stroke="#ffffff" stroke-width="2" opacity="0.35" />`;
-  const schloss = d.stein ? `<circle cx="60" cy="55" r="6.5" fill="url(#${id("stein")})" stroke="${KONTUR}" stroke-width="2" />
-       <circle cx="58" cy="53" r="2" fill="#ffffff" opacity="0.85" />` : `<circle cx="60" cy="53" r="3" fill="${KONTUR}" />
-       <path d="M58.5 54 L61.5 54 L62 60 L58 60 Z" fill="${KONTUR}" />`;
-  const krone = d.krone ? `<path d="M46 26 L50 16 L55 23 L60 12 L65 23 L70 16 L74 26 Z" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2" stroke-linejoin="round" />
-       <circle cx="60" cy="12" r="2.4" fill="${d.stein}" stroke="${KONTUR}" stroke-width="1.2" />` : "";
+  const schloss = d.stein ? `<circle cx="60" cy="55" r="6.5" fill="url(#${id("stein")})" stroke="${KONTUR2}" stroke-width="2" />
+       <circle cx="58" cy="53" r="2" fill="#ffffff" opacity="0.85" />` : `<circle cx="60" cy="53" r="3" fill="${KONTUR2}" />
+       <path d="M58.5 54 L61.5 54 L62 60 L58 60 Z" fill="${KONTUR2}" />`;
+  const krone = d.krone ? `<path d="M46 26 L50 16 L55 23 L60 12 L65 23 L70 16 L74 26 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" stroke-linejoin="round" />
+       <circle cx="60" cy="12" r="2.4" fill="${d.stein}" stroke="${KONTUR2}" stroke-width="1.2" />` : "";
   const funkeln = design === "gold" || design === "boss" ? `<path class="truhe__funkeln" d="M100 10 L102 16 L108 18 L102 20 L100 26 L98 20 L92 18 L98 16 Z" fill="#fff6c9" />
        <path class="truhe__funkeln truhe__funkeln--2" d="M18 34 L19.5 38 L23 39.5 L19.5 41 L18 45 L16.5 41 L13 39.5 L16.5 38 Z" fill="#fff6c9" />` : "";
   return `
@@ -11768,7 +12355,7 @@ function truheSvg(design, { offen: offen2 = false, className = "" } = {}) {
         <radialGradient id="${id("stein")}" cx="0.35" cy="0.35" r="0.75">
           <stop offset="0" stop-color="#ffffff" />
           <stop offset="0.35" stop-color="${d.stein ?? "#ffffff"}" />
-          <stop offset="1" stop-color="${KONTUR}" />
+          <stop offset="1" stop-color="${KONTUR2}" />
         </radialGradient>
         <radialGradient id="${id("licht")}" cx="0.5" cy="1" r="0.9">
           <stop offset="0" stop-color="${d.licht}" stop-opacity="0.95" />
@@ -11784,11 +12371,11 @@ function truheSvg(design, { offen: offen2 = false, className = "" } = {}) {
 
       <!-- Deckel: klappt beim Öffnen auf -->
       <g class="truhe__deckel">
-        <path d="M12 48 V34 Q12 14 60 14 Q108 14 108 34 V48 Z" fill="url(#${id("holz")})" stroke="${KONTUR}" stroke-width="3" stroke-linejoin="round" />
+        <path d="M12 48 V34 Q12 14 60 14 Q108 14 108 34 V48 Z" fill="url(#${id("holz")})" stroke="${KONTUR2}" stroke-width="3" stroke-linejoin="round" />
         <path d="M20 26 Q60 16 100 26" stroke="#ffffff" stroke-width="3" fill="none" opacity="0.35" stroke-linecap="round" />
-        <path d="M24 48 V20 Q29 17 35 16 V48 Z" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2" />
-        <path d="M85 48 V16 Q91 17 96 20 V48 Z" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2" />
-        <rect x="10" y="42" width="100" height="8" rx="3" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2" />
+        <path d="M24 48 V20 Q29 17 35 16 V48 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
+        <path d="M85 48 V16 Q91 17 96 20 V48 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
+        <rect x="10" y="42" width="100" height="8" rx="3" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
         ${krone}
       </g>
       <!-- Körper - nach dem Deckel gezeichnet, damit das Schloss über
@@ -11796,21 +12383,21 @@ function truheSvg(design, { offen: offen2 = false, className = "" } = {}) {
       <g class="truhe__koerper">
         <!-- Das Innere mit Schätzen - erst bei offener Truhe zu sehen -->
         <g class="truhe__innen">
-          <path d="M15 48 Q60 34 105 48 Z" fill="#160b05" stroke="${KONTUR}" stroke-width="2" stroke-linejoin="round" />
+          <path d="M15 48 Q60 34 105 48 Z" fill="#160b05" stroke="${KONTUR2}" stroke-width="2" stroke-linejoin="round" />
           <circle cx="44" cy="44" r="5" fill="#ffd34d" stroke="#a8721a" stroke-width="1.5" />
           <circle cx="54" cy="41" r="5" fill="#ffe27a" stroke="#a8721a" stroke-width="1.5" />
           <circle cx="76" cy="44" r="5" fill="#ffd34d" stroke="#a8721a" stroke-width="1.5" />
-          <path d="M64 44 L68 37 L72 44 L68 48 Z" fill="${d.stein ?? "#7ee0ff"}" stroke="${KONTUR}" stroke-width="1.2" />
+          <path d="M64 44 L68 37 L72 44 L68 48 Z" fill="${d.stein ?? "#7ee0ff"}" stroke="${KONTUR2}" stroke-width="1.2" />
         </g>
-        <rect x="12" y="46" width="96" height="46" rx="7" fill="url(#${id("holz")})" stroke="${KONTUR}" stroke-width="3" />
+        <rect x="12" y="46" width="96" height="46" rx="7" fill="url(#${id("holz")})" stroke="${KONTUR2}" stroke-width="3" />
         ${maserung}
-        <rect x="24" y="46" width="11" height="46" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2" />
-        <rect x="85" y="46" width="11" height="46" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2" />
-        <rect x="12" y="84" width="96" height="8" rx="3" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2" />
-        <circle cx="29.5" cy="56" r="1.6" fill="${KONTUR}" /><circle cx="29.5" cy="76" r="1.6" fill="${KONTUR}" />
-        <circle cx="90.5" cy="56" r="1.6" fill="${KONTUR}" /><circle cx="90.5" cy="76" r="1.6" fill="${KONTUR}" />
+        <rect x="24" y="46" width="11" height="46" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
+        <rect x="85" y="46" width="11" height="46" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
+        <rect x="12" y="84" width="96" height="8" rx="3" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
+        <circle cx="29.5" cy="56" r="1.6" fill="${KONTUR2}" /><circle cx="29.5" cy="76" r="1.6" fill="${KONTUR2}" />
+        <circle cx="90.5" cy="56" r="1.6" fill="${KONTUR2}" /><circle cx="90.5" cy="76" r="1.6" fill="${KONTUR2}" />
         <!-- Schloss -->
-        <path d="M50 44 H70 V64 Q60 72 50 64 Z" fill="url(#${id("band")})" stroke="${KONTUR}" stroke-width="2.5" stroke-linejoin="round" />
+        <path d="M50 44 H70 V64 Q60 72 50 64 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2.5" stroke-linejoin="round" />
         ${schloss}
       </g>
 
@@ -12888,17 +13475,17 @@ var startScreen = {
     `;
     screen.appendChild(content);
     logoGezeigt = true;
-    const stern = document.createElement("button");
-    stern.type = "button";
-    stern.className = "himmels-stern";
-    stern.setAttribute("aria-label", "Ein funkelnder Stern");
-    stern.addEventListener("click", () => {
-      if (stern.classList.contains("ist-schnuppe")) return;
-      stern.classList.add("ist-schnuppe");
+    const stern2 = document.createElement("button");
+    stern2.type = "button";
+    stern2.className = "himmels-stern";
+    stern2.setAttribute("aria-label", "Ein funkelnder Stern");
+    stern2.addEventListener("click", () => {
+      if (stern2.classList.contains("ist-schnuppe")) return;
+      stern2.classList.add("ist-schnuppe");
       clearTimeout(schnuppenTimer);
-      schnuppenTimer = setTimeout(() => stern.classList.remove("ist-schnuppe"), 6e3);
+      schnuppenTimer = setTimeout(() => stern2.classList.remove("ist-schnuppe"), 6e3);
     });
-    screen.appendChild(stern);
+    screen.appendChild(stern2);
     const hero = document.createElement("div");
     hero.className = "start__hero";
     hero.innerHTML = `
@@ -13356,16 +13943,17 @@ var monsterScreen = {
       const skinBlock = document.createElement("div");
       skinBlock.className = "panel";
       skinBlock.innerHTML = '<div class="panel__title">Skins</div>';
-      const eigeneSkins = SKINS.filter((skin) => skin.monsterId === monster.id);
-      if (eigeneSkins.length === 0) {
+      const selbstGebaut = eigeneSkins().filter((skin) => skin.monsterId === monster.id);
+      const figurSkins = [...SKINS.filter((skin) => skin.monsterId === monster.id), ...selbstGebaut];
+      if (figurSkins.length === 0) {
         skinBlock.innerHTML += '<p class="map__info-text">Für diese Figur gibt es noch keine Skins.</p>';
         content2.appendChild(skinBlock);
         return;
       }
       const skinListe = document.createElement("div");
       skinListe.className = "skin-list";
-      eigeneSkins.forEach((skin) => {
-        const besitzt = besitztSkin(skin.id);
+      figurSkins.forEach((skin) => {
+        const besitzt = skin.eigen || besitztSkin(skin.id);
         const aktiv2 = (getAktiverSkin(monster.id) ?? "skin-standard") === skin.id;
         const seltenheit = SELTENHEITEN[skin.seltenheit];
         const knopf = document.createElement("button");
@@ -13375,17 +13963,32 @@ var monsterScreen = {
         knopf.style.setProperty("--rarity", seltenheit.farbe);
         knopf.innerHTML = `
           <span class="skin-chip__vorschau"></span>
-          <span class="skin-chip__name">${besitzt ? skin.name : "🔒 " + skin.name}</span>
+          <span class="skin-chip__name">${skin.eigen ? "✏️ " : ""}${besitzt ? skin.name : "🔒 " + skin.name}</span>
         `;
         knopf.querySelector(".skin-chip__vorschau").appendChild(createSprite(monster, { skin }));
-        knopf.addEventListener("click", () => {
+        knopf.addEventListener("click", async () => {
           setAktiverSkin(monster.id, skin.id);
+          if (skin.eigen) await outfitVorbereitenId(skin.id).catch(() => {
+          });
           spritesNeuZeichnen();
           zeichne();
         });
         skinListe.appendChild(knopf);
       });
       skinBlock.appendChild(skinListe);
+      if (selbstGebaut.some((skin) => !skin.bilder)) {
+        alleOutfitsVorbereiten().then((neu) => {
+          if (neu && skinListe.isConnected) zeichne();
+        }).catch(() => {
+        });
+      }
+      if (monster.id === "timo" && !location.pathname.endsWith("MonsterQuest.html")) {
+        const werkstatt = document.createElement("a");
+        werkstatt.className = "btn werkstatt-knopf";
+        werkstatt.href = "werkstatt.html";
+        werkstatt.innerHTML = "🎨 Eigenes Outfit bauen";
+        skinBlock.appendChild(werkstatt);
+      }
       content2.appendChild(skinBlock);
     }
     function baueKraefte2(content2) {
@@ -13824,11 +14427,11 @@ function gruppe(titel, eintraege) {
   block.innerHTML = `<div class="panel__title">${titel} <span class="panel__count">${gefunden}/${eintraege.length}</span></div>`;
   const grid = document.createElement("div");
   grid.className = "collection";
-  eintraege.forEach(({ monster, bekannt, notiz, silhouette = false, farbe = null }, nr) => {
+  eintraege.forEach(({ monster, bekannt, notiz, silhouette = false, farbe: farbe2 = null }, nr) => {
     const item = document.createElement("div");
     item.className = `collection-item${bekannt ? "" : " is-locked"}${monster.isBoss ? " is-boss" : ""}`;
     item.style.animationDelay = `${Math.min(nr, 12) * 0.03}s`;
-    if (farbe) item.style.setProperty("--welt-farbe", farbe);
+    if (farbe2) item.style.setProperty("--welt-farbe", farbe2);
     item.innerHTML = `
       <span class="collection-item__sprite"></span>
       <span class="collection-item__name">${bekannt ? monster.name : "???"}</span>
@@ -14691,11 +15294,11 @@ function kameraStoss(kampfflaeche, richtung) {
   kampfflaeche.classList.add(klasse);
   setTimeout(() => kampfflaeche.classList.remove(klasse), 480);
 }
-function trefferFunke(sprite, farbe = "#ffd76a", splitter = 7) {
+function trefferFunke(sprite, farbe2 = "#ffd76a", splitter = 7) {
   if (!sprite || !sprite.parentElement || !animationenAn2()) return;
   const impakt = document.createElement("span");
   impakt.className = "impakt";
-  impakt.style.setProperty("--impakt-farbe", farbe);
+  impakt.style.setProperty("--impakt-farbe", farbe2);
   const ring = document.createElement("span");
   ring.className = "impakt__ring";
   impakt.appendChild(ring);
@@ -14730,7 +15333,7 @@ function karteWeg(karte) {
   document.body.appendChild(klon);
   setTimeout(() => klon.remove(), 420);
 }
-function energiestrahl(vonEl, zuEl, farbe = "#8fd0ff") {
+function energiestrahl(vonEl, zuEl, farbe2 = "#8fd0ff") {
   if (!vonEl || !zuEl || !animationenAn2()) return;
   const a = vonEl.getBoundingClientRect();
   const z = zuEl.getBoundingClientRect();
@@ -14742,7 +15345,7 @@ function energiestrahl(vonEl, zuEl, farbe = "#8fd0ff") {
   const winkel = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
   const strahl = document.createElement("span");
   strahl.className = "energiestrahl";
-  strahl.style.setProperty("--strahl-farbe", farbe);
+  strahl.style.setProperty("--strahl-farbe", farbe2);
   Object.assign(strahl.style, {
     position: "fixed",
     left: `${x1}px`,
@@ -16873,7 +17476,7 @@ var hatSpielstand = loadProgress();
 applySettings();
 setSkinNachschlag((monster) => {
   const skinId = getAktiverSkin(monster.id);
-  return skinId ? getSkin(skinId) : null;
+  return skinId ? getSkin(skinId) ?? eigenerSkin(skinId) ?? null : null;
 });
 var spielfigur = getMonster(getAktiveFigur());
 function kampfgrafikenVorladen() {
@@ -16917,6 +17520,10 @@ registerScreen("battle", battleScreen);
 registerScreen("daily", dailyScreen);
 registerScreen("arena", arenaScreen);
 registerScreen("rangliste", ranglisteScreen);
+var getragenesOutfit = getAktiverSkin("timo");
+if (istEigenerSkin(getragenesOutfit)) {
+  await outfitVorbereitenId(getragenesOutfit).catch((fehler) => console.warn("Outfit nicht gebaut:", fehler));
+}
 showScreen("start");
 if (!hatSpielstand) {
   zeigeWillkommen(document.getElementById("app"), (name) => {
@@ -16929,9 +17536,10 @@ if (!hatSpielstand) {
 cloudStart(() => {
   setSkinNachschlag((monster) => {
     const skinId = getAktiverSkin(monster.id);
-    return skinId ? getSkin(skinId) : null;
+    return skinId ? getSkin(skinId) ?? eigenerSkin(skinId) ?? null : null;
   });
-  showScreen("start", { neu: true });
+  outfitVorbereitenId(getAktiverSkin("timo")).catch(() => {
+  }).then(() => showScreen("start", { neu: true }));
 });
 if ("serviceWorker" in navigator) {
   const hatteVersion = Boolean(navigator.serviceWorker.controller);

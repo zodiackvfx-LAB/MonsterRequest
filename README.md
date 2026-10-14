@@ -47,6 +47,7 @@ App-Symbol; das Spiel startet dann im Vollbild ohne Safari-Leiste.
 
 ```
 index.html              Einstiegspunkt, Mobile-Meta-Tags, leerer #app-Container
+werkstatt.html          Skin-Werkstatt: eigene Outfits für Timo bauen (js/werkstatt.js)
 
 css/
   base.css              Schrift, Farben, Grundlayout   ← Farben zentral ändern
@@ -217,7 +218,16 @@ auf den übrigen Plätzen Fähigkeitskarten (ab und zu einen Skin).
 | Zauberer | episch | violette Robe, Sternen-Zauberhut |
 | König | legendär | Königsrot, goldene Krone |
 
-Die Bilder erzeugt `werkzeuge/timo-skins-bauen.py` aus den Originalen in
+**Skin-Werkstatt** (`werkstatt.html`, im Spiel unter Figur → Aussehen →
+„Eigenes Outfit bauen“): Hier baust du selbst Outfits – Kleidungsfarbe,
+Helligkeit, eine von 9 Kopfbedeckungen (Bommelmütze, Krone, Zauberhut,
+Cowboyhut, Wikingerhelm, Ninja-Band, Schweißband, Partyhut, Piratenhut) und
+deren Farbe. Die Vorschau zeigt Timo sofort in allen 14 Posen; „Speichern &
+tragen“ zieht das Outfit im Spiel an. Gespeichert wird nur das Rezept (im
+Spielstand, auch in der Datenbank) – die Bilder baut das Spiel daraus selbst
+(`js/core/outfit.js`, `js/ui/outfit-bilder.js`). Höchstens 8 eigene Outfits.
+
+Die festen Outfits oben erzeugt `werkzeuge/timo-skins-bauen.py` aus den Originalen in
 `bilder/timo/`: Es färbt nur die Kleidung um und zeichnet den Hut passend auf
 den Kopf jeder Pose. Neues Outfit = dort einen Eintrag in `SKINS` (Farbe und
 Hut) ergänzen, das Skript laufen lassen und in `js/data/items.js` einen Skin

@@ -2972,3 +2972,10 @@
 .overlay__unlock--liga {
   border-color: var(--gold);
 }
+
+/* Knopf zur Skin-Werkstatt (Figur -> Aussehen, siehe werkstatt.html). */
+.werkstatt-knopf {
+  width: 100%;
+  margin-top: 14px;
+  text-decoration: none;
+}

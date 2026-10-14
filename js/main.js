@@ -14,6 +14,8 @@ import { getAktiverSkin, getAktiveFigur, loadProgress, setSpielername } from './
 import { cloudStart } from './core/sync.js';
 import { zeigeWillkommen } from './ui/willkommen.js';
 import { getSkin } from './data/items.js';
+import { eigenerSkin, istEigenerSkin } from './core/eigene-skins.js';
+import { outfitVorbereitenId } from './ui/outfit-bilder.js';
 import { getMonster } from './data/monsters.js';
 import { aktiverSkin, bilderVorladen, setSkinNachschlag, skinBild } from './ui/sprite.js';
 import { spieleKlang, tonFreischalten } from './core/audio.js';
@@ -32,7 +34,8 @@ applySettings();
 // Spielstand nicht - deshalb bekommt es hier die passende Funktion gereicht.
 setSkinNachschlag((monster) => {
   const skinId = getAktiverSkin(monster.id);
-  return skinId ? getSkin(skinId) : null;
+  // Eigene Outfits aus der Skin-Werkstatt stehen nicht in SKINS.
+    return skinId ? getSkin(skinId) ?? eigenerSkin(skinId) ?? null : null;
 });
 
 // Die KAMPF-Grafiken (Schlag, Strahl, Treffer) werden erst gebraucht, wenn
@@ -109,6 +112,16 @@ registerScreen('daily', dailyScreen);
 registerScreen('arena', arenaScreen);
 registerScreen('rangliste', ranglisteScreen);
 
+/*
+ * Trägt Timo ein selbst gebautes Outfit (Skin-Werkstatt), werden dessen
+ * Bilder erst gebaut - das dauert nur einen Augenblick. Klappt es nicht
+ * (z. B. offline ohne Bilder), startet das Spiel trotzdem, im Original.
+ */
+const getragenesOutfit = getAktiverSkin('timo');
+if (istEigenerSkin(getragenesOutfit)) {
+  await outfitVorbereitenId(getragenesOutfit).catch((fehler) => console.warn('Outfit nicht gebaut:', fehler));
+}
+
 showScreen('start');
 
 /*
@@ -137,10 +150,14 @@ if (!hatSpielstand) {
 cloudStart(() => {
   setSkinNachschlag((monster) => {
     const skinId = getAktiverSkin(monster.id);
-    return skinId ? getSkin(skinId) : null;
+    // Eigene Outfits aus der Skin-Werkstatt stehen nicht in SKINS.
+    return skinId ? getSkin(skinId) ?? eigenerSkin(skinId) ?? null : null;
   });
   // neu: die ganze Lobby frisch bauen - alle Seiten zeigen den neuen Stand.
-  showScreen('start', { neu: true });
+  // Ein getragenes eigenes Outfit aus dem neuen Stand vorher bauen.
+  outfitVorbereitenId(getAktiverSkin('timo'))
+    .catch(() => {})
+    .then(() => showScreen('start', { neu: true }));
 });
 
 /*

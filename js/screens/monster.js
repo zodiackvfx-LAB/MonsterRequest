@@ -16,6 +16,8 @@ import { showScreen } from '../core/screens.js';
 import { getMonster, SPIELER_FIGUREN } from '../data/monsters.js';
 import { getAttack } from '../data/attacks.js';
 import { MUENZE, SELTENHEITEN, SKINS } from '../data/items.js';
+import { eigeneSkins } from '../core/eigene-skins.js';
+import { alleOutfitsVorbereiten, outfitVorbereitenId } from '../ui/outfit-bilder.js';
 import { BOSS_KRAEFTE } from '../data/kraefte.js';
 import { getWorld } from '../data/worlds.js';
 import { createScenery } from '../ui/scenery.js';
@@ -267,8 +269,10 @@ export const monsterScreen = {
       skinBlock.className = 'panel';
       skinBlock.innerHTML = '<div class="panel__title">Skins</div>';
 
-      const eigeneSkins = SKINS.filter((skin) => skin.monsterId === monster.id);
-      if (eigeneSkins.length === 0) {
+      // Erst die Skins aus Truhen, dann die selbst gebauten aus der Werkstatt.
+      const selbstGebaut = eigeneSkins().filter((skin) => skin.monsterId === monster.id);
+      const figurSkins = [...SKINS.filter((skin) => skin.monsterId === monster.id), ...selbstGebaut];
+      if (figurSkins.length === 0) {
         skinBlock.innerHTML +=
           '<p class="map__info-text">Für diese Figur gibt es noch keine Skins.</p>';
         content.appendChild(skinBlock);
@@ -278,8 +282,8 @@ export const monsterScreen = {
       const skinListe = document.createElement('div');
       skinListe.className = 'skin-list';
 
-      eigeneSkins.forEach((skin) => {
-        const besitzt = besitztSkin(skin.id);
+      figurSkins.forEach((skin) => {
+        const besitzt = skin.eigen || besitztSkin(skin.id);
         const aktiv = (getAktiverSkin(monster.id) ?? 'skin-standard') === skin.id;
         const seltenheit = SELTENHEITEN[skin.seltenheit];
 
@@ -290,12 +294,14 @@ export const monsterScreen = {
         knopf.style.setProperty('--rarity', seltenheit.farbe);
         knopf.innerHTML = `
           <span class="skin-chip__vorschau"></span>
-          <span class="skin-chip__name">${besitzt ? skin.name : '🔒 ' + skin.name}</span>
+          <span class="skin-chip__name">${skin.eigen ? '✏️ ' : ''}${besitzt ? skin.name : '🔒 ' + skin.name}</span>
         `;
         // Die Vorschau zeigt genau diesen Skin, nicht den getragenen.
         knopf.querySelector('.skin-chip__vorschau').appendChild(createSprite(monster, { skin }));
-        knopf.addEventListener('click', () => {
+        knopf.addEventListener('click', async () => {
           setAktiverSkin(monster.id, skin.id);
+          // Ein eigenes Outfit braucht seine Bilder, bevor Timo es zeigt.
+          if (skin.eigen) await outfitVorbereitenId(skin.id).catch(() => {});
           spritesNeuZeichnen();
           zeichne();
         });
@@ -304,6 +310,24 @@ export const monsterScreen = {
       });
 
       skinBlock.appendChild(skinListe);
+
+      // Eigene Outfits, deren Bilder noch fehlen, im Hintergrund bauen -
+      // danach die Liste mit den richtigen Vorschauen neu zeichnen.
+      if (selbstGebaut.some((skin) => !skin.bilder)) {
+        alleOutfitsVorbereiten()
+          .then((neu) => { if (neu && skinListe.isConnected) zeichne(); })
+          .catch(() => {});
+      }
+
+      // Die Skin-Werkstatt: eigene Outfits bauen (nur für Figuren mit
+      // Posen-Bildern). Die Einzeldatei-Version hat keine Werkstatt-Seite.
+      if (monster.id === 'timo' && !location.pathname.endsWith('MonsterQuest.html')) {
+        const werkstatt = document.createElement('a');
+        werkstatt.className = 'btn werkstatt-knopf';
+        werkstatt.href = 'werkstatt.html';
+        werkstatt.innerHTML = '🎨 Eigenes Outfit bauen';
+        skinBlock.appendChild(werkstatt);
+      }
       content.appendChild(skinBlock);
     }
 

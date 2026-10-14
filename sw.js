@@ -17,7 +17,7 @@
  *   werden dann alle alten Caches gelöscht.
  */
 
-const CACHE = 'monsterquest-v26';
+const CACHE = 'monsterquest-v27';
 
 // Das komplette Spiel, das schon beim ersten Besuch fest in den Cache soll -
 // alle Seiten, Daten, Bilder. So läuft es auch offline vollständig, sobald die
@@ -29,22 +29,26 @@ const CACHE = 'monsterquest-v26';
 const SCHALE = [
   './',
   'index.html',
+  'werkstatt.html',
   'manifest.webmanifest',
   'css/base.css',
   'css/scenery.css',
   'css/ui.css',
   'css/screens.css',
   'css/erlebnis.css',
+  'css/werkstatt.css',
   'js/core/audio.js',
   'js/core/aufgaben.js',
   'js/core/battle.js',
   'js/core/belohnung.js',
   'js/core/cloud.js',
   'js/core/deck.js',
+  'js/core/eigene-skins.js',
   'js/core/fighter.js',
   'js/core/haptik.js',
   'js/core/loot.js',
   'js/core/modi.js',
+  'js/core/outfit.js',
   'js/core/progression.js',
   'js/core/screens.js',
   'js/core/sortierung.js',
@@ -76,6 +80,7 @@ const SCHALE = [
   'js/data/trophaeen.js',
   'js/data/worlds.js',
   'js/main.js',
+  'js/werkstatt.js',
   'js/screens/arena.js',
   'js/screens/battle.js',
   'js/screens/collection.js',
@@ -93,6 +98,7 @@ const SCHALE = [
   'js/ui/hud.js',
   'js/ui/kampfintro.js',
   'js/ui/logo-pfade.js',
+  'js/ui/outfit-bilder.js',
   'js/ui/parallax.js',
   'js/ui/scenery.js',
   'js/ui/spielmodi.js',

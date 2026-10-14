@@ -26,6 +26,8 @@ import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { SKIN_BILDER, SKIN_POSEN } from '../js/data/timo-skins.js';
+import { HUETE, POSEN as OUTFIT_POSEN, kleidungAusFarbe, poseBauen } from '../js/core/outfit.js';
+import { MAX_EIGENE, eigenerSkin, eigeneSkins, outfitLoeschen, outfitSpeichern } from '../js/core/eigene-skins.js';
 import { skinBild } from '../js/ui/sprite.js';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
@@ -1417,6 +1419,68 @@ console.log('\nZeit-Truhen (Holz alle 30 Min, Gold jede Stunde)');
   pruefe('Verstellte Uhr: höchstens eine Wartezeit, Unsinn fliegt raus',
     gameState.zeitTruhen.holztruhe <= Date.now() + 30 * 60000 && !('goldtruhe' in gameState.zeitTruhen) && !('quatsch' in gameState.zeitTruhen));
   resetProgress();
+}
+
+console.log('\nSkin-Werkstatt: eigene Outfits');
+{
+  resetProgress();
+  pruefe('Werkstatt kennt dieselben Posen wie die Outfit-Bilder', OUTFIT_POSEN.join() === SKIN_POSEN.join());
+  pruefe('Mindestens 9 Kopfbedeckungen plus "keiner"', Object.keys(HUETE).length >= 10 && HUETE.keiner);
+  const k = kleidungAusFarbe('#3a7bd5', 0);
+  pruefe('Kleidungsfarbe: hell über dunkel, im erlaubten Bereich', k.hell > k.dunkel && k.dunkel >= 0.03 && k.hell <= 0.95);
+
+  // Ein kleines Testbild: Haare oben, Kleidung unten - wie Timo im Kleinen.
+  const w = 20, h = 40;
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 2; y < 40; y++) {
+    for (let x = 4; x < 16; x++) {
+      const i = (y * w + x) * 4;
+      const farbe = y < 14 ? [150, 100, 70] : [58, 51, 48]; // Haare, dunkle Jacke
+      data.set([...farbe, 255], i);
+    }
+  }
+  const original = { width: w, height: h, data };
+  const kopf = { y0: 2, mitte: 9.5, breite: 12 };
+  const ohne = poseBauen(original, kopf, { kleidung: null, helligkeit: 0, hut: 'keiner', hutFarbe: null });
+  const raum = Math.round(h * 0.35);
+  pruefe('Outfit-Bild ist oben um den Hutraum höher', ohne.height === h + raum && ohne.width === w);
+  const px = (bild, x, y) => Array.from(bild.data.slice((y * bild.width + x) * 4, (y * bild.width + x) * 4 + 4));
+  pruefe('Ohne Kleidungsfarbe bleibt die Jacke wie sie war', px(ohne, 8, 30 + raum).join() === '58,51,48,255');
+  const rot = poseBauen(original, kopf, { kleidung: '#d8323c', helligkeit: 0, hut: 'krone', hutFarbe: null });
+  const jacke = px(rot, 8, 30 + raum);
+  pruefe('Mit roter Kleidung wird die Jacke rot', jacke[0] > jacke[1] + 40 && jacke[0] > jacke[2] + 40);
+  pruefe('Die Haare bleiben unverändert', px(rot, 8, 12 + raum).join() === '150,100,70,255');
+  let hutPixel = 0;
+  for (let y = 0; y < raum + 2; y++) for (let x = 0; x < w; x++) if (rot.data[(y * w + x) * 4 + 3]) hutPixel++;
+  pruefe('Die Krone sitzt über dem Kopf', hutPixel > 10);
+
+  const rezept = { kleidung: '#2e9d4e', helligkeit: 0.1, hut: 'partyhut', hutFarbe: null };
+  const r1 = outfitSpeichern({ name: 'Party-Timo', rezept });
+  pruefe('Ein Outfit speichern', r1.ok && eigeneSkins().length === 1 && gameState.eigeneOutfits[0].name === 'Party-Timo');
+  const skin = eigenerSkin(r1.id);
+  pruefe('Ein eigenes Outfit ist ein Skin für Timo', skin.eigen && skin.monsterId === 'timo' && skin.bilder === null);
+  pruefe('Ohne gebaute Bilder bleibt das Originalbild', skinBild(SPIELFIGUR.image, skin) === SPIELFIGUR.image);
+  const r2 = outfitSpeichern({ id: r1.id, name: 'Neu', rezept: { ...rezept, hut: 'krone' } });
+  pruefe('Ändern überschreibt statt zu verdoppeln', r2.id === r1.id && eigeneSkins().length === 1 && gameState.eigeneOutfits[0].rezept.hut === 'krone');
+  for (let i = 0; i < MAX_EIGENE + 2; i++) outfitSpeichern({ name: `O${i}`, rezept });
+  pruefe(`Höchstens ${MAX_EIGENE} eigene Outfits`, eigeneSkins().length === MAX_EIGENE);
+  pruefe('Ein weiteres wird mit Grund abgelehnt', outfitSpeichern({ name: 'zu viel', rezept }).ok === false);
+  saveProgress();
+  loadProgress();
+  pruefe('Outfits überstehen das Neuladen (sie stecken im Spielstand)', eigeneSkins().length === MAX_EIGENE);
+  outfitLoeschen(gameState.eigeneOutfits[0].id);
+  pruefe('Löschen', eigeneSkins().length === MAX_EIGENE - 1);
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ eigeneOutfits: [
+    { id: 'eigen-ok1', name: '<b>x</b>'.repeat(9), rezept: { kleidung: '#ABCDEF', helligkeit: 9, hut: 'quatsch', hutFarbe: 'rot' } },
+    { id: 'boese', name: 'x', rezept: {} }, 5, null,
+  ] }));
+  loadProgress();
+  const geladen = gameState.eigeneOutfits;
+  pruefe('Kaputte Outfits werden beim Laden bereinigt',
+    geladen.length === 1 && geladen[0].name.length === 20 && geladen[0].rezept.kleidung === '#abcdef' &&
+    geladen[0].rezept.helligkeit === 0.2 && geladen[0].rezept.hut === 'keiner' && geladen[0].rezept.hutFarbe === null);
+  resetProgress();
+  pruefe('Zurücksetzen leert die eigenen Outfits', eigeneSkins().length === 0);
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

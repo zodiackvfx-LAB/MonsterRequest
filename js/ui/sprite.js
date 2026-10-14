@@ -568,6 +568,9 @@ const POSE_VON = (() => {
  * Original.
  */
 export function skinBild(pfad, skin) {
+  // Eigene Outfits aus der Skin-Werkstatt bringen ihre Bilder selbst mit
+  // (solange sie noch gebaut werden, bleibt es beim Original).
+  if (skin?.eigen) return skin.bilder?.[POSE_VON.get(pfad)] ?? pfad;
   if (!skin?.ordner) return pfad;
   return SKIN_BILDER[skin.ordner]?.[POSE_VON.get(pfad)] ?? pfad;
 }
