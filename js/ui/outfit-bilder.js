@@ -8,7 +8,7 @@
  */
 
 import { POSEN, poseImOutfit } from '../core/outfit.js';
-import { eigeneOutfits, importBild, importId, outfitBilder, outfitBilderSetzen } from '../core/eigene-skins.js';
+import { eigeneOutfits, outfitBilder, outfitBilderSetzen } from '../core/eigene-skins.js';
 import { MONSTERS } from '../data/monsters.js';
 
 let originaleVersprechen = null;
@@ -41,43 +41,6 @@ export function originaleLaden() {
   return originaleVersprechen;
 }
 
-/** Ein Bild (Adresse) in Pixel verwandeln. */
-export function bildZuPixel(adresse) {
-  return new Promise((fertig, fehler) => {
-    const img = new Image();
-    img.onload = () => {
-      const leinwand = document.createElement('canvas');
-      leinwand.width = img.naturalWidth;
-      leinwand.height = img.naturalHeight;
-      const ctx = leinwand.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      fertig(ctx.getImageData(0, 0, leinwand.width, leinwand.height));
-    };
-    img.onerror = () => fehler(new Error('Bild nicht lesbar'));
-    img.src = adresse;
-  });
-}
-
-const importPixel = new Map(); // Bild-Kennung -> Pixel
-
-/**
- * Die importierten Bilder, die ein Rezept braucht, als Pixel:
- * { hutBild, musterBild } - fehlt eins (z. B. auf einem anderen Gerät),
- * bleibt es weg und das Outfit kommt ohne aus.
- */
-export async function extrasFuer(rezept) {
-  const laden = async (id) => {
-    if (!id) return undefined;
-    if (!importPixel.has(id)) {
-      const eintrag = importBild(id);
-      if (!eintrag) return undefined;
-      importPixel.set(id, await bildZuPixel(eintrag.bild).catch(() => undefined));
-    }
-    return importPixel.get(id);
-  };
-  return { hutBild: await laden(importId(rezept.hut)), musterBild: await laden(importId(rezept.muster)) };
-}
-
 /** Pixel -> Leinwand (für die Vorschau in der Werkstatt). */
 export function aufLeinwand(canvas, bild) {
   canvas.width = bild.width;
@@ -93,16 +56,15 @@ export function alsBildAdresse(bild) {
 }
 
 /** Eine Pose im Outfit (für die Werkstatt-Vorschau). */
-export function vorschauPose(originale, pose, rezept, extras = {}) {
-  return poseImOutfit(originale, pose, rezept, koepfe, extras);
+export function vorschauPose(originale, pose, rezept) {
+  return poseImOutfit(originale, pose, rezept, koepfe);
 }
 
 /** Baut alle 14 Posen eines Outfits - falls nicht schon geschehen. */
 export async function outfitVorbereiten(outfit) {
   if (!outfit || outfitBilder(outfit)) return;
   const originale = await originaleLaden();
-  const extras = await extrasFuer(outfit.rezept);
-  const bilder = POSEN.map((pose) => alsBildAdresse(poseImOutfit(originale, pose, outfit.rezept, koepfe, extras)));
+  const bilder = POSEN.map((pose) => alsBildAdresse(poseImOutfit(originale, pose, outfit.rezept, koepfe)));
   outfitBilderSetzen(outfit.id, outfit.rezept, bilder);
 }
 

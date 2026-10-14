@@ -2979,3 +2979,55 @@
   margin-top: 14px;
   text-decoration: none;
 }
+
+/* ---------- Shop: Hüte und Muster fürs Skin-Studio (js/screens/shop.js) ---------- */
+.studio-shop__link {
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.studio-shop {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.studio-teil {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  text-align: center;
+  border-radius: 14px;
+  border: 2px solid color-mix(in srgb, var(--rarity) 70%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rarity) 22%, #1b2450), #16204a);
+}
+
+.studio-teil__icon {
+  font-size: 1.7rem;
+  line-height: 1.2;
+}
+
+.studio-teil__name {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.studio-teil__rarity {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--rarity);
+}
+
+.studio-teil__hat {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--green-1);
+}
+
+.studio-teil__kaufen {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}

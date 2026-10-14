@@ -356,7 +356,7 @@ body.werkstatt-seite {
   background: var(--danger);
 }
 
-/* ---------- Skin-Studio: Seltenheit, Import, Export ---------- */
+/* ---------- Skin-Studio: Seltenheit, Münzen, gesperrte Teile ---------- */
 .ws-seltenheiten {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -400,14 +400,6 @@ body.werkstatt-seite {
   position: relative;
 }
 
-.ws-hut__icon img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  vertical-align: middle;
-}
-
 .ws-hut__name {
   max-width: 100%;
   overflow: hidden;
@@ -415,37 +407,49 @@ body.werkstatt-seite {
   white-space: nowrap;
 }
 
-/* Kleines ✕ zum Löschen eines importierten Bilds. */
-.ws-hut__weg {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  font-size: 0.7rem;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--danger);
-  box-shadow: 0 2px 0 rgba(8, 14, 40, 0.5);
-}
-
-.ws-regler__name {
-  width: 52px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
 .ws-neu {
   justify-self: center;
 }
 
-.ws-export .btn {
-  width: 100%;
-  margin-top: 10px;
-}
-
 .ws-eintrag {
   border-left: 4px solid var(--farbe, transparent);
+}
+
+/* Münzen oben rechts - damit man sieht, was man sich leisten kann. */
+.ws-muenzen {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: rgba(8, 14, 40, 0.6);
+  border: 2px solid var(--panel-border);
+}
+
+/* Teile mit Seltenheit bekommen einen farbigen Rand. */
+.ws-hut[style*='--farbe'] {
+  border-color: color-mix(in srgb, var(--farbe) 60%, var(--panel-border));
+}
+
+/* Gesperrt: blass, mit Schloss und Preis. Antippen bietet den Kauf an. */
+.ws-hut.ist-gesperrt .ws-hut__icon {
+  filter: grayscale(1) brightness(0.7);
+  opacity: 0.6;
+}
+
+.ws-hut__preis {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--gold-1);
+}
+
+.ws-hut__preis .muenze {
+  width: 10px;
+  height: 10px;
 }

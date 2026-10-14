@@ -1,30 +1,22 @@
 /**
- * Das Skin-Studio (werkstatt.html): neue Skins für Timo erstellen - ohne Code.
+ * Das Skin-Studio (werkstatt.html): eigene Outfits für Timo.
  *
  * Wählen: Name, Seltenheit, Beschreibung, Kleidungsfarbe, Muster, Hut.
- * Importieren: eigene Hut- und Musterbilder.
- * Speichern & tragen: sofort im eigenen Spiel ausprobieren.
- * Skin-Paket herunterladen: alle Skins samt Bildern als Datei - daraus baut
- * werkzeuge/skins-einbauen.mjs echte Skins für alle Spieler.
+ * Farben sind kostenlos. Hüte und Muster muss man freischalten - im Shop
+ * oder aus Truhen; gesperrte zeigt das Studio mit Schloss und Preis und
+ * verkauft sie auf Wunsch gleich hier (js/core/studio-teile.js).
+ * Speichern & tragen: sofort im Spiel anziehen.
  *
  * Gerechnet wird in js/core/outfit.js. Diese Datei ist nur die Seite.
  */
 
-import { HUETE, MUSTER, POSEN, importBildSaeubern } from './core/outfit.js';
-import {
-  MAX_EIGENE,
-  eigeneOutfits,
-  importBildLoeschen,
-  importBildSpeichern,
-  importBilder,
-  outfitLoeschen,
-  outfitSpeichern,
-  rezeptSchluessel,
-  skinPaket,
-} from './core/eigene-skins.js';
-import { getAktiverSkin, loadProgress, setAktiverSkin } from './core/state.js';
-import { SELTENHEITEN } from './data/items.js';
-import { alsBildAdresse, aufLeinwand, bildZuPixel, extrasFuer, originaleLaden, vorschauPose } from './ui/outfit-bilder.js';
+import { HUETE, MUSTER, POSEN } from './core/outfit.js';
+import { MAX_EIGENE, eigeneOutfits, outfitLoeschen, outfitSpeichern, rezeptSchluessel } from './core/eigene-skins.js';
+import { gameState, getAktiverSkin, loadProgress, setAktiverSkin } from './core/state.js';
+import { teilFrei, teilKaufen, teilPreis } from './core/studio-teile.js';
+import { STUDIO_GRATIS, studioTeilFuer } from './data/studio-teile.js';
+import { MUENZE, SELTENHEITEN } from './data/items.js';
+import { alsBildAdresse, aufLeinwand, originaleLaden, vorschauPose } from './ui/outfit-bilder.js';
 
 /** Fertige Farben zum Antippen. null = Original. */
 const KLEIDUNG_FARBEN = [null, '#3a7bd5', '#d8323c', '#2e9d4e', '#7a3fc9', '#e08a1e', '#f2c94c',
@@ -38,14 +30,10 @@ const KURZ_POSEN = ['stand', 'schlag-2', 'strahl-3', 'treffer-3'];
 const NAMEN = ['Blitzheld', 'Nachtfalke', 'Sonnenkind', 'Sturmläufer', 'Feuerfuchs', 'Eiswolf',
   'Sternenjäger', 'Waldgeist', 'Donnerfaust', 'Glückspilz'];
 
-/** So groß werden importierte Bilder höchstens gespeichert (Pixel). */
-const IMPORT_MAX = { hut: 64, muster: 24 };
-
 const $ = (id) => document.getElementById(id);
 
 const LEER = {
-  kleidung: '#3a7bd5', helligkeit: 0, muster: 'keins', musterFarbe: '#ffffff',
-  hut: 'krone', hutFarbe: null, hutGroesse: 1, hutSitz: 0,
+  kleidung: '#3a7bd5', helligkeit: 0, muster: 'keins', musterFarbe: '#ffffff', hut: 'keiner', hutFarbe: null,
 };
 
 /* ---------- Zustand der Seite ---------- */
@@ -54,29 +42,25 @@ let seltenheit = 'episch';
 let bearbeiteId = null; // gesetzt, wenn ein gespeicherter Skin geändert wird
 let allePosen = false;
 let originale = null; // Pose -> Pixel der Originalbilder
-let extras = {}; // importierte Bilder als Pixel (Hut, Muster) für das aktuelle Rezept
 
 /* ---------- Vorschau ---------- */
 let geplant = false;
-let extrasStand = '';
 
 /** Vorschau neu zeichnen - höchstens einmal pro Bild, auch beim Schieben. */
 function vorschauPlanen() {
   if (geplant || !originale) return;
   geplant = true;
-  requestAnimationFrame(async () => {
-    // Importierte Bilder nur neu laden, wenn sich die Auswahl geändert hat.
-    const stand = `${rezept.hut}|${rezept.muster}`;
-    if (stand !== extrasStand) {
-      extras = await extrasFuer(rezept);
-      extrasStand = stand;
-    }
+  requestAnimationFrame(() => {
     geplant = false;
-    aufLeinwand($('vorschau-front'), vorschauPose(originale, 'front', rezept, extras));
+    aufLeinwand($('vorschau-front'), vorschauPose(originale, 'front', rezept));
     $('vorschau-posen').querySelectorAll('canvas').forEach((canvas) => {
-      aufLeinwand(canvas, vorschauPose(originale, canvas.dataset.pose, rezept, extras));
+      aufLeinwand(canvas, vorschauPose(originale, canvas.dataset.pose, rezept));
     });
   });
+}
+
+function muenzenZeichnen() {
+  $('muenzen').innerHTML = `${MUENZE} ${gameState.coins}`;
 }
 
 function posenAufbauen() {
@@ -141,85 +125,85 @@ function farbFeld(boxId, feld, farben, originalText, danach = () => {}) {
   }, originalText);
 }
 
-/* ---------- Auswahl-Kacheln (Muster, Hüte) mit Import ---------- */
-function kachel(box, { aktiv, icon, bild, name, beimTippen, loeschen }) {
+/* ---------- Auswahl-Kacheln (Muster, Hüte) ---------- */
+function kachel(box, { aktiv, icon, name, gesperrt, preis, seltenheit, beimTippen }) {
   const knopf = document.createElement('button');
   knopf.type = 'button';
-  knopf.className = 'ws-hut';
+  knopf.className = `ws-hut${gesperrt ? ' ist-gesperrt' : ''}`;
   knopf.setAttribute('role', 'radio');
   knopf.setAttribute('aria-checked', String(aktiv));
+  if (seltenheit) knopf.style.setProperty('--farbe', SELTENHEITEN[seltenheit].farbe);
   knopf.innerHTML = `
-    <span class="ws-hut__icon">${bild ? `<img src="${bild}" alt="">` : icon}</span>
+    <span class="ws-hut__icon">${icon}</span>
     <span class="ws-hut__name"></span>
-    ${loeschen ? '<span class="ws-hut__weg" role="button" aria-label="Bild löschen">✕</span>' : ''}
+    ${gesperrt ? `<span class="ws-hut__preis">🔒 ${MUENZE} ${preis}</span>` : ''}
   `;
   knopf.querySelector('.ws-hut__name').textContent = name;
-  knopf.addEventListener('click', (e) => {
-    if (e.target.closest('.ws-hut__weg')) {
-      loeschen();
-      return;
-    }
-    beimTippen();
-  });
+  knopf.addEventListener('click', beimTippen);
   box.appendChild(knopf);
 }
 
-function auswahlZeichnen(boxId, liste, art, feld, dateiId, danach) {
+/** Ein gesperrtes Teil: fragen, ob es gekauft werden soll. */
+function kaufenAnbieten(teil, name, danach) {
+  const preis = teilPreis(teil);
+  if (gameState.coins < preis) {
+    melden(`${name} kostet ${preis} Münzen - du hast ${gameState.coins}. Oder zieh es aus einer Truhe!`, true);
+    return;
+  }
+  if (!confirm(`${name} für ${preis} Münzen freischalten?`)) return;
+  const ergebnis = teilKaufen(teil.id);
+  if (!ergebnis.ok) {
+    melden(ergebnis.grund, true);
+    return;
+  }
+  muenzenZeichnen();
+  melden(`${name} freigeschaltet!`);
+  danach();
+}
+
+function auswahlZeichnen(boxId, liste, art, feld, danach) {
   const box = $(boxId);
   box.innerHTML = '';
   Object.entries(liste).forEach(([id, eintrag]) => {
+    const teil = studioTeilFuer(art, id);
+    const frei = teilFrei(art, id);
     kachel(box, {
       aktiv: rezept[feld] === id,
       icon: eintrag.icon,
       name: eintrag.name,
-      beimTippen: () => { rezept[feld] = id; danach(); },
-    });
-  });
-  // Importierte Bilder dieser Art.
-  Object.entries(importBilder()).filter(([, b]) => b.art === art).forEach(([id, b]) => {
-    kachel(box, {
-      aktiv: rezept[feld] === `import:${id}`,
-      bild: b.bild,
-      name: b.name,
-      beimTippen: () => { rezept[feld] = `import:${id}`; danach(); },
-      loeschen: () => {
-        if (!confirm(`Das Bild „${b.name}“ löschen?`)) return;
-        importBildLoeschen(id);
-        if (rezept[feld] === `import:${id}`) rezept[feld] = art === 'hut' ? 'keiner' : 'keins';
+      gesperrt: !frei,
+      preis: teil ? teilPreis(teil) : 0,
+      seltenheit: teil?.seltenheit,
+      beimTippen: () => {
+        if (!frei) {
+          kaufenAnbieten(teil, eintrag.name, () => { rezept[feld] = id; danach(); });
+          return;
+        }
+        rezept[feld] = id;
         danach();
       },
     });
   });
-  kachel(box, {
-    aktiv: false,
-    icon: '📥',
-    name: art === 'hut' ? 'Hut importieren' : 'Muster importieren',
-    beimTippen: () => $(dateiId).click(),
-  });
 }
 
 function musterZeichnen() {
-  auswahlZeichnen('muster', MUSTER, 'muster', 'muster', 'datei-muster', () => {
+  auswahlZeichnen('muster', MUSTER, 'muster', 'muster', () => {
     musterZeichnen();
     vorschauPlanen();
   });
-  const eingebaut = rezept.muster in MUSTER && rezept.muster !== 'keins';
-  $('musterfarbe-block').hidden = !eingebaut;
-  if (eingebaut) farbFeld('muster-farben', 'musterFarbe', AKZENT_FARBEN, 'Weiß');
+  const mitMuster = rezept.muster !== STUDIO_GRATIS.muster;
+  $('musterfarbe-block').hidden = !mitMuster;
+  if (mitMuster) farbFeld('muster-farben', 'musterFarbe', AKZENT_FARBEN, 'Weiß');
 }
 
 function hueteZeichnen() {
-  auswahlZeichnen('huete', HUETE, 'hut', 'hut', 'datei-hut', () => {
+  auswahlZeichnen('huete', HUETE, 'hut', 'hut', () => {
     rezept.hutFarbe = null; // jeder Hut startet in seiner eigenen Farbe
     hueteZeichnen();
     vorschauPlanen();
   });
-  const importiert = rezept.hut.startsWith('import:');
-  $('hutfarbe-block').hidden = importiert || !HUETE[rezept.hut]?.farbe;
-  $('hutlage-block').hidden = !importiert;
+  $('hutfarbe-block').hidden = !HUETE[rezept.hut]?.farbe;
   if (!$('hutfarbe-block').hidden) farbFeld('hut-farben', 'hutFarbe', HUT_FARBEN, 'Originalfarbe');
-  $('hut-groesse').value = rezept.hutGroesse;
-  $('hut-sitz').value = rezept.hutSitz;
 }
 
 function kleidungZeichnen() {
@@ -253,53 +237,12 @@ function seltenheitZeichnen() {
 }
 
 function allesZeichnen() {
+  muenzenZeichnen();
   seltenheitZeichnen();
   kleidungZeichnen();
   musterZeichnen();
   hueteZeichnen();
   vorschauPlanen();
-}
-
-/* ---------- Bilder importieren ---------- */
-async function importieren(datei, art) {
-  if (!datei) return;
-  try {
-    const adresse = await new Promise((fertig, fehler) => {
-      const leser = new FileReader();
-      leser.onload = () => fertig(leser.result);
-      leser.onerror = fehler;
-      leser.readAsDataURL(datei);
-    });
-    let pixel = await bildZuPixel(adresse);
-    // Hüte: Ränder weg, Hintergrund weg. Muster bleiben, wie sie sind.
-    if (art === 'hut') pixel = importBildSaeubern(pixel);
-    // Verkleinern - scharf, ohne weiche Kanten (Pixelgrafik).
-    const max = IMPORT_MAX[art];
-    const faktor = Math.min(1, max / Math.max(pixel.width, pixel.height));
-    const zielW = Math.max(1, Math.round(pixel.width * faktor));
-    const zielH = Math.max(1, Math.round(pixel.height * faktor));
-    const quelle = document.createElement('canvas');
-    aufLeinwand(quelle, pixel);
-    const ziel = document.createElement('canvas');
-    ziel.width = zielW;
-    ziel.height = zielH;
-    const ctx = ziel.getContext('2d');
-    ctx.imageSmoothingEnabled = faktor < 0.5; // große Fotos weich verkleinern, Pixelbilder scharf
-    ctx.drawImage(quelle, 0, 0, zielW, zielH);
-    const name = datei.name.replace(/\.[^.]+$/, '').slice(0, 24) || (art === 'hut' ? 'Mein Hut' : 'Mein Muster');
-    const ergebnis = importBildSpeichern({ art, name, bild: ziel.toDataURL('image/png') });
-    if (!ergebnis.ok) {
-      melden(ergebnis.grund, true);
-      return;
-    }
-    if (art === 'hut') rezept.hut = `import:${ergebnis.id}`;
-    else rezept.muster = `import:${ergebnis.id}`;
-    allesZeichnen();
-    melden(art === 'hut' ? 'Hut importiert! Mit „Größe“ und „Sitz“ rückst du ihn zurecht.' : 'Muster importiert!');
-  } catch (fehler) {
-    console.error(fehler);
-    melden('Das Bild konnte nicht gelesen werden.', true);
-  }
 }
 
 /* ---------- Meldung ---------- */
@@ -342,8 +285,7 @@ const listenBilder = new Map();
 async function listenBild(outfit) {
   const schluessel = rezeptSchluessel(outfit.rezept);
   if (!listenBilder.has(schluessel)) {
-    const ex = await extrasFuer(outfit.rezept);
-    listenBilder.set(schluessel, alsBildAdresse(vorschauPose(originale, 'front', outfit.rezept, ex)));
+    listenBilder.set(schluessel, alsBildAdresse(vorschauPose(originale, 'front', outfit.rezept)));
   }
   return listenBilder.get(schluessel);
 }
@@ -352,7 +294,6 @@ function listeZeichnen() {
   const box = $('liste');
   const liste = eigeneOutfits();
   const getragen = getAktiverSkin('timo');
-  $('exportieren').disabled = !liste.length;
   if (!liste.length) {
     box.innerHTML = `<p class="ws-leer">Noch keine Skins. Bau oben einen und tippe auf „Speichern“! (Platz für ${MAX_EIGENE})</p>`;
     return;
@@ -402,20 +343,6 @@ function listeZeichnen() {
   });
 }
 
-function exportieren() {
-  const paket = skinPaket();
-  if (!paket.skins.length) return;
-  const datei = new Blob([JSON.stringify(paket, null, 1)], { type: 'application/json' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(datei);
-  link.download = `monsterquest-skins-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(link.href), 5000);
-  melden(`${paket.skins.length} Skin${paket.skins.length === 1 ? '' : 's'} exportiert - schick die Datei an Claude!`);
-}
-
 /* ---------- Zufall ---------- */
 const zufall = (liste) => liste[Math.floor(Math.random() * liste.length)];
 
@@ -425,9 +352,10 @@ function zufallsSkin() {
     ...LEER,
     kleidung: Math.random() < 0.6 ? zufall(KLEIDUNG_FARBEN.filter(Boolean)) : farbe,
     helligkeit: Math.round((Math.random() * 0.24 - 0.12) * 50) / 50,
-    muster: Math.random() < 0.5 ? 'keins' : zufall(Object.keys(MUSTER)),
+    // Nur, was der Spieler schon hat - Farben gehen immer.
+    muster: Math.random() < 0.5 ? 'keins' : zufall(Object.keys(MUSTER).filter((id) => teilFrei('muster', id))),
     musterFarbe: zufall(AKZENT_FARBEN),
-    hut: zufall(Object.keys(HUETE).filter((id) => id !== 'keiner')),
+    hut: zufall(Object.keys(HUETE).filter((id) => teilFrei('hut', id))),
     hutFarbe: Math.random() < 0.5 ? null : zufall(AKZENT_FARBEN),
   };
   seltenheit = zufall(Object.keys(SELTENHEITEN));
@@ -444,14 +372,6 @@ async function start() {
     rezept.helligkeit = Number(e.target.value);
     vorschauPlanen();
   });
-  $('hut-groesse').addEventListener('input', (e) => {
-    rezept.hutGroesse = Number(e.target.value);
-    vorschauPlanen();
-  });
-  $('hut-sitz').addEventListener('input', (e) => {
-    rezept.hutSitz = Number(e.target.value);
-    vorschauPlanen();
-  });
   $('alle-posen').addEventListener('click', () => {
     allePosen = !allePosen;
     posenAufbauen();
@@ -459,9 +379,6 @@ async function start() {
   $('zufall').addEventListener('click', zufallsSkin);
   $('speichern').addEventListener('click', speichern);
   $('neu').addEventListener('click', neuAnfangen);
-  $('exportieren').addEventListener('click', exportieren);
-  $('datei-hut').addEventListener('change', (e) => { importieren(e.target.files[0], 'hut'); e.target.value = ''; });
-  $('datei-muster').addEventListener('change', (e) => { importieren(e.target.files[0], 'muster'); e.target.value = ''; });
 
   try {
     originale = await originaleLaden();

@@ -16,6 +16,7 @@ import { stufenId } from '../data/attacks.js';
 import { ALTES_LEVEL_NEU, KARTEN_MAX_LEVEL, kopienFuer } from '../data/karten.js';
 import { TROPHAEEN_MAX, trophaeenFuerSieg } from '../data/trophaeen.js';
 import { HUETE, MUSTER } from './outfit.js';
+import { studioTeil } from '../data/studio-teile.js';
 
 /** Alle Truhen, die in einem Truhenplatz liegen dürfen. */
 const TRUHEN_IDS = [...TRUHEN.map((truhe) => truhe.id), BOSS_TRUHE.id];
@@ -78,6 +79,7 @@ function createNewGame() {
     bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
+    studioTeile: [], // freigeschaltete Hüte und Muster fürs Skin-Studio (js/data/studio-teile.js)
     activeSkin: {}, // { monsterId: skinId }
     // Selbst gebaute Outfits aus der Skin-Werkstatt (werkstatt.html) - nur
     // das Rezept, die Bilder baut das Spiel daraus (js/core/eigene-skins.js).
@@ -286,6 +288,10 @@ function uebernehmen(saved) {
   gameState.bossPower =
     saved.bossPower && gameState.bossPowers.includes(saved.bossPower) ? saved.bossPower : null;
   gameState.ownedSkins = Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ['skin-standard'];
+  // Nur bekannte Studio-Teile, jedes nur einmal.
+  gameState.studioTeile = Array.isArray(saved.studioTeile)
+    ? [...new Set(saved.studioTeile.filter((id) => typeof id === 'string' && studioTeil(id)))]
+    : [];
   gameState.activeSkin = figurUmbenennen(saved.activeSkin ?? {});
   gameState.eigeneOutfits = eigeneOutfitsPruefen(saved.eigeneOutfits);
   // Die Spielerfigur hiess frueher "glutwelpe" und heisst jetzt "timo".
@@ -385,9 +391,7 @@ function eigeneOutfitsPruefen(liste) {
     const n = Number(wert);
     return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : standard;
   };
-  // Eingebaut (Schlüssel aus der Liste) oder importiert ("import:<kennung>").
-  const auswahl = (wert, liste, standard) =>
-    (typeof wert === 'string' && (Object.hasOwn(liste, wert) || /^import:[a-z0-9-]{1,40}$/.test(wert)) ? wert : standard);
+  const auswahl = (wert, liste, standard) => (typeof wert === 'string' && Object.hasOwn(liste, wert) ? wert : standard);
   return liste
     .filter((e) => e && typeof e.id === 'string' && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === 'object')
     .slice(0, 8)
@@ -403,8 +407,6 @@ function eigeneOutfitsPruefen(liste) {
         musterFarbe: farbe(e.rezept.musterFarbe),
         hut: auswahl(e.rezept.hut, HUETE, 'keiner'),
         hutFarbe: farbe(e.rezept.hutFarbe),
-        hutGroesse: zahl(e.rezept.hutGroesse, 0.5, 2, 1),
-        hutSitz: zahl(e.rezept.hutSitz, -0.5, 0.5, 0),
       },
     }));
 }
@@ -678,6 +680,19 @@ export function besitztAttacke(id) {
   return gameState.ownedAttacks.includes(id);
 }
 
+/** Hat der Spieler diesen Hut / dieses Muster fürs Skin-Studio? */
+export function besitztStudioTeil(id) {
+  return gameState.studioTeile.includes(id);
+}
+
+/** Ein Studio-Teil freischalten (Kauf oder Truhe). */
+export function studioTeilFreischalten(id) {
+  if (!studioTeil(id) || besitztStudioTeil(id)) return false;
+  gameState.studioTeile.push(id);
+  saveProgress();
+  return true;
+}
+
 export function besitztSkin(id) {
   return gameState.ownedSkins.includes(id);
 }
@@ -707,6 +722,9 @@ export function beuteGutschreiben(stueck) {
       break;
     case 'skin':
       if (!besitztSkin(stueck.id)) gameState.ownedSkins.push(stueck.id);
+      break;
+    case 'studio':
+      if (!besitztStudioTeil(stueck.id)) gameState.studioTeile.push(stueck.id);
       break;
     default:
       break;

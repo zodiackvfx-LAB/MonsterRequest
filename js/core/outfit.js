@@ -11,21 +11,16 @@
  *
  * Ein Rezept beschreibt ein Outfit:
  *   { kleidung: '#3a7bd5', helligkeit: 0, muster: 'streifen', musterFarbe: '#ffffff',
- *     hut: 'krone', hutFarbe: '#ffc93d', hutGroesse: 1, hutSitz: 0 }
+ *     hut: 'krone', hutFarbe: '#ffc93d' }
  *     kleidung    - Grundfarbe für Jacke und Hose (null = Originalkleidung)
  *     helligkeit  - -0.2 (dunkler) bis 0.2 (heller)
- *     muster      - Schlüssel aus MUSTER, oder 'import:<id>' für ein
- *                   importiertes Musterbild
- *     musterFarbe - zweite Farbe der eingebauten Muster
- *     hut         - Schlüssel aus HUETE ('keiner' = ohne), oder
- *                   'import:<id>' für ein importiertes Hutbild
+ *     muster      - Schlüssel aus MUSTER ('keins' = einfarbig)
+ *     musterFarbe - zweite Farbe des Musters
+ *     hut         - Schlüssel aus HUETE ('keiner' = ohne)
  *     hutFarbe    - Hauptfarbe des Huts (null = seine eigene)
- *     hutGroesse  - nur importierte Hüte: 0.5 bis 2 (1 = so breit wie der Kopf)
- *     hutSitz     - nur importierte Hüte: -0.5 (höher) bis 0.5 (tiefer)
  *
- * Importierte Bilder kommen nicht im Rezept mit, sondern als "extras"
- * ({ hutBild, musterBild }, ebenfalls Pixel) - das Rezept merkt sich nur
- * ihre Kennung.
+ * Welche Hüte und Muster ein Spieler benutzen darf, steht in
+ * js/data/studio-teile.js (kaufen oder aus Truhen ziehen).
  */
 
 /** Platz über dem Kopf - genau wie im Python-Werkzeug und in css/ui.css. */
@@ -486,59 +481,21 @@ function rampe(hex, helligkeit) {
   return RAMPEN.get(schluessel);
 }
 
-function rgbZuHex(r, g, b) {
-  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
-}
-
 /**
- * Die Farbe eines Kleidungspixels: Grundfarbe, Muster oder importiertes
- * Muster - immer mit der Helligkeit l des Originals, damit Falten bleiben.
+ * Die Farbe eines Kleidungspixels: Grundfarbe oder Musterfarbe - immer mit der Helligkeit l des Originals, damit Falten bleiben.
  * Gibt null zurück, wenn das Original bleiben soll.
  */
-function kleidungsFarbe(rezept, extras, x, y, l, s, unten) {
+function kleidungsFarbe(rezept, x, y, l, s, unten) {
   const hell = rezept.helligkeit ?? 0;
   let hex = rezept.kleidung;
   let dunkler = 0;
-
-  if (rezept.muster?.startsWith('import:') && extras.musterBild) {
-    const m = extras.musterBild;
-    const p = Math.max(1, Math.round(s / 2)); // ein Musterpixel = s/2 Bildpixel
-    const mi = ((Math.floor(y / p) % m.height) * m.width + (Math.floor(x / p) % m.width)) * 4;
-    if (m.data[mi + 3] >= 128) hex = rgbZuHex(m.data[mi], m.data[mi + 1], m.data[mi + 2]);
-  } else {
-    const feld = (MUSTER[rezept.muster] ?? MUSTER.keins).feld(x, y, s, unten);
-    if (feld === 1) hex = rezept.musterFarbe ?? '#ffffff';
-    if (feld === 2) dunkler = 0.1;
-  }
+  const feld = (MUSTER[rezept.muster] ?? MUSTER.keins).feld(x, y, s, unten);
+  if (feld === 1) hex = rezept.musterFarbe ?? '#ffffff';
+  if (feld === 2) dunkler = 0.1;
   if (!hex) return null;
   const k = rampe(hex, hell - dunkler);
   const anteil = (l - 0.07) / 0.35;
   return hlsZuRgb(k.ton, k.dunkel + anteil * (k.hell - k.dunkel), k.satt);
-}
-
-/* ------------------------------------------------------------------ */
-/*  Importierte Hüte                                                   */
-/* ------------------------------------------------------------------ */
-
-/**
- * Setzt ein importiertes Hutbild auf den Kopf: so breit wie der Kopf mal
- * hutGroesse, mit der Unterkante etwas unter der obersten Haarstelle.
- * Kanten werden hart (Pixelgrafik) - weiche Ränder fallen weg.
- */
-function hutBildMalen(ebene, cx, y0, u, bildPx, groesse = 1, sitz = 0) {
-  const breite = Math.max(4, Math.round(u * groesse));
-  const hoehe = Math.max(1, Math.round((breite * bildPx.height) / bildPx.width));
-  const links = Math.round(cx - breite / 2);
-  const unten = Math.round(y0 + (0.3 + sitz * 0.8) * u);
-  for (let dy = 0; dy < hoehe; dy++) {
-    for (let dx = 0; dx < breite; dx++) {
-      const sx = Math.floor((dx * bildPx.width) / breite);
-      const sy = Math.floor((dy * bildPx.height) / hoehe);
-      const i = (sy * bildPx.width + sx) * 4;
-      if (bildPx.data[i + 3] < 128) continue;
-      setze(ebene, links + dx, unten - hoehe + dy, [bildPx.data[i], bildPx.data[i + 1], bildPx.data[i + 2], 255]);
-    }
-  }
 }
 
 /**
@@ -570,7 +527,7 @@ function kleidungsKarte(original, kopf) {
  * @param {{y0, mitte, breite}} kopf - aus kopfFinden
  * @param {object} rezept
  */
-export function poseBauen(original, kopf, rezept, extras = {}) {
+export function poseBauen(original, kopf, rezept) {
   const { width: w, height: h } = original;
   const raum = Math.round(h * HUT_RAUM);
   const bild = leinwand(w, h + raum);
@@ -585,7 +542,7 @@ export function poseBauen(original, kopf, rezept, extras = {}) {
       let [r, g, b] = [original.data[i], original.data[i + 1], original.data[i + 2]];
       const l = karte[y * w + x];
       if (l >= 0) {
-        const neu = kleidungsFarbe(rezept, extras, x, y, l, s, h);
+        const neu = kleidungsFarbe(rezept, x, y, l, s, h);
         if (neu) [r, g, b] = neu;
       }
       const o = ((y + raum) * w + x) * 4;
@@ -594,16 +551,10 @@ export function poseBauen(original, kopf, rezept, extras = {}) {
   }
 
   // 2. Den Hut auf eine eigene Ebene malen, mit Kontur, dann darüberlegen.
-  const importiert = rezept.hut?.startsWith('import:');
-  const hut = importiert ? null : HUETE[rezept.hut] ?? HUETE.keiner;
-  if ((importiert && extras.hutBild) || (hut && rezept.hut !== 'keiner')) {
+  const hut = HUETE[rezept.hut] ?? HUETE.keiner;
+  if (rezept.hut !== 'keiner' && hut !== HUETE.keiner) {
     const ebene = leinwand(w, h + raum);
-    const u = kopf.breite * 1.08;
-    if (importiert) {
-      hutBildMalen(ebene, kopf.mitte, kopf.y0 + raum, u, extras.hutBild, rezept.hutGroesse ?? 1, rezept.hutSitz ?? 0);
-    } else {
-      hut.malen(ebene, kopf.mitte, kopf.y0 + raum, u, rezept.hutFarbe ?? hut.farbe);
-    }
+    hut.malen(ebene, kopf.mitte, kopf.y0 + raum, kopf.breite * 1.08, rezept.hutFarbe ?? hut.farbe);
     const d = ebene.data;
     const kontur = [];
     for (let y = 0; y < ebene.height; y++) {
@@ -633,53 +584,17 @@ export function poseBauen(original, kopf, rezept, extras = {}) {
  * @param {Map} [koepfe] - Zwischenspeicher für die gefundenen Köpfe
  * @returns {Object<string, {width, height, data}>}
  */
-export function outfitBauen(originale, rezept, koepfe = new Map(), extras = {}) {
+export function outfitBauen(originale, rezept, koepfe = new Map()) {
   const fertig = {};
   POSEN.forEach((pose) => {
-    if (originale[pose]) fertig[pose] = poseImOutfit(originale, pose, rezept, koepfe, extras);
+    if (originale[pose]) fertig[pose] = poseImOutfit(originale, pose, rezept, koepfe);
   });
   return fertig;
 }
 
 /** Eine einzelne Pose im Outfit - für die schnelle Vorschau. */
-export function poseImOutfit(originale, pose, rezept, koepfe = new Map(), extras = {}) {
+export function poseImOutfit(originale, pose, rezept, koepfe = new Map()) {
   const quelle = KOPF_WIE[pose] ?? pose;
   if (!koepfe.has(quelle)) koepfe.set(quelle, kopfFinden(originale[quelle]));
-  return poseBauen(originale[pose], koepfe.get(quelle), rezept, extras);
-}
-
-/**
- * Bereitet ein importiertes Bild vor: durchsichtige Ränder abschneiden und -
- * hat es gar keine Durchsichtigkeit (z. B. ein Foto/JPG) - die Farbe der
- * Ecken als Hintergrund entfernen.
- * @param {{width, height, data}} bild
- * @returns {{width, height, data}}
- */
-export function importBildSaeubern(bild) {
-  const { width: w, height: h } = bild;
-  const data = new Uint8ClampedArray(bild.data);
-  let durchsichtig = false;
-  for (let i = 3; i < data.length; i += 4) if (data[i] < 128) { durchsichtig = true; break; }
-  if (!durchsichtig) {
-    const ecke = [data[0], data[1], data[2]];
-    for (let i = 0; i < data.length; i += 4) {
-      const abstand = Math.abs(data[i] - ecke[0]) + Math.abs(data[i + 1] - ecke[1]) + Math.abs(data[i + 2] - ecke[2]);
-      if (abstand < 48) data[i + 3] = 0;
-    }
-  }
-  let [x0, y0, x1, y1] = [w, h, -1, -1];
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (data[(y * w + x) * 4 + 3] < 128) continue;
-      x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
-    }
-  }
-  if (x1 < 0) return { width: 1, height: 1, data: new Uint8ClampedArray(4) };
-  const nw = x1 - x0 + 1;
-  const nh = y1 - y0 + 1;
-  const neu = new Uint8ClampedArray(nw * nh * 4);
-  for (let y = 0; y < nh; y++) {
-    neu.set(data.subarray(((y + y0) * w + x0) * 4, ((y + y0) * w + x1 + 1) * 4), y * nw * 4);
-  }
-  return { width: nw, height: nh, data: neu };
+  return poseBauen(originale[pose], koepfe.get(quelle), rezept);
 }

@@ -47,7 +47,7 @@ App-Symbol; das Spiel startet dann im Vollbild ohne Safari-Leiste.
 
 ```
 index.html              Einstiegspunkt, Mobile-Meta-Tags, leerer #app-Container
-werkstatt.html          Skin-Studio: neue Skins für Timo erstellen (js/werkstatt.js)
+werkstatt.html          Skin-Studio: eigene Outfits für Timo (js/werkstatt.js)
 
 css/
   base.css              Schrift, Farben, Grundlayout   ← Farben zentral ändern
@@ -66,8 +66,6 @@ datenbank/              Spielstände auf einem Server – siehe ANLEITUNG.md
 werkzeuge/              Hilfsskripte, die nicht zum Spiel gehören
   logo-bauen.py         Erzeugt die Logo-Pfade aus der Schrift
   timo-skins-bauen.py   Baut Timos Outfits (Kleidung + Hut) für alle Posen
-  skins-einbauen.mjs    Baut Skin-Pakete aus dem Skin-Studio als echte Skins ein
-  png.mjs               PNG lesen/schreiben für die Werkzeuge (ohne Zusatzpakete)
   test-datenbank.mjs    Spiel mit Datenbank zum Ausprobieren, ohne Konto
 
 js/
@@ -83,6 +81,7 @@ js/
     modi.js             Werte der Kampf-Modi (Herausforderung, Boss-Rush,
                         Zeitangriff) und welche Gegner kommen
     shop.js             Truhen, Truhenplätze, Gratis-Truhen mit Uhr
+    studio-teile.js     Hüte und Muster fürs Skin-Studio: Seltenheit und Preis
     trophaeen.js        Trophäen je Sieg und die 8 Ligen
 
   core/                 NUR Logik – kennt kein HTML
@@ -221,29 +220,17 @@ auf den übrigen Plätzen Fähigkeitskarten (ab und zu einen Skin).
 | König | legendär | Königsrot, goldene Krone |
 
 **Skin-Studio** (`werkstatt.html`, im Spiel unter Figur → Aussehen →
-„Eigenes Outfit bauen“) – neue Skins erstellen, ohne Code:
+„Skin-Studio: eigenes Outfit“ und im Shop): eigene Outfits für Timo.
 
-* **Wählen:** Name, Seltenheit, Beschreibung, Kleidungsfarbe und Helligkeit,
-  ein Muster (Streifen, Längsstreifen, Karo, Punkte, Zickzack, Tarnmuster,
-  Flammen) mit eigener Farbe und eine Kopfbedeckung (9 eingebaute) mit Farbe.
-* **Importieren:** eigene Hut-Bilder (PNG oder Foto – weißer Hintergrund und
-  leere Ränder fallen automatisch weg; Größe und Sitz per Regler) und eigene
-  Muster-Bilder (werden als Stoff wiederholt).
-* **Ausprobieren:** „Speichern & tragen“ zieht den Skin im eigenen Spiel an.
-  Gespeichert wird nur das Rezept im Spielstand; die Bilder baut das Spiel
-  (`js/core/outfit.js`, `js/ui/outfit-bilder.js`). Importierte Bilder liegen
-  nur auf dem Gerät.
-* **Für alle ins Spiel bringen:** „Skin-Paket herunterladen“ speichert alle
-  Skins samt importierten Bildern als JSON-Datei. Daraus baut
-
-  ```bash
-  node werkzeuge/skins-einbauen.mjs monsterquest-skins-JJJJ-MM-TT.json
-  ```
-
-  echte Skins: Bilder nach `bilder/timo/skins/<name>/`, Eintrag in
-  `js/data/studio-skins.js` (von dort in `SKINS`). Danach gibt es sie in
-  Truhen und in der Sammlung, mit der gewählten Seltenheit. Danach Tests,
-  `sw.js`-Version erhöhen, `dist` neu bauen.
+* **Kostenlos:** alle Kleidungsfarben (auch eigene), Helligkeit, Hut- und
+  Musterfarben, „Einfarbig“ und „Kein Hut“.
+* **Freischalten:** 9 Hüte und 7 Muster – im **Shop** (Reiter „Studio“, oder
+  direkt im Studio antippen) oder aus **Truhen** (ab dem 2. Beuteplatz mit
+  20 % Chance). Preise je Seltenheit: 500 / 1200 / 2500 / 5000 Münzen.
+  Einstellbar in `js/data/studio-teile.js`.
+* **Speichern & tragen** zieht das Outfit im Spiel an (höchstens 8). Im
+  Spielstand steht nur das Rezept; die Bilder baut das Spiel daraus
+  (`js/core/outfit.js`, `js/ui/outfit-bilder.js`).
 
 Die festen Outfits oben erzeugt `werkzeuge/timo-skins-bauen.py` aus den Originalen in
 `bilder/timo/`: Es färbt nur die Kleidung um und zeichnet den Hut passend auf

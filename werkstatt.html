@@ -16,13 +16,14 @@
 </head>
 <body class="werkstatt-seite">
   <!--
-    Das Skin-Studio: neue Skins für Timo erstellen, ohne Code.
+    Das Skin-Studio: eigene Outfits für Timo. Farben sind gratis, Hüte und
+    Muster schaltet man im Shop oder aus Truhen frei (js/data/studio-teile.js).
     Seite: js/werkstatt.js - Pixel: js/core/outfit.js - Speicher: js/core/eigene-skins.js
-    Einbauen ins Spiel: werkzeuge/skins-einbauen.mjs (mit dem exportierten Skin-Paket)
   -->
   <header class="ws-kopf">
     <a class="btn btn--ghost btn--small" href="index.html">‹ Zum Spiel</a>
     <h1 class="ws-kopf__titel">🎨 Skin-Studio</h1>
+    <span class="ws-muenzen" id="muenzen"></span>
   </header>
 
   <main class="ws">
@@ -67,16 +68,6 @@
           <span class="ws-unterzeile">Farbe vom Hut</span>
           <div class="ws-farben" id="hut-farben" role="radiogroup" aria-label="Hutfarbe"></div>
         </div>
-        <div class="ws-hutfarbe" id="hutlage-block">
-          <label class="ws-regler">
-            <span class="ws-regler__name">Größe</span>
-            <input id="hut-groesse" type="range" min="0.5" max="2" step="0.05" value="1" aria-label="Hutgröße">
-          </label>
-          <label class="ws-regler">
-            <span class="ws-regler__name">Sitz</span>
-            <input id="hut-sitz" type="range" min="-0.5" max="0.5" step="0.02" value="0" aria-label="Wie hoch der Hut sitzt">
-          </label>
-        </div>
       </section>
 
       <div class="ws-aktionen">
@@ -88,21 +79,13 @@
       <section class="panel">
         <div class="panel__title">📁 Meine Skins</div>
         <div class="ws-liste" id="liste"></div>
+        <p class="ws-hinweis">🎨 Farben sind kostenlos. 🔒 Hüte und Muster bekommst du im
+          <strong>Shop</strong> oder aus <strong>Truhen</strong>. Deine Skins findest du im Spiel unter
+          <strong>Figur → Aussehen</strong>.</p>
       </section>
 
-      <section class="panel ws-export">
-        <div class="panel__title">📦 Ins Spiel bringen</div>
-        <p class="ws-hinweis">Lade das Skin-Paket herunter und schick es Claude mit
-          „<strong>Bring die Skins ins Spiel</strong>“. Dann gibt es sie für alle in Truhen und in der Sammlung -
-          mit der Seltenheit, die du gewählt hast.</p>
-        <button class="btn" id="exportieren" type="button">📦 Skin-Paket herunterladen</button>
-      </section>
     </div>
   </main>
-
-  <!-- Unsichtbare Dateiwähler für den Import von Hut- und Musterbildern. -->
-  <input id="datei-hut" type="file" accept="image/*" hidden>
-  <input id="datei-muster" type="file" accept="image/*" hidden>
 
   <div class="ws-meldung" id="meldung" role="status" aria-live="polite"></div>
 

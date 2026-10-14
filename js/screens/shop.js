@@ -2,6 +2,7 @@
  * Shop - in zwei Reitern, wie die Sammlung.
  *
  *   Truhen  Truhen kaufen und öffnen
+ *   Studio  Hüte und Muster fürs Skin-Studio kaufen (js/data/studio-teile.js)
  *   Besitz  Münzen, Material, gefundene Attacken und Skins auf einen Blick
  *
  * Bezahlt wird nur mit Münzen aus Kämpfen. Geöffnet wird mit der großen
@@ -21,6 +22,9 @@ import { zeigeErfolgToast } from '../ui/toast.js';
 import { createScenery } from '../ui/scenery.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
+import { STUDIO_TEILE } from '../data/studio-teile.js';
+import { teilAnzeige, teilKaufen, teilPreis, teileZaehlen } from '../core/studio-teile.js';
+import { besitztStudioTeil } from '../core/state.js';
 
 export const shopScreen = {
   mount(root, params = {}) {
@@ -41,6 +45,7 @@ export const shopScreen = {
 
     const REITER = [
       { id: 'truhen', label: 'Truhen', bauen: baueTruhen },
+      { id: 'studio', label: 'Studio', bauen: baueStudio },
       { id: 'besitz', label: 'Besitz', bauen: baueBesitz },
     ];
     let aktiv = REITER.some((r) => r.id === params.tab) ? params.tab : 'truhen';
@@ -75,7 +80,7 @@ export const shopScreen = {
         <p class="map__info-text">
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
           <strong>5 Beutestücke</strong>: einmal <strong>150 bis 500 Münzen</strong>,
-          einmal Material und <strong>Fähigkeitskarten</strong> (ab und zu ein Skin).
+          einmal Material und <strong>Fähigkeitskarten</strong> (ab und zu ein Skin, Hut oder Muster).
           Doppelte Karten leveln deine Karte hoch - bis Level 15.
           <br>🎁 <strong>Jeder 2. Sieg</strong> bringt eine Holztruhe gratis –
           noch ${siegeBisGratisTruhe()} Sieg${siegeBisGratisTruhe() === 1 ? '' : 'e'}.
@@ -113,7 +118,64 @@ export const shopScreen = {
       });
     }
 
-    /* ---------- Reiter 2: Besitz ---------- */
+    /* ---------- Reiter 2: Studio-Teile ---------- */
+    function baueStudio(content) {
+      const { hat, alle } = teileZaehlen();
+      const kopf = document.createElement('div');
+      kopf.className = 'panel panel--tight';
+      kopf.innerHTML = `
+        <p class="map__info-text">
+          Hüte und Muster für dein eigenes Outfit im <strong>Skin-Studio</strong>.
+          Farben sind dort immer kostenlos. Alles hier gibt es auch aus Truhen.
+          <br>Freigeschaltet: <strong>${hat} von ${alle}</strong>
+        </p>
+        <a class="btn btn--small studio-shop__link" href="werkstatt.html">🎨 Zum Skin-Studio</a>
+      `;
+      content.appendChild(kopf);
+
+      [['hut', '🎩 Hüte'], ['muster', '🧵 Muster']].forEach(([art, titel]) => {
+        const block = document.createElement('div');
+        block.className = 'panel';
+        block.innerHTML = `<div class="panel__title">${titel}</div><div class="studio-shop"></div>`;
+        const gitter = block.querySelector('.studio-shop');
+        STUDIO_TEILE.filter((t) => t.art === art).forEach((teil) => {
+          const { name, icon } = teilAnzeige(teil);
+          const seltenheit = SELTENHEITEN[teil.seltenheit];
+          const hatEs = besitztStudioTeil(teil.id);
+          const preis = teilPreis(teil);
+          const feld = document.createElement('div');
+          feld.className = `studio-teil${hatEs ? ' is-owned' : ''}`;
+          feld.style.setProperty('--rarity', seltenheit.farbe);
+          feld.innerHTML = `
+            <span class="studio-teil__icon">${icon}</span>
+            <span class="studio-teil__name">${name}</span>
+            <span class="studio-teil__rarity">${seltenheit.name}</span>
+          `;
+          if (hatEs) {
+            feld.insertAdjacentHTML('beforeend', '<span class="studio-teil__hat">✓ Freigeschaltet</span>');
+          } else {
+            const knopf = document.createElement('button');
+            knopf.type = 'button';
+            knopf.className = 'btn btn--small studio-teil__kaufen';
+            knopf.innerHTML = `${MUENZE} ${preis}`;
+            knopf.disabled = !kannBezahlen(preis);
+            knopf.addEventListener('click', () => {
+              if (!teilKaufen(teil.id).ok) {
+                spieleKlang('gesperrt');
+                return;
+              }
+              spieleKlang('kauf');
+              zeichne();
+            });
+            feld.appendChild(knopf);
+          }
+          gitter.appendChild(feld);
+        });
+        content.appendChild(block);
+      });
+    }
+
+    /* ---------- Reiter 3: Besitz ---------- */
     function baueBesitz(content) {
       const besitz = document.createElement('div');
       besitz.className = 'panel';
@@ -134,6 +196,10 @@ export const shopScreen = {
         <div class="stat-row">
           <span class="stat-row__label">Skins</span>
           <span class="stat-row__value">${gameState.ownedSkins.length}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row__label">Hüte und Muster</span>
+          <span class="stat-row__value">${teileZaehlen().hat} / ${teileZaehlen().alle}</span>
         </div>
       `;
       content.appendChild(besitz);

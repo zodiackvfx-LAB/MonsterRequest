@@ -325,7 +325,7 @@ export const monsterScreen = {
         const werkstatt = document.createElement('a');
         werkstatt.className = 'btn werkstatt-knopf';
         werkstatt.href = 'werkstatt.html';
-        werkstatt.innerHTML = '🎨 Skin-Studio: neuen Skin bauen';
+        werkstatt.innerHTML = '🎨 Skin-Studio: eigenes Outfit';
         skinBlock.appendChild(werkstatt);
       }
       content.appendChild(skinBlock);

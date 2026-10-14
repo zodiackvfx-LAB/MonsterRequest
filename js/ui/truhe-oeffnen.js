@@ -41,6 +41,9 @@ function inhaltFuer(stueck, seltenheit) {
   if (stueck.art === 'attacke') {
     return `${kopf}<span class="loot-item__neu">NEUE KARTE!</span>`;
   }
+  if (stueck.art === 'studio') {
+    return `${kopf}<span class="loot-item__neu">FÜRS SKIN-STUDIO!</span>`;
+  }
   if (stueck.art === 'karte' && stueck.ergebnis) {
     const { levelVorher, level, kopien, benoetigt } = stueck.ergebnis;
     const anteil = benoetigt ? Math.min(1, kopien / benoetigt) : 1;

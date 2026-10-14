@@ -12,10 +12,12 @@
  */
 
 import { BEUTE_ATTACKEN, MATERIAL_BEUTE, MUENZE, SKINS, TRUHEN_MUENZEN } from '../data/items.js';
+import { STUDIO_TEILE } from '../data/studio-teile.js';
+import { teilAnzeige } from './studio-teile.js';
 import { getAttack } from '../data/attacks.js';
 import { MONSTERS } from '../data/monsters.js';
 import { KOPIEN_JE_SELTENHEIT } from '../data/karten.js';
-import { besitztAttacke, besitztSkin, getAktiveFigur } from './state.js';
+import { besitztAttacke, besitztSkin, besitztStudioTeil, getAktiveFigur } from './state.js';
 import { MAX_ATTACKEN_LEVEL, getAttackenLevel } from './progression.js';
 
 /** Zufallszahl zwischen min und max (beide eingeschlossen). */
@@ -96,6 +98,17 @@ function zieheSkin(seltenheit, schonGezogen) {
   return { art: 'skin', seltenheit, id: skin.id, name: `Skin: ${skin.name}`, icon: '🎨', skin };
 }
 
+/** Ein Hut oder Muster fürs Skin-Studio, das der Spieler noch nicht hat. */
+function zieheStudioTeil(seltenheit, schonGezogen) {
+  const teile = STUDIO_TEILE.filter(
+    (t) => t.seltenheit === seltenheit && !besitztStudioTeil(t.id) && !schonGezogen.has(t.id)
+  );
+  if (!teile.length) return null;
+  const teil = zufall(teile);
+  const { name, icon, artName } = teilAnzeige(teil);
+  return { art: 'studio', seltenheit, id: teil.id, name: `${artName}: ${name}`, icon, teil };
+}
+
 /** Das eine Materialstück einer Truhe - die Menge richtet sich nach der Seltenheit. */
 function materialStueck(seltenheit) {
   const menge = zwischen(...MATERIAL_BEUTE[seltenheit]);
@@ -133,13 +146,18 @@ export function truheOeffnen(truhe) {
   const gezogen = new Set();
 
   // ... und der Rest sind Fähigkeitskarten - mindestens eine, immer.
-  // Ab dem zweiten Platz kann statt einer Karte auch ein Skin kommen.
+  // Ab dem zweiten Platz kann statt einer Karte auch ein Skin oder ein
+  // Hut/Muster fürs Skin-Studio kommen.
   const plaetze = Math.max(1, truhe.anzahl - 2);
   for (let i = 0; i < plaetze; i++) {
     const seltenheit =
       i === 0 && truhe.garantie ? truhe.garantie : wuerfleSeltenheit(truhe.chancen);
-    const skin = i > 0 && Math.random() < SKIN_CHANCE ? zieheSkin(seltenheit, gezogen) : null;
-    const stueck = skin ?? zieheKarte(seltenheit, gezogen);
+    const wurf = Math.random();
+    const skin = i > 0 && wurf < SKIN_CHANCE ? zieheSkin(seltenheit, gezogen) : null;
+    const studio = !skin && i > 0 && wurf >= SKIN_CHANCE && wurf < SKIN_CHANCE + STUDIO_CHANCE
+      ? zieheStudioTeil(seltenheit, gezogen)
+      : null;
+    const stueck = skin ?? studio ?? zieheKarte(seltenheit, gezogen);
     if (!stueck) continue;
     gezogen.add(stueck.id);
     stuecke.push(stueck);
@@ -150,3 +168,6 @@ export function truheOeffnen(truhe) {
 
 /** Wie oft ein freier Platz ein Skin statt einer Karte ist (solange es welche gibt). */
 const SKIN_CHANCE = 0.25;
+
+/** Wie oft ein freier Platz ein Hut oder Muster fürs Skin-Studio ist. */
+const STUDIO_CHANCE = 0.2;

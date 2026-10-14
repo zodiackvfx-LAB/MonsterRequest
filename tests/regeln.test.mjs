@@ -26,10 +26,11 @@ import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { SKIN_BILDER, SKIN_POSEN } from '../js/data/timo-skins.js';
-import { HUETE, POSEN as OUTFIT_POSEN, importBildSaeubern, kleidungAusFarbe, poseBauen } from '../js/core/outfit.js';
-import { STUDIO_SKINS } from '../js/data/studio-skins.js';
-import { pngLesen, pngSchreiben } from '../werkzeuge/png.mjs';
-import { MAX_EIGENE, eigenerSkin, eigeneSkins, outfitLoeschen, outfitSpeichern, skinPaket } from '../js/core/eigene-skins.js';
+import { HUETE, MUSTER, POSEN as OUTFIT_POSEN, kleidungAusFarbe, poseBauen } from '../js/core/outfit.js';
+import { STUDIO_GRATIS, STUDIO_PREISE, STUDIO_TEILE } from '../js/data/studio-teile.js';
+import { rezeptErlaubt, teilFrei, teilKaufen } from '../js/core/studio-teile.js';
+import { truheOeffnen as truheOeffnenStudio } from '../js/core/loot.js';
+import { MAX_EIGENE, eigenerSkin, eigeneSkins, outfitLoeschen, outfitSpeichern } from '../js/core/eigene-skins.js';
 import { skinBild } from '../js/ui/sprite.js';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
@@ -1392,6 +1393,52 @@ console.log('\nKampf-Modi: Herausforderung, Boss-Rush, Zeitangriff');
   resetProgress();
 }
 
+console.log('\nStudio-Teile: Farben gratis, Hüte und Muster freischalten');
+{
+  resetProgress();
+  pruefe('Jeder Hut und jedes Muster (außer gratis) ist ein Studio-Teil',
+    Object.keys(HUETE).filter((h) => h !== STUDIO_GRATIS.hut).every((h) => STUDIO_TEILE.some((t) => t.art === 'hut' && t.wert === h)) &&
+    Object.keys(MUSTER).filter((m) => m !== STUDIO_GRATIS.muster).every((m) => STUDIO_TEILE.some((t) => t.art === 'muster' && t.wert === m)));
+  pruefe('Keine doppelten Kennungen', new Set(STUDIO_TEILE.map((t) => t.id)).size === STUDIO_TEILE.length);
+  pruefe('Teurer, je seltener', STUDIO_PREISE.gewoehnlich < STUDIO_PREISE.selten && STUDIO_PREISE.selten < STUDIO_PREISE.episch && STUDIO_PREISE.episch < STUDIO_PREISE.legendaer);
+  pruefe('Neuer Spieler: "Kein Hut" und "Einfarbig" sind frei, die Krone nicht',
+    teilFrei('hut', 'keiner') && teilFrei('muster', 'keins') && !teilFrei('hut', 'krone'));
+  pruefe('Farben sind immer erlaubt', rezeptErlaubt({ kleidung: '#123456', helligkeit: 0.1, muster: 'keins', musterFarbe: '#ff0000', hut: 'keiner', hutFarbe: '#00ff00' }));
+  pruefe('Ein Rezept mit gesperrtem Hut ist nicht erlaubt', !rezeptErlaubt({ kleidung: null, muster: 'keins', hut: 'krone' }));
+  gameState.coins = 100;
+  const zuArm = teilKaufen('hut-krone');
+  pruefe('Ohne genug Münzen kein Kauf', !zuArm.ok && !teilFrei('hut', 'krone') && gameState.coins === 100);
+  gameState.coins = 10000;
+  const gekauft = teilKaufen('hut-krone');
+  pruefe('Kaufen zieht den Preis ab und schaltet frei',
+    gekauft.ok && teilFrei('hut', 'krone') && gameState.coins === 10000 - STUDIO_PREISE.legendaer);
+  pruefe('Nicht zweimal kaufen', !teilKaufen('hut-krone').ok && gameState.coins === 10000 - STUDIO_PREISE.legendaer);
+  pruefe('Speichern mit gesperrtem Muster wird abgelehnt',
+    outfitSpeichern({ name: 'x', rezept: { kleidung: null, helligkeit: 0, muster: 'flammen', musterFarbe: null, hut: 'krone', hutFarbe: null } }).ok === false);
+  pruefe('Speichern mit freigeschaltetem Hut klappt',
+    outfitSpeichern({ name: 'x', rezept: { kleidung: null, helligkeit: 0, muster: 'keins', musterFarbe: null, hut: 'krone', hutFarbe: null } }).ok === true);
+  saveProgress();
+  loadProgress();
+  pruefe('Freigeschaltete Teile überstehen das Neuladen', teilFrei('hut', 'krone'));
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ studioTeile: ['hut-krone', 'hut-krone', 'quatsch', 5] }));
+  loadProgress();
+  pruefe('Unbekannte und doppelte Teile werden beim Laden entfernt', gameState.studioTeile.join() === 'hut-krone');
+
+  // Truhen: Hüte und Muster kommen auch aus Truhen - nur, was man noch nicht hat.
+  resetProgress();
+  let gefunden = 0;
+  for (let i = 0; i < 300; i++) {
+    truheOeffnenStudio(TRUHEN[2]).forEach((stueck) => {
+      if (stueck.art !== 'studio') return;
+      gefunden++;
+      beuteGutschreiben(stueck);
+    });
+  }
+  pruefe('Aus Truhen kommen Hüte und Muster', gefunden > 0 && gameState.studioTeile.length > 0);
+  pruefe('Nie ein Teil doppelt', new Set(gameState.studioTeile).size === gameState.studioTeile.length && gefunden === gameState.studioTeile.length);
+  resetProgress();
+}
+
 console.log('\nZeit-Truhen (Holz alle 30 Min, Gold jede Stunde)');
 {
   resetProgress();
@@ -1456,6 +1503,8 @@ console.log('\nSkin-Werkstatt: eigene Outfits');
   for (let y = 0; y < raum + 2; y++) for (let x = 0; x < w; x++) if (rot.data[(y * w + x) * 4 + 3]) hutPixel++;
   pruefe('Die Krone sitzt über dem Kopf', hutPixel > 10);
 
+  // Für diese Tests: alle Hüte und Muster schon freigeschaltet.
+  gameState.studioTeile = STUDIO_TEILE.map((t) => t.id);
   const rezept = { kleidung: '#2e9d4e', helligkeit: 0.1, hut: 'partyhut', hutFarbe: null };
   const r1 = outfitSpeichern({ name: 'Party-Timo', rezept });
   pruefe('Ein Outfit speichern', r1.ok && eigeneSkins().length === 1 && gameState.eigeneOutfits[0].name === 'Party-Timo');
@@ -1482,43 +1531,23 @@ console.log('\nSkin-Werkstatt: eigene Outfits');
     geladen.length === 1 && geladen[0].name.length === 20 && geladen[0].rezept.kleidung === '#abcdef' &&
     geladen[0].rezept.helligkeit === 0.2 && geladen[0].rezept.hut === 'keiner' && geladen[0].rezept.hutFarbe === null);
 
-  // Skin-Studio: Muster, importierte Bilder, Seltenheit
+  // Skin-Studio: Muster
   const mitMuster = poseBauen(original, kopf, { kleidung: '#ffffff', helligkeit: 0, muster: 'streifen', musterFarbe: '#000000', hut: 'keiner' });
   const farbenDerJacke = new Set();
   for (let y = 14; y < 40; y++) farbenDerJacke.add(px(mitMuster, 8, y + raum).slice(0, 3).join());
   pruefe('Streifenmuster: die Jacke hat zwei Farben', farbenDerJacke.size >= 2);
-  const kachelBild = { width: 2, height: 1, data: new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 255]) };
-  const mitImport = poseBauen(original, kopf, { kleidung: null, helligkeit: 0, muster: 'import:x', hut: 'keiner' }, { musterBild: kachelBild });
-  const imp = new Set();
-  for (let x = 4; x < 16; x++) imp.add(px(mitImport, x, 30 + raum).slice(0, 3).join());
-  pruefe('Importiertes Muster färbt die Kleidung in seinen Farben', imp.size >= 2);
-  const hutPx = { width: 4, height: 2, data: new Uint8ClampedArray(4 * 2 * 4).fill(200) };
-  const mitHut = poseBauen(original, kopf, { kleidung: null, hut: 'import:h', hutGroesse: 1, hutSitz: 0 }, { hutBild: hutPx });
-  let hutGezeichnet = 0;
-  for (let i = 0; i < mitHut.data.length; i += 4) if (mitHut.data[i] === 200 && mitHut.data[i + 3] === 255) hutGezeichnet++;
-  pruefe('Importierter Hut wird auf den Kopf gesetzt', hutGezeichnet > 10);
-  const foto = { width: 6, height: 6, data: new Uint8ClampedArray(6 * 6 * 4).fill(255) };
-  foto.data.set([10, 200, 10, 255], (2 * 6 + 3) * 4);
-  const sauber = importBildSaeubern(foto);
-  pruefe('Import: weißer Hintergrund fällt weg, Ränder werden abgeschnitten', sauber.width === 1 && sauber.height === 1 && sauber.data[1] === 200);
 
-  outfitSpeichern({ name: 'Studio', seltenheit: 'selten', text: 'Test', rezept: { ...rezept, muster: 'import:muster-abc', hut: 'import:hut-xyz', hutGroesse: 1.4, hutSitz: -0.2 } });
+  gameState.studioTeile = STUDIO_TEILE.map((t) => t.id);
+  outfitSpeichern({ name: 'Studio', seltenheit: 'selten', text: 'Test', rezept: { ...rezept, muster: 'tarn', hut: 'zauberhut' } });
   saveProgress();
   loadProgress();
   const st = gameState.eigeneOutfits[0];
-  pruefe('Studio-Skin: Seltenheit, Text, Muster und importierter Hut bleiben erhalten',
-    st.seltenheit === 'selten' && st.text === 'Test' && st.rezept.muster === 'import:muster-abc' &&
-    st.rezept.hut === 'import:hut-xyz' && st.rezept.hutGroesse === 1.4 && st.rezept.hutSitz === -0.2);
-  const paket = skinPaket();
-  pruefe('Skin-Paket enthält Name, Seltenheit und Rezept', paket.format === 'monsterquest-skins' &&
-    paket.skins[0].name === 'Studio' && paket.skins[0].seltenheit === 'selten' && paket.skins[0].rezept.hutGroesse === 1.4);
-
-  // PNG-Werkzeug: Lesen und Schreiben ohne Verlust
-  const front = pngLesen(readFileSync(new URL('../bilder/timo/front.png', import.meta.url)));
-  const zurueck = pngLesen(pngSchreiben(front));
-  pruefe('PNG lesen und schreiben verliert keine Pixel',
-    zurueck.width === front.width && zurueck.data.every((v, i) => (front.data[i - (i % 4) + 3] ? v === front.data[i] : true)));
-  pruefe('Studio-Skins werden in SKINS aufgenommen', STUDIO_SKINS.every((s) => SKINS.includes(s)));
+  pruefe('Studio-Skin: Seltenheit, Text, Muster und Hut bleiben erhalten',
+    st.seltenheit === 'selten' && st.text === 'Test' && st.rezept.muster === 'tarn' && st.rezept.hut === 'zauberhut');
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ eigeneOutfits: [{ id: 'eigen-x1', name: 'a', rezept: { muster: 'import:abc', hut: 'import:xyz' } }] }));
+  loadProgress();
+  pruefe('Importierte Bilder gibt es nicht mehr - sie werden beim Laden entfernt',
+    gameState.eigeneOutfits[0].rezept.muster === 'keins' && gameState.eigeneOutfits[0].rezept.hut === 'keiner');
   resetProgress();
   pruefe('Zurücksetzen leert die eigenen Outfits', eigeneSkins().length === 0);
 }
