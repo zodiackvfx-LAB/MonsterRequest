@@ -1442,6 +1442,11 @@
 .welt-teilchen--schatten .welt-teilchen__stueck { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #b28cff, rgba(80, 40, 140, 0)); }
 .welt-teilchen--sand .welt-teilchen__stueck { width: 5px; height: 5px; border-radius: 50%; background: #f2d28c; }
 .welt-teilchen--feder .welt-teilchen__stueck { width: 6px; height: 16px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; background: linear-gradient(90deg, #ffffff, #dfe8ff); }
+.welt-teilchen--blase .welt-teilchen__stueck { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffffff, rgba(160, 230, 255, 0.4) 60%, rgba(160, 230, 255, 0)); border: 1px solid rgba(255, 255, 255, 0.7); }
+.welt-teilchen--irrlicht .welt-teilchen__stueck { width: 7px; height: 7px; border-radius: 50%; background: #d8ff9a; box-shadow: 0 0 10px 3px rgba(170, 255, 120, 0.7); }
+.welt-teilchen--zahnrad .welt-teilchen__stueck { width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, #5e5242 0 22%, #c9a14a 24%); box-shadow: 0 0 0 2px #8a6a2a; }
+.welt-teilchen--streusel .welt-teilchen__stueck { width: 4px; height: 11px; border-radius: 3px; background: linear-gradient(#ff6fa8, #ffd84d); }
+.welt-teilchen--stern .welt-teilchen__stueck { width: 10px; height: 10px; background: #ffe27a; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); box-shadow: 0 0 6px #ffe27a; }
 
 /* =========================================================================
    6. Startbildschirm und Wolken
@@ -2818,8 +2823,9 @@
 /* ---------- Alle Ligen ---------- */
 .ligen-leiste {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 4px;
+  /* 13 Ligen: zwei Reihen à 7 */
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px 4px;
   margin-top: 6px;
 }
 

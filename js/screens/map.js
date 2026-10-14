@@ -190,11 +190,12 @@ export const mapScreen = {
     weltTeilchen(screen, world.id);
 
     // Sterne dieser Welt in der Kopfleiste ergänzen
-    const hud = screen.querySelector('.hud');
+    // (rechts zu Trophäen und Münzen - so passt alles in eine Reihe).
+    const rechts = screen.querySelector('.hud__rechts') ?? screen.querySelector('.hud');
     const starChip = document.createElement('div');
-    starChip.className = 'hud__coins';
-    starChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars(worldId)} / ${levels.length * 3}</span>`;
-    hud.insertBefore(starChip, hud.lastElementChild);
+    starChip.className = 'hud__coins hud__sterne';
+    starChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars(worldId)}/${levels.length * 3}</span>`;
+    rechts.prepend(starChip);
 
     // Zum ausgewählten Kampf scrollen - und zwar so, dass er komplett im
     // Bild liegt und nicht am oberen oder unteren Rand angeschnitten wird.

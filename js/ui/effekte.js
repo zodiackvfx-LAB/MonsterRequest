@@ -198,6 +198,11 @@ const WELT_TEILCHEN = {
   5: ['schatten', true],
   6: ['sand', false],
   7: ['feder', false],
+  8: ['blase', true],
+  9: ['irrlicht', true],
+  10: ['zahnrad', false],
+  11: ['streusel', false],
+  12: ['stern', false],
 };
 
 /**

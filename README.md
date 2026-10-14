@@ -4,7 +4,7 @@ Ein 2D-Mobile-Game im Browser: Cartoon-Monster-RPG mit Weltkarte und
 taktischem Echtzeit-Kampfsystem. Gebaut mit reinem HTML, CSS und JavaScript –
 ohne Framework, ohne Build-Schritt.
 
-**Stand:** 7 Welten mit je 12 Kämpfen, zwei Spielfiguren (Timo und Rocco),
+**Stand:** 12 Welten mit je 12 Kämpfen (144 Kämpfe), zwei Spielfiguren (Timo und Rocco),
 Endlos-Arena, Tägliche Herausforderung, Boss-Rush, Zeitangriff, Truhenplätze,
 Trophäen mit Rangliste, Shop, Tagesaufgaben, Erfolge und Spielstand-Übertragung.
 
@@ -125,6 +125,31 @@ Darstellung (`screens/`) bleiben getrennt. Die Kampf-Engine weiß nicht, wie ein
 Kampf aussieht – der Kampfbildschirm kennt keine Kampfregeln.
 
 ---
+
+## Die Welten
+
+| Nr. | Welt | Boss | Boss-Kraft |
+|---|---|---|---|
+| 1 | 🌿 Grünes Tal | Borkenwächter | Rindenpanzer |
+| 2 | 💎 Kristallhöhlen | Kristallgolem | Prismabrecher |
+| 3 | 🌋 Vulkanlande | Schlackenfürst | Inferno |
+| 4 | ❄️ Eisgebirge | Frostherrscher | Frostbann |
+| 5 | 🌙 Schattenreich | Schattenmagier | Seelenraub |
+| 6 | 🏜️ Wüstenreich | Dünenkönig | Sandsturm |
+| 7 | 🌤️ Himmelsinseln | Sturmfürst | Gewittersturm |
+| 8 | 🐠 Korallenriff | Tiefenkraken | Strudelfalle |
+| 9 | 🕯️ Spukmoor | Moorhexe | Irrlichtfluch |
+| 10 | ⚙️ Uhrwerkstadt | Zahnradkoloss | Stahlpanzer |
+| 11 | 🍭 Zuckerland | Karamellkönigin | Zuckerrausch |
+| 12 | 🌌 Sternenwelt | Sternenkaiser | Supernova |
+
+Jede Welt ist stärker als die davor. Ab Welt 8 braucht man gelevelte Karten,
+Aufwertungen und eine gute Boss-Kraft (grob: Welt 12 ab Charakter-Level 25–30
+und Karten-Level 8–9). Neue Welt = ein Eintrag in `js/data/worlds.js`, dazu
+Boss-Kraft (`js/data/kraefte.js`), Musik (`js/data/musik.js`), Kampfstimmung
+(`STIMMUNGEN` in `js/ui/umgebung.js`), Teilchen auf der Karte
+(`WELT_TEILCHEN` in `js/ui/effekte.js`) und optional eine eigene Kulisse
+(`.region--…` in `css/scenery.css`).
 
 ## Spielregeln
 

@@ -65,6 +65,35 @@ const STIMMUNGEN = {
     wetter: { sonnig: 5, bewoelkt: 3, regen: 1 },
     tiere: 'falter',
     voegel: true,
+  },  8: {
+    varianten: [['wiese', 'Sandgrund'], ['bach', 'Strömungsrinne'], ['lichtung', 'Lichtkegel']],
+    wetter: { glitzer: 4, nebel: 3, sonnig: 3 }, // Glitzer = leuchtendes Plankton
+    tiere: 'gluehwurm',
+    voegel: false,
+  },
+  9: {
+    varianten: [['wiese', 'Nebelsumpf'], ['bach', 'Moorbach'], ['lichtung', 'Irrlichtlichtung']],
+    wetter: { nebel: 6, regen: 3, bewoelkt: 1 },
+    tiere: 'gluehwurm',
+    voegel: false,
+  },
+  10: {
+    varianten: [['wiese', 'Werkhof'], ['bach', 'Ölkanal'], ['lichtung', 'Dampfplatz']],
+    wetter: { bewoelkt: 4, nebel: 3, glut: 2 }, // Nebel = Dampf, Glut = Funkenflug
+    tiere: null,
+    voegel: true,
+  },
+  11: {
+    varianten: [['wiese', 'Bonbonwiese'], ['bach', 'Schokofluss'], ['lichtung', 'Zuckerlichtung']],
+    wetter: { sonnig: 5, glitzer: 3, schnee: 2 }, // Schnee = Puderzucker
+    tiere: 'falter',
+    voegel: true,
+  },
+  12: {
+    varianten: [['wiese', 'Mondfeld'], ['bach', 'Milchstraße'], ['lichtung', 'Sternenlichtung']],
+    wetter: { glitzer: 6, nebel: 2 },
+    tiere: 'gluehwurm',
+    voegel: false,
   },
 };
 

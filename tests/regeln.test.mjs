@@ -1393,6 +1393,21 @@ console.log('\nKampf-Modi: Herausforderung, Boss-Rush, Zeitangriff');
   resetProgress();
 }
 
+console.log('\nWelten 8 bis 12');
+{
+  pruefe('Es gibt 12 Welten mit fortlaufenden Nummern', WORLDS.length === 12 && WORLDS.every((w, i) => w.id === i + 1));
+  pruefe('Jede Welt ist stärker als die davor (Schaden, Leben, Belohnung)',
+    WORLDS.every((w, i) => i === 0 || (w.powerPerXp > WORLDS[i - 1].powerPerXp && w.baseHp > WORLDS[i - 1].baseHp && w.reward > WORLDS[i - 1].reward)));
+  pruefe('Jede Welt hat 11 Gegner, einen Boss und je 8 Attacken',
+    WORLDS.every((w) => w.enemies.length === 11 && w.boss && w.attacks.length === 8 && w.bossAttacks.length === 8));
+  pruefe('Keine zwei Welten heißen gleich', new Set(WORLDS.map((w) => w.name)).size === WORLDS.length);
+  pruefe('Gegnernamen sind über alle Welten einmalig',
+    new Set(WORLDS.flatMap((w) => [...w.enemies.map((e) => e.n), w.boss.n])).size === WORLDS.length * 12);
+  pruefe('Jede Welt hat 12 Kämpfe auf der Karte', WORLDS.every((w) => levelsOfWorld(w.id).length === 12));
+  pruefe('Jede Welt hat Arena-Stimmungen', WORLDS.every((w) => ALLE_STIMMUNGEN[w.id]));
+  pruefe('Mit jeder Welt gibt es ungefähr eine neue Liga', LIGEN.length >= WORLDS.length);
+}
+
 console.log('\nStudio-Teile: Farben gratis, Hüte und Muster freischalten');
 {
   resetProgress();

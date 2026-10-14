@@ -407,6 +407,25 @@
   min-width: 0;
 }
 
+/* Auf der Weltkarte stehen rechts drei Anzeigen (Sterne, Trophäen, Münzen) -
+   etwas kompakter, damit sie auch auf schmalen Handys in eine Reihe passen. */
+.screen--map .hud__rechts .hud__coins,
+.screen--map .hud__trophaeen {
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* Dafür zeigt die Karte links nur das Bild der Figur (Name und Level stehen
+   auf der Startseite). */
+.screen--map .hud__level {
+  display: none;
+}
+
+.screen--map .hud__player {
+  padding: 4px;
+}
+
 /* Die Trophäen sind ein Knopf: ein Tipp öffnet die Rangliste. Der Rand
    leuchtet in der Farbe der eigenen Liga. */
 .hud__trophaeen {

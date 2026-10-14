@@ -645,10 +645,70 @@ body.no-animations *::after {
   height: calc(var(--h) * 0.12);
 }
 
-/* In Vulkan, Schatten und Wüste wächst nichts, was blüht. */
+/* Korallenriff: verzweigte Korallen statt Bäume */
+.region--riff .arena__tree-top {
+  clip-path: polygon(
+    44% 100%, 44% 62%, 22% 44%, 16% 14%, 26% 12%, 30% 38%, 44% 48%, 42% 18%, 50% 0%,
+    58% 18%, 56% 48%, 70% 34%, 74% 8%, 84% 10%, 80% 42%, 56% 62%, 56% 100%
+  );
+}
+
+.region--riff .arena__tree-trunk {
+  display: none;
+}
+
+/* Spukmoor: Schilfkolben, schief im Nebel */
+.region--moor .arena__tree-top {
+  clip-path: polygon(
+    46% 0%, 56% 0%, 58% 30%, 54% 30%, 54% 100%, 46% 100%, 46% 30%, 42% 30%,
+    30% 26%, 24% 8%, 32% 6%, 38% 24%, 46% 30%
+  );
+}
+
+/* Uhrwerkstadt: Türme mit Zahnrad-Krone */
+.region--uhrwerk .arena__tree-top {
+  clip-path: polygon(
+    20% 22%, 30% 22%, 30% 8%, 42% 8%, 42% 22%, 58% 22%, 58% 8%, 70% 8%, 70% 22%,
+    80% 22%, 80% 34%, 70% 34%, 70% 100%, 30% 100%, 30% 34%, 20% 34%
+  );
+}
+
+.region--uhrwerk .arena__tree-trunk {
+  background: linear-gradient(90deg, #6b5a44, #3e3326);
+}
+
+/* Zuckerland: Lollis auf einem weißen Stiel */
+.region--zucker .arena__tree-top {
+  clip-path: circle(38% at 50% 38%);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 38%, var(--s-tree) 0deg 30deg, #ffffff 30deg 60deg);
+}
+
+.region--zucker .arena__tree-trunk {
+  height: calc(var(--h) * 0.5);
+  background: linear-gradient(90deg, #ffffff, #e8dce4);
+}
+
+/* Sternenwelt: leuchtende Sterne auf Stäben */
+.region--sterne .arena__tree-top {
+  clip-path: polygon(
+    50% 0%, 61% 24%, 88% 26%, 67% 43%, 74% 70%, 50% 55%, 26% 70%, 33% 43%, 12% 26%, 39% 24%
+  );
+  filter: drop-shadow(0 0 6px var(--s-tree));
+}
+
+.region--sterne .arena__tree-trunk {
+  height: calc(var(--h) * 0.5);
+  width: calc(var(--h) * 0.04);
+  background: linear-gradient(90deg, #c9c3ff, #8a7ad0);
+}
+
+/* In Vulkan, Schatten, Wüste, Uhrwerk und Sternen wächst nichts, was blüht. */
 .region--vulkan .arena__flower,
 .region--schatten .arena__flower,
-.region--wueste .arena__flower {
+.region--wueste .arena__flower,
+.region--uhrwerk .arena__flower,
+.region--sterne .arena__flower {
   display: none;
 }
 
@@ -1264,6 +1324,25 @@ body.no-animations *::after {
   align-items: center;
   gap: 6px;
   min-width: 0;
+}
+
+/* Auf der Weltkarte stehen rechts drei Anzeigen (Sterne, Trophäen, Münzen) -
+   etwas kompakter, damit sie auch auf schmalen Handys in eine Reihe passen. */
+.screen--map .hud__rechts .hud__coins,
+.screen--map .hud__trophaeen {
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* Dafür zeigt die Karte links nur das Bild der Figur (Name und Level stehen
+   auf der Startseite). */
+.screen--map .hud__level {
+  display: none;
+}
+
+.screen--map .hud__player {
+  padding: 4px;
 }
 
 /* Die Trophäen sind ein Knopf: ein Tipp öffnet die Rangliste. Der Rand
@@ -6282,6 +6361,11 @@ body.no-animations *::after {
 .welt-teilchen--schatten .welt-teilchen__stueck { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #b28cff, rgba(80, 40, 140, 0)); }
 .welt-teilchen--sand .welt-teilchen__stueck { width: 5px; height: 5px; border-radius: 50%; background: #f2d28c; }
 .welt-teilchen--feder .welt-teilchen__stueck { width: 6px; height: 16px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; background: linear-gradient(90deg, #ffffff, #dfe8ff); }
+.welt-teilchen--blase .welt-teilchen__stueck { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffffff, rgba(160, 230, 255, 0.4) 60%, rgba(160, 230, 255, 0)); border: 1px solid rgba(255, 255, 255, 0.7); }
+.welt-teilchen--irrlicht .welt-teilchen__stueck { width: 7px; height: 7px; border-radius: 50%; background: #d8ff9a; box-shadow: 0 0 10px 3px rgba(170, 255, 120, 0.7); }
+.welt-teilchen--zahnrad .welt-teilchen__stueck { width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, #5e5242 0 22%, #c9a14a 24%); box-shadow: 0 0 0 2px #8a6a2a; }
+.welt-teilchen--streusel .welt-teilchen__stueck { width: 4px; height: 11px; border-radius: 3px; background: linear-gradient(#ff6fa8, #ffd84d); }
+.welt-teilchen--stern .welt-teilchen__stueck { width: 10px; height: 10px; background: #ffe27a; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); box-shadow: 0 0 6px #ffe27a; }
 
 /* =========================================================================
    6. Startbildschirm und Wolken
@@ -7658,8 +7742,9 @@ body.no-animations *::after {
 /* ---------- Alle Ligen ---------- */
 .ligen-leiste {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 4px;
+  /* 13 Ligen: zwei Reihen à 7 */
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px 4px;
   margin-top: 6px;
 }
 
@@ -8128,6 +8213,66 @@ var MUSIK = {
     form: "triangle",
     bassForm: "sine",
     lautstaerke: 0.95
+  },
+  // Korallenriff: weich und wogend, wie unter Wasser - Moll-Pentatonik
+  riff: {
+    grundton: 220,
+    // A3
+    skala: [0, 3, 5, 7, 10],
+    muster: [0, null, null, 2, null, 4, null, null, 3, null, null, 2, null, 1, null, null],
+    bassfolge: [0, 2, 3, 1],
+    tempo: 78,
+    form: "sine",
+    bassForm: "sine",
+    lautstaerke: 1
+  },
+  // Spukmoor: langsam und unheimlich, schleichende Halbtöne - Phrygisch
+  moor: {
+    grundton: 164.81,
+    // E3
+    skala: [0, 1, 3, 5, 7, 8],
+    muster: [0, null, 1, null, null, null, 0, null, 3, null, 2, null, 1, null, null, null],
+    bassfolge: [0, 1, 0, 5],
+    tempo: 70,
+    form: "triangle",
+    bassForm: "sine",
+    lautstaerke: 0.95
+  },
+  // Uhrwerkstadt: tickend, gleichmäßig, mechanisch - Dur, kurze Töne
+  uhrwerk: {
+    grundton: 261.63,
+    // C4
+    skala: [0, 2, 4, 5, 7, 9, 11],
+    muster: [0, 4, 0, 4, 2, 5, 2, 5, 4, 7, 4, 7, 2, 4, 0, null],
+    bassfolge: [0, 4, 3, 4],
+    tempo: 132,
+    form: "square",
+    bassForm: "triangle",
+    lautstaerke: 0.75
+  },
+  // Zuckerland: hüpfend und fröhlich - Dur-Pentatonik, hoch
+  zucker: {
+    grundton: 329.63,
+    // E4
+    skala: [0, 2, 4, 7, 9],
+    muster: [0, 2, 4, null, 4, null, 5, 4, 2, null, 0, null, 2, null, null, null],
+    bassfolge: [0, 3, 1, 4],
+    tempo: 124,
+    form: "triangle",
+    bassForm: "sine",
+    lautstaerke: 0.9
+  },
+  // Sternenwelt: weit und schwebend, ohne Halt - Ganztonleiter, sehr ruhig
+  sterne: {
+    grundton: 246.94,
+    // H3
+    skala: [0, 2, 4, 6, 8, 10],
+    muster: [0, null, null, null, 3, null, null, null, 5, null, 4, null, 2, null, null, null],
+    bassfolge: [0, 3, 2, 4],
+    tempo: 64,
+    form: "sine",
+    bassForm: "triangle",
+    lautstaerke: 1
   },
   /*
    * Das Titelthema von MonsterQuest.
@@ -8621,6 +8766,310 @@ var WORLDS = [
       { n: "Himmelsschlange", i: "🐍" }
     ],
     boss: { n: "Sturmfürst", i: "🌩️" }
+  },
+  /* ===================================================================
+     Ab hier die Welten 8 bis 12 - deutlich stärker. Wer Welt 7 schafft,
+     muss hier seine Karten leveln und eine gute Boss-Kraft tragen.
+     =================================================================== */
+  {
+    id: 8,
+    name: "Korallenriff",
+    icon: "🐠",
+    hueBase: 185,
+    // Türkis wie das Meer
+    scenery: "riff",
+    farben: {
+      himmelOben: "#0e5a8a",
+      himmelUnten: "#4fc3e0",
+      wiese: "#e8c98a",
+      wieseDunkel: "#c2a062",
+      wieseHell: "#f5e0ae",
+      fels: "#3f8fa8",
+      felsDunkel: "#2a6680",
+      baum: "#ff7a8a",
+      baumDunkel: "#d0465c",
+      schnee: "#e9fbff"
+    },
+    text: "Bunte Korallen auf dem Meeresgrund - und etwas Großes in der Tiefe.",
+    music: "riff",
+    powerPerXp: 5,
+    baseHp: 285,
+    hpGrowth: 13,
+    reward: 235,
+    attacks: [
+      { n: "Blubberblase", i: "🫧", c: 1 },
+      { n: "Flossenschlag", i: "🐟", c: 1 },
+      { n: "Strudelstoß", i: "🌊", c: 2 },
+      { n: "Muschelwurf", i: "🐚", c: 2 },
+      { n: "Tintenspritzer", i: "🦑", c: 3 },
+      { n: "Korallenhieb", i: "🪸", c: 3 },
+      { n: "Wellenbrecher", i: "🌊", c: 4 },
+      { n: "Tiefseedruck", i: "💧", c: 5 }
+    ],
+    bossAttacks: [
+      { n: "Saugnapf", i: "🐙", c: 1 },
+      { n: "Tentakelhieb", i: "🦑", c: 2 },
+      { n: "Panzerschale", i: "🐚", c: 2, shield: true },
+      { n: "Meeresbrise", i: "🫧", c: 2, heal: true },
+      { n: "Strömung", i: "🌊", c: 3 },
+      { n: "Tintenwolke", i: "🌫️", c: 3 },
+      { n: "Tiefenzug", i: "🌀", c: 4 },
+      { n: "Krakenumarmung", i: "💢", c: 5 }
+    ],
+    enemies: [
+      { n: "Blubbergnom", i: "🫧" },
+      { n: "Clownfischchen", i: "🐠" },
+      { n: "Seesternchen", i: "⭐" },
+      { n: "Krabbenkrieger", i: "🦀" },
+      { n: "Quallenglimmer", i: "🪼" },
+      { n: "Muschelmaul", i: "🐚" },
+      { n: "Seepferdritter", i: "🐴" },
+      { n: "Kugelfisch", i: "🐡" },
+      { n: "Rochenschatten", i: "🐟" },
+      { n: "Muränenbiss", i: "🐍" },
+      { n: "Hammerhai", i: "🦈" }
+    ],
+    boss: { n: "Tiefenkraken", i: "🐙" }
+  },
+  {
+    id: 9,
+    name: "Spukmoor",
+    icon: "🕯️",
+    hueBase: 95,
+    // fahles Sumpfgrün
+    scenery: "moor",
+    farben: {
+      himmelOben: "#2b3a2e",
+      himmelUnten: "#8fa58a",
+      wiese: "#4f6b3c",
+      wieseDunkel: "#33482a",
+      wieseHell: "#6f8d55",
+      fels: "#6b6f5a",
+      felsDunkel: "#4a4d3e",
+      baum: "#3f5a36",
+      baumDunkel: "#273a22",
+      schnee: "#d8e8c8"
+    },
+    text: "Nebel, Irrlichter und Schritte, wo niemand ist. Bleib auf dem Weg!",
+    music: "moor",
+    powerPerXp: 5.2,
+    baseHp: 320,
+    hpGrowth: 14,
+    reward: 285,
+    attacks: [
+      { n: "Irrlichtfunke", i: "🕯️", c: 1 },
+      { n: "Modergriff", i: "🖐️", c: 1 },
+      { n: "Sumpfgas", i: "💨", c: 2 },
+      { n: "Krötenzunge", i: "🐸", c: 2 },
+      { n: "Nebelbiss", i: "🌫️", c: 3 },
+      { n: "Moorschlinge", i: "🌿", c: 3 },
+      { n: "Spukheulen", i: "👻", c: 4 },
+      { n: "Grabeskälte", i: "🥶", c: 5 }
+    ],
+    bossAttacks: [
+      { n: "Hexenfinger", i: "☝️", c: 1 },
+      { n: "Fluchbann", i: "🔮", c: 2 },
+      { n: "Kräutertrank", i: "🧪", c: 2, heal: true },
+      { n: "Nebelschleier", i: "🌫️", c: 2, shield: true },
+      { n: "Krötenregen", i: "🐸", c: 3 },
+      { n: "Irrlichtschwarm", i: "🕯️", c: 3 },
+      { n: "Sumpfsog", i: "🌀", c: 4 },
+      { n: "Hexenfluch", i: "💀", c: 5 }
+    ],
+    enemies: [
+      { n: "Irrlichtchen", i: "🕯️" },
+      { n: "Moorkröte", i: "🐸" },
+      { n: "Nebelfledermaus", i: "🦇" },
+      { n: "Sumpfschnapper", i: "🐊" },
+      { n: "Gruselrabe", i: "🐦" },
+      { n: "Schlammgolem", i: "🪨" },
+      { n: "Grabwurm", i: "🪱" },
+      { n: "Spukeule", i: "🦉" },
+      { n: "Kesselgeist", i: "👻" },
+      { n: "Knochenkrähe", i: "💀" },
+      { n: "Moorwolf", i: "🐺" }
+    ],
+    boss: { n: "Moorhexe", i: "🧙" }
+  },
+  {
+    id: 10,
+    name: "Uhrwerkstadt",
+    icon: "⚙️",
+    hueBase: 38,
+    // Messing
+    scenery: "uhrwerk",
+    farben: {
+      himmelOben: "#5a4a3a",
+      himmelUnten: "#d8b98a",
+      wiese: "#8a7a62",
+      wieseDunkel: "#5e5242",
+      wieseHell: "#b0a084",
+      fels: "#a8794a",
+      felsDunkel: "#7a5532",
+      baum: "#c9a14a",
+      baumDunkel: "#8a6a2a",
+      schnee: "#f5ecd8"
+    },
+    text: "Eine Stadt aus Zahnrädern und Dampf. Hier tickt alles - auch die Gegner.",
+    music: "uhrwerk",
+    powerPerXp: 5.4,
+    baseHp: 355,
+    hpGrowth: 14,
+    reward: 340,
+    attacks: [
+      { n: "Zahnradwurf", i: "⚙️", c: 1 },
+      { n: "Funkenstoß", i: "✨", c: 1 },
+      { n: "Hammerschlag", i: "🔨", c: 2 },
+      { n: "Dampfstrahl", i: "♨️", c: 2 },
+      { n: "Schraubenhagel", i: "🔩", c: 3 },
+      { n: "Kettenpeitsche", i: "⛓️", c: 3 },
+      { n: "Kolbenstoß", i: "🛠️", c: 4 },
+      { n: "Turbinenschlag", i: "🌪️", c: 5 }
+    ],
+    bossAttacks: [
+      { n: "Nietenhieb", i: "🔩", c: 1 },
+      { n: "Presslufthammer", i: "🔨", c: 2 },
+      { n: "Stahlplatte", i: "🛡️", c: 2, shield: true },
+      { n: "Ölkanne", i: "🛢️", c: 2, heal: true },
+      { n: "Dampfexplosion", i: "♨️", c: 3 },
+      { n: "Zahnradmühle", i: "⚙️", c: 3 },
+      { n: "Laserauge", i: "🔴", c: 4 },
+      { n: "Maschinenzorn", i: "🤖", c: 5 }
+    ],
+    enemies: [
+      { n: "Schraubenwicht", i: "🔩" },
+      { n: "Federmaus", i: "🐭" },
+      { n: "Zahnradkäfer", i: "🪲" },
+      { n: "Dampfspatz", i: "🐦" },
+      { n: "Blechhund", i: "🐕" },
+      { n: "Kettenschlange", i: "⛓️" },
+      { n: "Uhrwerkeule", i: "🦉" },
+      { n: "Kolbenkrabbe", i: "🦀" },
+      { n: "Funkenfliege", i: "✨" },
+      { n: "Ambossbär", i: "🐻" },
+      { n: "Turmwächter", i: "🤖" }
+    ],
+    boss: { n: "Zahnradkoloss", i: "⚙️" }
+  },
+  {
+    id: 11,
+    name: "Zuckerland",
+    icon: "🍭",
+    hueBase: 325,
+    // Bonbonrosa
+    scenery: "zucker",
+    farben: {
+      himmelOben: "#ff9ad5",
+      himmelUnten: "#ffe6f4",
+      wiese: "#9be3c4",
+      wieseDunkel: "#5fbf98",
+      wieseHell: "#c6f5df",
+      fels: "#f7c1a0",
+      felsDunkel: "#d48f68",
+      baum: "#ff6fa8",
+      baumDunkel: "#d43f80",
+      schnee: "#ffffff"
+    },
+    text: "Alles hier ist süß - nur die Bewohner nicht. Vorsicht, klebrig!",
+    music: "zucker",
+    powerPerXp: 5.6,
+    baseHp: 390,
+    hpGrowth: 15,
+    reward: 400,
+    attacks: [
+      { n: "Zuckerstreusel", i: "🍬", c: 1 },
+      { n: "Kaugummiblase", i: "🫧", c: 1 },
+      { n: "Bonbonwurf", i: "🍬", c: 2 },
+      { n: "Sahnespritzer", i: "🍦", c: 2 },
+      { n: "Kekskrümel", i: "🍪", c: 3 },
+      { n: "Schokoflut", i: "🍫", c: 3 },
+      { n: "Lollihieb", i: "🍭", c: 4 },
+      { n: "Tortenlawine", i: "🎂", c: 5 }
+    ],
+    bossAttacks: [
+      { n: "Zimtstern", i: "⭐", c: 1 },
+      { n: "Karamellschlag", i: "🍮", c: 2 },
+      { n: "Zuckerguss", i: "🧁", c: 2, shield: true },
+      { n: "Honigtrunk", i: "🍯", c: 2, heal: true },
+      { n: "Bonbonregen", i: "🍬", c: 3 },
+      { n: "Schokowelle", i: "🍫", c: 3 },
+      { n: "Marzipanfaust", i: "🍡", c: 4 },
+      { n: "Zuckerschock", i: "💥", c: 5 }
+    ],
+    enemies: [
+      { n: "Gummibärchen", i: "🧸" },
+      { n: "Bonbonwicht", i: "🍬" },
+      { n: "Keksmonster", i: "🍪" },
+      { n: "Lollilöwe", i: "🦁" },
+      { n: "Watteschaf", i: "🐑" },
+      { n: "Donutdrache", i: "🍩" },
+      { n: "Puddingglibber", i: "🍮" },
+      { n: "Schokokäfer", i: "🐞" },
+      { n: "Waffelritter", i: "🍦" },
+      { n: "Kirschbombe", i: "🍒" },
+      { n: "Lebkuchenriese", i: "🏠" }
+    ],
+    boss: { n: "Karamellkönigin", i: "👸" }
+  },
+  {
+    id: 12,
+    name: "Sternenwelt",
+    icon: "🌌",
+    hueBase: 255,
+    // Nachtviolett
+    scenery: "sterne",
+    farben: {
+      himmelOben: "#0b0a2e",
+      himmelUnten: "#3a2f7a",
+      wiese: "#4a3f8f",
+      wieseDunkel: "#2c2566",
+      wieseHell: "#6f63b8",
+      fels: "#8a7ad0",
+      felsDunkel: "#564a9e",
+      baum: "#ffe27a",
+      baumDunkel: "#c9a83a",
+      schnee: "#e8e4ff"
+    },
+    text: "Ganz oben, zwischen den Sternen, wartet der letzte und stärkste Gegner.",
+    music: "sterne",
+    powerPerXp: 5.9,
+    baseHp: 430,
+    hpGrowth: 16,
+    reward: 470,
+    attacks: [
+      { n: "Sternstaub", i: "✨", c: 1 },
+      { n: "Kometenfunke", i: "☄️", c: 1 },
+      { n: "Mondsichel", i: "🌙", c: 2 },
+      { n: "Nebelring", i: "🪐", c: 2 },
+      { n: "Meteorschauer", i: "🌠", c: 3 },
+      { n: "Polarlicht", i: "🌌", c: 3 },
+      { n: "Gravitation", i: "🌀", c: 4 },
+      { n: "Urknallecho", i: "💫", c: 5 }
+    ],
+    bossAttacks: [
+      { n: "Lichtjahr", i: "⭐", c: 1 },
+      { n: "Sternenklinge", i: "🗡️", c: 2 },
+      { n: "Galaxienschild", i: "🛡️", c: 2, shield: true },
+      { n: "Mondlicht", i: "🌕", c: 2, heal: true },
+      { n: "Schwarzes Loch", i: "🕳️", c: 3 },
+      { n: "Sonnenwind", i: "🌞", c: 3 },
+      { n: "Kometenhagel", i: "☄️", c: 4 },
+      { n: "Kosmoszorn", i: "🌌", c: 5 }
+    ],
+    enemies: [
+      { n: "Sternschnuppe", i: "🌠" },
+      { n: "Mondhase", i: "🐇" },
+      { n: "Kometenwurm", i: "☄️" },
+      { n: "Planetenkugel", i: "🪐" },
+      { n: "Nebelwal", i: "🐋" },
+      { n: "Astrofuchs", i: "🦊" },
+      { n: "Satellitenkäfer", i: "🛰️" },
+      { n: "Lichtqualle", i: "🪼" },
+      { n: "Sternbildbär", i: "🐻" },
+      { n: "Galaxiendrache", i: "🐉" },
+      { n: "Sonnenwächter", i: "☀️" }
+    ],
+    boss: { n: "Sternenkaiser", i: "🌟" }
   }
 ];
 function getWorld(id) {
@@ -9780,6 +10229,63 @@ var BOSS_KRAEFTE = [
     wert: 34,
     // Grundschaden; zusätzlich fällt die Energie des Getroffenen auf 0
     gegnerLadung: 26
+  },
+  // Ab Welt 8: dieselben Wirkungen wie oben, aber stärker - wer so weit
+  // kommt, bekommt die kräftigeren Fassungen.
+  {
+    id: "strudelfalle",
+    welt: 8,
+    boss: "Tiefenkraken",
+    icon: "🌀",
+    name: "Strudelfalle",
+    text: "Ein Strudel trifft den Gegner hart und saugt ihm alle Energie ab.",
+    art: "energieraub",
+    wert: 44,
+    gegnerLadung: 26
+  },
+  {
+    id: "irrlichtfluch",
+    welt: 9,
+    boss: "Moorhexe",
+    icon: "🕯️",
+    name: "Irrlichtfluch",
+    text: "Irrlichter verbrennen den Gegner - lange und immer wieder.",
+    art: "brand",
+    wert: { sofort: 24, tick: 12, male: 6 },
+    gegnerLadung: 30
+  },
+  {
+    id: "stahlpanzer",
+    welt: 10,
+    boss: "Zahnradkoloss",
+    icon: "⚙️",
+    name: "Stahlpanzer",
+    text: "Ein Panzer aus Stahlplatten: Schild in Höhe von 60 % deiner Lebenspunkte.",
+    art: "schild",
+    wert: 0.6,
+    gegnerLadung: 24
+  },
+  {
+    id: "zuckerrausch",
+    welt: 11,
+    boss: "Karamellkönigin",
+    icon: "🍭",
+    name: "Zuckerrausch",
+    text: "Volle Energie auf einen Schlag - und ein süßer, harter Treffer.",
+    art: "energiesturm",
+    wert: 34,
+    gegnerLadung: 24
+  },
+  {
+    id: "supernova",
+    welt: 12,
+    boss: "Sternenkaiser",
+    icon: "💥",
+    name: "Supernova",
+    text: "Ein explodierender Stern zerschmettert jedes Schild und trifft gewaltig.",
+    art: "schildbruch",
+    wert: 85,
+    gegnerLadung: 28
   }
 ];
 function getKraft(id) {
@@ -9891,7 +10397,13 @@ var LIGEN = [
   { id: "kristall", name: "Kristallliga", ab: 1100, icon: "💎", farbe: "#5fd8ff" },
   { id: "meister", name: "Meisterliga", ab: 1600, icon: "🔮", farbe: "#c07bff" },
   { id: "legende", name: "Legendenliga", ab: 2100, icon: "🔥", farbe: "#ff7a45" },
-  { id: "champion", name: "Championliga", ab: 2700, icon: "👑", farbe: "#ffe27a" }
+  { id: "champion", name: "Championliga", ab: 2700, icon: "👑", farbe: "#ffe27a" },
+  // Für die Welten 8 bis 12:
+  { id: "titan", name: "Titanliga", ab: 3300, icon: "🗿", farbe: "#9fb4c8" },
+  { id: "sternen", name: "Sternenliga", ab: 4e3, icon: "⭐", farbe: "#ffd84d" },
+  { id: "galaxie", name: "Galaxieliga", ab: 4800, icon: "🌌", farbe: "#8a7cff" },
+  { id: "mythos", name: "Mythosliga", ab: 5600, icon: "🐉", farbe: "#3fd9a0" },
+  { id: "ewig", name: "Ewige Liga", ab: 6500, icon: "♾️", farbe: "#ff5fd2" }
 ];
 function ligaVon(trophaeen) {
   let liga = LIGEN[0];
@@ -15661,7 +16173,12 @@ var WELT_TEILCHEN = {
   4: ["flocke", false],
   5: ["schatten", true],
   6: ["sand", false],
-  7: ["feder", false]
+  7: ["feder", false],
+  8: ["blase", true],
+  9: ["irrlicht", true],
+  10: ["zahnrad", false],
+  11: ["streusel", false],
+  12: ["stern", false]
 };
 function weltTeilchen(screen, weltId) {
   if (!screen || !animationenAn2()) return;
@@ -15804,11 +16321,11 @@ var mapScreen = {
     root.appendChild(screen);
     if (world.farben?.wiese) screen.style.setProperty("--welt-farbe", world.farben.wiese);
     weltTeilchen(screen, world.id);
-    const hud = screen.querySelector(".hud");
+    const rechts = screen.querySelector(".hud__rechts") ?? screen.querySelector(".hud");
     const starChip = document.createElement("div");
-    starChip.className = "hud__coins";
-    starChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars(worldId)} / ${levels.length * 3}</span>`;
-    hud.insertBefore(starChip, hud.lastElementChild);
+    starChip.className = "hud__coins hud__sterne";
+    starChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars(worldId)}/${levels.length * 3}</span>`;
+    rechts.prepend(starChip);
     const selectedNode = canvas.querySelector(".node.is-selected");
     if (selectedNode) {
       const mitte = selectedNode.offsetTop - map.clientHeight / 2 + selectedNode.offsetHeight / 2;
@@ -16498,6 +17015,39 @@ var STIMMUNGEN = {
     wetter: { sonnig: 5, bewoelkt: 3, regen: 1 },
     tiere: "falter",
     voegel: true
+  },
+  8: {
+    varianten: [["wiese", "Sandgrund"], ["bach", "Strömungsrinne"], ["lichtung", "Lichtkegel"]],
+    wetter: { glitzer: 4, nebel: 3, sonnig: 3 },
+    // Glitzer = leuchtendes Plankton
+    tiere: "gluehwurm",
+    voegel: false
+  },
+  9: {
+    varianten: [["wiese", "Nebelsumpf"], ["bach", "Moorbach"], ["lichtung", "Irrlichtlichtung"]],
+    wetter: { nebel: 6, regen: 3, bewoelkt: 1 },
+    tiere: "gluehwurm",
+    voegel: false
+  },
+  10: {
+    varianten: [["wiese", "Werkhof"], ["bach", "Ölkanal"], ["lichtung", "Dampfplatz"]],
+    wetter: { bewoelkt: 4, nebel: 3, glut: 2 },
+    // Nebel = Dampf, Glut = Funkenflug
+    tiere: null,
+    voegel: true
+  },
+  11: {
+    varianten: [["wiese", "Bonbonwiese"], ["bach", "Schokofluss"], ["lichtung", "Zuckerlichtung"]],
+    wetter: { sonnig: 5, glitzer: 3, schnee: 2 },
+    // Schnee = Puderzucker
+    tiere: "falter",
+    voegel: true
+  },
+  12: {
+    varianten: [["wiese", "Mondfeld"], ["bach", "Milchstraße"], ["lichtung", "Sternenlichtung"]],
+    wetter: { glitzer: 6, nebel: 2 },
+    tiere: "gluehwurm",
+    voegel: false
   }
 };
 var WETTER_NAMEN = {
@@ -17699,7 +18249,7 @@ function ligenLeiste() {
         </span>`).join("")}
     </div>
     <p class="map__info-text ligen-leiste__regel">
-      Sieg: bis zu ${TROPHAEEN.GRUND + TROPHAEEN.JE_WELT * 7} 🏆 beim ersten Mal (Boss doppelt),
+      Sieg: bis zu ${TROPHAEEN.GRUND + TROPHAEEN.JE_WELT * WORLDS.length} 🏆 beim ersten Mal (Boss doppelt),
       ${TROPHAEEN.WIEDERHOLUNG} beim Wiederholen. Niederlage: −${TROPHAEEN.NIEDERLAGE} -
       aber nie unter die Grenze deiner Liga.
     </p>

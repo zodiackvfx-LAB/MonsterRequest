@@ -114,6 +114,63 @@ export const BOSS_KRAEFTE = [
     wert: 34, // Grundschaden; zusätzlich fällt die Energie des Getroffenen auf 0
     gegnerLadung: 26,
   },
+  // Ab Welt 8: dieselben Wirkungen wie oben, aber stärker - wer so weit
+  // kommt, bekommt die kräftigeren Fassungen.
+  {
+    id: 'strudelfalle',
+    welt: 8,
+    boss: 'Tiefenkraken',
+    icon: '🌀',
+    name: 'Strudelfalle',
+    text: 'Ein Strudel trifft den Gegner hart und saugt ihm alle Energie ab.',
+    art: 'energieraub',
+    wert: 44,
+    gegnerLadung: 26,
+  },
+  {
+    id: 'irrlichtfluch',
+    welt: 9,
+    boss: 'Moorhexe',
+    icon: '🕯️',
+    name: 'Irrlichtfluch',
+    text: 'Irrlichter verbrennen den Gegner - lange und immer wieder.',
+    art: 'brand',
+    wert: { sofort: 24, tick: 12, male: 6 },
+    gegnerLadung: 30,
+  },
+  {
+    id: 'stahlpanzer',
+    welt: 10,
+    boss: 'Zahnradkoloss',
+    icon: '⚙️',
+    name: 'Stahlpanzer',
+    text: 'Ein Panzer aus Stahlplatten: Schild in Höhe von 60 % deiner Lebenspunkte.',
+    art: 'schild',
+    wert: 0.6,
+    gegnerLadung: 24,
+  },
+  {
+    id: 'zuckerrausch',
+    welt: 11,
+    boss: 'Karamellkönigin',
+    icon: '🍭',
+    name: 'Zuckerrausch',
+    text: 'Volle Energie auf einen Schlag - und ein süßer, harter Treffer.',
+    art: 'energiesturm',
+    wert: 34,
+    gegnerLadung: 24,
+  },
+  {
+    id: 'supernova',
+    welt: 12,
+    boss: 'Sternenkaiser',
+    icon: '💥',
+    name: 'Supernova',
+    text: 'Ein explodierender Stern zerschmettert jedes Schild und trifft gewaltig.',
+    art: 'schildbruch',
+    wert: 85,
+    gegnerLadung: 28,
+  },
 ];
 
 /** Die Kraft mit dieser id (oder undefined). */

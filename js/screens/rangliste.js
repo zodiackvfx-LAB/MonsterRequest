@@ -15,6 +15,7 @@ import { balkenFuellen, createTopbar } from '../ui/hud.js';
 import { gameState } from '../core/state.js';
 import { cloudAktiv, cloudRangliste } from '../core/cloud.js';
 import { LIGEN, TROPHAEEN, ligaVon, naechsteLiga } from '../data/trophaeen.js';
+import { WORLDS } from '../data/worlds.js';
 
 /** Wie viele Plätze die Liste zeigt. */
 const ANZAHL = 50;
@@ -93,7 +94,7 @@ function ligenLeiste() {
         </span>`).join('')}
     </div>
     <p class="map__info-text ligen-leiste__regel">
-      Sieg: bis zu ${TROPHAEEN.GRUND + TROPHAEEN.JE_WELT * 7} 🏆 beim ersten Mal (Boss doppelt),
+      Sieg: bis zu ${TROPHAEEN.GRUND + TROPHAEEN.JE_WELT * WORLDS.length} 🏆 beim ersten Mal (Boss doppelt),
       ${TROPHAEEN.WIEDERHOLUNG} beim Wiederholen. Niederlage: −${TROPHAEEN.NIEDERLAGE} -
       aber nie unter die Grenze deiner Liga.
     </p>

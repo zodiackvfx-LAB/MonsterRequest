@@ -113,6 +113,66 @@ export const MUSIK = {
     lautstaerke: 0.95,
   },
 
+  // Korallenriff: weich und wogend, wie unter Wasser - Moll-Pentatonik
+  riff: {
+    grundton: 220.0, // A3
+    skala: [0, 3, 5, 7, 10],
+    muster: [0, null, null, 2, null, 4, null, null, 3, null, null, 2, null, 1, null, null],
+    bassfolge: [0, 2, 3, 1],
+    tempo: 78,
+    form: 'sine',
+    bassForm: 'sine',
+    lautstaerke: 1,
+  },
+
+  // Spukmoor: langsam und unheimlich, schleichende Halbtöne - Phrygisch
+  moor: {
+    grundton: 164.81, // E3
+    skala: [0, 1, 3, 5, 7, 8],
+    muster: [0, null, 1, null, null, null, 0, null, 3, null, 2, null, 1, null, null, null],
+    bassfolge: [0, 1, 0, 5],
+    tempo: 70,
+    form: 'triangle',
+    bassForm: 'sine',
+    lautstaerke: 0.95,
+  },
+
+  // Uhrwerkstadt: tickend, gleichmäßig, mechanisch - Dur, kurze Töne
+  uhrwerk: {
+    grundton: 261.63, // C4
+    skala: [0, 2, 4, 5, 7, 9, 11],
+    muster: [0, 4, 0, 4, 2, 5, 2, 5, 4, 7, 4, 7, 2, 4, 0, null],
+    bassfolge: [0, 4, 3, 4],
+    tempo: 132,
+    form: 'square',
+    bassForm: 'triangle',
+    lautstaerke: 0.75,
+  },
+
+  // Zuckerland: hüpfend und fröhlich - Dur-Pentatonik, hoch
+  zucker: {
+    grundton: 329.63, // E4
+    skala: [0, 2, 4, 7, 9],
+    muster: [0, 2, 4, null, 4, null, 5, 4, 2, null, 0, null, 2, null, null, null],
+    bassfolge: [0, 3, 1, 4],
+    tempo: 124,
+    form: 'triangle',
+    bassForm: 'sine',
+    lautstaerke: 0.9,
+  },
+
+  // Sternenwelt: weit und schwebend, ohne Halt - Ganztonleiter, sehr ruhig
+  sterne: {
+    grundton: 246.94, // H3
+    skala: [0, 2, 4, 6, 8, 10],
+    muster: [0, null, null, null, 3, null, null, null, 5, null, 4, null, 2, null, null, null],
+    bassfolge: [0, 3, 2, 4],
+    tempo: 64,
+    form: 'sine',
+    bassForm: 'triangle',
+    lautstaerke: 1,
+  },
+
   /*
    * Das Titelthema von MonsterQuest.
    *

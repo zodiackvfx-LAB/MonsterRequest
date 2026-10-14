@@ -7,13 +7,13 @@
  * HIER STELLST DU DIE WERTE EIN:
  *
  *   Erster Sieg in einem Kampf  GRUND + JE_WELT × Weltnummer
- *                               (Welt 1: 15, Welt 7: 45), Boss doppelt
+ *                               (Welt 1: 15, Welt 12: 70), Boss doppelt
  *   Sieg beim Wiederholen       WIEDERHOLUNG (Boss doppelt) - damit sich
  *                               ein leichter Kampf nicht endlos lohnt
  *   Niederlage                  minus NIEDERLAGE - aber nie unter die
  *                               Grenze der eigenen Liga
  *
- * Wer alle 7 Welten einmal schafft, hat 2730 Trophäen. Die Ligen sind so
+ * Wer alle 12 Welten einmal schafft, hat 6630 Trophäen. Die Ligen sind so
  * gelegt, dass man mit jeder geschafften Welt ungefähr eine Liga aufsteigt.
  * Die Endlos-Arena bringt keine Trophäen - sie läuft bewusst ohne Belohnung.
  */
@@ -42,6 +42,12 @@ export const LIGEN = [
   { id: 'meister', name: 'Meisterliga', ab: 1600, icon: '🔮', farbe: '#c07bff' },
   { id: 'legende', name: 'Legendenliga', ab: 2100, icon: '🔥', farbe: '#ff7a45' },
   { id: 'champion', name: 'Championliga', ab: 2700, icon: '👑', farbe: '#ffe27a' },
+  // Für die Welten 8 bis 12:
+  { id: 'titan', name: 'Titanliga', ab: 3300, icon: '🗿', farbe: '#9fb4c8' },
+  { id: 'sternen', name: 'Sternenliga', ab: 4000, icon: '⭐', farbe: '#ffd84d' },
+  { id: 'galaxie', name: 'Galaxieliga', ab: 4800, icon: '🌌', farbe: '#8a7cff' },
+  { id: 'mythos', name: 'Mythosliga', ab: 5600, icon: '🐉', farbe: '#3fd9a0' },
+  { id: 'ewig', name: 'Ewige Liga', ab: 6500, icon: '♾️', farbe: '#ff5fd2' },
 ];
 
 /** Die Liga zu einer Trophäenzahl. */
