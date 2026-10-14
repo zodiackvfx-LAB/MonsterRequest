@@ -169,7 +169,9 @@ async function rufe(name, parameter, amEnde = false) {
 
     if (!antwort.ok) {
       const text = await antwort.text().catch(() => '');
-      throw new Error(`${name}: ${antwort.status} ${text.slice(0, 200)}`);
+      const fehler = new Error(`${name}: ${antwort.status} ${text.slice(0, 200)}`);
+      fehler.status = antwort.status; // 404 = Funktion fehlt in der Datenbank
+      throw fehler;
     }
 
     const text = await antwort.text();
@@ -265,6 +267,30 @@ export async function cloudCodeEinloesen(code) {
   const ergebnis = await rufe('mq_code_einloesen', { p_code: sauber });
   if (!ergebnis || !ergebnis.id || !ergebnis.daten) return null;
   return ergebnis;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Rangliste                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Holt die Rangliste: die besten Spieler nach Trophäen und den eigenen
+ * Platz. Vorher wird der eigene Stand hochgeschickt, damit die eigenen
+ * Trophäen darin schon stimmen.
+ *
+ * @returns {Promise<{spitze: Array<{platz, name, trophaeen, ich}>, ich: {platz, trophaeen}|null, spieler: number}>}
+ * @throws Fehler mit status 404, wenn die Funktion in der Datenbank fehlt
+ *         (schema.sql ist noch nicht neu eingespielt)
+ */
+export async function cloudRangliste(anzahl = 50) {
+  if (!cloudAktiv()) throw new Error('Keine Datenbank eingetragen');
+  await cloudJetztSenden();
+  const ergebnis = await rufe('mq_rangliste', { p_id: spielerId(), p_anzahl: anzahl });
+  return {
+    spitze: Array.isArray(ergebnis?.spitze) ? ergebnis.spitze : [],
+    ich: ergebnis?.ich ?? null,
+    spieler: Number(ergebnis?.spieler) || 0,
+  };
 }
 
 /* ------------------------------------------------------------------ */

@@ -7,6 +7,8 @@ import { charakterWerte, getCharakter, xpFuerNaechstesLevel } from '../core/prog
 import { getMonster } from '../data/monsters.js';
 import { createSprite } from './sprite.js';
 import { MUENZE } from '../data/items.js';
+import { ligaVon } from '../data/trophaeen.js';
+import { showScreen } from '../core/screens.js';
 
 /**
  * Macht Text sicher fürs Einsetzen in HTML.
@@ -42,7 +44,8 @@ export function balkenFuellen(element, anteil) {
 }
 
 /**
- * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken und Münzen.
+ * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken, Trophäen und
+ * Münzen. Ein Tipp auf die Trophäen öffnet die Rangliste.
  */
 export function createHud() {
   const starter = getMonster(getAktiveFigur());
@@ -66,12 +69,20 @@ export function createHud() {
         </span>
       </span>
     </div>
-    <div class="hud__coins">
-      <span class="hud__coin-icon">${MUENZE}</span>
-      <span>${gameState.coins}</span>
+    <div class="hud__rechts">
+      <button class="hud__trophaeen" type="button" style="--liga-farbe:${ligaVon(gameState.trophaeen).farbe}"
+              aria-label="${gameState.trophaeen} Trophäen - Rangliste öffnen">
+        <span class="hud__trophaeen-icon" aria-hidden="true">🏆</span>
+        <span>${gameState.trophaeen}</span>
+      </button>
+      <div class="hud__coins">
+        <span class="hud__coin-icon">${MUENZE}</span>
+        <span>${gameState.coins}</span>
+      </div>
     </div>
   `;
   hud.querySelector('.hud__avatar').appendChild(createSprite(starter));
+  hud.querySelector('.hud__trophaeen').addEventListener('click', () => showScreen('rangliste'));
   return hud;
 }
 

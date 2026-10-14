@@ -19,15 +19,19 @@
  *     eine Bosstruhe.
  *   - Jeder 2. Sieg bringt zusätzlich eine Gratis-Truhe (Holztruhe) - auch
  *     beim Wiederholen.
- *   - Gewonnene Truhen werden NICHT sofort geöffnet: Sie kommen ins
- *     Truhenlager (Symbol auf dem Startbildschirm), und der Spieler öffnet
- *     sie selbst. Zurück kommen sie als neueTruhen, damit das
- *     Ergebnisfenster sie zeigen kann.
+ *   - Gewonnene Truhen werden NICHT sofort geöffnet: Sie kommen in einen
+ *     der 4 Truhenplätze auf der Startseite, werden dort freigeschaltet und
+ *     dann geöffnet (siehe js/core/truhenplaetze.js). Zurück kommen sie als
+ *     neueTruhen, damit das Ergebnisfenster sie zeigen kann.
+ *   - Sind alle Plätze voll, wartet die Gratis-Truhe auf einen freien Platz
+ *     (gratisWartet); die Bosstruhe stellt sich in die Warteschlange.
  */
 
 import { MATERIAL_BEUTE, MUENZE } from '../data/items.js';
 import { BOSS_TRUHE, GRATIS_TRUHE_ID, SIEGE_PRO_GRATIS_TRUHE, getTruhe } from '../data/shop.js';
-import { beuteGutschreiben, bossKraftFreischalten, completeLevel, gameState, isLevelCleared, saveProgress, truheEinlagern } from './state.js';
+import { beuteGutschreiben, bossKraftFreischalten, completeLevel, gameState, isLevelCleared, saveProgress } from './state.js';
+import { gratisTruheWartet, truheEinlagern } from './truhenplaetze.js';
+import { trophaeenSieg } from './trophaeen.js';
 import { xpGutschreiben } from './progression.js';
 
 /** Wie oft ein normaler Kampf Material abwirft. */
@@ -55,7 +59,7 @@ function stueck(art, menge, name, icon, seltenheit) {
  * @param {number} sterne    - 0 bis 3
  * @param {string} monsterId - wessen Erfahrungskonto steigt
  * @param {function} [wuerfeln] - Zufallsquelle (für Tests austauschbar)
- * @returns {{stuecke: Array, newWorld: object|null, xpErgebnis: object, erstesMal: boolean}}
+ * @returns {{stuecke: Array, newWorld: object|null, xpErgebnis: object, erstesMal: boolean, trophaeen: object}}
  */
 export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) {
   // Vor completeLevel abfragen - danach gilt der Level als geschafft.
@@ -69,6 +73,9 @@ export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) 
 
   // Erfahrung gibt es bei jedem Sieg, auch beim Wiederholen.
   const xpErgebnis = xpGutschreiben(monsterId, level.xp ?? 0);
+
+  // Trophäen: viele beim ersten Sieg, ein paar beim Wiederholen.
+  const trophaeen = trophaeenSieg(level, erstesMal);
 
   // Münzen und Erfahrung sind durch completeLevel und xpGutschreiben schon
   // auf dem Konto - sie werden nur noch angezeigt.
@@ -88,39 +95,56 @@ export function siegBelohnung(level, sterne, monsterId, wuerfeln = Math.random) 
   // Beim ERSTEN Boss-Sieg gibt es die Boss-Kraft dieser Welt.
   const neueKraft = level.isBoss && erstesMal ? bossKraftFreischalten(level.worldId) : null;
 
-  // Gewonnene Truhen kommen ungeöffnet ins Lager.
+  // Gewonnene Truhen kommen ungeöffnet in die Truhenplätze.
   const neueTruhen = [];
   if (level.isBoss && erstesMal) {
-    truheEinlagern(BOSS_TRUHE.id);
-    neueTruhen.push(BOSS_TRUHE);
+    const wohin = truheEinlagern(BOSS_TRUHE.id, { warteschlange: true });
+    neueTruhen.push({ ...BOSS_TRUHE, wartet: wohin === 'warteschlange' });
   }
   const gratis = gratisTruheZaehlen();
   if (gratis) neueTruhen.push(gratis);
 
-  return { stuecke: [...bereitsGebucht, ...nochBuchen], newWorld, xpErgebnis, erstesMal, neueKraft, neueTruhen };
+  return {
+    stuecke: [...bereitsGebucht, ...nochBuchen],
+    newWorld,
+    xpErgebnis,
+    erstesMal,
+    neueKraft,
+    neueTruhen,
+    gratisWartet: gratisTruheWartet(),
+    trophaeen,
+  };
 }
 
 /**
  * Zählt einen Sieg für die Gratis-Truhe. Ist es der 2. Sieg, kommt eine
- * Holztruhe ins Lager.
+ * Holztruhe in einen Truhenplatz.
+ *
+ * Sind alle Plätze voll, bleibt der Zähler stehen: Die Truhe wartet, bis
+ * ein Platz frei wird (siehe nachruecken in js/core/truhenplaetze.js).
+ * Weitere Siege stapeln keine zusätzlichen Truhen.
  *
  * @returns {object|null} die gewonnene Truhe oder null
  */
 function gratisTruheZaehlen() {
-  gameState.gratisTruheZaehler = (Number(gameState.gratisTruheZaehler) || 0) + 1;
-  if (gameState.gratisTruheZaehler < SIEGE_PRO_GRATIS_TRUHE) {
+  const zaehler = Math.min(SIEGE_PRO_GRATIS_TRUHE, (Number(gameState.gratisTruheZaehler) || 0) + 1);
+  gameState.gratisTruheZaehler = zaehler;
+  if (zaehler < SIEGE_PRO_GRATIS_TRUHE || !truheEinlagern(GRATIS_TRUHE_ID)) {
     saveProgress();
     return null;
   }
 
   gameState.gratisTruheZaehler = 0;
-  truheEinlagern(GRATIS_TRUHE_ID);
+  saveProgress();
   return getTruhe(GRATIS_TRUHE_ID);
 }
 
-/** Wie viele Siege noch bis zur nächsten Gratis-Truhe fehlen (1 oder 2). */
+/**
+ * Wie viele Siege noch bis zur nächsten Gratis-Truhe fehlen (1 oder 2).
+ * 0 heißt: Sie ist schon verdient und wartet auf einen freien Platz.
+ */
 export function siegeBisGratisTruhe() {
-  return SIEGE_PRO_GRATIS_TRUHE - (Number(gameState.gratisTruheZaehler) || 0);
+  return Math.max(0, SIEGE_PRO_GRATIS_TRUHE - (Number(gameState.gratisTruheZaehler) || 0));
 }
 
 /** Wie viel Material dieser Kampf abwirft (0, wenn keins). */

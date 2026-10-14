@@ -25,6 +25,7 @@ import { zeigeKampfTutorial } from '../ui/tutorial.js';
 import { statErhoehen, pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { attackeMitLevel, monsterMitFortschritt } from '../core/progression.js';
 import { siegBelohnung, siegeBisGratisTruhe } from '../core/belohnung.js';
+import { trophaeenNiederlage } from '../core/trophaeen.js';
 import { fortschrittMelden } from '../core/aufgaben.js';
 import { spieleBeute, spieleKlang, spieleTreffer } from '../core/audio.js';
 import { vibriere } from '../core/haptik.js';
@@ -756,6 +757,8 @@ export const battleScreen = {
         if (level.isBoss) statErhoehen('bosse');
       } else {
         statErhoehen('niederlagen');
+        // Eine Niederlage kostet ein paar Trophäen (nie unter die Liga-Grenze).
+        belohnung = { trophaeen: trophaeenNiederlage() };
       }
 
       // Neu erreichte Erfolge ermitteln und den Fortschritt sichern.
@@ -864,6 +867,7 @@ export const battleScreen = {
               : `${playerMonster.name} ist erschöpft. ${MUT_SAETZE[Math.floor(Math.random() * MUT_SAETZE.length)]}`}
           </p>
           ${statistikHtml(result)}
+          ${trophaeenHtml(belohnung?.trophaeen)}
           ${sieg ? '<div class="belohnung" id="belohnung"></div>' : ''}
           ${belohnung?.neueTruhen?.length
             ? `<div class="gewonnene-truhen">
@@ -872,10 +876,16 @@ export const battleScreen = {
                      ${truheSvg(truhe.design)}
                      <span class="gewonnene-truhe__name">${truhe.id === BOSS_TRUHE.id ? '👑' : '🎁'} ${truhe.name} gewonnen!</span>
                    </div>`).join('')}
-                 <p class="gewonnene-truhen__hinweis">Öffne sie auf der Startseite.</p>
+                 <p class="gewonnene-truhen__hinweis">${belohnung.neueTruhen.some((t) => t.wartet)
+                   ? 'Alle 4 Truhenplätze sind belegt - die Bosstruhe wartet, bis einer frei wird.'
+                   : belohnung.neueTruhen.length > 1
+                     ? 'Sie warten in den Truhenplätzen auf der Startseite.'
+                     : 'Sie wartet in einem Truhenplatz auf der Startseite.'}</p>
                </div>`
             : sieg
-              ? `<p class="gratis-hinweis">🎁 Noch ${siegeBisGratisTruhe()} Sieg bis zur Gratis-Truhe</p>`
+              ? belohnung?.gratisWartet
+                ? '<p class="gratis-hinweis gratis-hinweis--voll">🎁 Gratis-Truhe verdient! Alle 4 Truhenplätze sind belegt - sie kommt, sobald einer frei ist.</p>'
+                : `<p class="gratis-hinweis">🎁 Noch ${siegeBisGratisTruhe()} Sieg bis zur Gratis-Truhe</p>`
               : ''}
           ${belohnung?.xpErgebnis?.aufgestiegen
             ? `<p class="overlay__unlock">🌟 <strong>Level ${belohnung.xpErgebnis.levelNachher} erreicht!</strong></p>`
@@ -923,6 +933,21 @@ export const battleScreen = {
         .querySelector('#btn-map')
         .addEventListener('click', () => showScreen('map', { worldId: level.worldId }));
       screen.appendChild(overlay);
+    }
+
+    /**
+     * Gewonnene oder verlorene Trophäen - und ein Banner beim Liga-Aufstieg.
+     */
+    function trophaeenHtml(t) {
+      if (!t) return '';
+      const zahl = t.aenderung > 0 ? `+${t.aenderung}` : t.aenderung < 0 ? `−${-t.aenderung}` : '±0';
+      return `
+        <p class="ergebnis-trophaeen${t.aenderung < 0 ? ' ergebnis-trophaeen--minus' : ''}">
+          <span class="ergebnis-trophaeen__zahl">🏆 ${zahl}</span>
+          <span class="ergebnis-trophaeen__stand">${t.nachher} · ${t.liga.icon} ${t.liga.name}</span>
+        </p>
+        ${t.aufgestiegen ? `<p class="overlay__unlock overlay__unlock--liga">${t.liga.icon} <strong>Aufgestiegen: ${t.liga.name}!</strong></p>` : ''}
+      `;
     }
 
     /**

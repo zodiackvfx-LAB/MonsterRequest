@@ -14,9 +14,21 @@ import { getMonster } from '../data/monsters.js';
 import { createSprite } from '../ui/sprite.js';
 import { parallaxAktivieren } from '../ui/parallax.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../ui/logo-pfade.js';
-import { figurAnzeigeName, gameState, getAktiveFigur, truheAusLager } from '../core/state.js';
-import { BOSS_TRUHE, truheNachId } from '../data/shop.js';
+import { figurAnzeigeName, gameState, getAktiveFigur } from '../core/state.js';
+import { TRUHEN_PLAETZE, truheNachId } from '../data/shop.js';
+import { MUENZE } from '../data/items.js';
 import { truheSvg } from '../ui/truhen.js';
+import {
+  alleZustaende,
+  dauerText,
+  freischaltenLaeuft,
+  freischaltenStarten,
+  platzZustand,
+  restText,
+  sofortPreis,
+  truheAusPlatz,
+} from '../core/truhenplaetze.js';
+import { spieleKlang } from '../core/audio.js';
 import { zeigeTruhenOeffnung } from '../ui/truhe-oeffnen.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
 import { pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
@@ -56,15 +68,24 @@ function funkenStreuen(knopf) {
   }
 }
 
+/** Tickt jede Sekunde, solange die Startseite offen ist (Restzeit der Truhen). */
+let platzTimer = null;
+
 /**
- * Öffnet die nächste Truhe aus dem Lager. Liegen danach noch weitere dort,
- * kann man direkt die nächste öffnen; sonst wird die Startseite neu gebaut.
+ * Öffnet die Truhe aus einem Platz mit der großen Animation. Sind danach
+ * noch weitere Truhen bereit, kann man direkt die nächste öffnen.
+ *
+ * @param {boolean} sofort - noch nicht fertig: mit Münzen sofort öffnen
  */
-function naechsteTruheOeffnen(screen) {
-  const id = truheAusLager();
-  if (!id) return;
+function truheOeffnen(screen, index, sofort = false) {
+  const id = truheAusPlatz(index, { sofort });
+  if (!id) {
+    spieleKlang('gesperrt');
+    return;
+  }
+  const naechsteBereit = () => alleZustaende().findIndex((p) => p.zustand === 'bereit');
   zeigeTruhenOeffnung(screen, truheNachId(id), {
-    weitere: gameState.truhenLager.length,
+    weitere: alleZustaende().filter((p) => p.zustand === 'bereit').length,
     fertig: (naechste) => {
       spritesNeuZeichnen();
       const neueErfolge = pruefeNeueErfolge();
@@ -72,10 +93,151 @@ function naechsteTruheOeffnen(screen) {
         statistikSpeichern();
         zeigeErfolgToast(neueErfolge);
       }
-      if (naechste && gameState.truhenLager.length) naechsteTruheOeffnen(screen);
+      if (naechste && naechsteBereit() >= 0) truheOeffnen(screen, naechsteBereit());
       else showScreen('start');
     },
   });
+}
+
+/**
+ * Das Fenster zu einer Truhe, die noch nicht fertig ist: Freischalten
+ * starten oder sofort mit Münzen öffnen.
+ */
+function truhenDialog(screen, index) {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay overlay--truhenplatz';
+  screen.appendChild(overlay);
+
+  let uhr = null;
+  const schliessen = () => {
+    clearInterval(uhr);
+    overlay.remove();
+  };
+
+  function zeichnen() {
+    const { zustand, truhe, rest, dauer } = platzZustand(index);
+    if (zustand === 'leer') return schliessen();
+    if (zustand === 'bereit') {
+      schliessen();
+      truheOeffnen(screen, index);
+      return;
+    }
+    const preis = sofortPreis(index);
+    const andereLaeuft = zustand === 'wartet' && freischaltenLaeuft();
+    const genugMuenzen = gameState.coins >= preis;
+
+    overlay.innerHTML = `
+      <div class="overlay__box truhenplatz-dialog">
+        <div class="truhenplatz-dialog__truhe">${truheSvg(truhe.design)}</div>
+        <h3 class="overlay__title">${truhe.name}</h3>
+        ${zustand === 'laeuft'
+          ? `<p class="truhenplatz-dialog__zeit">⏳ Offen in <strong>${restText(rest)}</strong></p>
+             <span class="truhenplatz-dialog__balken" style="--anteil:${1 - rest / dauer}"></span>`
+          : `<p class="overlay__text">Braucht <strong>${dauerText(dauer)}</strong> zum Freischalten.</p>`}
+        ${andereLaeuft ? '<p class="truhenplatz-dialog__hinweis">Es wird immer nur eine Truhe gleichzeitig freigeschaltet.</p>' : ''}
+        <div class="overlay__actions">
+          ${zustand === 'wartet' && !andereLaeuft
+            ? '<button class="btn btn--big btn--green" data-aktion="starten" type="button">⏳ Freischalten starten</button>'
+            : ''}
+          <button class="btn${genugMuenzen ? '' : ' btn--ghost'}" data-aktion="sofort" type="button" ${genugMuenzen ? '' : 'disabled'}>
+            Sofort öffnen: ${MUENZE} ${preis}
+          </button>
+          <button class="btn btn--ghost" data-aktion="zu" type="button">Schließen</button>
+        </div>
+      </div>
+    `;
+    overlay.querySelector('[data-aktion="starten"]')?.addEventListener('click', () => {
+      freischaltenStarten(index);
+      schliessen();
+      showScreen('start');
+    });
+    overlay.querySelector('[data-aktion="sofort"]').addEventListener('click', () => {
+      schliessen();
+      truheOeffnen(screen, index, true);
+    });
+    overlay.querySelector('[data-aktion="zu"]').addEventListener('click', schliessen);
+  }
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) schliessen();
+  });
+  zeichnen();
+  // Die Restzeit und der Preis laufen im offenen Fenster mit.
+  uhr = setInterval(() => {
+    if (!overlay.isConnected) return clearInterval(uhr);
+    zeichnen();
+  }, 1000);
+}
+
+/** Inhalt eines Platzes je nach Zustand. */
+function platzInhalt(p) {
+  if (p.zustand === 'leer') {
+    return '<span class="truhenplatz__leer">Truhenplatz</span>';
+  }
+  const unten = {
+    wartet: `<span class="truhenplatz__text">${dauerText(p.dauer)}</span>`,
+    laeuft: `<span class="truhenplatz__text truhenplatz__text--zeit">${restText(p.rest)}</span>
+             <span class="truhenplatz__balken" style="--anteil:${1 - p.rest / p.dauer}"></span>`,
+    bereit: '<span class="truhenplatz__text truhenplatz__text--bereit">Öffnen!</span>',
+  }[p.zustand];
+  return `
+    <span class="truhenplatz__truhe">${truheSvg(p.truhe.design)}</span>
+    ${unten}
+  `;
+}
+
+/**
+ * Die Reihe mit den 4 Truhenplätzen. Wartet eine Truhe und läuft gerade
+ * keine, zeigt der Platz "Tippen" - so weiß man, dass man starten kann.
+ */
+function baueTruhenplaetze(screen) {
+  const reihe = document.createElement('div');
+  reihe.className = 'truhenplaetze';
+  reihe.setAttribute('role', 'group');
+  reihe.setAttribute('aria-label', 'Truhenplätze');
+
+  const knoepfe = Array.from({ length: TRUHEN_PLAETZE }, (_, index) => {
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.dataset.klang = 'keiner';
+    knopf.addEventListener('click', () => {
+      const p = platzZustand(index);
+      if (p.zustand === 'leer') return;
+      spieleKlang('tipp');
+      if (p.zustand === 'bereit') truheOeffnen(screen, index);
+      else truhenDialog(screen, index);
+    });
+    reihe.appendChild(knopf);
+    return knopf;
+  });
+
+  /** Baut die Plätze neu - nur die, deren Anzeige sich geändert hat. */
+  function aktualisieren() {
+    const laeuft = freischaltenLaeuft();
+    alleZustaende().forEach((p, index) => {
+      const knopf = knoepfe[index];
+      const startbar = p.zustand === 'wartet' && !laeuft;
+      const klasse = `truhenplatz truhenplatz--${p.zustand}${startbar ? ' ist-startbar' : ''}${p.truhe ? ` truhenplatz--${p.truhe.design}` : ''}`;
+      const html = platzInhalt(p);
+      if (knopf.className !== klasse) knopf.className = klasse;
+      if (knopf.dataset.html !== html) {
+        knopf.innerHTML = html;
+        knopf.dataset.html = html;
+      }
+      knopf.disabled = p.zustand === 'leer';
+      knopf.setAttribute(
+        'aria-label',
+        p.zustand === 'leer'
+          ? 'Leerer Truhenplatz'
+          : `${p.truhe.name}: ${{ wartet: 'Freischalten starten', laeuft: `offen in ${restText(p.rest)}`, bereit: 'jetzt öffnen' }[p.zustand]}`
+      );
+    });
+  }
+
+  aktualisieren();
+  clearInterval(platzTimer);
+  platzTimer = setInterval(aktualisieren, 1000);
+  return reihe;
 }
 
 export const startScreen = {
@@ -159,25 +321,6 @@ export const startScreen = {
     });
     screen.appendChild(stern);
 
-    // Truhenlager: gewonnene Truhen warten hier, bis man sie selbst öffnet.
-    // Das Symbol zeigt die wertvollste Truhe und wie viele es sind.
-    const lager = gameState.truhenLager;
-    if (lager.length) {
-      const vorn = lager.includes(BOSS_TRUHE.id) ? BOSS_TRUHE : truheNachId(lager[0]);
-      const lagerKnopf = document.createElement('button');
-      lagerKnopf.type = 'button';
-      lagerKnopf.className = 'truhenlager';
-      lagerKnopf.dataset.klang = 'keiner';
-      lagerKnopf.setAttribute('aria-label', `${lager.length} ungeöffnete Truhe${lager.length === 1 ? '' : 'n'} öffnen`);
-      lagerKnopf.innerHTML = `
-        <span class="truhenlager__truhe">${truheSvg(vorn.design)}</span>
-        <span class="truhenlager__zahl">${lager.length}</span>
-        <span class="truhenlager__text">Öffnen!</span>
-      `;
-      lagerKnopf.addEventListener('click', () => naechsteTruheOeffnen(screen));
-      screen.appendChild(lagerKnopf);
-    }
-
     const hero = document.createElement('div');
     hero.className = 'start__hero';
     hero.innerHTML = `
@@ -248,6 +391,9 @@ export const startScreen = {
     startReihe.appendChild(startButton);
     actions.appendChild(startReihe);
 
+    // Die 4 Truhenplätze wie bei Clash Royale - direkt unter "Spiel starten".
+    actions.appendChild(baueTruhenplaetze(screen));
+
     screen.appendChild(actions);
     root.appendChild(screen);
 
@@ -260,5 +406,7 @@ export const startScreen = {
     parallaxAus = () => {};
     clearTimeout(schnuppenTimer);
     schnuppenTimer = null;
+    clearInterval(platzTimer);
+    platzTimer = null;
   },
 };

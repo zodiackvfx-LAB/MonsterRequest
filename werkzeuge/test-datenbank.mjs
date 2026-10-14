@@ -6,7 +6,7 @@
  *
  * Er tut zwei Dinge gleichzeitig:
  *   1. Er liefert das Spiel aus (wie python3 -m http.server).
- *   2. Er spielt die Datenbank nach - dieselben vier Funktionen wie
+ *   2. Er spielt die Datenbank nach - dieselben fuenf Funktionen wie
  *      datenbank/schema.sql, nur im Arbeitsspeicher statt in Postgres.
  *
  * Die Datei js/data/cloud-config.js wird dabei unterwegs ausgetauscht, damit
@@ -116,6 +116,31 @@ const FUNKTIONEN = {
     if (!eintrag || eintrag.gueltigBis < Date.now()) return null;
     codes.delete(code); // gilt genau einmal
     return { id: eintrag.id, daten: spielstaende.get(eintrag.id)?.daten ?? null };
+  },
+  // Gleiche Regeln wie mq_rangliste in schema.sql: nur Name, Trophaeen und
+  // Platz; Ausgeblendete und Spieler ohne Trophaeen fehlen.
+  mq_rangliste({ p_id, p_anzahl }) {
+    const zahl = (wert) => (/^-?\d+(\.\d+)?$/.test(String(wert ?? '')) ? Number(wert) : 0);
+    const liste = [...spielstaende.entries()]
+      .filter(([, e]) => String(e.daten?.settings?.rangliste ?? true) !== 'false')
+      .map(([id, e]) => ({
+        id,
+        name: (String(e.daten?.name ?? '').trim() || 'Spieler').slice(0, 16),
+        trophaeen: Math.floor(Math.min(100000, Math.max(0, zahl(e.daten?.trophaeen)))),
+        gespeichert: e.gespeichert,
+      }))
+      .filter((e) => e.trophaeen > 0)
+      .sort((a, b) => b.trophaeen - a.trophaeen || a.gespeichert.localeCompare(b.gespeichert));
+    liste.forEach((e, i) => {
+      e.platz = i > 0 && liste[i - 1].trophaeen === e.trophaeen ? liste[i - 1].platz : i + 1;
+    });
+    const anzahl = Math.min(100, Math.max(1, Number(p_anzahl) || 50));
+    const ich = liste.find((e) => e.id === p_id);
+    return {
+      spitze: liste.slice(0, anzahl).map((e) => ({ platz: e.platz, name: e.name, trophaeen: e.trophaeen, ich: e.id === p_id })),
+      ich: ich ? { platz: ich.platz, trophaeen: ich.trophaeen } : null,
+      spieler: liste.length,
+    };
   },
 };
 

@@ -23,6 +23,7 @@ import { battleScreen } from './screens/battle.js';
 import { dailyScreen } from './screens/daily.js';
 import { applySettings } from './screens/settings.js';
 import { arenaScreen } from './screens/arena.js';
+import { ranglisteScreen } from './screens/rangliste.js';
 
 const hatSpielstand = loadProgress();
 applySettings();
@@ -104,6 +105,7 @@ registerScreen('map', mapScreen);
 registerScreen('battle', battleScreen);
 registerScreen('daily', dailyScreen);
 registerScreen('arena', arenaScreen);
+registerScreen('rangliste', ranglisteScreen);
 
 showScreen('start');
 

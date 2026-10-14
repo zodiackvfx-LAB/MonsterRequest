@@ -17,6 +17,9 @@ declare
   v_schlecht integer := 0;
   v_a constant uuid := '00000000-0000-4000-8000-0000000000a1';
   v_b constant uuid := '00000000-0000-4000-8000-0000000000b2';
+  v_c constant uuid := '00000000-0000-4000-8000-0000000000c3';
+  v_d constant uuid := '00000000-0000-4000-8000-0000000000d4';
+  v_liste jsonb;
   v_code text;
   v_wert text;
   v_ok boolean;
@@ -166,7 +169,52 @@ begin
   end;
 
   -- ---------------------------------------------------------------- --
-  delete from public.spielstaende where id in (v_a, v_b);
+  raise notice '--- Rangliste ---';
+  -- Die Testspieler bekommen so viele Trophaeen, dass sie auch in einer
+  -- Datenbank mit echten Spielern ganz oben stehen.
+  perform public.mq_speichern(v_a, '{"name":"Ranglisten-Test-Spieler-A","trophaeen":100000}'::jsonb);
+  perform public.mq_speichern(v_b, '{"name":"   ","trophaeen":99999}'::jsonb);
+  perform public.mq_speichern(v_c, '{"name":"Versteckt","trophaeen":99999,"settings":{"rangliste":false}}'::jsonb);
+  perform public.mq_speichern(v_d, '{"name":"Kaputt","trophaeen":"viele"}'::jsonb);
+  set local role anon;
+
+  v_liste := public.mq_rangliste(v_b, 5);
+  if v_liste -> 'spitze' -> 0 ->> 'name' = 'Ranglisten-Test-' and (v_liste -> 'spitze' -> 0 ->> 'trophaeen')::int = 100000 then
+    v_gut := v_gut + 1; raise notice 'ok   Platz 1 hat die meisten Trophaeen, Name auf 16 Zeichen gekuerzt';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Platz 1 stimmt nicht: %', v_liste -> 'spitze' -> 0;
+  end if;
+
+  if (v_liste -> 'ich' ->> 'platz')::int = 2 and (v_liste -> 'spitze' -> 1 ->> 'ich')::boolean
+     and v_liste -> 'spitze' -> 1 ->> 'name' = 'Spieler' then
+    v_gut := v_gut + 1; raise notice 'ok   Eigener Platz wird erkannt, leerer Name wird "Spieler"';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Eigener Platz falsch: %', v_liste -> 'ich';
+  end if;
+
+  if v_liste::text not like '%' || v_a::text || '%' and v_liste::text not like '%' || v_b::text || '%'
+     and v_liste::text not like '%Versteckt%' and v_liste::text not like '%Kaputt%' then
+    v_gut := v_gut + 1; raise notice 'ok   Keine Spielernummern, Versteckte und Kaputte fehlen';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Rangliste verraet zu viel: %', v_liste;
+  end if;
+
+  if public.mq_rangliste(v_c, 5) -> 'ich' = 'null'::jsonb or public.mq_rangliste(v_c, 5) -> 'ich' is null then
+    v_gut := v_gut + 1; raise notice 'ok   Wer sich ausblendet, hat keinen Platz';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Ausgeblendeter Spieler hat einen Platz';
+  end if;
+
+  if jsonb_array_length(public.mq_rangliste(v_a, 1000) -> 'spitze') <= 100
+     and jsonb_array_length(public.mq_rangliste(v_a, 1) -> 'spitze') = 1 then
+    v_gut := v_gut + 1; raise notice 'ok   Hoechstens 100 Eintraege, auf Wunsch weniger';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Die Laenge der Rangliste stimmt nicht';
+  end if;
+  reset role;
+
+  -- ---------------------------------------------------------------- --
+  delete from public.spielstaende where id in (v_a, v_b, v_c, v_d);
 
   raise notice '';
   raise notice '% bestanden, % fehlgeschlagen', v_gut, v_schlecht;

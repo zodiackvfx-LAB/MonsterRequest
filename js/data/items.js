@@ -48,6 +48,14 @@ export const BEUTE_ATTACKEN = [
   // Status-Attacken: wirken über den Sofortschaden hinaus weiter.
   { id: 'giftstachel', name: 'Giftstachel', icon: '🐍', cost: 3, damage: 8, gift: { tick: 5, male: 4, intervall: 1 }, seltenheit: 'selten', text: 'Ein Stich, der lange nachwirkt: Gift über mehrere Sekunden.' },
   { id: 'frostschock', name: 'Frostschock', icon: '❄️', cost: 4, damage: 14, stun: 1.4, seltenheit: 'episch', text: 'Ein eisiger Schlag - der Gegner erstarrt kurz und kann nicht handeln.' },
+  // Die drei Karten aus dem Master-Prompt. Dort hatten sie 7, 14 und 23
+  // Schaden - das war auf die alten, kleineren Zahlen ausgelegt. Hier sind
+  // sie auf das heutige Balancing umgerechnet und liegen etwas UNTER den
+  // gleich teuren Karten. Dafür sind sie eine Seltenheit niedriger: Sie
+  // kommen öfter aus Truhen und leveln dadurch schneller hoch.
+  { id: 'wirbelhieb', name: 'Wirbelhieb', icon: '🌀', cost: 3, damage: 16, seltenheit: 'gewoehnlich', text: 'Ein Hieb aus der Drehung - schnell und günstig.' },
+  { id: 'donnerschlag', name: 'Donnerschlag', icon: '⛈️', cost: 5, damage: 30, seltenheit: 'selten', text: 'Ein Schlag, der wie Donner durch die Arena rollt.' },
+  { id: 'sternenknall', name: 'Sternenknall', icon: '✨', cost: 8, damage: 50, seltenheit: 'episch', text: 'Ein Stern platzt direkt vor dem Gegner.' },
 ];
 
 /**

@@ -17,7 +17,7 @@
  *   werden dann alle alten Caches gelöscht.
  */
 
-const CACHE = 'monsterquest-v22';
+const CACHE = 'monsterquest-v23';
 
 // Das komplette Spiel, das schon beim ersten Besuch fest in den Cache soll -
 // alle Seiten, Daten, Bilder. So läuft es auch offline vollständig, sobald die
@@ -50,6 +50,8 @@ const SCHALE = [
   'js/core/state.js',
   'js/core/statistik.js',
   'js/core/sync.js',
+  'js/core/trophaeen.js',
+  'js/core/truhenplaetze.js',
   'js/data/arena.js',
   'js/data/attacks.js',
   'js/data/aufgaben.js',
@@ -67,6 +69,7 @@ const SCHALE = [
   'js/data/shop.js',
   'js/data/spielmodi.js',
   'js/data/sounds.js',
+  'js/data/trophaeen.js',
   'js/data/worlds.js',
   'js/main.js',
   'js/screens/arena.js',
@@ -77,6 +80,7 @@ const SCHALE = [
   'js/screens/lobby.js',
   'js/screens/map.js',
   'js/screens/monster.js',
+  'js/screens/rangliste.js',
   'js/screens/settings.js',
   'js/screens/shop.js',
   'js/screens/start.js',

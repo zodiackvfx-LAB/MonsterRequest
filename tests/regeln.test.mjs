@@ -62,7 +62,10 @@ import { SORTIERUNGEN, sortiereAttacken } from '../js/core/sortierung.js';
 import { ALLE_STIMMUNGEN, tageszeitFuer, waehleStimmung } from '../js/ui/umgebung.js';
 import { bewegungVon } from '../js/ui/kampfintro.js';
 import { createBattle } from '../js/core/battle.js';
-import { karteGutschreiben, saveProgress, sicherungsInfo, truheAusLager, truheEinlagern } from '../js/core/state.js';
+import { karteGutschreiben, saveProgress, sicherungsInfo } from '../js/core/state.js';
+import { trophaeenNiederlage, trophaeenSieg } from '../js/core/trophaeen.js';
+import { LIGEN, ligaVon, naechsteLiga, trophaeenFuerSieg } from '../js/data/trophaeen.js';
+import { alleZustaende, freischaltenStarten, platzZustand, sofortPreis, truheAusPlatz, truheEinlagern } from '../js/core/truhenplaetze.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
@@ -534,12 +537,12 @@ console.log('\nBelohnungen');
   pruefe('Boss oeffnet eine neue Welt', bossLohn.newWorld?.id === 2);
 
   // Bosstruhe nur beim ersten Sieg - und sie kommt ungeöffnet ins Lager
-  pruefe('Der erste Boss-Sieg legt die Bosstruhe ins Lager',
-    bossLohn.neueTruhen.some((t) => t.id === BOSS_TRUHE.id) && gameState.truhenLager.includes(BOSS_TRUHE.id));
+  const bossTruhen = () => gameState.truhenPlaetze.filter((p) => p?.id === BOSS_TRUHE.id).length;
+  pruefe('Der erste Boss-Sieg legt die Bosstruhe in einen Truhenplatz',
+    bossLohn.neueTruhen.some((t) => t.id === BOSS_TRUHE.id) && bossTruhen() === 1);
   const bossZweimal = siegBelohnung(boss, 3, SPIELFIGUR.id, nieGlueck);
   pruefe('Bosstruhe gibt es nur beim ersten Sieg',
-    !bossZweimal.neueTruhen.some((t) => t.id === BOSS_TRUHE.id) &&
-    gameState.truhenLager.filter((id) => id === BOSS_TRUHE.id).length === 1);
+    !bossZweimal.neueTruhen.some((t) => t.id === BOSS_TRUHE.id) && bossTruhen() === 1);
 
   // Material
   pruefe(
@@ -1144,12 +1147,14 @@ console.log('\nLokale Sicherung');
   resetProgress();
 }
 
-console.log('\nGratis-Truhe und Truhenlager');
+console.log('\nGratis-Truhe und Truhenplätze');
 {
   resetProgress();
   const kampf = levelsOfWorld(1)[0];
+  const belegt = () => gameState.truhenPlaetze.filter(Boolean).map((p) => p.id);
+  pruefe('Es gibt genau 4 Truhenplätze', gameState.truhenPlaetze.length === 4);
   pruefe('Zu Beginn fehlen 2 Siege bis zur Gratis-Truhe', siegeBisGratisTruhe() === 2);
-  pruefe('Das Truhenlager ist anfangs leer', gameState.truhenLager.length === 0);
+  pruefe('Die Truhenplätze sind anfangs leer', belegt().length === 0);
   const erster = siegBelohnung(kampf, 3, 'timo', () => 0.99);
   pruefe('Der 1. Sieg bringt noch keine Truhe',
     erster.neueTruhen.length === 0 && siegeBisGratisTruhe() === 1);
@@ -1157,25 +1162,105 @@ console.log('\nGratis-Truhe und Truhenlager');
   const zweiter = siegBelohnung(kampf, 3, 'timo', () => 0.99);
   pruefe('Der 2. Sieg bringt eine Holztruhe',
     zweiter.neueTruhen.length === 1 && zweiter.neueTruhen[0].id === 'holztruhe');
-  pruefe('...die ungeöffnet ins Lager kommt (keine Münzen aus der Truhe)',
-    gameState.truhenLager.join() === 'holztruhe' && gameState.coins === muenzenVorher + zweiter.stuecke[0].menge);
+  pruefe('...die ungeöffnet in einen Platz kommt (keine Münzen aus der Truhe)',
+    belegt().join() === 'holztruhe' && gameState.coins === muenzenVorher + zweiter.stuecke[0].menge);
+  pruefe('...und dort wartet, bis man das Freischalten startet', platzZustand(0).zustand === 'wartet');
   pruefe('Danach beginnt die Zählung neu', siegeBisGratisTruhe() === 2);
+
+  // Freischalten: immer nur eine Truhe gleichzeitig.
+  const t0 = 1_000_000_000_000;
+  truheEinlagern('goldtruhe');
+  pruefe('Freischalten startet', freischaltenStarten(0, t0) && platzZustand(0, t0).zustand === 'laeuft');
+  pruefe('Eine zweite Truhe kann nicht gleichzeitig laufen', !freischaltenStarten(1, t0));
+  pruefe('Holztruhe braucht 15 Minuten',
+    platzZustand(0, t0 + 14 * 60000).zustand === 'laeuft' && platzZustand(0, t0 + 15 * 60000).zustand === 'bereit');
+  pruefe('Eine nicht fertige Truhe lässt sich nicht einfach öffnen', truheAusPlatz(0, { jetzt: t0 }) === null);
+  pruefe('Sofort-Öffnen kostet anfangs den vollen Wert', sofortPreis(0, t0) === 250);
+  pruefe('...und wird mit der Zeit billiger', sofortPreis(0, t0 + 7.5 * 60000) === 125);
+  pruefe('...aber nie unter 5 Münzen', sofortPreis(0, t0 + 15 * 60000 - 1000) === 5);
+  pruefe('Fertige Truhe öffnet gratis', truheAusPlatz(0, { jetzt: t0 + 15 * 60000 }) === 'holztruhe' && belegt().join() === 'goldtruhe');
+  gameState.coins = 100;
+  pruefe('Sofort öffnen geht nicht ohne genug Münzen', truheAusPlatz(1, { sofort: true, jetzt: t0 }) === null && gameState.coins === 100);
+  gameState.coins = 5000;
+  pruefe('Sofort öffnen zieht die Münzen ab', truheAusPlatz(1, { sofort: true, jetzt: t0 }) === 'goldtruhe' && gameState.coins === 3000);
+
+  // Alles voll: Gratis-Truhe wartet, Bosstruhe stellt sich an.
+  ['holztruhe', 'holztruhe', 'silbertruhe', 'holztruhe'].forEach((id) => truheEinlagern(id));
+  pruefe('Ein 5. Platz gibt es nicht', truheEinlagern('holztruhe') === false && belegt().length === 4);
   siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  const vollSieg = siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  pruefe('Bei vollen Plätzen wartet die Gratis-Truhe',
+    vollSieg.neueTruhen.length === 0 && vollSieg.gratisWartet && siegeBisGratisTruhe() === 0);
   siegBelohnung(kampf, 3, 'timo', () => 0.99);
-  pruefe('Nach 4 Siegen liegen 2 Truhen im Lager', gameState.truhenLager.length === 2);
-  siegBelohnung(kampf, 3, 'timo', () => 0.99);
+  pruefe('Weitere Siege stapeln keine Truhen', siegeBisGratisTruhe() === 0 && belegt().length === 4);
+  pruefe('Bosstruhe geht nie verloren (Warteschlange)', truheEinlagern('bosstruhe', { warteschlange: true }) === 'warteschlange');
+  gameState.truhenPlaetze[2].bereitAb = 0;
+  truheAusPlatz(2);
+  pruefe('Ein frei gewordener Platz holt zuerst die Bosstruhe', gameState.truhenPlaetze[2]?.id === 'bosstruhe' && siegeBisGratisTruhe() === 0);
+  gameState.truhenPlaetze[3].bereitAb = 0;
+  truheAusPlatz(3);
+  pruefe('...danach die wartende Gratis-Truhe', gameState.truhenPlaetze[3]?.id === 'holztruhe' && siegeBisGratisTruhe() === 2);
+
   loadProgress();
-  pruefe('Lager und Zähler überstehen das Neuladen',
-    siegeBisGratisTruhe() === 1 && gameState.truhenLager.length === 2);
-  truheEinlagern('bosstruhe');
-  pruefe('Die Bosstruhe wird zuerst geöffnet', truheAusLager() === 'bosstruhe');
-  pruefe('Danach die Holztruhen', truheAusLager() === 'holztruhe' && gameState.truhenLager.length === 1);
-  pruefe('Eine unbekannte Truhe kommt nicht ins Lager', truheEinlagern('gibtsnicht') === false);
-  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ truhenLager: ['holztruhe', 'quatsch', 7] }));
+  pruefe('Plätze und Zähler überstehen das Neuladen',
+    belegt().length === 4 && gameState.truhenPlaetze[2].id === 'bosstruhe' && alleZustaende().length === 4);
+  pruefe('Eine unbekannte Truhe kommt in keinen Platz', truheEinlagern('gibtsnicht') === false);
+
+  // Alte Spielstände: das Lager ohne Wartezeit wird übernommen.
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ truhenLager: ['holztruhe', 'quatsch', 7, 'bosstruhe', 'holztruhe', 'goldtruhe', 'silbertruhe'] }));
   loadProgress();
-  pruefe('Beim Laden bleiben nur bekannte Truhen im Lager', gameState.truhenLager.join() === 'holztruhe');
+  pruefe('Altes Lager: bekannte Truhen kommen fertig in die Plätze',
+    belegt().join() === 'holztruhe,bosstruhe,holztruhe,goldtruhe' && alleZustaende().every((p) => p.zustand === 'bereit'));
+  pruefe('Altes Lager: der Rest stellt sich an', gameState.truhenWarteschlange.join() === 'silbertruhe');
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ truhenPlaetze: [{ id: 'quatsch' }, { id: 'goldtruhe', bereitAb: 'x' }, 5] }));
+  loadProgress();
+  pruefe('Kaputte Plätze werden beim Laden bereinigt',
+    gameState.truhenPlaetze.length === 4 && belegt().join() === 'goldtruhe' && platzZustand(1).zustand === 'wartet');
   resetProgress();
-  pruefe('Zurücksetzen leert Lager und Zähler', siegeBisGratisTruhe() === 2 && gameState.truhenLager.length === 0);
+  pruefe('Zurücksetzen leert Plätze und Zähler', siegeBisGratisTruhe() === 2 && belegt().length === 0);
+}
+
+console.log('\nTrophäen und Ligen');
+{
+  resetProgress();
+  const w1 = levelsOfWorld(1);
+  const w7 = levelsOfWorld(7);
+  pruefe('Neuer Spielstand hat 0 Trophäen', gameState.trophaeen === 0 && ligaVon(0).id === 'holz');
+  pruefe('Erster Sieg in Welt 1: 15, in Welt 7: 45',
+    trophaeenFuerSieg(w1[0], true) === 15 && trophaeenFuerSieg(w7[0], true) === 45);
+  pruefe('Boss zählt doppelt', trophaeenFuerSieg(w1[11], true) === 30 && trophaeenFuerSieg(w1[11], false) === 4);
+  pruefe('Wiederholen bringt nur 2', trophaeenFuerSieg(w1[0], false) === 2);
+  const alleWelten = WORLDS.flatMap((w) => levelsOfWorld(w.id)).reduce((s, l) => s + trophaeenFuerSieg(l, true), 0);
+  pruefe(`Alle Welten einmal geschafft = ${alleWelten} Trophäen, reicht für die Championliga`,
+    alleWelten >= LIGEN[LIGEN.length - 1].ab);
+  pruefe('Ligen steigen an', LIGEN.every((l, i) => i === 0 || l.ab > LIGEN[i - 1].ab) && LIGEN[0].ab === 0);
+  pruefe('Nächste Liga', naechsteLiga(0).id === 'bronze' && naechsteLiga(99999) === null);
+
+  const sieg = siegBelohnung(w1[0], 3, 'timo', () => 0.99);
+  pruefe('Ein Sieg schreibt Trophäen gut', sieg.trophaeen.aenderung === 15 && gameState.trophaeen === 15);
+  pruefe('Niederlage kostet 5', trophaeenNiederlage().aenderung === -5 && gameState.trophaeen === 10);
+  trophaeenNiederlage();
+  trophaeenNiederlage();
+  pruefe('Nie unter 0', gameState.trophaeen === 0 && gameState.trophaeenRekord === 15);
+  gameState.trophaeen = 152;
+  const ab = trophaeenNiederlage();
+  pruefe('Nie unter die Grenze der eigenen Liga', gameState.trophaeen === 150 && ab.liga.id === 'bronze');
+  gameState.trophaeen = 145;
+  const auf = trophaeenSieg(w1[0], true);
+  pruefe('Aufstieg in die nächste Liga wird gemeldet', auf.aufgestiegen && auf.liga.id === 'bronze');
+
+  saveProgress();
+  loadProgress();
+  pruefe('Trophäen und Rekord überstehen das Neuladen', gameState.trophaeen === 160 && gameState.trophaeenRekord === 160);
+
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ clearedLevels: ['1-1', '1-2', '1-12', 'quatsch'] }));
+  loadProgress();
+  pruefe('Alter Spielstand: Trophäen aus geschafften Kämpfen (15+15+30)', gameState.trophaeen === 60);
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ trophaeen: 'viele', trophaeenRekord: -4, clearedLevels: ['1-1'] }));
+  loadProgress();
+  pruefe('Kaputte Trophäen werden 0 (und nicht neu berechnet)', gameState.trophaeen === 0 && gameState.trophaeenRekord === 0);
+  pruefe('Rangliste ist standardmäßig an', gameState.settings.rangliste === true);
+  resetProgress();
 }
 
 console.log('\nKarten-Level bis 15');

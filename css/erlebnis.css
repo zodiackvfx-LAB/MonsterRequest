@@ -2036,89 +2036,189 @@
    9. Truhenlager und Truhe öffnen (js/ui/truhe-oeffnen.js)
    ========================================================================= */
 
-/* ---------- Das Symbol auf der Startseite ---------- */
-.truhenlager {
-  position: absolute !important;
-  z-index: 3 !important;
-  left: calc(12px + env(safe-area-inset-left));
-  top: 40%;
-  width: 74px;
-  padding: 0;
-  font: inherit;
-  color: #fff;
-  background: none;
-  border: 0;
-  cursor: pointer;
+/* ---------- Die 4 Truhenplätze auf der Startseite ----------
+   Wie bei Clash Royale: eine Reihe unter "Spiel starten". Jeder Platz ist
+   leer, wartet, läuft (mit Restzeit) oder ist bereit (leuchtet grün). */
+.truhenplaetze {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.truhenplatz {
+  position: relative;
   display: grid;
   justify-items: center;
-  filter: drop-shadow(0 6px 8px rgba(8, 14, 40, 0.45));
+  align-content: end;
+  min-height: 82px;
+  padding: 4px 2px 6px;
+  font: inherit;
+  color: #fff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(43, 55, 120, 0.92), rgba(22, 30, 72, 0.94));
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 4px 0 rgba(8, 14, 40, 0.55);
+  cursor: pointer;
+  overflow: hidden;
 }
 
-.truhenlager__truhe {
-  width: 70px;
-  height: 76px;
-  animation: lager-hopsen 2.4s ease-in-out infinite;
+.truhenplatz:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 2px 0 rgba(8, 14, 40, 0.55);
 }
 
-/* Ein warmer Schein hinter der Truhe - sie will geöffnet werden. */
-.truhenlager::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  width: 92px;
-  height: 80px;
-  margin-left: -46px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 220, 120, 0.55) 0%, rgba(255, 220, 120, 0) 68%);
-  animation: lager-schein 2.4s ease-in-out infinite;
-  z-index: -1;
+.truhenplatz--leer {
+  cursor: default;
+  align-content: center;
+  background: rgba(22, 30, 72, 0.62);
+  border-style: dashed;
+  border-color: rgba(195, 205, 240, 0.35);
+  box-shadow: none;
 }
 
-.truhenlager__zahl {
-  position: absolute;
-  top: -4px;
-  right: 0;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 6px;
+.truhenplatz__leer {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(195, 205, 240, 0.7);
+  text-align: center;
+}
+
+.truhenplatz__truhe {
+  width: 50px;
+  height: 50px;
   display: grid;
   place-items: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ff6b6b, #d22f3c);
-  border: 2px solid #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-.truhenlager__text {
-  margin-top: -4px;
-  padding: 2px 10px;
+.truhenplatz__truhe svg {
+  width: 100%;
+  height: 100%;
+}
+
+.truhenplatz__text {
+  margin-top: 2px;
   font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.truhenplatz__text--zeit {
+  color: var(--gold-1);
+}
+
+.truhenplatz__balken {
+  width: 80%;
+  height: 5px;
+  margin-top: 3px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--gold-1), var(--gold-2)) 0 0 / calc(var(--anteil, 0) * 100%) 100% no-repeat,
+    rgba(8, 14, 40, 0.6);
+}
+
+/* Wartet und nichts läuft: "Tipp mich" - ein sanftes Pulsieren. */
+.truhenplatz.ist-startbar {
+  border-color: var(--gold-2);
+}
+
+.truhenplatz.ist-startbar::after {
+  content: 'Tippen';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0 6px;
+  font-size: 0.52rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   border-radius: 999px;
-  background: linear-gradient(180deg, #7ee06a, #3fa62a);
-  border: 2px solid #24701a;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  color: var(--text-dark);
+  background: var(--gold-1);
+  animation: platz-tippen 1.6s ease-in-out infinite;
 }
 
-.truhenlager:active .truhenlager__truhe {
-  scale: 0.92;
+/* Läuft: ein goldener Rand. */
+.truhenplatz--laeuft {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, rgba(92, 70, 24, 0.92), rgba(40, 32, 18, 0.94));
+}
+
+/* Bereit: grün leuchtend, die Truhe hopst. */
+.truhenplatz--bereit {
+  border-color: var(--green-1);
+  background: linear-gradient(180deg, #3fa62a, #1f5c16);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 4px 0 #154010, 0 0 14px rgba(126, 224, 106, 0.6);
+}
+
+.truhenplatz--bereit .truhenplatz__truhe {
+  animation: lager-hopsen 2.4s ease-in-out infinite;
+}
+
+.truhenplatz__text--bereit {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@keyframes platz-tippen {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 @keyframes lager-hopsen {
   0%, 70%, 100% { transform: translateY(0) rotate(0); }
-  76% { transform: translateY(-8px) rotate(-6deg); }
+  76% { transform: translateY(-6px) rotate(-6deg); }
   84% { transform: translateY(0) rotate(5deg); }
-  92% { transform: translateY(-3px) rotate(-2deg); }
+  92% { transform: translateY(-2px) rotate(-2deg); }
 }
 
-@keyframes lager-schein {
-  0%, 100% { opacity: 0.6; transform: scale(0.9); }
-  50%      { opacity: 1; transform: scale(1.08); }
+/* ---------- Fenster zu einer Truhe, die noch nicht fertig ist ---------- */
+.truhenplatz-dialog {
+  text-align: center;
+}
+
+.truhenplatz-dialog__truhe {
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 4px;
+}
+
+.truhenplatz-dialog__truhe svg {
+  width: 100%;
+  height: 100%;
+}
+
+.truhenplatz-dialog__zeit {
+  margin: 4px 0 6px;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.truhenplatz-dialog__zeit strong {
+  color: var(--gold-1);
+}
+
+.truhenplatz-dialog__balken {
+  display: block;
+  width: 80%;
+  height: 8px;
+  margin: 0 auto 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--gold-1), var(--gold-2)) 0 0 / calc(var(--anteil, 0) * 100%) 100% no-repeat,
+    rgba(8, 14, 40, 0.6);
+}
+
+.truhenplatz-dialog__hinweis {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.gratis-hinweis--voll {
+  color: var(--gold-1);
 }
 
 /* ---------- Gewonnene Truhen im Siegesfenster ---------- */
@@ -2499,3 +2599,245 @@
 }
 
 
+
+/* =========================================================================
+   10. Trophäen und Rangliste (js/screens/rangliste.js)
+   ========================================================================= */
+
+/* ---------- Liga-Abzeichen: ein runder Schild in der Ligafarbe ---------- */
+.liga-abzeichen {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  font-size: 0.95rem;
+  line-height: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%),
+    var(--liga-farbe, var(--gold));
+  border: 2px solid rgba(8, 14, 40, 0.65);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25), 0 2px 4px rgba(8, 14, 40, 0.45);
+}
+
+.liga-abzeichen--gross {
+  width: 76px;
+  height: 76px;
+  font-size: 2.3rem;
+  border-width: 3px;
+  box-shadow:
+    inset 0 -6px 0 rgba(0, 0, 0, 0.22),
+    0 0 0 4px rgba(255, 255, 255, 0.12),
+    0 0 22px var(--liga-farbe, var(--gold));
+}
+
+/* ---------- Eigene Liga ---------- */
+.meine-liga {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-color: var(--liga-farbe, var(--panel-border));
+}
+
+.meine-liga__text {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.meine-liga__name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--liga-farbe, #fff);
+  text-shadow: 0 2px 3px rgba(8, 14, 40, 0.7);
+}
+
+.meine-liga__zahl {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.meine-liga__balken {
+  position: relative;
+  display: block;
+  height: 10px;
+  margin-top: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(8, 14, 40, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.meine-liga__fuellung {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--fuellung, 0));
+  background: linear-gradient(90deg, var(--gold-1), var(--gold-2));
+}
+
+.meine-liga__ziel,
+.meine-liga__rekord {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Alle Ligen ---------- */
+.ligen-leiste {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.ligen-leiste__liga {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 5px 0 4px;
+  border-radius: 10px;
+}
+
+.ligen-leiste__liga.is-eigene {
+  background: rgba(255, 197, 61, 0.16);
+  outline: 2px solid var(--gold);
+}
+
+.ligen-leiste__liga.is-offen .liga-abzeichen {
+  filter: grayscale(0.85) brightness(0.7);
+}
+
+.ligen-leiste__ab {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.ligen-leiste__regel {
+  margin-top: 8px;
+  font-size: 0.74rem;
+}
+
+/* ---------- Die Rangliste ---------- */
+.rangliste__liste {
+  display: grid;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rangliste__zeile {
+  display: grid;
+  grid-template-columns: 32px auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(8, 14, 40, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rangliste__zeile.is-ich {
+  background: linear-gradient(90deg, rgba(255, 197, 61, 0.3), rgba(255, 197, 61, 0.1));
+  border-color: var(--gold);
+}
+
+.rangliste__zeile.is-platz-1 { border-color: rgba(255, 210, 80, 0.6); }
+.rangliste__zeile.is-platz-2 { border-color: rgba(200, 212, 232, 0.5); }
+.rangliste__zeile.is-platz-3 { border-color: rgba(208, 138, 78, 0.5); }
+
+.rangliste__platz {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.rangliste__zeile:not(.is-platz-1):not(.is-platz-2):not(.is-platz-3) .rangliste__platz {
+  color: var(--text-dim);
+}
+
+/* Platz 1 bis 3: die Zahl sitzt auf einer kleinen Münze. */
+.is-platz-1 .rangliste__platz,
+.is-platz-2 .rangliste__platz,
+.is-platz-3 .rangliste__platz {
+  justify-self: center;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-dark);
+  border: 2px solid rgba(8, 14, 40, 0.5);
+}
+
+.is-platz-1 .rangliste__platz { background: linear-gradient(180deg, #ffe98a, #f0a91c); }
+.is-platz-2 .rangliste__platz { background: linear-gradient(180deg, #f2f6ff, #9eaecb); }
+.is-platz-3 .rangliste__platz { background: linear-gradient(180deg, #f3b47e, #b5662e); }
+
+.rangliste__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.rangliste__name small {
+  font-weight: 500;
+  color: var(--gold-1);
+}
+
+.rangliste__trophaeen {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rangliste__luecke {
+  text-align: center;
+  color: var(--text-dim);
+  line-height: 0.8;
+}
+
+.rangliste__fuss {
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* ---------- Trophäen im Ergebnisfenster ---------- */
+.ergebnis-trophaeen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 2px 0 4px;
+}
+
+.ergebnis-trophaeen__zahl {
+  padding: 3px 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  border: 2px solid var(--gold-3);
+}
+
+.ergebnis-trophaeen--minus .ergebnis-trophaeen__zahl {
+  color: #fff;
+  background: linear-gradient(180deg, #6a7398, #434b70);
+  border-color: #2d3352;
+}
+
+.ergebnis-trophaeen__stand {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.overlay__unlock--liga {
+  border-color: var(--gold);
+}

@@ -53,6 +53,11 @@ const TOGGLES = [
     name: 'Vibration',
     hint: 'Kurzes Vibrieren bei Treffern (nur auf Geräten, die das können)',
   },
+  {
+    key: 'rangliste',
+    name: 'In der Rangliste zeigen',
+    hint: 'Dein Name und deine Trophäen sind für andere Spieler sichtbar',
+  },
 ];
 
 /** Die beiden Reiter. */

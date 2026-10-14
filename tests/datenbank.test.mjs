@@ -148,6 +148,23 @@ try {
     pruefe('Und der Spielstand ist da', (await cloud.cloudLaden())?.coins === 3);
   }
 
+  console.log('\nRangliste');
+  {
+    const ich = cloud.spielerId();
+    const fremd = (n) => `00000000-0000-4000-8000-00000000000${n}`;
+    await ruf('mq_speichern', { p_id: fremd(1), p_daten: { name: 'Ass', trophaeen: 900 } });
+    await ruf('mq_speichern', { p_id: fremd(2), p_daten: { name: 'Versteckt', trophaeen: 5000, settings: { rangliste: false } } });
+    await ruf('mq_speichern', { p_id: fremd(3), p_daten: { name: 'Neuling', trophaeen: 0 } });
+    // Der eigene Stand geht über cloudMerken mit - cloudRangliste schickt ihn vorher los.
+    cloud.cloudMerken({ revision: 20, name: 'Ich', trophaeen: 300, settings: { rangliste: true } });
+    const liste = await cloud.cloudRangliste(10);
+    pruefe('Die Rangliste ist nach Trophaeen sortiert',
+      liste.spitze.map((e) => e.name).join() === 'Ass,Ich');
+    pruefe('Der eigene Platz kommt mit', liste.ich?.platz === 2 && liste.spitze[1].ich === true);
+    pruefe('Ausgeblendete und Spieler ohne Trophaeen fehlen', liste.spieler === 2);
+    pruefe('Keine Spielernummern in der Antwort', !JSON.stringify(liste).includes(ich) && !JSON.stringify(liste).includes(fremd(1)));
+  }
+
   console.log('\nGrenzen');
   {
     pruefe('Ein zu grosser Spielstand wird abgelehnt', await zuGrossWirdAbgelehnt());

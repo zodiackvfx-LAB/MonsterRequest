@@ -11,11 +11,12 @@ import { LEVELS, bossLevelOf } from '../data/levels.js';
 import { WORLDS } from '../data/worlds.js';
 import { getKraft, kraftFuerWelt } from '../data/kraefte.js';
 import { MONSTERS } from '../data/monsters.js';
-import { BOSS_TRUHE, TRUHEN } from '../data/shop.js';
+import { BOSS_TRUHE, TRUHEN, TRUHEN_PLAETZE } from '../data/shop.js';
 import { stufenId } from '../data/attacks.js';
 import { ALTES_LEVEL_NEU, KARTEN_MAX_LEVEL, kopienFuer } from '../data/karten.js';
+import { TROPHAEEN_MAX, trophaeenFuerSieg } from '../data/trophaeen.js';
 
-/** Alle Truhen, die im Lager liegen dürfen. */
+/** Alle Truhen, die in einem Truhenplatz liegen dürfen. */
 const TRUHEN_IDS = [...TRUHEN.map((truhe) => truhe.id), BOSS_TRUHE.id];
 import { cloudMerken } from './cloud.js';
 
@@ -57,10 +58,16 @@ function createNewGame() {
     clearedLevels: [], // Level-ids wie "1-3"
     stars: {}, // { "1-3": 2 }
     coins: 0,
+    trophaeen: 0, // Trophäen für Liga und Rangliste (siehe js/core/trophaeen.js)
+    trophaeenRekord: 0, // die höchste je erreichte Zahl
     materials: 0, // Material (💠) für Aufwertungen - siehe js/core/progression.js
     ownedAttacks: [], // aus Truhen freigeschaltete Attacken
     gratisTruheZaehler: 0, // Siege seit der letzten Gratis-Truhe (siehe js/core/belohnung.js)
-    truhenLager: [], // gewonnene, noch ungeöffnete Truhen (ids) - der Spieler öffnet sie selbst
+    // Truhenplätze (siehe js/core/truhenplaetze.js): je Platz null oder
+    // { id, bereitAb } - bereitAb ist null (noch nicht gestartet) oder der
+    // Zeitpunkt in Millisekunden, ab dem die Truhe offen ist.
+    truhenPlaetze: Array(TRUHEN_PLAETZE).fill(null),
+    truhenWarteschlange: [], // Bosstruhen, die gerade keinen Platz finden
     bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
@@ -98,6 +105,7 @@ function createNewGame() {
       vibration: true, // kurzes Vibrieren bei Treffern (nur wo das Gerät es kann)
       schwierigkeit: 'normal', // 'leicht' | 'normal' | 'schwer' (siehe js/data/schwierigkeit.js)
       deckSortierung: 'deck', // Anzeige im Deckmenü (siehe js/core/sortierung.js)
+      rangliste: true, // mit Name und Trophäen in der Rangliste erscheinen
     },
   };
 }
@@ -253,13 +261,11 @@ function uebernehmen(saved) {
   gameState.clearedLevels = Array.isArray(saved.clearedLevels) ? saved.clearedLevels.map(String) : [];
   gameState.stars = saved.stars && typeof saved.stars === 'object' ? saved.stars : {};
   gameState.coins = Number(saved.coins) || 0;
+  trophaeenUebernehmen(saved);
   gameState.materials = Number(saved.materials) || 0;
   gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
   gameState.gratisTruheZaehler = Math.max(0, Math.floor(Number(saved.gratisTruheZaehler) || 0));
-  // Nur bekannte Truhen übernehmen - eine unbekannte id ließe sich nie öffnen.
-  gameState.truhenLager = Array.isArray(saved.truhenLager)
-    ? saved.truhenLager.filter((id) => TRUHEN_IDS.includes(id))
-    : [];
+  truhenUebernehmen(saved);
   // Nur bekannte Kraft-ids übernehmen, damit ein alter Spielstand keine
   // Geister-Kraft einschleppt.
   gameState.bossPowers = Array.isArray(saved.bossPowers)
@@ -324,6 +330,57 @@ function uebernehmen(saved) {
   Object.keys(standard).forEach((key) => {
     if (typeof gespeichert[key] === typeof standard[key]) gameState.settings[key] = gespeichert[key];
   });
+}
+
+/**
+ * Truhenplätze aus dem Spielstand übernehmen. Nur bekannte Truhen zählen -
+ * eine unbekannte id ließe sich nie öffnen.
+ *
+ * Ältere Stände kannten statt der Plätze ein Lager ohne Wartezeit
+ * (truhenLager). Diese Truhen wurden unter der alten Regel gewonnen - sie
+ * kommen deshalb gleich FERTIG in die Plätze, der Rest in die Warteschlange.
+ */
+function truhenUebernehmen(saved) {
+  const bekannt = (id) => TRUHEN_IDS.includes(id);
+  const plaetze = Array.isArray(saved.truhenPlaetze) ? saved.truhenPlaetze : [];
+  gameState.truhenPlaetze = Array.from({ length: TRUHEN_PLAETZE }, (_, i) => {
+    const platz = plaetze[i];
+    if (!platz || !bekannt(platz.id)) return null;
+    const bereitAb = Number(platz.bereitAb);
+    return { id: platz.id, bereitAb: platz.bereitAb === null || !Number.isFinite(bereitAb) ? null : bereitAb };
+  });
+  gameState.truhenWarteschlange = Array.isArray(saved.truhenWarteschlange)
+    ? saved.truhenWarteschlange.filter(bekannt)
+    : [];
+
+  const altesLager = Array.isArray(saved.truhenLager) ? saved.truhenLager.filter(bekannt) : [];
+  altesLager.forEach((id) => {
+    const frei = gameState.truhenPlaetze.indexOf(null);
+    if (frei >= 0) gameState.truhenPlaetze[frei] = { id, bereitAb: 0 };
+    else gameState.truhenWarteschlange.push(id);
+  });
+}
+
+/**
+ * Trophäen aus dem Spielstand übernehmen.
+ *
+ * Ältere Stände kennen noch keine Trophäen. Damit niemand, der schon weit
+ * ist, bei null anfängt, bekommt er die Trophäen für jeden Kampf, den er
+ * schon einmal gewonnen hat - so, als hätte es sie damals schon gegeben.
+ */
+function trophaeenUebernehmen(saved) {
+  const zahl = (wert) => Math.max(0, Math.min(TROPHAEEN_MAX, Math.floor(Number(wert) || 0)));
+  if (saved.trophaeen === undefined) {
+    gameState.trophaeen = zahl(
+      gameState.clearedLevels.reduce((summe, id) => {
+        const level = LEVELS.find((eintrag) => eintrag.id === id);
+        return level ? summe + trophaeenFuerSieg(level, true) : summe;
+      }, 0)
+    );
+  } else {
+    gameState.trophaeen = zahl(saved.trophaeen);
+  }
+  gameState.trophaeenRekord = Math.max(gameState.trophaeen, zahl(saved.trophaeenRekord));
 }
 
 /** Wurde dieser Einmal-Hinweis schon gezeigt? */
@@ -677,30 +734,6 @@ export function setBossKraft(id) {
     gameState.bossPower = id;
     saveProgress();
   }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Truhenlager: gewonnene Truhen, die der Spieler selbst öffnet        */
-/* ------------------------------------------------------------------ */
-
-/** Legt eine gewonnene Truhe ins Lager (geöffnet wird sie später). */
-export function truheEinlagern(id) {
-  if (!TRUHEN_IDS.includes(id)) return false;
-  gameState.truhenLager.push(id);
-  saveProgress();
-  return true;
-}
-
-/**
- * Nimmt die nächste Truhe aus dem Lager - die Bosstruhe zuerst, sie ist die
- * wertvollste. Gibt die id zurück oder null, wenn das Lager leer ist.
- */
-export function truheAusLager() {
-  if (!gameState.truhenLager.length) return null;
-  const boss = gameState.truhenLager.indexOf(BOSS_TRUHE.id);
-  const [id] = gameState.truhenLager.splice(boss >= 0 ? boss : 0, 1);
-  saveProgress();
-  return id;
 }
 
 /** Eine Einstellung ändern (z. B. Ton an/aus). */

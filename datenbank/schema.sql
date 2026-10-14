@@ -83,7 +83,7 @@ $$;
 
 
 -- -------------------------------------------------------------------------
--- 4. Die vier Funktionen, die das Spiel aufruft
+-- 4. Die Funktionen, die das Spiel aufruft
 -- -------------------------------------------------------------------------
 -- SECURITY DEFINER heisst: Die Funktion laeuft mit den Rechten ihres
 -- Besitzers und darf deshalb an die gesperrten Tabellen. Das search_path
@@ -210,6 +210,54 @@ end;
 $$;
 
 
+-- --- Rangliste -----------------------------------------------------------
+-- Die besten Spieler nach Trophaeen, dazu der eigene Platz. Heraus kommen
+-- nur Name, Trophaeen und Platz - keine Spielernummern. Ob eine Zeile die
+-- eigene ist, steht als ja/nein dabei.
+--
+-- Wer in den Einstellungen "In der Rangliste zeigen" ausschaltet
+-- (settings.rangliste = false), taucht nicht auf. Ohne Trophaeen auch nicht.
+-- Gleich viele Trophaeen = gleicher Platz; wer sie zuerst hatte, steht oben.
+create or replace function public.mq_rangliste(p_id uuid, p_anzahl integer default 50)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with liste as (
+    select s.id,
+           -- Name: hoechstens 16 Zeichen, leer wird "Spieler".
+           left(coalesce(nullif(btrim(s.daten ->> 'name'), ''), 'Spieler'), 16) as name,
+           -- Unsinn (Text, negativ, riesig) darf die Liste nicht kippen.
+           least(greatest(coalesce(public.mq_zahl(s.daten, 'trophaeen'), 0), 0), 100000)::int as trophaeen,
+           s.gespeichert_am
+      from public.spielstaende s
+     where coalesce(s.daten #>> '{settings,rangliste}', 'true') <> 'false'
+  ),
+  rang as (
+    select l.*,
+           rank()       over (order by l.trophaeen desc)                    as platz,
+           row_number() over (order by l.trophaeen desc, l.gespeichert_am)  as nr
+      from liste l
+     where l.trophaeen > 0
+  )
+  select jsonb_build_object(
+    'spitze', coalesce(
+      (select jsonb_agg(
+                jsonb_build_object('platz', r.platz, 'name', r.name,
+                                   'trophaeen', r.trophaeen, 'ich', r.id = p_id)
+                order by r.nr)
+         from rang r
+        where r.nr <= least(greatest(coalesce(p_anzahl, 50), 1), 100)),
+      '[]'::jsonb),
+    'ich', (select jsonb_build_object('platz', r.platz, 'trophaeen', r.trophaeen)
+              from rang r where r.id = p_id),
+    'spieler', (select count(*) from rang)
+  );
+$$;
+
+
 -- -------------------------------------------------------------------------
 -- 5. Wer darf die Funktionen aufrufen
 -- -------------------------------------------------------------------------
@@ -218,11 +266,13 @@ revoke all on function public.mq_speichern(uuid, jsonb)      from public;
 revoke all on function public.mq_laden(uuid)                 from public;
 revoke all on function public.mq_code_erstellen(uuid)        from public;
 revoke all on function public.mq_code_einloesen(text)        from public;
+revoke all on function public.mq_rangliste(uuid, integer)    from public;
 
 grant execute on function public.mq_speichern(uuid, jsonb)   to anon, authenticated;
 grant execute on function public.mq_laden(uuid)              to anon, authenticated;
 grant execute on function public.mq_code_erstellen(uuid)     to anon, authenticated;
 grant execute on function public.mq_code_einloesen(text)     to anon, authenticated;
+grant execute on function public.mq_rangliste(uuid, integer) to anon, authenticated;
 
 
 -- -------------------------------------------------------------------------
@@ -249,7 +299,10 @@ create or replace view public.spielstaende_uebersicht as
     end as geschaffte_kaempfe,
     s.speicherungen,
     s.erstellt_am,
-    s.gespeichert_am
+    s.gespeichert_am,
+    -- Neue Spalten nur HINTEN anhaengen: "create or replace view" darf
+    -- vorhandene Spalten nicht verschieben.
+    public.mq_zahl(s.daten, 'trophaeen')::int as trophaeen
   from public.spielstaende s
   order by s.gespeichert_am desc;
 
