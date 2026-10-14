@@ -144,7 +144,9 @@ export const ROCCO_ATTACKEN = [
   { id: 'schulterramme', stufeVon: 'ellbogenstoss', seltenheit: 'gewoehnlich', name: 'Schulterramme', cost: 2, damage: 12, icon: '💪', text: 'Rocco wirft sich mit der ganzen Schulter nach vorn.' },
   { id: 'felsstampfer', stufeVon: 'wirbelkick', seltenheit: 'selten', name: 'Felsstampfer', cost: 3, damage: 17, icon: '🦶', text: 'Ein Tritt auf den Boden, der bis zum Gegner bebt.' },
   { id: 'brockenwurf', stufeVon: 'aufwaertshaken', seltenheit: 'selten', name: 'Brockenwurf', cost: 4, damage: 23, icon: '🗿', text: 'Ein Stück vom eigenen Rücken - mit Schwung geworfen.' },
-  { id: 'steinhaut', stufeVon: 'deckung', seltenheit: 'selten', name: 'Steinhaut', cost: 4, damage: 0, shield: 26, icon: '🧱', text: 'Rocco verhärtet sich. Fängt den nächsten Treffer ab.' },
+  // "felshaut", nicht "steinhaut": So heißt schon eine Truhen-Karte
+  // (js/data/items.js) - gleiche ids überschreiben sich gegenseitig.
+  { id: 'felshaut', stufeVon: 'deckung', seltenheit: 'selten', name: 'Felshaut', cost: 4, damage: 0, shield: 26, icon: '🧱', text: 'Rocco verhärtet sich. Fängt den nächsten Treffer ab.' },
   { id: 'erdstoss', stufeVon: 'energiestoss', seltenheit: 'episch', name: 'Erdstoß', cost: 5, damage: 30, icon: '⛰️', text: 'Eine Felsspitze bricht unter dem Gegner aus dem Boden.' },
   { id: 'felslawine', stufeVon: 'druckwelle', seltenheit: 'episch', name: 'Felslawine', cost: 7, damage: 45, icon: '🏔️', text: 'Geröll von allen Seiten - kaum auszuweichen.' },
   { id: 'bergsturz', stufeVon: 'sturmfaust', seltenheit: 'legendaer', name: 'Bergsturz', cost: 9, damage: 62, icon: '🌋', text: 'Roccos stärkster Schlag: der halbe Berg fällt auf einmal.' },

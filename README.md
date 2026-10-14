@@ -148,7 +148,7 @@ dem Truhen-Symbol links auf der Startseite – bis man sie selbst öffnet.
 | Ellbogenstoß | Schulterramme | 2 | 12 Schaden |
 | Wirbelkick | Felsstampfer | 3 | 17 Schaden |
 | Aufwärtshaken | Brockenwurf | 4 | 23 Schaden |
-| Deckung | Steinhaut | 4 | fängt 26 Schaden ab |
+| Deckung | Felshaut | 4 | fängt 26 Schaden ab |
 | Energiestoß | Erdstoß | 5 | 30 Schaden |
 | Druckwelle | Felslawine | 7 | 45 Schaden |
 | Sturmfaust | Bergsturz | 9 | 62 Schaden |

@@ -1007,6 +1007,11 @@ console.log('\nRoccos Attacken');
     return a.cost === t.cost && a.damage === t.damage && (a.shield ?? 0) === (t.shield ?? 0);
   });
   pruefe('Roccos Attacken kosten und wirken genau wie Timos Gegenstück', gleich);
+  // Im Katalog darf keine andere Karte Roccos Karten überschreiben.
+  pruefe('Roccos Karten stehen unverändert im Katalog',
+    ROCCO_ATTACKEN.every((a) => ATTACKS[a.id].stufeVon === a.stufeVon && ATTACKS[a.id].cost === a.cost));
+  const alleIds = [...START_ATTACKEN, ...ROCCO_ATTACKEN.map((a) => a.id), ...BEUTE_ATTACKEN.map((a) => a.id)];
+  pruefe('Keine Kartenkennung kommt doppelt vor', new Set(alleIds).size === alleIds.length);
   gameState.coins = 999999;
   gameState.materials = 999;
   attackeAufwerten('fausthieb');

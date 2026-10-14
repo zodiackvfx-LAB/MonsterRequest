@@ -108,7 +108,7 @@ export const MONSTERS = {
       'schulterramme',
       'felsstampfer',
       'brockenwurf',
-      'steinhaut',
+      'felshaut',
       'erdstoss',
       'felslawine',
       'bergsturz',
