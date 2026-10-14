@@ -28,6 +28,7 @@ import {
   sofortPreis,
   truheAusPlatz,
 } from '../core/truhenplaetze.js';
+import { alleZeitTruhen, zeitTruheAbholen } from '../core/zeittruhen.js';
 import { spieleKlang } from '../core/audio.js';
 import { zeigeTruhenOeffnung } from '../ui/truhe-oeffnen.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
@@ -70,6 +71,17 @@ function funkenStreuen(knopf) {
 
 /** Tickt jede Sekunde, solange die Startseite offen ist (Restzeit der Truhen). */
 let platzTimer = null;
+let zeitTimer = null;
+
+/** Nach dem Öffnen einer Truhe: Figur neu zeichnen, Erfolge prüfen. */
+function nachDemOeffnen() {
+  spritesNeuZeichnen();
+  const neueErfolge = pruefeNeueErfolge();
+  if (neueErfolge.length) {
+    statistikSpeichern();
+    zeigeErfolgToast(neueErfolge);
+  }
+}
 
 /**
  * Öffnet die Truhe aus einem Platz mit der großen Animation. Sind danach
@@ -87,12 +99,7 @@ function truheOeffnen(screen, index, sofort = false) {
   zeigeTruhenOeffnung(screen, truheNachId(id), {
     weitere: alleZustaende().filter((p) => p.zustand === 'bereit').length,
     fertig: (naechste) => {
-      spritesNeuZeichnen();
-      const neueErfolge = pruefeNeueErfolge();
-      if (neueErfolge.length) {
-        statistikSpeichern();
-        zeigeErfolgToast(neueErfolge);
-      }
+      nachDemOeffnen();
       if (naechste && naechsteBereit() >= 0) truheOeffnen(screen, naechsteBereit());
       else showScreen('start');
     },
@@ -240,6 +247,62 @@ function baueTruhenplaetze(screen) {
   return reihe;
 }
 
+/**
+ * Die Gratis-Truhen mit Uhr: links und rechts neben der Figur. Ist eine
+ * bereit, leuchtet sie und ein Tipp öffnet sie direkt.
+ */
+function baueZeitTruhen(screen) {
+  const box = document.createElement('div');
+  box.className = 'zeit-truhen';
+
+  const knoepfe = alleZeitTruhen().map(({ truhe }, index) => {
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.dataset.klang = 'keiner';
+    knopf.className = `zeit-truhe zeit-truhe--${index === 0 ? 'links' : 'rechts'} zeit-truhe--${truhe.design}`;
+    knopf.innerHTML = `
+      <span class="zeit-truhe__marke">Gratis</span>
+      <span class="zeit-truhe__truhe">${truheSvg(truhe.design)}</span>
+      <span class="zeit-truhe__text"></span>
+    `;
+    knopf.addEventListener('click', () => {
+      const geholt = zeitTruheAbholen(truhe.id);
+      if (!geholt) {
+        spieleKlang('gesperrt');
+        knopf.classList.remove('ist-gesperrt');
+        void knopf.offsetWidth; // Animation neu starten
+        knopf.classList.add('ist-gesperrt');
+        return;
+      }
+      spieleKlang('tipp');
+      zeigeTruhenOeffnung(screen, geholt, {
+        fertig: () => {
+          nachDemOeffnen();
+          showScreen('start');
+        },
+      });
+    });
+    box.appendChild(knopf);
+    return knopf;
+  });
+
+  function aktualisieren() {
+    alleZeitTruhen().forEach(({ truhe, bereit, rest }, index) => {
+      const knopf = knoepfe[index];
+      knopf.classList.toggle('ist-bereit', bereit);
+      const text = bereit ? 'Öffnen!' : restText(rest);
+      const feld = knopf.querySelector('.zeit-truhe__text');
+      if (feld.textContent !== text) feld.textContent = text;
+      knopf.setAttribute('aria-label', `Gratis-${truhe.name}: ${bereit ? 'jetzt öffnen' : `bereit in ${text}`}`);
+    });
+  }
+
+  aktualisieren();
+  clearInterval(zeitTimer);
+  zeitTimer = setInterval(aktualisieren, 1000);
+  return box;
+}
+
 export const startScreen = {
   mount(root) {
     const starter = getMonster(getAktiveFigur());
@@ -331,6 +394,7 @@ export const startScreen = {
       <p class="start__hero-name">Deine Figur: ${figurAnzeigeName(starter)}</p>
     `;
     hero.querySelector('#hero-sprite').appendChild(createSprite(starter));
+    hero.appendChild(baueZeitTruhen(screen));
     screen.appendChild(hero);
 
     const actions = document.createElement('div');
@@ -408,5 +472,7 @@ export const startScreen = {
     schnuppenTimer = null;
     clearInterval(platzTimer);
     platzTimer = null;
+    clearInterval(zeitTimer);
+    zeitTimer = null;
   },
 };

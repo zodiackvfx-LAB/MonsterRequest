@@ -11,7 +11,7 @@ import { LEVELS, bossLevelOf } from '../data/levels.js';
 import { WORLDS } from '../data/worlds.js';
 import { getKraft, kraftFuerWelt } from '../data/kraefte.js';
 import { MONSTERS } from '../data/monsters.js';
-import { BOSS_TRUHE, TRUHEN, TRUHEN_PLAETZE } from '../data/shop.js';
+import { BOSS_TRUHE, TRUHEN, TRUHEN_PLAETZE, ZEIT_TRUHEN } from '../data/shop.js';
 import { stufenId } from '../data/attacks.js';
 import { ALTES_LEVEL_NEU, KARTEN_MAX_LEVEL, kopienFuer } from '../data/karten.js';
 import { TROPHAEEN_MAX, trophaeenFuerSieg } from '../data/trophaeen.js';
@@ -68,6 +68,9 @@ function createNewGame() {
     // Zeitpunkt in Millisekunden, ab dem die Truhe offen ist.
     truhenPlaetze: Array(TRUHEN_PLAETZE).fill(null),
     truhenWarteschlange: [], // Bosstruhen, die gerade keinen Platz finden
+    // Zeit-Truhen (siehe js/core/zeittruhen.js): je Truhen-id der Zeitpunkt
+    // in Millisekunden, ab dem die nächste bereitsteht. Fehlt er: sofort.
+    zeitTruhen: {},
     bossPowers: [], // freigeschaltete Boss-Kräfte (siehe js/data/kraefte.js)
     bossPower: null, // die getragene Boss-Kraft (id) oder null
     ownedSkins: ['skin-standard'],
@@ -266,6 +269,7 @@ function uebernehmen(saved) {
   gameState.ownedAttacks = Array.isArray(saved.ownedAttacks) ? saved.ownedAttacks : [];
   gameState.gratisTruheZaehler = Math.max(0, Math.floor(Number(saved.gratisTruheZaehler) || 0));
   truhenUebernehmen(saved);
+  zeitTruhenUebernehmen(saved);
   // Nur bekannte Kraft-ids übernehmen, damit ein alter Spielstand keine
   // Geister-Kraft einschleppt.
   gameState.bossPowers = Array.isArray(saved.bossPowers)
@@ -358,6 +362,22 @@ function truhenUebernehmen(saved) {
     const frei = gameState.truhenPlaetze.indexOf(null);
     if (frei >= 0) gameState.truhenPlaetze[frei] = { id, bereitAb: 0 };
     else gameState.truhenWarteschlange.push(id);
+  });
+}
+
+/**
+ * Zeit-Truhen übernehmen: nur bekannte ids mit einer echten Zahl. Liegt der
+ * Zeitpunkt weiter weg als eine ganze Wartezeit (Uhr am Gerät verstellt),
+ * wird er auf eine Wartezeit ab jetzt gekürzt - sonst wartet man ewig.
+ */
+function zeitTruhenUebernehmen(saved) {
+  const gespeichert = saved.zeitTruhen && typeof saved.zeitTruhen === 'object' ? saved.zeitTruhen : {};
+  const jetzt = Date.now();
+  gameState.zeitTruhen = {};
+  ZEIT_TRUHEN.forEach(({ id, minuten }) => {
+    const ab = Number(gespeichert[id]);
+    if (!Number.isFinite(ab)) return;
+    gameState.zeitTruhen[id] = Math.min(ab, jetzt + minuten * 60 * 1000);
   });
 }
 

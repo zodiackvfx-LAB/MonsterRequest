@@ -2174,6 +2174,120 @@
   92% { transform: translateY(-2px) rotate(-2deg); }
 }
 
+/* ---------- Zeit-Truhen neben der Figur (js/core/zeittruhen.js) ----------
+   Links die Holztruhe (alle 30 Min), rechts die Goldtruhe (jede Stunde).
+   Die Box liegt über der Bühne, fängt aber selbst keine Tipps ab. */
+.zeit-truhen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.zeit-truhe {
+  position: absolute;
+  top: 38%;
+  translate: 0 -50%;
+  width: 74px;
+  display: grid;
+  justify-items: center;
+  padding: 14px 4px 6px;
+  font: inherit;
+  color: #fff;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(43, 55, 120, 0.9), rgba(22, 30, 72, 0.92));
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 4px 0 rgba(8, 14, 40, 0.5);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.zeit-truhe--links { left: 12px; }
+.zeit-truhe--rechts { right: 12px; }
+
+.zeit-truhe:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 2px 0 rgba(8, 14, 40, 0.5);
+}
+
+.zeit-truhe__marke {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 1px 8px;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: var(--gold-1);
+  box-shadow: 0 2px 0 rgba(8, 14, 40, 0.45);
+}
+
+.zeit-truhe__truhe {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+
+.zeit-truhe__truhe svg {
+  width: 100%;
+  height: 100%;
+}
+
+.zeit-truhe__text {
+  margin-top: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold-1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bereit: grün, leuchtet und hüpft ab und zu. */
+.zeit-truhe.ist-bereit {
+  background: linear-gradient(180deg, rgba(52, 168, 83, 0.95), rgba(24, 98, 52, 0.95));
+  border-color: #8af0a4;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 4px 0 rgba(8, 40, 20, 0.55), 0 0 16px rgba(120, 255, 160, 0.55);
+}
+
+.zeit-truhe.ist-bereit .zeit-truhe__text {
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.zeit-truhe.ist-bereit .zeit-truhe__truhe {
+  animation: lager-hopsen 2.4s ease-in-out infinite;
+}
+
+/* Noch nicht bereit und trotzdem angetippt: kurz den Kopf schütteln. */
+.zeit-truhe.ist-gesperrt {
+  animation: zeit-nein 0.35s ease-in-out;
+}
+
+@keyframes zeit-nein {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Schmale Handys: etwas kleiner, damit die Figur Platz behält. */
+@media (max-width: 360px) {
+  .zeit-truhe { width: 62px; padding-top: 12px; }
+  .zeit-truhe--links { left: 6px; }
+  .zeit-truhe--rechts { right: 6px; }
+  .zeit-truhe__truhe { width: 42px; height: 42px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zeit-truhe.ist-bereit .zeit-truhe__truhe,
+  .zeit-truhe.ist-gesperrt { animation: none; }
+}
+
 /* ---------- Fenster zu einer Truhe, die noch nicht fertig ist ---------- */
 .truhenplatz-dialog {
   text-align: center;

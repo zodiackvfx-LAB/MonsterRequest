@@ -135,8 +135,17 @@ beim Gegner zeigt dir, wann bei ihm ein großer Schlag kommt.
 Münzen als Belohnung, und das nächste Level wird freigeschaltet.
 **Jeder 2. Sieg** im Abenteuer bringt zusätzlich eine Holztruhe gratis
 (Niederlagen und die Endlos-Arena zählen nicht mit). Gewonnene Truhen (auch
-die Bosstruhe) werden nicht sofort geöffnet: Sie warten im **Truhenlager** –
-dem Truhen-Symbol links auf der Startseite – bis man sie selbst öffnet.
+die Bosstruhe) werden nicht sofort geöffnet: Sie kommen in einen der
+**4 Truhenplätze** unter „Spiel starten“ und werden dort freigeschaltet
+(Holz 15 Min, Silber und Boss 1 Std, Gold 3 Std – immer nur eine gleichzeitig)
+oder sofort mit Münzen geöffnet. Siege bringen außerdem **Trophäen** für
+Liga und Rangliste (Tipp auf den Pokal oben).
+
+**Gratis-Truhen mit Uhr:** Neben der Figur auf der Startseite gibt es
+**alle 30 Minuten eine Holztruhe** und **jede Stunde eine Goldtruhe** – ohne
+Kampf. Sie belegen keinen Truhenplatz und öffnen sich direkt. Die Uhr für die
+nächste läuft ab dem Abholen; nicht abgeholte Truhen stapeln sich nicht.
+Einstellbar in `ZEIT_TRUHEN` (`js/data/shop.js`).
 
 ---
 

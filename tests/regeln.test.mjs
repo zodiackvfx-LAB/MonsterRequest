@@ -66,6 +66,7 @@ import { karteGutschreiben, saveProgress, sicherungsInfo } from '../js/core/stat
 import { trophaeenNiederlage, trophaeenSieg } from '../js/core/trophaeen.js';
 import { LIGEN, ligaVon, naechsteLiga, trophaeenFuerSieg } from '../js/data/trophaeen.js';
 import { alleZustaende, freischaltenStarten, platzZustand, sofortPreis, truheAusPlatz, truheEinlagern } from '../js/core/truhenplaetze.js';
+import { alleZeitTruhen, zeitTruheAbholen, zeitTruheZustand } from '../js/core/zeittruhen.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
@@ -1296,6 +1297,37 @@ console.log('\nKarten-Level bis 15');
   for (let i = 0; i < 40; i++) beuteGutschreiben(truheOeffnen(TRUHEN[0]).find((b) => b.art === 'karte') ?? { art: 'nichts' });
   pruefe('Kopien aus Truhen leveln Karten hoch',
     Object.values(gameState.attackLevels).some((l) => l >= 3));
+  resetProgress();
+}
+
+console.log('\nZeit-Truhen (Holz alle 30 Min, Gold jede Stunde)');
+{
+  resetProgress();
+  const t0 = 1_000_000_000_000;
+  pruefe('Neuer Spielstand: beide Gratis-Truhen sofort bereit',
+    alleZeitTruhen(t0).map((z) => `${z.truhe.id}:${z.bereit}`).join() === 'holztruhe:true,goldtruhe:true');
+  const holz = zeitTruheAbholen('holztruhe', t0);
+  pruefe('Abholen gibt die Holztruhe', holz?.id === 'holztruhe');
+  pruefe('Kein zweites Mal direkt danach', zeitTruheAbholen('holztruhe', t0 + 1000) === null);
+  pruefe('Holz ist nach 30 Minuten wieder bereit',
+    !zeitTruheZustand('holztruhe', t0 + 29 * 60000).bereit && zeitTruheZustand('holztruhe', t0 + 30 * 60000).bereit);
+  zeitTruheAbholen('goldtruhe', t0);
+  pruefe('Gold ist nach einer Stunde wieder bereit',
+    !zeitTruheZustand('goldtruhe', t0 + 59 * 60000).bereit && zeitTruheZustand('goldtruhe', t0 + 60 * 60000).bereit);
+  pruefe('Es stapelt sich nichts: nach 5 Stunden genau eine Truhe',
+    zeitTruheAbholen('holztruhe', t0 + 300 * 60000) !== null && zeitTruheAbholen('holztruhe', t0 + 300 * 60000) === null);
+  pruefe('Zeit-Truhen belegen keinen Truhenplatz', gameState.truhenPlaetze.every((p) => p === null));
+  pruefe('Eine unbekannte Zeit-Truhe gibt es nicht', zeitTruheAbholen('silbertruhe', t0) === null);
+
+  const bald = Date.now() + 20 * 60000;
+  gameState.zeitTruhen = { holztruhe: bald };
+  saveProgress();
+  loadProgress();
+  pruefe('Die Uhr übersteht das Neuladen', gameState.zeitTruhen.holztruhe === bald);
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ zeitTruhen: { holztruhe: Date.now() + 9e12, goldtruhe: 'x', quatsch: 5 } }));
+  loadProgress();
+  pruefe('Verstellte Uhr: höchstens eine Wartezeit, Unsinn fliegt raus',
+    gameState.zeitTruhen.holztruhe <= Date.now() + 30 * 60000 && !('goldtruhe' in gameState.zeitTruhen) && !('quatsch' in gameState.zeitTruhen));
   resetProgress();
 }
 

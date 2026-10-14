@@ -105,6 +105,21 @@ export const SOFORT_WERT = { holztruhe: 250, silbertruhe: 800, goldtruhe: 2000, 
 /** Billiger als das wird Sofort-Öffnen nie. */
 export const SOFORT_MINDESTPREIS = 5;
 
+/**
+ * Zeit-Truhen: gibt es einfach so, ohne Kampf - alle paar Minuten eine.
+ *
+ *   id      - welche Truhe (aus TRUHEN oben)
+ *   minuten - so lange dauert es, bis die nächste bereitsteht
+ *
+ * Sie belegen keinen Truhenplatz und werden direkt geöffnet. Holt man eine
+ * bereite Truhe nicht ab, wartet sie - es stapeln sich aber keine weiteren.
+ * Die Uhr für die nächste startet erst beim Abholen (js/core/zeittruhen.js).
+ */
+export const ZEIT_TRUHEN = [
+  { id: 'holztruhe', minuten: 30 },
+  { id: 'goldtruhe', minuten: 60 },
+];
+
 export function getTruhe(id) {
   return TRUHEN.find((truhe) => truhe.id === id);
 }
