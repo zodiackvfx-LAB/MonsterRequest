@@ -21,7 +21,7 @@ import { MONSTERS, SPIELER_FIGUREN, STARTER_MONSTER_ID, getMonster } from '../js
 import { ATTACKS, ROCCO_ATTACKEN, START_ATTACKEN, getAttack } from '../js/data/attacks.js';
 import { ENEMIES } from '../js/data/enemies.js';
 import { GEGNER_ARTEN } from '../js/data/gegnerarten.js';
-import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
+import { BOSS_FORMEN, FORM_NAMEN, GROESSE, NEUE_BOSS_FORMEN, NEUE_FORMEN, formenPruefen } from '../js/ui/sprite.js';
 import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
 import { existsSync, readFileSync } from 'node:fs';
@@ -140,7 +140,7 @@ console.log('\nPixel-Figuren');
   pruefe(`Alle Grundformen sind ${GROESSE} mal ${GROESSE} Felder`, probleme.length === 0);
   if (probleme.length) probleme.slice(0, 5).forEach((t) => console.log('       ' + t));
 
-  const formen = new Set([...FORM_NAMEN, ...BOSS_FORMEN]);
+  const formen = new Set([...FORM_NAMEN, ...BOSS_FORMEN, ...NEUE_FORMEN, ...NEUE_BOSS_FORMEN]);
   const gegner = Object.values(ENEMIES);
   pruefe(
     'Jeder Gegner hat eine gueltige Form',
@@ -148,7 +148,26 @@ console.log('\nPixel-Figuren');
   );
   pruefe(
     'Bosse benutzen Formen, die kein normaler Gegner hat',
-    gegner.filter((e) => e.isBoss).every((e) => BOSS_FORMEN.includes(e.look.form))
+    gegner.filter((e) => e.isBoss).every((e) => [...BOSS_FORMEN, ...NEUE_BOSS_FORMEN].includes(e.look.form))
+  );
+  pruefe(
+    'Ab Welt 7 tragen alle Gegner die neuen Formen',
+    gegner.filter((e) => e.worldId >= 7).every((e) =>
+      (e.isBoss ? NEUE_BOSS_FORMEN : NEUE_FORMEN).includes(e.look.form))
+  );
+  pruefe(
+    'Welt 1 bis 6 behalten ihre alten Formen',
+    gegner.filter((e) => e.worldId < 7).every((e) =>
+      (e.isBoss ? BOSS_FORMEN : FORM_NAMEN).includes(e.look.form))
+  );
+  pruefe(
+    'Ab Welt 7 hat jeder Boss eine eigene Form',
+    new Set(gegner.filter((e) => e.isBoss && e.worldId >= 7).map((e) => e.look.form)).size ===
+      gegner.filter((e) => e.isBoss && e.worldId >= 7).length
+  );
+  pruefe(
+    'Jede neue Form kommt im Spiel vor',
+    [...NEUE_FORMEN, ...NEUE_BOSS_FORMEN].every((f) => gegner.some((e) => e.look.form === f))
   );
 
   // In einer Welt darf keine Figur aussehen wie eine andere

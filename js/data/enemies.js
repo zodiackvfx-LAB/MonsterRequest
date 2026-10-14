@@ -1,8 +1,8 @@
 /**
  * Alle Gegner des Spiels - erzeugt aus den Welten (js/data/worlds.js).
  *
- * Warum erzeugt und nicht aufgeschrieben? Bei 6 Welten mit je 12 Kämpfen
- * sind das 72 Gegner. Jeden einzeln mit Lebenspunkten, Deck und KI-Werten
+ * Warum erzeugt und nicht aufgeschrieben? Bei 12 Welten mit je 12 Kämpfen
+ * sind das 144 Gegner. Jeden einzeln mit Lebenspunkten, Deck und KI-Werten
  * hinzuschreiben wäre unübersichtlich und fehleranfällig. Stattdessen steht
  * in worlds.js nur, WER in einer Welt vorkommt - alles Weitere rechnet
  * diese Datei aus:
@@ -19,7 +19,33 @@
 import { registerAttack } from './attacks.js';
 import { WORLDS } from './worlds.js';
 import { GEGNER_ARTEN, standardArt } from './gegnerarten.js';
-import { BOSS_FORMEN, FORM_NAMEN } from '../ui/sprite.js';
+import { BOSS_FORMEN, FORM_NAMEN, NEUE_BOSS_FORMEN, NEUE_FORMEN } from '../ui/sprite.js';
+
+/** Ab dieser Welt bekommen die Gegner die neuen, ausführlicheren Formen. */
+export const NEUE_FORMEN_AB_WELT = 7;
+
+/**
+ * Form und Zusatz eines normalen Gegners. Ab Welt 7 nennt worlds.js die Form
+ * selbst (z. B. { n: 'Kugelfisch', form: 'fisch', zusatz: 2 }); fehlt sie,
+ * wird reihum vergeben. Die neuen Formen sind schon fertig ausgestaltet und
+ * bekommen deshalb nur einen Zusatz (Hörner, Stacheln ...), wenn er genannt ist.
+ */
+function formVon(world, entry, index) {
+  if (world.id < NEUE_FORMEN_AB_WELT) {
+    return { form: FORM_NAMEN[index % FORM_NAMEN.length], zusatz: (index + world.id) % 5 };
+  }
+  return {
+    form: entry.form ?? NEUE_FORMEN[index % NEUE_FORMEN.length],
+    zusatz: entry.zusatz ?? 0,
+  };
+}
+
+/** Die Form des Bosses einer Welt - ab Welt 7 hat jeder Boss seine eigene. */
+function bossFormVon(world) {
+  if (world.boss.form) return world.boss.form;
+  if (world.id < NEUE_FORMEN_AB_WELT) return BOSS_FORMEN[world.id % BOSS_FORMEN.length];
+  return NEUE_BOSS_FORMEN[(world.id - NEUE_FORMEN_AB_WELT) % NEUE_BOSS_FORMEN.length];
+}
 
 /** Aus "Moosgnubbel" wird "moosgnubbel", aus "Knospenstoß" wird "knospenstoss". */
 function slug(text) {
@@ -83,11 +109,10 @@ function buildEnemies() {
         // sieht innerhalb einer Welt garantiert kein Gegner aus wie ein
         // anderer - und jede Welt hat ihren eigenen Farbton.
         look: {
-          form: FORM_NAMEN[index % FORM_NAMEN.length],
+          ...formVon(world, entry, index),
           hue: (world.hueBase + index * 29) % 360,
           sattheit: 55 + (index % 4) * 10,
           akzentHue: (world.hueBase + index * 29 + 150) % 360,
-          zusatz: (index + world.id) % 5,
         },
         id,
         name: entry.n,
@@ -111,11 +136,12 @@ function buildEnemies() {
     ENEMIES[bossId] = {
       // Bosse bekommen eigene Formen, die kein normaler Gegner hat.
       look: {
-        form: BOSS_FORMEN[world.id % BOSS_FORMEN.length],
+        form: bossFormVon(world),
         hue: (world.hueBase + 200) % 360,
         sattheit: 70,
         akzentHue: (world.hueBase + 40) % 360,
-        zusatz: 1,
+        // Die neuen Boss-Formen tragen schon Krone, Hut oder Blitze - ohne Hörner.
+        zusatz: world.id < NEUE_FORMEN_AB_WELT ? 1 : 0,
       },
       id: bossId,
       name: world.boss.n,

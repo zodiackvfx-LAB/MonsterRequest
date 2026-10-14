@@ -143,6 +143,32 @@ Kampf aussieht – der Kampfbildschirm kennt keine Kampfregeln.
 | 11 | 🍭 Zuckerland | Karamellkönigin | Zuckerrausch |
 | 12 | 🌌 Sternenwelt | Sternenkaiser | Supernova |
 
+**Monster-Designs:** Welt 1–6 nutzen die ersten 8 Grundformen (Klecks,
+Vierbeiner, Flügler, Gestalt, Schlange, Golem, Käfer, Geist). **Ab Welt 7**
+haben die Gegner 13 neue, ausführlichere Formen, passend zu ihrem Namen:
+
+| Form | Beispiele |
+|---|---|
+| Qualle | Himmelsqualle, Quallenglimmer, Lichtqualle |
+| Fisch | Clownfischchen, Kugelfisch, Hammerhai, Nebelwal |
+| Vogel | Flatterfink, Gruselrabe, Uhrwerkeule |
+| Krabbe | Donnerkralle, Krabbenkrieger, Kolbenkrabbe |
+| Roboter | Schraubenwicht, Turmwächter, Satellitenkäfer |
+| Stern | Seesternchen, Lebkuchenriese, Sternschnuppe |
+| Bär | Moorwolf, Ambossbär, Gummibärchen, Sternbildbär |
+| Hase | Federmaus, Bonbonwicht, Mondhase, Astrofuchs |
+| Flamme | Windgeist, Irrlichtchen, Kirschbombe |
+| Wurm | Himmelsschlange, Muränenbiss, Kometenwurm |
+| Kugelkäfer | Blitzkäfer, Zahnradkäfer, Keksmonster |
+| Wolke | Wolkengnubbel, Schlammgolem, Watteschaf |
+| Drachling | Federdrache, Seepferdritter, Galaxiendrache |
+
+Jeder Boss ab Welt 7 hat eine eigene Form: Sturmriese (Sturmfürst), Krake
+(Tiefenkraken), Hexe (Moorhexe), Koloss (Zahnradkoloss), Königin
+(Karamellkönigin) und Kaiser (Sternenkaiser). Die Form steht beim Gegner in
+`js/data/worlds.js` (`form`, optional `zusatz`), gezeichnet sind sie in
+`js/ui/sprite.js`, ihre Bewegung im Kampf steht in `js/ui/kampfintro.js`.
+
 Jede Welt ist stärker als die davor. Ab Welt 8 braucht man gelevelte Karten,
 Aufwertungen und eine gute Boss-Kraft (grob: Welt 12 ab Charakter-Level 25–30
 und Karten-Level 8–9). Neue Welt = ein Eintrag in `js/data/worlds.js`, dazu

@@ -35,6 +35,29 @@ const BEWEGUNG = {
   geist: { ruhe: 'schweben', auftritt: 'gleiten' },
   drache: { ruhe: 'flattern', auftritt: 'landen' },
   herrscher: { ruhe: 'atmen', auftritt: 'landen' },
+
+  // Neue Formen ab Welt 7
+  qualle: { ruhe: 'schweben', auftritt: 'gleiten' },
+  fisch: { ruhe: 'schlaengeln', auftritt: 'gleiten' },
+  vogel: { ruhe: 'flattern', auftritt: 'landen' },
+  krabbe: { ruhe: 'wackeln', auftritt: 'stein' },
+  roboter: { ruhe: 'stampfen', auftritt: 'rollen' },
+  stern: { ruhe: 'wackeln', auftritt: 'rollen' },
+  baer: { ruhe: 'stampfen', auftritt: 'busch' },
+  hase: { ruhe: 'wabbeln', auftritt: 'busch' },
+  flamme: { ruhe: 'wabbeln', auftritt: 'gleiten' },
+  wurm: { ruhe: 'schlaengeln', auftritt: 'busch' },
+  kugel: { ruhe: 'wackeln', auftritt: 'rollen' },
+  wolke: { ruhe: 'schweben', auftritt: 'gleiten' },
+  drachling: { ruhe: 'flattern', auftritt: 'landen' },
+
+  // Neue Boss-Formen ab Welt 7
+  sturmriese: { ruhe: 'schweben', auftritt: 'landen' },
+  krake: { ruhe: 'wabbeln', auftritt: 'landen' },
+  hexe: { ruhe: 'atmen', auftritt: 'landen' },
+  koloss: { ruhe: 'stampfen', auftritt: 'landen' },
+  koenigin: { ruhe: 'atmen', auftritt: 'landen' },
+  kaiser: { ruhe: 'atmen', auftritt: 'landen' },
 };
 
 /** Wie bewegt sich dieser Gegner? Bosse landen immer - mit Wucht. */
