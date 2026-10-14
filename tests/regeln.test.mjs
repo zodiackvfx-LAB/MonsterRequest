@@ -24,7 +24,9 @@ import { GEGNER_ARTEN } from '../js/data/gegnerarten.js';
 import { BOSS_FORMEN, FORM_NAMEN, GROESSE, formenPruefen } from '../js/ui/sprite.js';
 import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { SKIN_BILDER, SKIN_POSEN } from '../js/data/timo-skins.js';
+import { skinBild } from '../js/ui/sprite.js';
 import { LEVELS, bossLevelOf, levelsOfWorld } from '../js/data/levels.js';
 import {
   besitztAttacke,
@@ -49,7 +51,7 @@ import {
   setDeck,
 } from '../js/core/state.js';
 import { TRUHEN } from '../js/data/shop.js';
-import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS } from '../js/data/items.js';
+import { BEUTE_ATTACKEN, SELTENHEITEN, SKINS, getSkin } from '../js/data/items.js';
 import { BOSS_MATERIAL, materialBelohnung, siegBelohnung, siegeBisGratisTruhe } from '../js/core/belohnung.js';
 import { BOSS_KRAEFTE, getKraft, kraftFuerWelt } from '../js/data/kraefte.js';
 import { ERFOLGE } from '../js/data/erfolge.js';
@@ -653,10 +655,23 @@ console.log('\nSpielfigur');
   // Skins muessen zur Figur passen, sonst waere der Skin-Bereich leer.
   const meine = SKINS.filter((skin) => skin.monsterId === SPIELFIGUR.id);
   pruefe('Alle Skins gehoeren zur Spielfigur', meine.length === SKINS.length);
-  pruefe('Jeder Skin ausser Standard hat einen Farbfilter',
-    meine.filter((skin) => skin.id !== 'skin-standard').every((skin) => Boolean(skin.filter)));
+  pruefe('Jeder Skin ausser Standard hat einen Farbfilter oder ein Outfit',
+    meine.filter((skin) => skin.id !== 'skin-standard').every((skin) => Boolean(skin.filter) !== Boolean(skin.ordner)));
   pruefe('Keine zwei Skins sehen gleich aus',
-    new Set(meine.map((skin) => skin.filter)).size === meine.length);
+    new Set(meine.map((skin) => skin.filter ?? skin.ordner)).size === meine.length);
+
+  // Outfit-Skins: für jede Pose ein eigenes Bild, und das Spiel findet es.
+  const outfits = meine.filter((skin) => skin.ordner);
+  pruefe('Es gibt mindestens 7 Outfits mit Hut und Kleidung', outfits.length >= 7);
+  pruefe('Jedes Outfit hat alle 14 Posen als Datei',
+    outfits.every((skin) => SKIN_BILDER[skin.ordner]?.length === SKIN_POSEN.length &&
+      SKIN_BILDER[skin.ordner].every((pfad) => existsSync(new URL(`../${pfad}`, import.meta.url)))));
+  pruefe('Outfit: jede Pose von Timo bekommt ihr Outfit-Bild',
+    outfits.every((skin) => [SPIELFIGUR.image, SPIELFIGUR.bildKampf, ...SPIELFIGUR.bildSchlag, ...SPIELFIGUR.bildStrahl, ...SPIELFIGUR.bildTreffer]
+      .every((pfad) => skinBild(pfad, skin) === pfad.replace('bilder/timo/', `bilder/timo/skins/${skin.ordner}/`))));
+  pruefe('Ohne Outfit (Farb-Skin) bleibt das Originalbild',
+    skinBild(SPIELFIGUR.image, getSkin('skin-frost')) === SPIELFIGUR.image && skinBild(SPIELFIGUR.image, null) === SPIELFIGUR.image);
+  pruefe('Fremde Bilder bleiben unverändert', skinBild('bilder/menue/deck.png', getSkin('skin-ninja')) === 'bilder/menue/deck.png');
 
   // Alter Spielstand: Fortschritt darf beim Figurenwechsel nicht verlorengehen.
   resetProgress();

@@ -64,6 +64,7 @@ datenbank/              Spielstände auf einem Server – siehe ANLEITUNG.md
 
 werkzeuge/              Hilfsskripte, die nicht zum Spiel gehören
   logo-bauen.py         Erzeugt die Logo-Pfade aus der Schrift
+  timo-skins-bauen.py   Baut Timos Outfits (Kleidung + Hut) für alle Posen
   test-datenbank.mjs    Spiel mit Datenbank zum Ausprobieren, ohne Konto
 
 js/
@@ -199,6 +200,28 @@ kauft ein Level im Deckmenü – absichtlich teuer (800 Münzen für Level 2, ru
 
 **Truhen** enthalten genau einmal Münzen (150–500), genau einmal Material und
 auf den übrigen Plätzen Fähigkeitskarten (ab und zu einen Skin).
+
+**Skins für Timo** gibt es in zwei Arten (`SKINS` in `js/data/items.js`):
+
+* **Farb-Skins** (Asche, Frost, Gift, …) legen einen Farbfilter über Timo.
+* **Outfits** geben ihm neue Kleidung und eine Kopfbedeckung – in allen 14
+  Posen, auch im Kampf. Haut und Haare bleiben, wie sie sind:
+
+| Outfit | Seltenheit | Aussehen |
+|---|---|---|
+| Sportler | gewöhnlich | weißer Trainingsanzug, Schweißband |
+| Winter | selten | blaue Winterjacke, rote Bommelmütze |
+| Cowboy | selten | Lederjacke, Cowboyhut |
+| Ninja | episch | nachtschwarzer Anzug, rotes Stirnband |
+| Wikinger | episch | waldgrüne Kluft, Hörnerhelm |
+| Zauberer | episch | violette Robe, Sternen-Zauberhut |
+| König | legendär | Königsrot, goldene Krone |
+
+Die Bilder erzeugt `werkzeuge/timo-skins-bauen.py` aus den Originalen in
+`bilder/timo/`: Es färbt nur die Kleidung um und zeichnet den Hut passend auf
+den Kopf jeder Pose. Neues Outfit = dort einen Eintrag in `SKINS` (Farbe und
+Hut) ergänzen, das Skript laufen lassen und in `js/data/items.js` einen Skin
+mit `ordner` eintragen.
 
 ---
 

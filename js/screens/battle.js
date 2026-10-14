@@ -36,7 +36,7 @@ import { BOSS_TRUHE } from '../data/shop.js';
 import { truheSvg } from '../ui/truhen.js';
 import { applyRegion, createArenaLayers, createScenery } from '../ui/scenery.js';
 import { balkenFuellen, createStars } from '../ui/hud.js';
-import { createSprite, spieleBildfolge } from '../ui/sprite.js';
+import { aktiverSkin, createSprite, skinBild, spieleBildfolge } from '../ui/sprite.js';
 import { bildschirmBeben, energiestrahl, kameraStoss, karteWeg, konfetti, trefferFunke } from '../ui/effekte.js';
 import { bewegungVon, spieleKampfIntro } from '../ui/kampfintro.js';
 import { baueUmgebung, waehleStimmung } from '../ui/umgebung.js';
@@ -564,7 +564,9 @@ export const battleScreen = {
     function spieleFolge(bilder) {
       if (!bilder?.length) return;
       bildfolgeStoppen();
-      bildfolgeStoppen = spieleBildfolge(ui.playerSprite, bilder);
+      // Im Outfit-Skin laufen die Posen mit Hut und neuer Kleidung.
+      const skin = aktiverSkin(basis);
+      bildfolgeStoppen = spieleBildfolge(ui.playerSprite, bilder.map((bild) => skinBild(bild, skin)));
     }
 
     function handleEvent(event) {

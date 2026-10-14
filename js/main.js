@@ -15,7 +15,7 @@ import { cloudStart } from './core/sync.js';
 import { zeigeWillkommen } from './ui/willkommen.js';
 import { getSkin } from './data/items.js';
 import { getMonster } from './data/monsters.js';
-import { bilderVorladen, setSkinNachschlag } from './ui/sprite.js';
+import { aktiverSkin, bilderVorladen, setSkinNachschlag, skinBild } from './ui/sprite.js';
 import { spieleKlang, tonFreischalten } from './core/audio.js';
 import { LOBBY_SEITEN, lobbyScreen } from './screens/lobby.js';
 import { mapScreen } from './screens/map.js';
@@ -44,12 +44,14 @@ setSkinNachschlag((monster) => {
 // Startbildschirm selbst, sobald er sie zeigt.
 const spielfigur = getMonster(getAktiveFigur());
 function kampfgrafikenVorladen() {
+  // Im Outfit-Skin die Bilder mit Hut - die anderen braucht es dann nicht.
+  const skin = aktiverSkin(spielfigur);
   bilderVorladen([
     spielfigur.bildKampf,
     ...(spielfigur.bildSchlag ?? []),
     ...(spielfigur.bildStrahl ?? []),
     ...(spielfigur.bildTreffer ?? []),
-  ]);
+  ].map((bild) => skinBild(bild, skin)));
 }
 if (typeof requestIdleCallback === 'function') {
   requestIdleCallback(kampfgrafikenVorladen, { timeout: 3000 });

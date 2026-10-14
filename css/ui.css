@@ -712,6 +712,24 @@
   align-self: end;
 }
 
+/* Outfit-Skins (js/data/items.js, "ordner"): Ihre Bilder haben über dem
+   Kopf 35 % Platz für den Hut (HUT_RAUM in werkzeuge/timo-skins-bauen.py).
+   Genau um so viel wird das Bild höher angezeigt und ragt nach oben über
+   seinen Kasten - so bleibt die Figur gleich groß und steht an derselben
+   Stelle. */
+.pixel-sprite--hut {
+  height: 135%;
+  max-height: none;
+  align-self: end;
+}
+
+/* Im runden Avatar: der Ausschnitt rutscht um den Hutraum nach unten, damit
+   wieder das Gesicht zu sehen ist (mit dem Rand der Mütze darüber). */
+.hud__avatar .pixel-sprite--hoch.pixel-sprite--hut {
+  height: 100%;
+  object-position: 50% 42%;
+}
+
 /* Im runden Avatar wird nur der Kopf gezeigt - ganzkoerpers waere die Figur
    dort nur ein Streifen. */
 .hud__avatar .pixel-sprite--hoch {

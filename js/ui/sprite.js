@@ -24,6 +24,9 @@
  *   E  Augenweiß       P  Pupille         M  Mund/Detail
  */
 
+import { MONSTERS } from '../data/monsters.js';
+import { SKIN_BILDER, SKIN_POSEN } from '../data/timo-skins.js';
+
 /** Kantenlänge einer Figur in Feldern. */
 export const GROESSE = 32;
 
@@ -536,6 +539,39 @@ export function setSkinNachschlag(funktion) {
   skinNachschlag = funktion;
 }
 
+/** Der Skin, den eine Figur gerade trägt (oder null). */
+export function aktiverSkin(monster) {
+  return skinNachschlag(monster);
+}
+
+/**
+ * Welche Pose ein Bildpfad von Timo ist - als Nummer in SKIN_POSEN.
+ *
+ * Gebaut aus Timos eigenen Bildfeldern statt aus Dateinamen: In der
+ * Einzeldatei-Version sind alle Pfade durch eingebettete Bilder ersetzt, und
+ * dieselbe Datei ergibt dort dieselbe Zeichenkette - so klappt es in beiden.
+ */
+const POSE_VON = (() => {
+  const timo = MONSTERS.timo;
+  const pfade = [timo.image, timo.bildKampf, ...timo.bildSchlag, ...timo.bildStrahl, ...timo.bildTreffer];
+  const posen = ['front', 'stand', 'schlag-1', 'schlag-2', 'schlag-3', 'schlag-4', 'strahl-1', 'strahl-2',
+    'strahl-3', 'strahl-4', 'treffer-1', 'treffer-2', 'treffer-3', 'treffer-4'];
+  return new Map(pfade.map((pfad, i) => [pfad, SKIN_POSEN.indexOf(posen[i])]));
+})();
+
+/**
+ * Das Bild einer Pose im Outfit eines Skins.
+ *
+ * Outfit-Skins (mit "ordner", siehe SKINS in js/data/items.js) haben für jede
+ * Pose ein eigenes Bild mit Hut und neuer Kleidung (js/data/timo-skins.js).
+ * Ohne Outfit - oder für ein Bild, das keine Timo-Pose ist - bleibt es beim
+ * Original.
+ */
+export function skinBild(pfad, skin) {
+  if (!skin?.ordner) return pfad;
+  return SKIN_BILDER[skin.ordner]?.[POSE_VON.get(pfad)] ?? pfad;
+}
+
 /** Leert den Zwischenspeicher - nötig, wenn ein Skin gewechselt wurde. */
 export function spritesNeuZeichnen() {
   zwischenspeicher.clear();
@@ -630,10 +666,14 @@ export function createSprite(monster, optionen = {}) {
   // Timo seine gezeichneten Grafiken, alle Gegner weiterhin gerechnete.
   const eigenesBild = optionen.bild ?? monster.image;
 
+  // Outfit-Skins haben eigene Bilder mit Platz für den Hut über dem Kopf.
+  const outfitBild = eigenesBild ? skinBild(eigenesBild, skin) : null;
+  const outfit = Boolean(outfitBild && outfitBild !== eigenesBild);
+
   if (eigenesBild) {
-    img.src = eigenesBild;
-    // Ein fertiges Bild lässt sich nicht umrechnen - ein Skin wird deshalb
-    // als Farbfilter darübergelegt (siehe SKINS in js/data/items.js).
+    img.src = outfitBild;
+    // Ein fertiges Bild lässt sich nicht umrechnen - ein Farb-Skin wird
+    // deshalb als Filter darübergelegt (siehe SKINS in js/data/items.js).
     if (skin?.filter) img.style.filter = skin.filter;
   } else {
     img.src = spriteDataUrl(monster, optionen);
@@ -643,6 +683,7 @@ export function createSprite(monster, optionen = {}) {
   // Menschen sind schmal und hoch und dürfen über den quadratischen Kasten
   // hinauswachsen, sonst wirken sie neben den Gegnern winzig.
   if (monster.hoch) klassen.push('pixel-sprite--hoch');
+  if (outfit) klassen.push('pixel-sprite--hut');
   if (optionen.className) klassen.push(optionen.className);
 
   img.alt = monster.name ?? '';

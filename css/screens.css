@@ -15,6 +15,10 @@
   margin-top: 4px;
   flex: 0 0 auto;
   text-align: center;
+  /* Über der Figur: Ein hoher Hut (Outfit-Skins) verschwindet hinter dem
+     Schriftzug, statt ihn zu verdecken. */
+  position: relative;
+  z-index: 2;
 }
 
 .start__hero {

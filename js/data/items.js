@@ -69,6 +69,11 @@ export const BEUTE_ATTACKEN = [
  *             lässt sich nicht umrechnen, also legen wir einen Farbfilter
  *             darüber (dieselbe Technik wie ein Fotofilter).
  *
+ *   ordner  - ein ganzes Outfit mit Kopfbedeckung und neuer Kleidung:
+ *             fertige Bilder aller Posen in bilder/timo/skins/<ordner>/.
+ *             Erzeugt von werkzeuge/timo-skins-bauen.py - dort stehen
+ *             Farben und Hüte. Haut und Haare bleiben, wie sie sind.
+ *
  * Beide Felder stehen nebeneinander, damit ein Skin für jede Art von Figur
  * passt.
  */
@@ -121,6 +126,43 @@ export const SKINS = [
     id: 'skin-glut', name: 'Glut', monsterId: 'timo', seltenheit: 'episch',
     look: { hue: 15, sattheit: 95, akzentHue: 40 },
     filter: 'saturate(2.3) brightness(1.08) contrast(1.12) hue-rotate(-10deg)',
+  },
+
+  /* ---------- Outfits: neue Kleidung und eine Kopfbedeckung ---------- */
+  {
+    id: 'skin-sportler', name: 'Sportler', monsterId: 'timo', seltenheit: 'gewoehnlich',
+    look: { hue: 215, sattheit: 10, akzentHue: 215 }, filter: null, ordner: 'sportler',
+    text: 'Weißer Trainingsanzug und Schweißband.',
+  },
+  {
+    id: 'skin-winter', name: 'Winter', monsterId: 'timo', seltenheit: 'selten',
+    look: { hue: 205, sattheit: 45, akzentHue: 355 }, filter: null, ordner: 'winter',
+    text: 'Blaue Winterjacke und rote Bommelmütze.',
+  },
+  {
+    id: 'skin-cowboy', name: 'Cowboy', monsterId: 'timo', seltenheit: 'selten',
+    look: { hue: 28, sattheit: 45, akzentHue: 20 }, filter: null, ordner: 'cowboy',
+    text: 'Lederjacke und Cowboyhut.',
+  },
+  {
+    id: 'skin-ninja', name: 'Ninja', monsterId: 'timo', seltenheit: 'episch',
+    look: { hue: 225, sattheit: 30, akzentHue: 355 }, filter: null, ordner: 'ninja',
+    text: 'Nachtschwarzer Anzug und rotes Stirnband.',
+  },
+  {
+    id: 'skin-wikinger', name: 'Wikinger', monsterId: 'timo', seltenheit: 'episch',
+    look: { hue: 110, sattheit: 28, akzentHue: 210 }, filter: null, ordner: 'wikinger',
+    text: 'Waldgrüne Kluft und Hörnerhelm.',
+  },
+  {
+    id: 'skin-zauberer', name: 'Zauberer', monsterId: 'timo', seltenheit: 'episch',
+    look: { hue: 268, sattheit: 45, akzentHue: 50 }, filter: null, ordner: 'zauberer',
+    text: 'Violette Robe und Sternen-Zauberhut.',
+  },
+  {
+    id: 'skin-koenig', name: 'König', monsterId: 'timo', seltenheit: 'legendaer',
+    look: { hue: 350, sattheit: 55, akzentHue: 45 }, filter: null, ordner: 'koenig',
+    text: 'Königsrot und eine goldene Krone.',
   },
 ];
 
