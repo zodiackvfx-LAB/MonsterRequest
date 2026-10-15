@@ -1,0 +1,207 @@
+/**
+ * Einstiegspunkt von MonsterQuest.
+ *
+ * Aufgaben:
+ *   1. Gespeicherten Fortschritt laden und Einstellungen anwenden
+ *   2. Alle Bildschirme registrieren
+ *   3. Den Startbildschirm anzeigen
+ *
+ * Neuer Bildschirm = Datei in js/screens/ anlegen und hier registrieren.
+ */
+
+import { initScreens, registerLobby, registerScreen, showScreen } from './core/screens.js';
+import { getAktiverSkin, getAktiveFigur, loadProgress, setSpielername } from './core/state.js';
+import { cloudStart } from './core/sync.js';
+import { zeigeWillkommen } from './ui/willkommen.js';
+import { getSkin } from './data/items.js';
+import { eigenerSkin, istEigenerSkin } from './core/eigene-skins.js';
+import { outfitVorbereitenId } from './ui/outfit-bilder.js';
+import { getMonster } from './data/monsters.js';
+import { aktiverSkin, bilderVorladen, setSkinNachschlag, skinBild } from './ui/sprite.js';
+import { spieleKlang, tonFreischalten } from './core/audio.js';
+import { LOBBY_SEITEN, lobbyScreen } from './screens/lobby.js';
+import { mapScreen } from './screens/map.js';
+import { battleScreen } from './screens/battle.js';
+import { dailyScreen } from './screens/daily.js';
+import { applySettings } from './screens/settings.js';
+import { arenaScreen } from './screens/arena.js';
+import { ranglisteScreen } from './screens/rangliste.js';
+
+const hatSpielstand = loadProgress();
+applySettings();
+
+// Die Pixel-Figuren sollen den gewählten Skin verwenden. sprite.js kennt den
+// Spielstand nicht - deshalb bekommt es hier die passende Funktion gereicht.
+setSkinNachschlag((monster) => {
+  const skinId = getAktiverSkin(monster.id);
+  // Eigene Outfits aus der Skin-Werkstatt stehen nicht in SKINS.
+    return skinId ? getSkin(skinId) ?? eigenerSkin(skinId) ?? null : null;
+});
+
+// Die KAMPF-Grafiken (Schlag, Strahl, Treffer) werden erst gebraucht, wenn
+// ein Kampf beginnt. Deshalb laden wir sie NICHT sofort - das würde nur mit
+// den Startbild-Grafiken um die Leitung streiten -, sondern im Leerlauf,
+// sobald der Browser Luft hat. Der Startbildschirm erscheint dadurch
+// schneller; die erste Angriffsanimation ruckelt trotzdem nicht, weil die
+// Bilder bis dahin längst da sind. Die Grafiken von Held und Menü lädt der
+// Startbildschirm selbst, sobald er sie zeigt.
+const spielfigur = getMonster(getAktiveFigur());
+function kampfgrafikenVorladen() {
+  // Im Outfit-Skin die Bilder mit Hut - die anderen braucht es dann nicht.
+  const skin = aktiverSkin(spielfigur);
+  bilderVorladen([
+    spielfigur.bildKampf,
+    ...(spielfigur.bildSchlag ?? []),
+    ...(spielfigur.bildStrahl ?? []),
+    ...(spielfigur.bildTreffer ?? []),
+  ].map((bild) => skinBild(bild, skin)));
+}
+if (typeof requestIdleCallback === 'function') {
+  requestIdleCallback(kampfgrafikenVorladen, { timeout: 3000 });
+} else {
+  setTimeout(kampfgrafikenVorladen, 1200);
+}
+
+// Safari auf iPhone und iPad erlaubt Ton erst nach der ersten Berührung.
+tonFreischalten();
+
+/*
+ * Knopfklänge an einer Stelle statt in jedem Bildschirm einzeln.
+ * Ein Knopf kann den Klang über data-klang selbst bestimmen:
+ *   data-klang="kauf"    - dieser Klang statt des automatischen
+ *   data-klang="keiner"  - still (der Bildschirm spielt selbst etwas)
+ */
+document.addEventListener('click', (event) => {
+  const knopf = event.target.closest('button');
+  if (!knopf || knopf.disabled) return;
+
+  const vorgabe = knopf.dataset.klang;
+  if (vorgabe === 'keiner') return;
+
+  spieleKlang(vorgabe ?? klangFuerKnopf(knopf));
+});
+
+/** Welcher Klang passt zu diesem Knopf? */
+function klangFuerKnopf(knopf) {
+  if (knopf.classList.contains('btn--big') || knopf.classList.contains('btn--green')) {
+    return 'bestaetigen';
+  }
+  // Der Zurück-Knopf der Kopfzeile und der Zurück-Pfeil der Karte
+  if (knopf.closest('.topbar') || knopf.classList.contains('btn--ghost')) return 'zurueck';
+  return 'tipp';
+}
+
+const app = document.getElementById('app');
+// Sicherheitsnetz für ältere Browser ohne "overflow: clip" (siehe .app in
+// css/base.css): Wird der Spielcontainer doch einmal verschoben, sofort zurück.
+app.addEventListener('scroll', () => {
+  if (app.scrollTop || app.scrollLeft) app.scrollTo(0, 0);
+});
+
+initScreens(app);
+
+// Die Lobby: Startbildschirm, Shop, Figur, Deck, Welten, Sammlung und
+// Einstellungen als Seiten zum Wischen (siehe js/screens/lobby.js). Wer
+// showScreen('shop') o. Ä. aufruft, landet auf der passenden Seite.
+registerScreen('lobby', lobbyScreen);
+registerLobby('lobby', LOBBY_SEITEN);
+
+registerScreen('map', mapScreen);
+registerScreen('battle', battleScreen);
+registerScreen('daily', dailyScreen);
+registerScreen('arena', arenaScreen);
+registerScreen('rangliste', ranglisteScreen);
+
+/*
+ * Trägt Timo ein selbst gebautes Outfit (Skin-Werkstatt), werden dessen
+ * Bilder erst gebaut - das dauert nur einen Augenblick. Klappt es nicht
+ * (z. B. offline ohne Bilder), startet das Spiel trotzdem, im Original.
+ */
+const getragenesOutfit = getAktiverSkin('timo');
+if (istEigenerSkin(getragenesOutfit)) {
+  await outfitVorbereitenId(getragenesOutfit).catch((fehler) => console.warn('Outfit nicht gebaut:', fehler));
+}
+
+showScreen('start');
+
+/*
+ * Erster Start auf diesem Geraet: nach einem Namen fragen. hatSpielstand ist
+ * false, wenn im Browser noch nichts lag. Das Pop-up wird ueber den
+ * Startbildschirm gelegt; nach der Eingabe wird der Bildschirm neu
+ * gezeichnet, damit der Name gleich oben in der Spielerleiste steht.
+ */
+if (!hatSpielstand) {
+  zeigeWillkommen(document.getElementById('app'), (name) => {
+    if (name) {
+      setSpielername(name);
+      showScreen('start');
+    }
+  });
+}
+
+/*
+ * Abgleich mit der Datenbank - erst JETZT, nachdem das Spiel schon zu sehen
+ * ist. Es laeuft im Hintergrund weiter; ohne Netz oder ohne eingetragene
+ * Datenbank passiert einfach nichts.
+ *
+ * Gewinnt der Stand aus der Datenbank, wird der Startbildschirm neu
+ * gezeichnet - sonst stuenden dort noch die alten Muenzen.
+ */
+cloudStart(() => {
+  setSkinNachschlag((monster) => {
+    const skinId = getAktiverSkin(monster.id);
+    // Eigene Outfits aus der Skin-Werkstatt stehen nicht in SKINS.
+    return skinId ? getSkin(skinId) ?? eigenerSkin(skinId) ?? null : null;
+  });
+  // neu: die ganze Lobby frisch bauen - alle Seiten zeigen den neuen Stand.
+  // Ein getragenes eigenes Outfit aus dem neuen Stand vorher bauen.
+  outfitVorbereitenId(getAktiverSkin('timo'))
+    .catch(() => {})
+    .then(() => showScreen('start', { neu: true }));
+});
+
+/*
+ * Als App installierbar ("Zum Home-Bildschirm") und offline spielbar machen.
+ * Die eigentliche Arbeit erledigt der Service Worker (siehe sw.js): Er legt
+ * das Spiel beim ersten Besuch in einen Cache, sodass es danach auch ohne
+ * Internet startet. Erst NACH dem Laden registrieren, damit der erste Start
+ * nicht ausgebremst wird. Ohne HTTPS (oder localhost) lehnt der Browser ab -
+ * dann läuft das Spiel eben wie bisher, nur ohne Offline-Funktion.
+ */
+if ('serviceWorker' in navigator) {
+  // Lief schon ein Service Worker? Nur dann ist ein Wechsel ein UPDATE -
+  // beim allerersten Besuch soll kein Hinweis erscheinen.
+  const hatteVersion = Boolean(navigator.serviceWorker.controller);
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('sw.js')
+      .then((registrierung) => {
+        // Kommt die App aus dem Hintergrund zurück (auf dem iPhone läuft sie
+        // dort oft stundenlang weiter), gleich nach einer neuen Version fragen.
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) registrierung.update().catch(() => {});
+        });
+      })
+      .catch(() => {
+        /* Kein Service Worker möglich (z. B. privater Modus) - kein Problem. */
+      });
+  });
+
+  // Eine neue Version hat übernommen: Hinweis zeigen. Neu geladen wird erst
+  // auf Tipp - so reißt ein Update niemanden aus einem laufenden Kampf.
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hatteVersion) zeigeUpdateHinweis();
+  });
+}
+
+/** Kleines Band oben: "Neue Version da - tippen zum Laden". */
+function zeigeUpdateHinweis() {
+  if (document.querySelector('.update-hinweis')) return;
+  const hinweis = document.createElement('button');
+  hinweis.type = 'button';
+  hinweis.className = 'update-hinweis';
+  hinweis.textContent = '🔄 Neue Version da – tippen zum Laden';
+  hinweis.addEventListener('click', () => window.location.reload());
+  document.body.appendChild(hinweis);
+}

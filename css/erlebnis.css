@@ -1,0 +1,3039 @@
+/* =========================================================================
+   MonsterQuest · erlebnis.css
+   Alles, was den Kampf und die Menüs lebendiger macht:
+     1. Pause und Ergebnisfenster (Banner, Porträt, Kampfstatistik)
+     2. Kampf-Intro, Auftritte und eigene Bewegungen der Gegner
+     3. Karten: Rahmen, Ziehen, Ausspielen, Kamera
+     4. Arena: Varianten, Tageszeit, Wetter, kleine Tiere
+     5. Menüs: Weltkarten-Partikel, Silhouetten, Sortierleiste
+
+   Reihenfolge der Dateien: base → scenery → ui → screens → erlebnis.
+   Alle Bewegungen laufen über @keyframes oder transitions - dadurch
+   schaltet "Animationen aus" (body.no-animations, siehe base.css) sie
+   automatisch mit ab.
+   ========================================================================= */
+
+/* =========================================================================
+   1. Pause und Ergebnisfenster
+   ========================================================================= */
+
+/* Rechte Seite der Kopfzeile: hier sitzt der Pause-Knopf. */
+.topbar__spacer--knopf {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pause-knopf {
+  min-width: 44px;
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.pause-knopf:disabled {
+  opacity: 0.45;
+}
+
+/* Während der Pause friert ALLES im Kampf ein - Wippen, Wetter, Wolken.
+   Nur das Pausenfenster selbst bewegt sich noch. */
+.screen--battle.ist-pausiert *,
+.screen--battle.ist-pausiert *::before,
+.screen--battle.ist-pausiert *::after {
+  animation-play-state: paused !important;
+}
+
+.screen--battle.ist-pausiert .overlay--pause,
+.screen--battle.ist-pausiert .overlay--pause * {
+  animation-play-state: running !important;
+}
+
+/* Lange Ergebnisfenster (viel Beute, neue Welt, Erfolge) bleiben auf
+   kleinen Handys scrollbar statt unten abgeschnitten. */
+.overlay--ergebnis .overlay__box {
+  max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Niederlage: dunkler und kühler, aber freundlich - kein Rot. */
+.overlay--niederlage {
+  background: rgba(6, 8, 22, 0.72);
+}
+
+.overlay--niederlage .overlay__box {
+  border-color: #6d7fc9;
+  background: linear-gradient(180deg, #2a3466 0%, #1a2048 55%, #10142e 100%);
+  box-shadow: var(--shadow-panel), 0 0 26px rgba(109, 127, 201, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* ---------- Kopf mit Banner ---------- */
+.ergebnis-kopf {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.ergebnis-kopf__icon {
+  animation: ergebnis-icon 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+@keyframes ergebnis-icon {
+  from { transform: scale(0.2) rotate(-25deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Das Banner: ein Band mit eingeschnittenen Enden, wie bei einer Medaille. */
+.ergebnis-banner {
+  position: relative;
+  min-width: 70%;
+  padding: 6px 30px 8px;
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(180deg, #ffd55a 0%, #ffad1f 55%, #d27a08 100%);
+  clip-path: polygon(0 0, 100% 0, 94% 50%, 100% 100%, 0 100%, 6% 50%);
+  text-shadow: 0 2px 0 rgba(120, 60, 0, 0.6);
+  animation: banner-ausrollen 0.45s 0.15s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.ergebnis-kopf--niederlage .ergebnis-banner {
+  background: linear-gradient(180deg, #8ea0e6 0%, #5f72c4 55%, #3f4f98 100%);
+  text-shadow: 0 2px 0 rgba(20, 28, 70, 0.6);
+}
+
+@keyframes banner-ausrollen {
+  from { transform: scaleX(0.1); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+/* Drei Funkelsterne um den Pokal. */
+.ergebnis-kopf__stern {
+  position: absolute;
+  color: var(--gold-1);
+  font-size: 1.1rem;
+  text-shadow: 0 0 8px rgba(255, 220, 120, 0.9);
+  animation: stern-funkeln 1.6s ease-in-out infinite;
+}
+
+.ergebnis-kopf__stern--1 { top: 2px; left: 26%; }
+.ergebnis-kopf__stern--2 { top: 18px; right: 24%; animation-delay: 0.5s; font-size: 0.85rem; }
+.ergebnis-kopf__stern--3 { top: -6px; right: 34%; animation-delay: 1s; font-size: 0.7rem; }
+
+@keyframes stern-funkeln {
+  0%, 100% { transform: scale(0.6) rotate(0); opacity: 0.4; }
+  50%      { transform: scale(1.2) rotate(45deg); opacity: 1; }
+}
+
+/* ---------- Porträt des Gegners ---------- */
+.ergebnis-portrait {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: end center;
+}
+
+.ergebnis-portrait .pixel-sprite {
+  position: relative;
+  transform: scaleX(-1);
+}
+
+.ergebnis-portrait__strahlen {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 230, 150, 0.4) 0%, rgba(255, 230, 150, 0) 68%);
+}
+
+/* Besiegt: kippt um, wird blass, Sternchen kreisen über dem Kopf. */
+.ergebnis-portrait.ist-besiegt .pixel-sprite {
+  filter: grayscale(0.5) brightness(0.9);
+  animation: besiegt-kippen 0.8s 0.3s ease-out both;
+}
+
+.ergebnis-portrait.ist-besiegt::after {
+  content: '💫';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  font-size: 1.2rem;
+  animation: schwindel 1.4s linear infinite;
+}
+
+@keyframes besiegt-kippen {
+  from { transform: scaleX(-1) rotate(0); }
+  to   { transform: scaleX(-1) rotate(-12deg) translateY(4px); }
+}
+
+@keyframes schwindel {
+  from { transform: translateX(-50%) rotate(0); }
+  to   { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* Bei einer Niederlage hüpft der Gegner vergnügt. */
+.ergebnis-portrait.ist-froh .ergebnis-portrait__strahlen {
+  background: radial-gradient(circle, rgba(140, 160, 255, 0.35) 0%, rgba(140, 160, 255, 0) 68%);
+}
+
+.ergebnis-portrait.ist-froh .pixel-sprite {
+  animation: froh-huepfen 0.9s ease-in-out infinite;
+}
+
+@keyframes froh-huepfen {
+  0%, 100% { transform: scaleX(-1) translateY(0); }
+  50%      { transform: scaleX(-1) translateY(-7px); }
+}
+
+/* ---------- Kampfdauer ---------- */
+.kampf-dauer {
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  background: rgba(8, 14, 40, 0.35);
+  border: 1px solid rgba(109, 146, 255, 0.35);
+}
+
+.kampf-dauer strong {
+  color: #fff;
+}
+
+/* =========================================================================
+   2. Kampf-Intro, Auftritte und eigene Bewegungen der Gegner
+   ========================================================================= */
+
+/* Der Schleier über dem Kampf, solange das Intro läuft. Er fängt alle
+   Tipps ab (ein Tipp überspringt das Intro), damit nichts doppelt startet. */
+.kampf-intro {
+  /* !important: base.css macht alle direkten Kinder eines Bildschirms
+     relativ - der Schleier muss aber über allem schweben. */
+  position: absolute !important;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 50% 45%, rgba(8, 12, 30, 0) 30%, rgba(8, 12, 30, 0.55) 100%);
+  animation: intro-schleier 1.5s ease-in-out forwards;
+}
+
+.kampf-intro--boss {
+  background: radial-gradient(ellipse at 60% 40%, rgba(30, 6, 24, 0.15) 20%, rgba(14, 4, 20, 0.82) 100%);
+  animation: intro-schleier-boss 2.9s ease-in-out forwards;
+}
+
+@keyframes intro-schleier {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes intro-schleier-boss {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Das Namensband - erst unsichtbar, dann rauscht es von links herein. */
+.kampf-intro__banner {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 34px 12px;
+  margin-top: -18vh;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(90deg, rgba(27, 42, 99, 0) 0%, rgba(27, 42, 99, 0.94) 16%, rgba(27, 42, 99, 0.94) 84%, rgba(27, 42, 99, 0) 100%);
+  border-top: 2px solid rgba(255, 197, 61, 0.7);
+  border-bottom: 2px solid rgba(255, 197, 61, 0.7);
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.zeige-banner .kampf-intro__banner {
+  animation: intro-banner 0.4s cubic-bezier(0.2, 1.3, 0.5, 1) forwards;
+}
+
+@keyframes intro-banner {
+  from { opacity: 0; transform: translateX(-40px) skewX(-8deg); }
+  to   { opacity: 1; transform: translateX(0) skewX(0); }
+}
+
+.kampf-intro__oben {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-1);
+}
+
+.kampf-intro__name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(8, 14, 40, 0.7);
+}
+
+/* Boss: rot-goldenes Band, größere Schrift. */
+.kampf-intro__banner--boss {
+  margin-top: 26vh;
+  background: linear-gradient(90deg, rgba(120, 20, 40, 0) 0%, rgba(120, 20, 40, 0.95) 14%, rgba(160, 40, 30, 0.95) 50%, rgba(120, 20, 40, 0.95) 86%, rgba(120, 20, 40, 0) 100%);
+  border-color: var(--gold-2);
+}
+
+.kampf-intro__banner--boss .kampf-intro__oben {
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+}
+
+.kampf-intro__banner--boss .kampf-intro__name {
+  font-size: 2rem;
+}
+
+/* Die Krone fällt von oben und bleibt kurz glänzend stehen. */
+.kampf-intro__krone {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  font-size: 3.4rem;
+  filter: drop-shadow(0 0 14px rgba(255, 200, 80, 0.9));
+  animation: krone-fallen 1.1s 0.2s cubic-bezier(0.3, 1.5, 0.5, 1) both, krone-weg 0.4s 1.3s ease-in forwards;
+}
+
+@keyframes krone-fallen {
+  from { transform: translate(-50%, -120px) rotate(-30deg) scale(0.5); opacity: 0; }
+  to   { transform: translate(-50%, 0) rotate(0) scale(1); opacity: 1; }
+}
+
+@keyframes krone-weg {
+  to { transform: translate(-50%, -20px) scale(1.4); opacity: 0; }
+}
+
+.kampf-intro__tipp {
+  position: absolute;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Optischer Zoom auf den Boss während des Intros. Nur die Kampffläche
+   bewegt sich - Leisten und Karten bleiben stehen. */
+.battlefield {
+  transition: transform 0.7s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.battlefield.kamera-intro-zoom {
+  transform: scale(1.22) translate(-8%, 6%);
+}
+
+/* Bis zum Auftritt: nur die dunkle Silhouette. */
+.sprite.ist-silhouette {
+  filter: brightness(0) drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+  opacity: 0.85;
+}
+
+/* ---------- Die fünf Auftritte ---------- */
+.auftritt--busch   { animation: auftritt-busch 0.75s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.auftritt--rollen  { animation: auftritt-rollen 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
+.auftritt--landen  { animation: auftritt-landen 0.6s cubic-bezier(0.5, 0, 0.8, 0.6) both; }
+.auftritt--stein   { animation: auftritt-stein 0.8s ease-out both; }
+.auftritt--gleiten { animation: auftritt-gleiten 0.85s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+@keyframes auftritt-busch {
+  0%   { transform: translateY(40%) scale(0.6); opacity: 0; }
+  45%  { transform: translateY(-30%) scale(1.05); opacity: 1; }
+  70%  { transform: translateY(0) scale(1.08, 0.9); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes auftritt-rollen {
+  0%   { transform: translateX(160%) rotate(360deg); opacity: 0; }
+  20%  { opacity: 1; }
+  85%  { transform: translateX(-6%) rotate(-8deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@keyframes auftritt-landen {
+  0%   { transform: translateY(-260%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { transform: translateY(0) scale(1.1, 0.86); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes auftritt-stein {
+  0%   { transform: translateX(-50%) translateY(18%) rotate(-18deg); opacity: 0; }
+  35%  { transform: translateX(-38%) translateY(10%) rotate(-12deg); opacity: 1; }
+  55%  { transform: translateX(-38%) translateY(10%) rotate(-12deg); }
+  100% { transform: translateX(0) translateY(0) rotate(0); }
+}
+
+@keyframes auftritt-gleiten {
+  0%   { transform: translate(70%, -24%); opacity: 0; }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+
+/* Busch bzw. Stein, aus dem/hinter dem der Gegner kommt. Sie nehmen die
+   Farben der Welt an und verschwinden nach dem Auftritt. */
+.auftritt-requisite {
+  position: absolute;
+  z-index: 2;
+  bottom: 4px;
+  pointer-events: none;
+  transition: opacity 0.4s 0.3s ease, transform 0.4s 0.3s ease;
+}
+
+.auftritt-requisite--busch {
+  left: 50%;
+  width: 92px;
+  height: 46px;
+  margin-left: -46px;
+  border-radius: 46px 46px 10px 10px;
+  background:
+    radial-gradient(circle at 26% 42%, var(--s-grass-light) 0 20%, transparent 21%),
+    radial-gradient(circle at 70% 36%, var(--s-grass-light) 0 16%, transparent 17%),
+    linear-gradient(180deg, var(--s-grass) 0%, var(--s-grass-dark) 100%);
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.15);
+}
+
+.auftritt-requisite--stein {
+  left: 6%;
+  width: 70px;
+  height: 52px;
+  border-radius: 48% 52% 20% 26% / 64% 60% 18% 20%;
+  background: linear-gradient(160deg, var(--s-rock) 0%, var(--s-rock-dark) 100%);
+  box-shadow: inset -6px -6px 0 rgba(0, 0, 0, 0.15), inset 5px 5px 0 rgba(255, 255, 255, 0.15);
+}
+
+.auftritt-requisite--busch.ist-weg {
+  animation: busch-raschelt 0.5s ease-in-out;
+  opacity: 0;
+  transform: scale(0.7) translateY(10px);
+}
+
+.auftritt-requisite--stein.ist-weg {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+@keyframes busch-raschelt {
+  0%, 100% { rotate: 0deg; }
+  30% { rotate: -6deg; }
+  60% { rotate: 5deg; }
+}
+
+/* Der Boss landet: Staubring auf dem Boden. */
+.stage.ist-gelandet::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 160px;
+  height: 30px;
+  margin-left: -80px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 240, 210, 0.75);
+  animation: staubring 0.7s 0.45s ease-out both;
+  pointer-events: none;
+}
+
+@keyframes staubring {
+  from { transform: scale(0.3); opacity: 1; }
+  to   { transform: scale(1.6); opacity: 0; }
+}
+
+/* ---------- Eigene Bewegung im Kampf ----------
+   Liegt auf einer eigenen Hülle um die Figur (.sprite__koerper). So kommen
+   sich die Dauerbewegung und die kurzen Treffer-/Angriffsbewegungen am
+   Kasten (.hit, .lunge-left) nicht in die Quere. */
+.sprite__koerper {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: end center;
+  transform-origin: 50% 100%;
+}
+
+.ruhe--wabbeln     { animation: ruhe-wabbeln 1.8s ease-in-out infinite; }
+.ruhe--stampfen    { animation: ruhe-stampfen 3.2s ease-in-out infinite; }
+.ruhe--flattern    { animation: ruhe-flattern 0.9s ease-in-out infinite; }
+.ruhe--atmen       { animation: ruhe-atmen 2.6s ease-in-out infinite; }
+.ruhe--schlaengeln { animation: ruhe-schlaengeln 2.2s ease-in-out infinite; }
+.ruhe--wackeln     { animation: ruhe-wackeln 1.4s ease-in-out infinite; }
+.ruhe--schweben    { animation: ruhe-schweben 3.4s ease-in-out infinite; }
+
+@keyframes ruhe-wabbeln {
+  0%, 100% { transform: scale(1, 1); }
+  50%      { transform: scale(1.06, 0.94); }
+}
+
+@keyframes ruhe-stampfen {
+  0%, 60%, 100% { transform: translateY(0) rotate(0); }
+  70% { transform: translateY(-9%) rotate(-3deg); }
+  78% { transform: translateY(0) scale(1.05, 0.95); }
+  86% { transform: translateY(-6%) rotate(3deg); }
+  94% { transform: translateY(0) scale(1.04, 0.96); }
+}
+
+@keyframes ruhe-flattern {
+  0%, 100% { transform: translateY(-4%) scaleY(1); }
+  50%      { transform: translateY(-11%) scaleY(0.96); }
+}
+
+@keyframes ruhe-atmen {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.035, 1.05); }
+}
+
+@keyframes ruhe-schlaengeln {
+  0%, 100% { transform: skewX(0); }
+  25%      { transform: skewX(5deg); }
+  75%      { transform: skewX(-5deg); }
+}
+
+@keyframes ruhe-wackeln {
+  0%, 100% { transform: rotate(0); }
+  25%      { transform: rotate(-4deg); }
+  75%      { transform: rotate(4deg); }
+}
+
+@keyframes ruhe-schweben {
+  0%, 100% { transform: translateY(-6%); opacity: 1; }
+  50%      { transform: translateY(-14%); opacity: 0.82; }
+}
+
+/* Der Boss atmet sichtbar Glut: ein pulsierender Schein hinter ihm. */
+.sprite--boss .sprite__koerper::before {
+  content: '';
+  position: absolute;
+  inset: 12% 8% 4%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 170, 60, 0.45) 0%, rgba(255, 90, 40, 0) 70%);
+  animation: boss-glut 2.4s ease-in-out infinite;
+}
+
+@keyframes boss-glut {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50%      { opacity: 1; transform: scale(1.08); }
+}
+
+/* ---------- Kamera bei starken Treffern ----------
+   Kurzer Zoom und Ruck in Richtung des Getroffenen - nur die Kampffläche,
+   die Kartenhand bleibt ruhig. */
+.battlefield.kamera-stoss-rechts { animation: kamera-stoss-rechts 0.45s ease-out; }
+.battlefield.kamera-stoss-links  { animation: kamera-stoss-links 0.45s ease-out; }
+
+@keyframes kamera-stoss-rechts {
+  0%   { transform: scale(1) translate(0, 0); }
+  30%  { transform: scale(1.06) translate(2.5%, -1%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+@keyframes kamera-stoss-links {
+  0%   { transform: scale(1) translate(0, 0); }
+  30%  { transform: scale(1.06) translate(-2.5%, 1%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+/* =========================================================================
+   3. Karten: Rahmen, Ziehen, Ausspielen
+   ========================================================================= */
+
+/* Ein zweiter, innerer Rahmen zeigt die Seltenheit. Der äußere Rand bleibt
+   frei für "spielbar" (gold leuchtend) - so beißen sich beide nie. */
+.card {
+  --rahmen: rgba(140, 160, 220, 0.35);
+  border-radius: 14px;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 10px;
+  border: 1.5px solid var(--rahmen);
+  pointer-events: none;
+}
+
+.card--silber {
+  --rahmen: #d9e2f2;
+  background: linear-gradient(180deg, #3d4f86 0%, #24305e 50%, #161f48 100%);
+}
+
+.card--gold {
+  --rahmen: #ffcf5a;
+  background: linear-gradient(180deg, #4a4580 0%, #2a2c62 50%, #1a1b47 100%);
+}
+
+.card--glitzer {
+  --rahmen: #ffe6a0;
+  background: linear-gradient(180deg, #5a3f8f 0%, #33276b 50%, #1d1747 100%);
+}
+
+/* Glitzer: Ein Lichtschein wandert langsam über den inneren Rahmen. */
+.card--glitzer::after {
+  border: 2px solid transparent;
+  background: linear-gradient(115deg, #ffd36b, #ff8ad8, #8fd0ff, #b9ff9a, #ffd36b) border-box;
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0);
+  animation: glitzer-rahmen 4s linear infinite;
+}
+
+@keyframes glitzer-rahmen {
+  from { background-position: 0% 50%; }
+  to   { background-position: 300% 50%; }
+}
+
+/* Das Symbol bekommt einen weichen Lichthof in der Rahmenfarbe. */
+.card__icon {
+  filter: drop-shadow(0 2px 3px rgba(8, 14, 40, 0.6));
+}
+
+.card--gold .card__icon,
+.card--glitzer .card__icon {
+  filter: drop-shadow(0 0 6px rgba(255, 210, 110, 0.6)) drop-shadow(0 2px 3px rgba(8, 14, 40, 0.6));
+}
+
+.card__name {
+  line-height: 1.15;
+  text-shadow: 0 1px 0 rgba(8, 14, 40, 0.7);
+}
+
+/* Spielbare Karte: leicht angehoben. */
+.card.is-ready {
+  transform: translateY(-2px);
+}
+
+.card.is-ready:active {
+  transform: translateY(3px) scale(0.96);
+}
+
+/* Neue Karte: kommt vom Stapel (unten rechts), dreht sich ein und landet. */
+.card.karte-gezogen {
+  animation: karte-gezogen 0.42s cubic-bezier(0.25, 1.3, 0.5, 1) both;
+}
+
+@keyframes karte-gezogen {
+  0%   { transform: translate(40%, 70%) scale(0.45) rotate(14deg); opacity: 0; }
+  60%  { transform: translate(0, -6%) scale(1.04) rotate(-2deg); opacity: 1; }
+  100% { transform: translate(0, 0) scale(1) rotate(0); }
+}
+
+/* Ausgespielt: hebt sich kurz, schnellt nach vorn und verblasst. */
+@keyframes karte-flieg {
+  0%   { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+  30%  { transform: translateY(-16px) scale(1.1) rotate(-2deg); opacity: 1; }
+  100% { transform: translateY(-110px) scale(0.6) rotate(-6deg); opacity: 0; }
+}
+
+.karte-flieg {
+  animation: karte-flieg 0.42s cubic-bezier(0.3, 0, 0.6, 1) forwards;
+}
+
+/* Etwas mehr Luft zwischen den Karten - weniger Fehltipps. */
+.screen--battle .hand {
+  gap: 10px;
+}
+
+/* =========================================================================
+   4. Arena: Varianten, Tageszeit, Wetter, Tiere
+   ========================================================================= */
+
+/* Leisten oben liegen über der Wetter-Ebene, die Karten unten sowieso
+   (sie stehen im Aufbau danach). */
+.screen--battle .topbar,
+.screen--battle .fighter-bar {
+  z-index: 2;
+}
+
+/* ---------- Tiefe: die hinteren Ebenen treiben sacht ---------- */
+.screen--battle .arena__hills {
+  animation: tiefe-treiben 22s ease-in-out infinite alternate;
+}
+
+.screen--battle .arena__treeline--fern {
+  animation: tiefe-treiben-mehr 16s ease-in-out infinite alternate;
+}
+
+@keyframes tiefe-treiben {
+  from { translate: -1.5% 0; }
+  to   { translate: 1.5% 0; }
+}
+
+@keyframes tiefe-treiben-mehr {
+  from { translate: -3% 0; }
+  to   { translate: 3% 0; }
+}
+
+/* ---------- Varianten-Bausteine ---------- */
+.umgebung-variante {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.umgebung-variante > * {
+  position: absolute;
+  transform: translate(-50%, -100%) scale(var(--gr, 1));
+  transform-origin: 50% 100%;
+}
+
+/* Bach (bzw. Lavastrom, Eisband ...) quer über die Wiese. */
+.umgebung-bach {
+  --bach: #6fc3ff;
+  --bach-hell: #c9ecff;
+  left: 50%;
+  top: 66%;
+  width: 150%;
+  height: 9%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--bach-hell) 0%, var(--bach) 45%, var(--bach) 100%);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18), inset 0 -6px 8px rgba(0, 0, 0, 0.22);
+  transform: translate(-50%, -50%) rotate(-4deg);
+  overflow: hidden;
+}
+
+.umgebung-bach__glanz {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0) 0 30px, rgba(255, 255, 255, 0.45) 30px 44px, rgba(255, 255, 255, 0) 44px 90px);
+  animation: bach-fliessen 3s linear infinite;
+}
+
+@keyframes bach-fliessen {
+  from { transform: translateX(0); }
+  to   { transform: translateX(90px); }
+}
+
+.region--vulkan .umgebung-bach { --bach: #ff6a1f; --bach-hell: #ffd36b; box-shadow: 0 0 18px rgba(255, 110, 40, 0.75); }
+.region--eis .umgebung-bach { --bach: #a9dcf5; --bach-hell: #f4fbff; }
+.region--eis .umgebung-bach__glanz { animation: none; }
+.region--schatten .umgebung-bach { --bach: #5b4a9a; --bach-hell: #9d8fe0; }
+.region--kristall .umgebung-bach { --bach: #59d8f0; --bach-hell: #d9fbff; box-shadow: 0 0 14px rgba(110, 230, 255, 0.6); }
+.region--wueste .umgebung-bach { --bach: #2fbfb0; --bach-hell: #b8fff3; }
+
+.umgebung-kiesel {
+  width: 16px;
+  height: 9px;
+  border-radius: 50% 50% 40% 40%;
+  background: linear-gradient(180deg, var(--s-rock) 0 55%, var(--s-rock-dark) 56%);
+}
+
+/* Lichtung: weiche Strahlen von oben. */
+.umgebung-lichtstrahlen {
+  left: 50%;
+  top: 70%;
+  width: 90%;
+  height: 120%;
+  transform: translate(-50%, -100%);
+  background: repeating-linear-gradient(100deg, rgba(255, 250, 220, 0) 0 26px, rgba(255, 250, 220, 0.2) 26px 40px, rgba(255, 250, 220, 0) 40px 70px);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 90%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 90%);
+  animation: strahlen-atmen 6s ease-in-out infinite;
+}
+
+@keyframes strahlen-atmen {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.umgebung-stumpf {
+  width: 30px;
+  height: 22px;
+  border-radius: 4px 4px 3px 3px;
+  background: linear-gradient(90deg, #8a6340 0%, #6b4a2f 55%, #4e3521 100%);
+  box-shadow: inset 0 5px 0 #c99e6c;
+}
+
+.umgebung-stein {
+  width: 40px;
+  height: 26px;
+  border-radius: 48% 52% 20% 26% / 64% 60% 18% 20%;
+  background: linear-gradient(160deg, var(--s-rock) 0%, var(--s-rock-dark) 100%);
+  box-shadow: inset -4px -4px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Wiese: Holzzaun am Horizont, Büsche, Blumen. */
+.umgebung-zaun {
+  left: 18%;
+  top: 54%;
+  width: 34%;
+  height: 20px;
+  background:
+    linear-gradient(180deg, transparent 0 25%, #9b6d43 25% 38%, transparent 38% 62%, #9b6d43 62% 75%, transparent 75%),
+    repeating-linear-gradient(90deg, #7a5432 0 5px, transparent 5px 26px);
+  opacity: 0.85;
+}
+
+.umgebung-busch {
+  width: 58px;
+  height: 32px;
+  border-radius: 32px 32px 8px 8px;
+  background:
+    radial-gradient(circle at 28% 38%, var(--s-grass-light) 0 18%, transparent 19%),
+    radial-gradient(circle at 68% 30%, var(--s-grass-light) 0 14%, transparent 15%),
+    linear-gradient(180deg, var(--s-grass) 0%, var(--s-grass-dark) 100%);
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.14);
+}
+
+.umgebung-blume {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe27a 0 30%, var(--farbe, #ffb3d9) 32%);
+  box-shadow: 0 7px 0 -3px var(--s-grass-dark);
+}
+
+.region--vulkan .umgebung-blume,
+.region--schatten .umgebung-blume,
+.region--eis .umgebung-blume {
+  display: none;
+}
+
+/* ---------- Die Umgebung reagiert auf Treffer ---------- */
+.umgebung-wackelt .arena__tree-top,
+.umgebung-wackelt .umgebung-busch,
+.umgebung-wackelt .umgebung-blume,
+.umgebung-wackelt .arena__flower {
+  animation: umgebung-wackeln 0.5s ease-in-out;
+}
+
+.umgebung-wackelt--stark .arena__tree-top,
+.umgebung-wackelt--stark .umgebung-busch,
+.umgebung-wackelt--stark .umgebung-blume,
+.umgebung-wackelt--stark .umgebung-kiesel,
+.umgebung-wackelt--stark .umgebung-stein,
+.umgebung-wackelt--stark .arena__flower {
+  animation: umgebung-wackeln-stark 0.65s ease-in-out;
+}
+
+@keyframes umgebung-wackeln {
+  0%, 100% { rotate: 0deg; }
+  30%      { rotate: -4deg; }
+  65%      { rotate: 3deg; }
+}
+
+@keyframes umgebung-wackeln-stark {
+  0%, 100% { rotate: 0deg; translate: 0 0; }
+  20%      { rotate: -8deg; translate: 0 -2px; }
+  50%      { rotate: 6deg; }
+  75%      { rotate: -3deg; }
+}
+
+/* ---------- Licht und Wetter (Ebene über Himmel und Arena) ---------- */
+.umgebung-himmel {
+  position: absolute !important;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.umgebung-licht,
+.umgebung-wetter {
+  position: absolute;
+  inset: 0;
+}
+
+/* Tageszeit nach der Uhr: morgens warm-rosa, abends lila Dämmerung. */
+.tageszeit--morgen .umgebung-licht {
+  background: linear-gradient(180deg, rgba(255, 168, 130, 0.26) 0%, rgba(255, 215, 160, 0.1) 55%, rgba(255, 230, 190, 0.06) 100%);
+}
+
+.tageszeit--abend .umgebung-licht {
+  background: linear-gradient(180deg, rgba(60, 30, 130, 0.42) 0%, rgba(240, 110, 80, 0.2) 50%, rgba(40, 20, 90, 0.26) 100%);
+}
+
+.tageszeit--morgen .scenery__sun {
+  top: 6%;
+  right: auto;
+  left: -80px;
+  background: radial-gradient(circle, rgba(255, 228, 200, 0.95) 0%, rgba(255, 170, 140, 0.5) 38%, rgba(255, 170, 140, 0) 70%);
+}
+
+.tageszeit--abend .scenery__sun {
+  top: 22%;
+  right: -40px;
+  background: radial-gradient(circle, rgba(255, 190, 120, 0.95) 0%, rgba(255, 110, 80, 0.55) 38%, rgba(255, 110, 80, 0) 70%);
+}
+
+.tageszeit--abend .scenery__strahlen {
+  opacity: 0.12;
+}
+
+/* Abends funkeln zwei Sterne kurz auf. */
+.umgebung-stern {
+  position: absolute;
+  top: 9%;
+  left: 22%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.8);
+  animation: stern-blinken 5s ease-in-out infinite;
+}
+
+.umgebung-stern--2 {
+  top: 15%;
+  left: 64%;
+  animation-delay: 2.3s;
+}
+
+@keyframes stern-blinken {
+  0%, 70%, 100% { opacity: 0.15; transform: scale(0.6); }
+  80%           { opacity: 1; transform: scale(1.4); }
+}
+
+/* Bewölkt: grauerer Himmel. */
+.wetter--bewoelkt .umgebung-wetter {
+  background: linear-gradient(180deg, rgba(90, 100, 130, 0.32) 0%, rgba(90, 100, 130, 0.08) 60%);
+}
+
+.wetter--bewoelkt .scenery__sun,
+.wetter--regen .scenery__sun,
+.wetter--nebel .scenery__sun {
+  opacity: 0.35;
+}
+
+/* Regen: zwei Schichten schräger Striche in unterschiedlichem Tempo. */
+.wetter--regen .umgebung-wetter {
+  background: rgba(70, 85, 120, 0.2);
+}
+
+.wetter--regen .umgebung-wetter::before,
+.wetter--regen .umgebung-wetter::after,
+.wetter--schnee .umgebung-wetter::before,
+.wetter--schnee .umgebung-wetter::after {
+  content: '';
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: -100%;
+  height: 200%;
+}
+
+.wetter--regen .umgebung-wetter::before {
+  background: repeating-linear-gradient(104deg, transparent 0 22px, rgba(210, 228, 255, 0.45) 22px 23.5px, transparent 23.5px 47px);
+  animation: wetter-fallen 0.8s linear infinite;
+}
+
+.wetter--regen .umgebung-wetter::after {
+  background: repeating-linear-gradient(104deg, transparent 0 37px, rgba(210, 228, 255, 0.3) 37px 38px, transparent 38px 71px);
+  animation: wetter-fallen 1.2s linear infinite;
+}
+
+/* Schnee: weiche Flocken aus zwei Punktmustern. */
+.wetter--schnee .umgebung-wetter::before {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 2.5px, transparent 3px);
+  background-size: 58px 64px;
+  animation: wetter-fallen 7s linear infinite;
+}
+
+.wetter--schnee .umgebung-wetter::after {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 1.6px, transparent 2px);
+  background-size: 37px 41px;
+  background-position: 13px 7px;
+  animation: wetter-fallen 11s linear infinite;
+}
+
+@keyframes wetter-fallen {
+  from { transform: translateY(0); }
+  to   { transform: translateY(50%); }
+}
+
+/* Nebel: zwei Schwaden, die sacht hin und her ziehen. */
+.wetter--nebel .umgebung-wetter::before,
+.wetter--nebel .umgebung-wetter::after {
+  content: '';
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(235, 240, 255, 0.5) 0%, rgba(235, 240, 255, 0) 70%);
+}
+
+.wetter--nebel .umgebung-wetter::before {
+  top: 36%;
+  animation: nebel-ziehen 14s ease-in-out infinite alternate;
+}
+
+.wetter--nebel .umgebung-wetter::after {
+  top: 56%;
+  opacity: 0.8;
+  animation: nebel-ziehen 19s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes nebel-ziehen {
+  from { transform: translateX(-12%); }
+  to   { transform: translateX(12%); }
+}
+
+/* Sandwind: feine waagrechte Schlieren. */
+.wetter--sand .umgebung-wetter {
+  background: rgba(230, 190, 120, 0.12);
+}
+
+.wetter--sand .umgebung-wetter::before {
+  content: '';
+  position: absolute;
+  inset: 20% -50% 10%;
+  background: repeating-linear-gradient(178deg, transparent 0 16px, rgba(255, 230, 180, 0.35) 16px 17px, transparent 17px 41px);
+  animation: sand-wehen 2.4s linear infinite;
+}
+
+@keyframes sand-wehen {
+  from { transform: translateX(0); }
+  to   { transform: translateX(33%); }
+}
+
+/* Kristallstaub: glitzernde Punkte, die aufleuchten. */
+.wetter--glitzer .umgebung-wetter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(200, 245, 255, 0.95) 0 1.5px, transparent 2.5px);
+  background-size: 47px 53px;
+  animation: glitzer-staub 3s ease-in-out infinite alternate;
+}
+
+@keyframes glitzer-staub {
+  from { opacity: 0.2; }
+  to   { opacity: 0.9; }
+}
+
+/* Glutfunken (Vulkan, und in jedem Bosskampf). */
+.wetter--glut .umgebung-wetter {
+  background: linear-gradient(180deg, rgba(120, 30, 20, 0.14) 0%, rgba(255, 110, 40, 0.1) 100%);
+}
+
+.umgebung-glut {
+  position: absolute;
+  bottom: -8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffd36b;
+  box-shadow: 0 0 8px 2px rgba(255, 120, 40, 0.85);
+  animation: glut-steigen 4s linear infinite;
+}
+
+@keyframes glut-steigen {
+  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translate(24px, -95vh) scale(0.3); opacity: 0; }
+}
+
+/* ---------- Bossarena ---------- */
+.ist-bosskampf .umgebung-licht::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 55%, rgba(0, 0, 0, 0) 40%, rgba(40, 6, 30, 0.45) 100%);
+}
+
+.umgebung-variante > .umgebung-boss-licht {
+  position: absolute;
+  top: -12%;
+  left: auto;
+  right: -14%;
+  width: 82%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 190, 90, 0.16) 0deg 10deg, rgba(255, 190, 90, 0) 10deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  animation: boss-licht-drehen 30s linear infinite;
+}
+
+@keyframes boss-licht-drehen {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Tiere (antippbar, rein dekorativ) ---------- */
+.umgebung-tier {
+  position: absolute;
+  z-index: 3;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  animation: tier-flug 7s ease-in-out infinite;
+}
+
+.umgebung-tier__koerper {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 10px;
+  margin: -5px 0 0 -2px;
+  border-radius: 2px;
+  background: #3a2a40;
+}
+
+/* Falter: zwei große Flügel (oben breit, unten schmal), die schlagen.
+   Leicht schräg gestellt, damit er wie im Flug aussieht. */
+.umgebung-tier--falter .umgebung-tier__koerper {
+  width: 3px;
+  height: 12px;
+  margin: -6px 0 0 -1.5px;
+  rotate: -18deg;
+}
+
+.umgebung-tier--falter .umgebung-tier__koerper::before,
+.umgebung-tier--falter .umgebung-tier__koerper::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  width: 13px;
+  height: 18px;
+  background:
+    radial-gradient(circle at 50% 30%, #ffffff 0 12%, transparent 13%),
+    radial-gradient(ellipse at 50% 28%, #ffb3d9 0 52%, transparent 54%),
+    radial-gradient(ellipse at 50% 78%, #ffd36b 0 38%, transparent 40%);
+  filter: drop-shadow(0 1px 1px rgba(60, 20, 60, 0.45));
+  animation: fluegel-schlag 0.28s ease-in-out infinite alternate;
+}
+
+.umgebung-tier--falter .umgebung-tier__koerper::before {
+  right: 2px;
+  transform-origin: 100% 50%;
+}
+
+.umgebung-tier--falter .umgebung-tier__koerper::after {
+  left: 2px;
+  transform-origin: 0% 50%;
+}
+
+.umgebung-tier--falter:nth-of-type(2n) .umgebung-tier__koerper::before,
+.umgebung-tier--falter:nth-of-type(2n) .umgebung-tier__koerper::after {
+  background:
+    radial-gradient(circle at 50% 30%, #ffffff 0 12%, transparent 13%),
+    radial-gradient(ellipse at 50% 28%, #9fd2ff 0 52%, transparent 54%),
+    radial-gradient(ellipse at 50% 78%, #c9a8ff 0 38%, transparent 40%);
+}
+
+@keyframes fluegel-schlag {
+  from { scale: 1 1; }
+  to   { scale: 0.25 1; }
+}
+
+/* Glühwürmchen: ein leuchtender Punkt, der pulsiert. */
+.umgebung-tier--gluehwurm .umgebung-tier__koerper {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #eaffa0;
+  box-shadow: 0 0 10px 4px rgba(210, 255, 120, 0.7);
+  animation: gluehen 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes gluehen {
+  from { opacity: 0.35; }
+  to   { opacity: 1; }
+}
+
+@keyframes tier-flug {
+  0%, 100% { translate: 0 0; }
+  25%      { translate: 14px -10px; }
+  50%      { translate: 4px -20px; }
+  75%      { translate: -12px -6px; }
+}
+
+.umgebung-tier.schreckt-auf {
+  animation: tier-aufschrecken 0.7s ease-out;
+}
+
+@keyframes tier-aufschrecken {
+  0%   { translate: 0 0; }
+  40%  { translate: 10px -30px; }
+  100% { translate: 0 0; }
+}
+
+/* Angetippt: davonflattern, später kommt es zurück. */
+.umgebung-tier.fliegt-weg {
+  pointer-events: none;
+  animation: tier-davon 1.2s ease-in forwards;
+}
+
+@keyframes tier-davon {
+  0%   { translate: 0 0; opacity: 1; }
+  100% { translate: 120px -240px; opacity: 0; }
+}
+
+/* ---------- Vogel, der ab und zu durch den Himmel zieht ---------- */
+.umgebung-vogel {
+  position: absolute;
+  top: 9%;
+  left: -8%;
+  width: 16px;
+  height: 6px;
+  animation: vogel-zug 16s linear infinite;
+  animation-delay: 3s;
+}
+
+.umgebung-vogel::before,
+.umgebung-vogel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 9px;
+  height: 6px;
+  border-top: 2px solid rgba(30, 40, 70, 0.7);
+  border-radius: 60% 60% 0 0;
+  animation: vogel-schlag 0.4s ease-in-out infinite alternate;
+}
+
+.umgebung-vogel::before { left: 0; transform-origin: 100% 100%; }
+.umgebung-vogel::after { right: 0; transform-origin: 0% 100%; }
+
+@keyframes vogel-schlag {
+  from { rotate: 12deg; }
+  to   { rotate: -12deg; }
+}
+
+@keyframes vogel-zug {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  4%   { opacity: 1; }
+  45%  { transform: translate(60vw, 14px); opacity: 1; }
+  50%  { transform: translate(66vw, 6px); opacity: 0; }
+  100% { transform: translate(66vw, 6px); opacity: 0; }
+}
+
+/* ---------- Geheimnis: ein kleines Wesen am Horizont ---------- */
+.umgebung-wicht {
+  position: absolute;
+  z-index: 1;
+  left: 31%;
+  top: 52%;
+  width: 34px;
+  height: 22px;
+  margin: -22px 0 0 -17px;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: none;
+}
+
+.umgebung-wicht::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  bottom: -22px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50% 50% 40% 40%;
+  background: radial-gradient(circle at 40% 35%, #b28cff 0%, #6c4bc4 100%);
+  transition: transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.umgebung-wicht__augen {
+  position: absolute;
+  left: 12px;
+  bottom: -14px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 6px 0 0 #fff;
+  transition: transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.umgebung-wicht.ist-da {
+  pointer-events: auto;
+}
+
+.umgebung-wicht.ist-da::before,
+.umgebung-wicht.ist-da .umgebung-wicht__augen {
+  transform: translateY(-17px);
+}
+
+.umgebung-wicht.huscht-weg::before {
+  transition-duration: 0.12s;
+}
+
+.umgebung-wicht.huscht-weg::after {
+  content: '✨';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  font-size: 0.8rem;
+  animation: float-up 0.6s ease-out forwards;
+}
+
+/* =========================================================================
+   5. Menüs
+   ========================================================================= */
+
+/* ---------- Sortierleiste im Deckmenü ---------- */
+.sortier-leiste {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+@media (max-width: 420px) {
+  .sortier-leiste {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sortier-knopf {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-height: 40px;
+  padding: 6px 4px;
+  color: var(--text-dim);
+  border-radius: 999px;
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(42, 58, 114, 0.94), rgba(17, 24, 58, 0.94));
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.sortier-knopf:active {
+  transform: scale(0.95);
+}
+
+.sortier-knopf.is-active {
+  color: #fff;
+  border-color: var(--gold-2);
+  box-shadow: 0 0 10px rgba(255, 190, 60, 0.35);
+}
+
+.deck-list > * {
+  animation: pop-in 0.22s ease-out both;
+}
+
+/* ---------- Lokale Sicherung in den Einstellungen ---------- */
+.stat-row--sicherung {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stat-row--sicherung .stat-row__label {
+  display: grid;
+  gap: 3px;
+}
+
+.stat-row--sicherung .stat-row__value {
+  white-space: nowrap;
+}
+
+/* ---------- Bildschirmwechsel ----------
+   Sanft einblenden, leicht anheben und aus 98,5 % aufziehen. Solange das
+   läuft, nimmt der neue Bildschirm keine Tipps an (js/core/screens.js). */
+@keyframes screen-rein {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.screen {
+  animation: screen-rein 0.26s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.screen.ist-im-uebergang {
+  pointer-events: none;
+}
+
+/* ---------- Sammlung: Silhouetten und Weltfarben ---------- */
+.collection-item {
+  animation: pop-in 0.25s ease-out both;
+}
+
+.collection-item__sprite {
+  background: radial-gradient(circle, color-mix(in srgb, var(--welt-farbe, #6d92ff) 55%, transparent), transparent 68%);
+}
+
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .collection-item__sprite {
+    background: radial-gradient(circle, rgba(109, 146, 255, 0.34), transparent 68%);
+  }
+}
+
+.pixel-sprite--silhouette {
+  filter: brightness(0) drop-shadow(0 0 4px rgba(160, 190, 255, 0.45));
+  opacity: 0.75;
+}
+
+/* Die Silhouette soll schwarz bleiben, nicht grau gefiltert werden. */
+.collection-item.is-locked .collection-item__sprite:has(.pixel-sprite--silhouette) {
+  filter: none;
+}
+
+/* ---------- Weltkarte: Ring in der Weltfarbe ---------- */
+.screen--map .node__circle::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 3px solid var(--welt-farbe, transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.screen--map .node.is-locked .node__circle::before {
+  opacity: 0.18;
+  border-style: dashed;
+}
+
+.screen--map .node.is-selected .node__circle::before {
+  opacity: 1;
+  inset: -10px;
+  box-shadow: 0 0 14px var(--welt-farbe, transparent);
+}
+
+/* ---------- Teilchen beim Betreten einer Welt ---------- */
+.welt-teilchen {
+  position: absolute !important;
+  inset: 0;
+  z-index: 4 !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.welt-teilchen__stueck {
+  position: absolute;
+  top: -20px;
+  width: 12px;
+  height: 8px;
+  opacity: 0;
+  animation: teilchen-fallen 1.6s ease-in forwards;
+}
+
+.welt-teilchen--steigen .welt-teilchen__stueck {
+  top: auto;
+  bottom: -20px;
+  animation-name: teilchen-steigen;
+}
+
+@keyframes teilchen-fallen {
+  0%   { transform: translate(0, 0) rotate(0); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--weg), 70vh) rotate(var(--dreh)); opacity: 0; }
+}
+
+@keyframes teilchen-steigen {
+  0%   { transform: translate(0, 0) rotate(0); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--weg), -70vh) rotate(var(--dreh)); opacity: 0; }
+}
+
+.welt-teilchen--blatt .welt-teilchen__stueck { border-radius: 0 70% 0 70%; background: #6fc04a; }
+.welt-teilchen--splitter .welt-teilchen__stueck { width: 8px; height: 12px; background: linear-gradient(160deg, #cdf3ff, #6fd0ff); clip-path: polygon(50% 0, 100% 40%, 70% 100%, 30% 100%, 0 40%); }
+.welt-teilchen--glut .welt-teilchen__stueck { width: 6px; height: 6px; border-radius: 50%; background: #ffd36b; box-shadow: 0 0 8px 2px rgba(255, 110, 40, 0.8); }
+.welt-teilchen--flocke .welt-teilchen__stueck { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.8); }
+.welt-teilchen--schatten .welt-teilchen__stueck { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #b28cff, rgba(80, 40, 140, 0)); }
+.welt-teilchen--sand .welt-teilchen__stueck { width: 5px; height: 5px; border-radius: 50%; background: #f2d28c; }
+.welt-teilchen--feder .welt-teilchen__stueck { width: 6px; height: 16px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; background: linear-gradient(90deg, #ffffff, #dfe8ff); }
+.welt-teilchen--blase .welt-teilchen__stueck { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffffff, rgba(160, 230, 255, 0.4) 60%, rgba(160, 230, 255, 0)); border: 1px solid rgba(255, 255, 255, 0.7); }
+.welt-teilchen--irrlicht .welt-teilchen__stueck { width: 7px; height: 7px; border-radius: 50%; background: #d8ff9a; box-shadow: 0 0 10px 3px rgba(170, 255, 120, 0.7); }
+.welt-teilchen--zahnrad .welt-teilchen__stueck { width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, #5e5242 0 22%, #c9a14a 24%); box-shadow: 0 0 0 2px #8a6a2a; }
+.welt-teilchen--streusel .welt-teilchen__stueck { width: 4px; height: 11px; border-radius: 3px; background: linear-gradient(#ff6fa8, #ffd84d); }
+.welt-teilchen--stern .welt-teilchen__stueck { width: 10px; height: 10px; background: #ffe27a; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); box-shadow: 0 0 6px #ffe27a; }
+
+/* =========================================================================
+   6. Startbildschirm und Wolken
+   ========================================================================= */
+
+.start__logo {
+  position: relative;
+}
+
+/* ---------- Logo: Tiefe, Glanz, Auftritt ---------- */
+.logo__tiefe path {
+  fill: #0b1236;
+  stroke: #0b1236;
+  stroke-width: 11;
+  stroke-linejoin: round;
+}
+
+.logo__glanz {
+  fill: rgba(255, 255, 255, 0.55);
+  transform: skewX(-20deg);
+  animation: logo-glanz 5.5s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+
+@keyframes logo-glanz {
+  0%   { transform: translateX(0) skewX(-20deg); }
+  28%  { transform: translateX(420px) skewX(-20deg); }
+  100% { transform: translateX(420px) skewX(-20deg); }
+}
+
+.logo--rein {
+  animation: logo-rein 0.75s cubic-bezier(0.25, 1.5, 0.45, 1) both, logo-schimmern 6s 0.75s ease-in-out infinite;
+}
+
+@keyframes logo-rein {
+  0%   { transform: translateY(-30px) scale(0.6); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Funkelnde Sterne rund um den Schriftzug. */
+.logo-stern {
+  position: absolute;
+  color: #fff6c9;
+  text-shadow: 0 0 8px rgba(255, 220, 120, 0.95);
+  pointer-events: none;
+  animation: stern-funkeln 2.4s ease-in-out infinite;
+}
+
+.logo-stern--1 { top: 2%;  left: 10%; font-size: 1rem; }
+.logo-stern--2 { top: 38%; right: 6%; font-size: 1.25rem; animation-delay: 0.8s; }
+.logo-stern--3 { top: 64%; left: 4%; font-size: 0.9rem; animation-delay: 1.5s; }
+.logo-stern--4 { top: -4%; right: 22%; font-size: 0.75rem; animation-delay: 2s; }
+
+/* ---------- Menüknöpfe: leichtes Schweben, federnder Druck ---------- */
+.screen--start .icon-btn__circle {
+  animation: knopf-schweben 3.2s ease-in-out infinite;
+  animation-delay: var(--schwebe-verzug, 0s);
+}
+
+@keyframes knopf-schweben {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -3px; }
+}
+
+.icon-btn:active .icon-btn__circle {
+  scale: 0.94;
+}
+
+.icon-btn:active .icon-btn__label {
+  color: var(--gold-1);
+}
+
+.icon-btn:focus-visible .icon-btn__circle {
+  outline: 3px solid var(--gold-1);
+  outline-offset: 3px;
+}
+
+/* ---------- Geheimnis: der Stern am Himmel ---------- */
+.himmels-stern {
+  /* !important: base.css macht direkte Kinder des Bildschirms relativ. */
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 34%;
+  left: 5%;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.himmels-stern::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 3px rgba(255, 255, 230, 0.9);
+  animation: stern-blinken 4.5s ease-in-out infinite;
+}
+
+.himmels-stern.ist-schnuppe {
+  pointer-events: none;
+}
+
+.himmels-stern.ist-schnuppe::before {
+  animation: schnuppe 1.1s ease-in forwards;
+}
+
+/* Der Schweif der Sternschnuppe. */
+.himmels-stern.ist-schnuppe::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70px;
+  height: 2px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  animation: schnuppe-schweif 1.1s ease-in forwards;
+}
+
+@keyframes schnuppe {
+  0%   { transform: translate(0, 0) scale(1.4); opacity: 1; }
+  100% { transform: translate(240px, 120px) scale(0.4); opacity: 0; }
+}
+
+@keyframes schnuppe-schweif {
+  0%   { transform: translate(0, 0) rotate(206deg) scaleX(0.2); opacity: 1; }
+  100% { transform: translate(240px, 120px) rotate(206deg) scaleX(1); opacity: 0; }
+}
+
+/* ---------- Wolken, die ihre Form verändern ----------
+   Zwei zusätzliche Beulen je Wolke wachsen und schrumpfen langsam und
+   wandern ein Stück - jede in ihrem eigenen Takt. Dadurch sieht keine Wolke
+   zweimal gleich aus. Nur transform: kostet fast nichts. */
+.scenery__cloud::before,
+.scenery__cloud::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  transform-origin: 50% 100%;
+}
+
+.scenery__cloud::before {
+  left: 14%;
+  bottom: 38%;
+  width: 42%;
+  height: 120%;
+  animation: wolke-beule 13s ease-in-out infinite alternate;
+}
+
+.scenery__cloud::after {
+  right: 6%;
+  bottom: 30%;
+  width: 30%;
+  height: 92%;
+  animation: wolke-beule 17s ease-in-out infinite alternate-reverse;
+}
+
+.scenery__cloud--2::before { animation-duration: 19s; }
+.scenery__cloud--3::after { animation-duration: 11s; }
+
+@keyframes wolke-beule {
+  0%   { transform: translateX(-12%) scale(0.7); }
+  45%  { transform: translateX(10%) scale(1.18); }
+  100% { transform: translateX(26%) scale(0.88, 1.05); }
+}
+
+/* =========================================================================
+   7. Gezeichnete Truhen (js/ui/truhen.js)
+   ========================================================================= */
+
+.truhe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Der Deckel klappt um sein hinteres Scharnier nach oben. */
+.truhe__deckel {
+  transform-box: fill-box;
+  transform-origin: 8% 100%;
+  transition: transform 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.truhe.ist-offen .truhe__deckel,
+.is-open .truhe__deckel {
+  transform: translateY(-10px) rotate(-24deg);
+}
+
+/* Licht aus dem Inneren: erst beim Öffnen, dann pulsierend. */
+.truhe__licht {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: opacity 0.35s ease 0.12s;
+}
+
+.truhe.ist-offen .truhe__licht,
+.is-open .truhe__licht {
+  opacity: 1;
+  animation: truhe-licht 1.8s ease-in-out infinite;
+}
+
+@keyframes truhe-licht {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(1.12); }
+}
+
+/* Gold- und Bosstruhe funkeln. */
+.truhe__funkeln {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: stern-funkeln 2.2s ease-in-out infinite;
+}
+
+.truhe__funkeln--2 {
+  animation-delay: 1.1s;
+}
+
+/* ---------- Im Shop ---------- */
+.chest-card__icon {
+  width: 66px;
+  height: 66px;
+  padding: 6px 5px 4px;
+}
+
+/* Die Truhe im Shop wippt sacht - sie will geöffnet werden. */
+.chest-card__icon .truhe {
+  animation: truhe-wippen 2.8s ease-in-out infinite;
+}
+
+.chest-card:nth-child(3n) .chest-card__icon .truhe { animation-delay: -0.9s; }
+.chest-card:nth-child(3n + 1) .chest-card__icon .truhe { animation-delay: -1.8s; }
+
+@keyframes truhe-wippen {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-2px) rotate(-2deg); }
+}
+
+/* ---------- Beim Öffnen ---------- */
+.chest-open__chest {
+  width: 150px;
+  height: 162px;
+  font-size: 0;
+}
+
+/* ---------- Bosstruhe im Siegesfenster ---------- */
+.boss-truhe {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.boss-truhe .truhe {
+  width: 96px;
+  height: 104px;
+  animation: pop-in 0.45s 0.3s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.boss-truhe__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e8b6ff;
+}
+
+.truhe__innen {
+  opacity: 0;
+  transition: opacity 0.25s ease 0.1s;
+}
+
+.truhe.ist-offen .truhe__innen,
+.is-open .truhe__innen {
+  opacity: 1;
+}
+
+/* ---------- Gratis-Truhe nach jedem 2. Sieg ---------- */
+.gratis-truhe {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: rgba(255, 197, 61, 0.08);
+  border: 1px dashed rgba(255, 197, 61, 0.5);
+}
+
+.gratis-truhe__name {
+  color: var(--gold-1);
+}
+
+.gratis-hinweis {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* =========================================================================
+   8. Lobby: Seiten zum Wischen und die Leiste unten (js/screens/lobby.js)
+   ========================================================================= */
+
+.lobby {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Die Seiten liegen übereinander; js/screens/lobby.js schiebt sie per
+   transform an ihren Platz. Waagrechtes Wischen übernimmt das Spiel,
+   senkrechtes Scrollen in den Seiten bleibt beim Browser (pan-y). */
+.lobby__seiten {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.lobby__seiten * {
+  touch-action: pan-y;
+}
+
+/* Waagrecht scrollende Leisten in einer Seite (z. B. die Reiter der
+   Sammlung) dürfen selbst seitlich scrollen. */
+.lobby__seiten .tabs {
+  touch-action: pan-x pan-y;
+}
+
+.lobby__seite {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+
+.lobby__seiten.ist-gleitend .lobby__seite {
+  transition: transform 0.3s cubic-bezier(0.22, 0.8, 0.3, 1);
+  will-change: transform;
+}
+
+/* Unten sitzt die Leiste - die Seiten brauchen dort keinen Rand für die
+   Home-Leiste des iPhones mehr. */
+.lobby__seite > .screen {
+  padding-bottom: 10px;
+}
+
+/* Zurück-Knöpfe braucht in der Lobby niemand - dafür gibt es die Leiste. */
+.lobby__seite .topbar > .btn:first-child {
+  visibility: hidden;
+}
+
+/* Fenster (Truhe, Tauschen, Spielmodi ...) liegen über allem, auch über
+   der Leiste - sonst könnte man mitten im Öffnen wegblättern. */
+.lobby__seite .overlay {
+  position: fixed;
+  z-index: 20;
+}
+
+/* ---------- Die Leiste ---------- */
+.lobby__leiste {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #2c3f83 0%, var(--fantasy-tief) 55%, #111a40 100%);
+  border-top: 2px solid var(--fantasy-gold);
+  box-shadow: 0 -6px 18px rgba(8, 14, 40, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.lobby__tab {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-height: 58px;
+  padding: 6px 0 4px;
+  font: inherit;
+  color: var(--text-dim);
+  background: none;
+  border: 0;
+  border-radius: 12px 12px 6px 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lobby__tab-symbol {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 1.35rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 197, 61, 0.4);
+  background: linear-gradient(180deg, #2c3f83 0%, var(--fantasy-tief) 100%);
+  box-shadow: 0 3px 0 #0f1838;
+  /* Ruhig anheben, ohne Überfedern - das sah auf dem Handy nach Wackeln aus. */
+  transition: transform 0.2s ease-out, border-color 0.2s ease;
+}
+
+.lobby__tab-symbol img {
+  width: 118%;
+  height: 118%;
+  min-width: 0;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Die Mitte (Start) bekommt ein goldenes Abzeichen mit gekreuzten Schwertern. */
+.lobby__tab--start .lobby__tab-symbol {
+  background: radial-gradient(circle at 50% 35%, #ffe27a 0%, #ffb32b 55%, #c9750d 100%);
+  border-color: #fff3c4;
+}
+
+/* Name nur beim aktiven Punkt - wie bei Clash Royale. */
+.lobby__tab-name {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.lobby__tab.is-aktiv {
+  background: linear-gradient(180deg, rgba(109, 146, 255, 0.55) 0%, rgba(60, 95, 208, 0.25) 100%);
+  color: #fff;
+}
+
+.lobby__tab.is-aktiv .lobby__tab-symbol {
+  transform: translateY(-9px) scale(1.2);
+  border-color: var(--fantasy-gold);
+}
+
+.lobby__tab.is-aktiv .lobby__tab-name {
+  height: auto;
+  opacity: 1;
+  margin-top: -8px;
+}
+
+
+/* ---------- Startseite: Modi-Knopf neben "Spiel starten" ---------- */
+.start__reihe {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.modi-knopf {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0;
+  min-width: 74px;
+  padding: 6px 10px;
+  color: #fff;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #7a54c9 0%, #5a3aa0 55%, #3d2775 100%);
+  border: 2px solid #b98cff;
+  text-shadow: 0 2px 3px rgba(8, 14, 40, 0.7);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -3px 0 rgba(8, 14, 40, 0.35),
+    0 4px 0 #2c1c55,
+    0 8px 16px rgba(10, 16, 44, 0.4);
+}
+
+.modi-knopf:active {
+  transform: translateY(3px) scale(0.98);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 1px 0 #2c1c55;
+}
+
+.modi-knopf__icon {
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.modi-knopf__text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ---------- Das Auswahlfenster ---------- */
+.spielmodi {
+  max-width: 340px;
+  gap: 12px;
+}
+
+.spielmodi__zu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  border-radius: 50%;
+  border: 2px solid var(--panel-border);
+  background: rgba(8, 14, 40, 0.45);
+  cursor: pointer;
+}
+
+.spielmodi__liste {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.spielmodus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  border-radius: 14px;
+  border: 2px solid #b98cff;
+  background: linear-gradient(180deg, #4a3590 0%, #2c2066 100%);
+  box-shadow: 0 4px 0 #1c1440;
+  cursor: pointer;
+  animation: pop-in 0.25s ease-out both;
+}
+
+.spielmodus:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #1c1440;
+}
+
+.spielmodus__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.spielmodus__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.spielmodus__name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.spielmodus__text {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.spielmodus__info {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gold-1);
+}
+
+.spielmodus__pfeil {
+  font-size: 1.4rem;
+  color: #d9c2ff;
+}
+
+.spielmodus.is-gesperrt {
+  filter: grayscale(0.7);
+  opacity: 0.7;
+}
+
+/* Zeitangriff: die gebrauchte Zeit im Ergebnisfenster. */
+.modus-zeit {
+  margin: 4px 0;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.modus-zeit strong {
+  color: var(--gold-1);
+  font-size: 1.2rem;
+}
+
+.spielmodi__hinweis {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+/* =========================================================================
+   9. Truhenlager und Truhe öffnen (js/ui/truhe-oeffnen.js)
+   ========================================================================= */
+
+/* ---------- Die 4 Truhenplätze auf der Startseite ----------
+   Wie bei Clash Royale: eine Reihe unter "Spiel starten". Jeder Platz ist
+   leer, wartet, läuft (mit Restzeit) oder ist bereit (leuchtet grün). */
+.truhenplaetze {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.truhenplatz {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  min-height: 82px;
+  padding: 4px 2px 6px;
+  font: inherit;
+  color: #fff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(43, 55, 120, 0.92), rgba(22, 30, 72, 0.94));
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 4px 0 rgba(8, 14, 40, 0.55);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.truhenplatz:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 2px 0 rgba(8, 14, 40, 0.55);
+}
+
+.truhenplatz--leer {
+  cursor: default;
+  align-content: center;
+  background: rgba(22, 30, 72, 0.62);
+  border-style: dashed;
+  border-color: rgba(195, 205, 240, 0.35);
+  box-shadow: none;
+}
+
+.truhenplatz__leer {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(195, 205, 240, 0.7);
+  text-align: center;
+}
+
+.truhenplatz__truhe {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+}
+
+.truhenplatz__truhe svg {
+  width: 100%;
+  height: 100%;
+}
+
+.truhenplatz__text {
+  margin-top: 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.truhenplatz__text--zeit {
+  color: var(--gold-1);
+}
+
+.truhenplatz__balken {
+  width: 80%;
+  height: 5px;
+  margin-top: 3px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--gold-1), var(--gold-2)) 0 0 / calc(var(--anteil, 0) * 100%) 100% no-repeat,
+    rgba(8, 14, 40, 0.6);
+}
+
+/* Wartet und nichts läuft: "Tipp mich" - ein sanftes Pulsieren. */
+.truhenplatz.ist-startbar {
+  border-color: var(--gold-2);
+}
+
+.truhenplatz.ist-startbar::after {
+  content: 'Tippen';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0 6px;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: var(--gold-1);
+  animation: platz-tippen 1.6s ease-in-out infinite;
+}
+
+/* Läuft: ein goldener Rand. */
+.truhenplatz--laeuft {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, rgba(92, 70, 24, 0.92), rgba(40, 32, 18, 0.94));
+}
+
+/* Bereit: grün leuchtend, die Truhe hopst. */
+.truhenplatz--bereit {
+  border-color: var(--green-1);
+  background: linear-gradient(180deg, #3fa62a, #1f5c16);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 4px 0 #154010, 0 0 14px rgba(126, 224, 106, 0.6);
+}
+
+.truhenplatz--bereit .truhenplatz__truhe {
+  animation: lager-hopsen 2.4s ease-in-out infinite;
+}
+
+.truhenplatz__text--bereit {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@keyframes platz-tippen {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes lager-hopsen {
+  0%, 70%, 100% { transform: translateY(0) rotate(0); }
+  76% { transform: translateY(-6px) rotate(-6deg); }
+  84% { transform: translateY(0) rotate(5deg); }
+  92% { transform: translateY(-2px) rotate(-2deg); }
+}
+
+/* ---------- Zeit-Truhen neben der Figur (js/core/zeittruhen.js) ----------
+   Links die Holztruhe (alle 30 Min), rechts die Goldtruhe (jede Stunde).
+   Die Box liegt über der Bühne, fängt aber selbst keine Tipps ab. */
+.zeit-truhen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.zeit-truhe {
+  position: absolute;
+  top: 38%;
+  translate: 0 -50%;
+  width: 74px;
+  display: grid;
+  justify-items: center;
+  padding: 14px 4px 6px;
+  font: inherit;
+  color: #fff;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(43, 55, 120, 0.9), rgba(22, 30, 72, 0.92));
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 4px 0 rgba(8, 14, 40, 0.5);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.zeit-truhe--links { left: 12px; }
+.zeit-truhe--rechts { right: 12px; }
+
+.zeit-truhe:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 2px 0 rgba(8, 14, 40, 0.5);
+}
+
+.zeit-truhe__marke {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 1px 8px;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: var(--gold-1);
+  box-shadow: 0 2px 0 rgba(8, 14, 40, 0.45);
+}
+
+.zeit-truhe__truhe {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+
+.zeit-truhe__truhe svg {
+  width: 100%;
+  height: 100%;
+}
+
+.zeit-truhe__text {
+  margin-top: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold-1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bereit: grün, leuchtet und hüpft ab und zu. */
+.zeit-truhe.ist-bereit {
+  background: linear-gradient(180deg, rgba(52, 168, 83, 0.95), rgba(24, 98, 52, 0.95));
+  border-color: #8af0a4;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 4px 0 rgba(8, 40, 20, 0.55), 0 0 16px rgba(120, 255, 160, 0.55);
+}
+
+.zeit-truhe.ist-bereit .zeit-truhe__text {
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.zeit-truhe.ist-bereit .zeit-truhe__truhe {
+  animation: lager-hopsen 2.4s ease-in-out infinite;
+}
+
+/* Noch nicht bereit und trotzdem angetippt: kurz den Kopf schütteln. */
+.zeit-truhe.ist-gesperrt {
+  animation: zeit-nein 0.35s ease-in-out;
+}
+
+@keyframes zeit-nein {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Schmale Handys: etwas kleiner, damit die Figur Platz behält. */
+@media (max-width: 360px) {
+  .zeit-truhe { width: 62px; padding-top: 12px; }
+  .zeit-truhe--links { left: 6px; }
+  .zeit-truhe--rechts { right: 6px; }
+  .zeit-truhe__truhe { width: 42px; height: 42px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zeit-truhe.ist-bereit .zeit-truhe__truhe,
+  .zeit-truhe.ist-gesperrt { animation: none; }
+}
+
+/* ---------- Fenster zu einer Truhe, die noch nicht fertig ist ---------- */
+.truhenplatz-dialog {
+  text-align: center;
+}
+
+.truhenplatz-dialog__truhe {
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 4px;
+}
+
+.truhenplatz-dialog__truhe svg {
+  width: 100%;
+  height: 100%;
+}
+
+.truhenplatz-dialog__zeit {
+  margin: 4px 0 6px;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.truhenplatz-dialog__zeit strong {
+  color: var(--gold-1);
+}
+
+.truhenplatz-dialog__balken {
+  display: block;
+  width: 80%;
+  height: 8px;
+  margin: 0 auto 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--gold-1), var(--gold-2)) 0 0 / calc(var(--anteil, 0) * 100%) 100% no-repeat,
+    rgba(8, 14, 40, 0.6);
+}
+
+.truhenplatz-dialog__hinweis {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.gratis-hinweis--voll {
+  color: var(--gold-1);
+}
+
+/* ---------- Gewonnene Truhen im Siegesfenster ---------- */
+.gewonnene-truhen {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  width: 100%;
+  padding: 10px 6px 8px;
+  border-radius: 14px;
+  background: rgba(255, 197, 61, 0.08);
+  border: 1px dashed rgba(255, 197, 61, 0.5);
+}
+
+.gewonnene-truhe {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.gewonnene-truhe .truhe {
+  width: 84px;
+  height: 91px;
+  animation: pop-in 0.5s 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) both, lager-hopsen 2.4s 1s ease-in-out infinite;
+}
+
+.gewonnene-truhe__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold-1);
+}
+
+.gewonnene-truhen__hinweis {
+  width: 100%;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Das Öffnen ---------- */
+.overlay--oeffnung {
+  background: radial-gradient(ellipse at 50% 35%, rgba(40, 52, 110, 0.82) 0%, rgba(6, 8, 22, 0.94) 75%);
+  cursor: pointer;
+}
+
+.oeffnung {
+  width: 100%;
+  max-width: 460px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.oeffnung__buehne {
+  position: relative;
+  width: 190px;
+  height: 196px;
+  display: grid;
+  place-items: center;
+}
+
+/* Lichtstrahlen hinter der Truhe - drehen sich langsam, offen hell. */
+.oeffnung__strahlen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 340px;
+  height: 340px;
+  margin: -170px 0 0 -170px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, var(--leucht-farbe) 0deg 8deg, transparent 8deg 22deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 66%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 66%);
+  opacity: 0.18;
+  animation: strahlen-drehen 14s linear infinite;
+  transition: opacity 0.4s ease;
+}
+
+.ist-offen .oeffnung__strahlen {
+  opacity: 0.75;
+  animation-duration: 6s;
+}
+
+@keyframes strahlen-drehen {
+  to { transform: rotate(360deg); }
+}
+
+.oeffnung__truhe {
+  position: relative;
+  width: 160px;
+  height: 173px;
+}
+
+/* 1. Landen: aus dem Himmel, federnd aufsetzen. */
+.ist-landend .oeffnung__truhe {
+  animation: truhe-landen 0.55s cubic-bezier(0.5, 0, 0.75, 0.5) both, truhe-warten 1.6s 0.9s ease-in-out infinite;
+}
+
+@keyframes truhe-landen {
+  0%   { transform: translateY(-120vh) scale(0.8); }
+  75%  { transform: translateY(0) scale(1.12, 0.84); }
+  88%  { transform: translateY(-10px) scale(0.96, 1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Wartend: wackelt immer mal wieder - "mach mich auf!" */
+@keyframes truhe-warten {
+  0%, 60%, 100% { transform: rotate(0) scale(1); }
+  68% { transform: rotate(-5deg) scale(1.04); }
+  76% { transform: rotate(5deg) scale(1.04); }
+  84% { transform: rotate(-3deg); }
+}
+
+/* 2. Rütteln: immer stärker, dazu ein wachsendes Leuchten. */
+.ist-ruettelnd .oeffnung__truhe {
+  animation: truhe-ruetteln 0.75s ease-in both;
+}
+
+@keyframes truhe-ruetteln {
+  0%   { transform: translate(0, 0) rotate(0); filter: drop-shadow(0 0 0 var(--leucht-farbe)); }
+  15%  { transform: translate(-3px, 0) rotate(-3deg); }
+  30%  { transform: translate(4px, -2px) rotate(4deg); }
+  45%  { transform: translate(-6px, 1px) rotate(-6deg) scale(1.04); }
+  60%  { transform: translate(7px, -3px) rotate(7deg) scale(1.07); }
+  75%  { transform: translate(-8px, 0) rotate(-8deg) scale(1.1); }
+  90%  { transform: translate(6px, -4px) rotate(6deg) scale(1.14); }
+  100% { transform: translate(0, -6px) rotate(0) scale(1.18); filter: drop-shadow(0 0 24px var(--leucht-farbe)); }
+}
+
+/* 3. Offen: kurzer Sprung, bleibt leuchtend stehen. */
+.ist-offen .oeffnung__truhe {
+  animation: truhe-aufspringen 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  filter: drop-shadow(0 0 18px var(--leucht-farbe));
+}
+
+@keyframes truhe-aufspringen {
+  0%   { transform: scale(1.18) translateY(-6px); }
+  40%  { transform: scale(1.3) translateY(-18px); }
+  100% { transform: scale(1.08) translateY(0); }
+}
+
+/* Lichtblitz über den ganzen Bildschirm im Moment des Öffnens. */
+.oeffnung__blitz {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 32%, #ffffff 0%, var(--leucht-farbe) 30%, transparent 75%);
+  opacity: 0;
+}
+
+.ist-offen .oeffnung__blitz {
+  animation: blitz 0.6s ease-out;
+}
+
+@keyframes blitz {
+  0%   { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+/* Funken, die aus der Truhe sprühen. */
+.oeffnung__funken {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  pointer-events: none;
+}
+
+.oeffnung__funke {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 3px var(--leucht-farbe);
+  animation: funke-spruehen 0.9s ease-out forwards;
+}
+
+@keyframes funke-spruehen {
+  0%   { transform: translate(0, 0) scale(1.2); opacity: 1; }
+  100% { transform: translate(var(--fx), var(--fy)) scale(0.2); opacity: 0; }
+}
+
+.oeffnung__titel {
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(8, 14, 40, 0.8);
+}
+
+.oeffnung__hinweis {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  animation: hinweis-pulsieren 1.4s ease-in-out infinite;
+}
+
+.ist-fertig .oeffnung__hinweis {
+  animation: none;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+@keyframes hinweis-pulsieren {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* Noch leere Plätze: unsichtbar, halten aber das Raster fest. */
+.oeffnung__platz {
+  visibility: hidden;
+}
+
+/* 4. Ein Stück fliegt aus der Truhe auf seinen Platz. */
+.loot-item.fliegt {
+  animation: stueck-fliegen 0.5s cubic-bezier(0.25, 1.3, 0.5, 1) both;
+}
+
+@keyframes stueck-fliegen {
+  0%   { transform: translate(var(--von-x), var(--von-y)) scale(0.2) rotate(-25deg); opacity: 0; }
+  20%  { opacity: 1; }
+  70%  { transform: translate(0, 0) scale(1.12) rotate(4deg); }
+  100% { transform: translate(0, 0) scale(1) rotate(0); }
+}
+
+/* Seltene Stücke: ein Lichtring, der sich ausdehnt, und ein Glühen. */
+.loot-item.ist-besonders {
+  position: relative;
+  animation: stueck-fliegen 0.5s cubic-bezier(0.25, 1.3, 0.5, 1) both, besonders-gluehen 1.6s 0.5s ease-in-out infinite;
+}
+
+.loot-item.ist-besonders::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  border: 3px solid var(--rarity);
+  animation: ring-aus 0.8s 0.35s ease-out both;
+  pointer-events: none;
+}
+
+@keyframes besonders-gluehen {
+  0%, 100% { box-shadow: 0 0 14px -2px var(--rarity); }
+  50%      { box-shadow: 0 0 26px 4px var(--rarity); }
+}
+
+@keyframes ring-aus {
+  from { transform: scale(0.8); opacity: 1; }
+  to   { transform: scale(1.45); opacity: 0; }
+}
+
+.oeffnung__knoepfe {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 4px;
+  animation: pop-in 0.3s ease-out both;
+}
+
+.oeffnung__knoepfe[hidden] {
+  display: none;
+}
+
+@media (max-width: 380px) {
+  .overlay--oeffnung .loot-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+
+/* =========================================================================
+   10. Karten-Level: Kopien, Fortschrittsbalken, Level-Up
+   ========================================================================= */
+
+/* Balken: wie viele Kopien bis zum nächsten Level (--anteil 0..1). */
+.kartenbalken {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 14px;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(8, 14, 40, 0.6);
+  border: 1px solid rgba(126, 224, 106, 0.55);
+}
+
+.kartenbalken::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--anteil, 0));
+  background: linear-gradient(180deg, #a6f08f 0%, #3fa62a 100%);
+  transition: transform 0.6s ease 0.3s;
+}
+
+.kartenbalken__text {
+  position: relative;
+  display: block;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 12px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+}
+
+.kartenbalken--max::before {
+  background: linear-gradient(180deg, #ffe27a 0%, #c9750d 100%);
+}
+
+/* Im Deckmenü sitzt der Balken schmal unter der Zeile. */
+.kartenbalken--klein {
+  grid-column: 1 / -1;
+  max-width: 150px;
+  height: 13px;
+}
+
+.deck-item__body {
+  min-width: 0;
+}
+
+.loot-item__kopien {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #a6f08f;
+}
+
+.loot-item__neu,
+.loot-item__levelup {
+  padding: 1px 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+  color: #1b2450;
+  background: linear-gradient(180deg, #ffe27a, #ffb32b);
+  animation: levelup-puls 0.9s ease-in-out infinite;
+}
+
+.loot-item__neu {
+  background: linear-gradient(180deg, #9fe8ff, #4fb4ff);
+}
+
+@keyframes levelup-puls {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+.overlay--oeffnung .loot-item {
+  min-height: 112px;
+  align-content: start;
+}
+
+/* ---------- Hinweis auf eine neue Version (js/main.js) ---------- */
+.update-hinweis {
+  position: fixed;
+  z-index: 100;
+  /* Über der Leiste unten - dort verdeckt es weder Münzen noch Namen. */
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  left: 16px;
+  right: 16px;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1b2450;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: linear-gradient(180deg, #ffe27a, #ffb32b);
+  box-shadow: 0 6px 16px rgba(8, 14, 40, 0.5);
+  cursor: pointer;
+  animation: pop-in 0.3s ease-out both;
+}
+
+
+
+/* =========================================================================
+   10. Trophäen und Rangliste (js/screens/rangliste.js)
+   ========================================================================= */
+
+/* ---------- Liga-Abzeichen: ein runder Schild in der Ligafarbe ---------- */
+.liga-abzeichen {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  font-size: 0.95rem;
+  line-height: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%),
+    var(--liga-farbe, var(--gold));
+  border: 2px solid rgba(8, 14, 40, 0.65);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25), 0 2px 4px rgba(8, 14, 40, 0.45);
+}
+
+.liga-abzeichen--gross {
+  width: 76px;
+  height: 76px;
+  font-size: 2.3rem;
+  border-width: 3px;
+  box-shadow:
+    inset 0 -6px 0 rgba(0, 0, 0, 0.22),
+    0 0 0 4px rgba(255, 255, 255, 0.12),
+    0 0 22px var(--liga-farbe, var(--gold));
+}
+
+/* ---------- Eigene Liga ---------- */
+.meine-liga {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-color: var(--liga-farbe, var(--panel-border));
+}
+
+.meine-liga__text {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.meine-liga__name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--liga-farbe, #fff);
+  text-shadow: 0 2px 3px rgba(8, 14, 40, 0.7);
+}
+
+.meine-liga__zahl {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.meine-liga__balken {
+  position: relative;
+  display: block;
+  height: 10px;
+  margin-top: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(8, 14, 40, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.meine-liga__fuellung {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--fuellung, 0));
+  background: linear-gradient(90deg, var(--gold-1), var(--gold-2));
+}
+
+.meine-liga__ziel,
+.meine-liga__rekord {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Alle Ligen ---------- */
+.ligen-leiste {
+  display: grid;
+  /* 13 Ligen: zwei Reihen à 7 */
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px 4px;
+  margin-top: 6px;
+}
+
+.ligen-leiste__liga {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 5px 0 4px;
+  border-radius: 10px;
+}
+
+.ligen-leiste__liga.is-eigene {
+  background: rgba(255, 197, 61, 0.16);
+  outline: 2px solid var(--gold);
+}
+
+.ligen-leiste__liga.is-offen .liga-abzeichen {
+  filter: grayscale(0.85) brightness(0.7);
+}
+
+.ligen-leiste__ab {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.ligen-leiste__regel {
+  margin-top: 8px;
+  font-size: 0.74rem;
+}
+
+/* ---------- Die Rangliste ---------- */
+.rangliste__liste {
+  display: grid;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rangliste__zeile {
+  display: grid;
+  grid-template-columns: 32px auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(8, 14, 40, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rangliste__zeile.is-ich {
+  background: linear-gradient(90deg, rgba(255, 197, 61, 0.3), rgba(255, 197, 61, 0.1));
+  border-color: var(--gold);
+}
+
+.rangliste__zeile.is-platz-1 { border-color: rgba(255, 210, 80, 0.6); }
+.rangliste__zeile.is-platz-2 { border-color: rgba(200, 212, 232, 0.5); }
+.rangliste__zeile.is-platz-3 { border-color: rgba(208, 138, 78, 0.5); }
+
+.rangliste__platz {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.rangliste__zeile:not(.is-platz-1):not(.is-platz-2):not(.is-platz-3) .rangliste__platz {
+  color: var(--text-dim);
+}
+
+/* Platz 1 bis 3: die Zahl sitzt auf einer kleinen Münze. */
+.is-platz-1 .rangliste__platz,
+.is-platz-2 .rangliste__platz,
+.is-platz-3 .rangliste__platz {
+  justify-self: center;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-dark);
+  border: 2px solid rgba(8, 14, 40, 0.5);
+}
+
+.is-platz-1 .rangliste__platz { background: linear-gradient(180deg, #ffe98a, #f0a91c); }
+.is-platz-2 .rangliste__platz { background: linear-gradient(180deg, #f2f6ff, #9eaecb); }
+.is-platz-3 .rangliste__platz { background: linear-gradient(180deg, #f3b47e, #b5662e); }
+
+.rangliste__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.rangliste__name small {
+  font-weight: 500;
+  color: var(--gold-1);
+}
+
+.rangliste__trophaeen {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rangliste__luecke {
+  text-align: center;
+  color: var(--text-dim);
+  line-height: 0.8;
+}
+
+.rangliste__fuss {
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* ---------- Trophäen im Ergebnisfenster ---------- */
+.ergebnis-trophaeen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 2px 0 4px;
+}
+
+.ergebnis-trophaeen__zahl {
+  padding: 3px 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  border: 2px solid var(--gold-3);
+}
+
+.ergebnis-trophaeen--minus .ergebnis-trophaeen__zahl {
+  color: #fff;
+  background: linear-gradient(180deg, #6a7398, #434b70);
+  border-color: #2d3352;
+}
+
+.ergebnis-trophaeen__stand {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.overlay__unlock--liga {
+  border-color: var(--gold);
+}
+
+/* Knopf zur Skin-Werkstatt (Figur -> Aussehen, siehe werkstatt.html). */
+.werkstatt-knopf {
+  width: 100%;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+/* ---------- Shop: Hüte und Muster fürs Skin-Studio (js/screens/shop.js) ---------- */
+.studio-shop__link {
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.studio-shop {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.studio-teil {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  text-align: center;
+  border-radius: 14px;
+  border: 2px solid color-mix(in srgb, var(--rarity) 70%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rarity) 22%, #1b2450), #16204a);
+}
+
+.studio-teil__icon {
+  font-size: 1.7rem;
+  line-height: 1.2;
+}
+
+.studio-teil__name {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.studio-teil__rarity {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--rarity);
+}
+
+.studio-teil__hat {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--green-1);
+}
+
+.studio-teil__kaufen {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}

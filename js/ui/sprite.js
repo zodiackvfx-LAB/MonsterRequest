@@ -1,0 +1,1395 @@
+/**
+ * Pixel-Figuren für Monster und Gegner.
+ *
+ * Bei 144 Gegnern kann niemand 144 Bilder von Hand zeichnen. Deshalb setzt
+ * diese Datei jede Figur aus Bausteinen zusammen:
+ *
+ *   1. eine Grundform (Körperbau) - siehe FORMEN weiter unten
+ *   2. eine Farbwelt, die sich aus einem Farbwert ergibt
+ *   3. Zusätze wie Hörner, Stacheln, Flügel oder ein drittes Auge
+ *
+ * Die Figuren sind 32 mal 32 Felder gross. Licht- und Schattenkanten werden
+ * beim Zeichnen automatisch gesetzt - sie müssen in keiner Form von Hand
+ * eingetragen werden.
+ *
+ * ECHTE GRAFIKEN SPÄTER EINSETZEN:
+ * Jedes Monster darf ein Feld "image" bekommen. Ist es gesetzt, wird dieses
+ * Bild verwendet und nichts gezeichnet:
+ *     { id: '...', name: '...', image: 'bilder/moosgnubbel.png' }
+ * Der übrige Code bleibt gleich.
+ *
+ * Zeichen in den Formen:
+ *   .  leer            B  Körper          S  Schatten (dunkler)
+ *   L  Bauch/Licht     A  Zusatzfarbe     C  zweite Zusatzfarbe
+ *   E  Augenweiß       P  Pupille         M  Mund/Detail
+ */
+
+import { MONSTERS } from '../data/monsters.js';
+import { SKIN_BILDER, SKIN_POSEN } from '../data/timo-skins.js';
+
+/** Kantenlänge einer Figur in Feldern. */
+export const GROESSE = 32;
+
+/** Alle Grundformen. Jede ist 32 Felder breit und 32 hoch. */
+const FORMEN = {
+  klecks: [
+    '................................',
+    '................................',
+    '..........BBBBBBBBBBBB..........',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBEEEEEBBBBBBBBEEEEEBBBBB...',
+    '...BBEEEEEEEBBBBBBEEEEEEEBBBB...',
+    '...BBEEEPPPEBBBBBBEEEPPPEBBBB...',
+    '...BBEEEPPPEBBBBBBEEEPPPEBBBB...',
+    '...BBEEEEEEEBBBBBBEEEEEEEBBBB...',
+    '...BBBEEEEEBBBBBBBBEEEEEBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '....BBBBBBBBMMMMMMBBBBBBBBBB....',
+    '....BBBBBBBMMMMMMMMBBBBBBBBB....',
+    '....BBBBBBBBMMMMMMBBBBBBBBBB....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '......LLLLBBBBBBBBBBBBLLLL......',
+    '.......LLLLLLLLLLLLLLLLLL.......',
+    '........LLLLLLLLLLLLLLLL........',
+    '.........LLLLLLLLLLLLLL.........',
+    '.......SSSSS......SSSSS.........',
+    '.......SSSSS......SSSSS.........',
+    '.......SSSSS......SSSSS.........',
+    '................................',
+    '................................',
+  ],
+  vierbeiner: [
+    '................................',
+    '..AA......................AA....',
+    '..AAA....................AAA....',
+    '...AAA..................AAA.....',
+    '....AAA................AAA......',
+    '.....AA...............AA........',
+    '......A..BBBBBBBBBBBBBB.........',
+    '.....BBBBBBBBBBBBBBBBBBBB.......',
+    '...BBBBBBBBBBBBBBBBBBBBBBB......',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBB.....',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBB....',
+    'BBBBBBBBBBBBBBBBBBBBBEEEEEBB....',
+    'BBBBBBBBBBBBBBBBBBBBEEPPPEBBB...',
+    '.BBBBBBBBBBBBBBBBBBBEEPPPEBBB...',
+    '..BBBBBBBBBBBBBBBBBBEEEEEBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBMMBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBMMBB...',
+    '...LLBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....LLLLLLLLLLLLLLLLLLLLLLL.....',
+    '.....LLLLLLLLLLLLLLLLLLLLL......',
+    '....BBBB....BBBB....BBBB........',
+    '....BBBB....BBBB....BBBB........',
+    '....BBBB....BBBB....BBBB........',
+    '....SSSS....SSSS....SSSS........',
+    '....SSSS....SSSS....SSSS........',
+    '....SSSS....SSSS....SSSS........',
+    '....SSSS....SSSS....SSSS........',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  fluegler: [
+    '................................',
+    '.AAA........................AAA.',
+    '.AAAAA....................AAAAA.',
+    'AAAAAAA..................AAAAAAA',
+    'AAAAAAAA................AAAAAAAA',
+    'AAAAAAAAA...BBBBBB.....AAAAAAAAA',
+    'AAAAAAAAA..BBBBBBBB...AAAAAAAAAA',
+    '.AAAAAAAA.BBBBBBBBBB..AAAAAAAAA.',
+    '.AAAAAAABBBBBBBBBBBBBBAAAAAAAAA.',
+    '..AAAAABBBEEEEBBEEEEBBBAAAAAAA..',
+    '..AAAABBBEEPPEBBEEPPEBBBAAAAAA..',
+    '...AAABBBEEPPEBBEEPPEBBBAAAAA...',
+    '....AABBBBEEEEBBEEEEBBBBAAAA....',
+    '.....ABBBBBBBBBBBBBBBBBBAAA.....',
+    '......BBBBBBMMMMMMBBBBBBBA......',
+    '......BBBBBBMMMMMMBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBB.......',
+    '.......BBBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBB........',
+    '........LLLLLLLLLLLLLL..........',
+    '.........LLLLLLLLLLLL...........',
+    '..........LLLLLLLLLL............',
+    '..........CCC....CCC............',
+    '..........CCC....CCC............',
+    '..........SSS....SSS............',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  gestalt: [
+    '................................',
+    '..............AA................',
+    '.............AAAA...............',
+    '............AAAAAA..............',
+    '...........AAAAAAAA.............',
+    '..........BBBBBBBBBB............',
+    '.........BBBBBBBBBBBB...........',
+    '........BBBBBBBBBBBBBB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BBBBBBBBBBBBBB..........',
+    '.........BBBMMMMMMBBB...........',
+    '..........BBBBBBBBBB............',
+    '...BB......BBBBBBBB......BB.....',
+    '..BBBB....BBBBBBBBBB....BBBB....',
+    '.BBBBB...BBBBBBBBBBBB...BBBBB...',
+    'BBBBB...BBBBBBBBBBBBBB...BBBBB..',
+    'BBBB....BBBBBBBBBBBBBB....BBBB..',
+    'CCC.....LLBBBBBBBBBBLL.....CCC..',
+    '........LLLLLLLLLLLLLL..........',
+    '.........LLLLLLLLLLLL...........',
+    '..........BBBB..BBBB............',
+    '..........BBBB..BBBB............',
+    '..........BBBB..BBBB............',
+    '.........SSSSS..SSSSS...........',
+    '.........SSSSS..SSSSS...........',
+    '.........SSSSS..SSSSS...........',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  schlange: [
+    '................................',
+    '..........BBBBBBBBBB............',
+    '.........BBBBBBBBBBBB...........',
+    '........BBBBBBBBBBBBBB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BEEEPPEBEEPPEB..........',
+    '........BBEEEEBBEEEEBB..........',
+    '........BBBBBBBBBBBBBB..........',
+    '.........BBBMMMMMMBBB...........',
+    '..........BBBBBBBBBB............',
+    '...........BBBBBBBB.............',
+    '............BBBBBB..............',
+    '...........BBBBBBBB.............',
+    '..........BBBBBBBBBB............',
+    '.........BBBBBBBBBB.............',
+    '........BBBBBBBBBB..............',
+    '.......BBBBBBBBBB...............',
+    '......BBBBBBBBBB................',
+    '.....BBBBBBBBBB.................',
+    '....BBBBBBBBBB.............AAA..',
+    '...BBBBBBBBBB............AAAAAA.',
+    '..BBBBBBBBBB...........AAAAAAAA.',
+    '..LBBBBBBBBBBBBBBBBBBBBAAAAAAA..',
+    '..LLBBBBBBBBBBBBBBBBBBBBAAAA....',
+    '...LLLLLLLLLLLLLLLLLLLLLL.......',
+    '....LLLLLLLLLLLLLLLLLLL.........',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  golem: [
+    '................................',
+    '....AAA..................AAA....',
+    '...AAAAA................AAAAA...',
+    '...AAAAA................AAAAA...',
+    '....AAA..................AAA....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBEEEEEBBBBBBBBBBEEEEEBBBB...',
+    '...BBEEPPPEBBBBBBBBEEEPPPEBBB...',
+    '...BBEEPPPEBBBBBBBBEEEPPPEBBB...',
+    '...BBEEEEEBBBBBBBBBBEEEEEBBBB...',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '..BBBBBBBMMMMMMMMMMMMBBBBBBBBB..',
+    '..BBBBBBBMMMMMMMMMMMMBBBBBBBBB..',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBLLLLBBBBBBBBBBBBBBLLLLBBBBBB',
+    'BBBBLLLLLLLLLLLLLLLLLLLLLLBBBBBB',
+    'BBBBLLLLLLLLLLLLLLLLLLLLLLBBBBBB',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.',
+    '..SSSSSS......SSSSSS......SSSS..',
+    '..SSSSSS......SSSSSS......SSSS..',
+    '..SSSSSS......SSSSSS......SSSS..',
+    '...SSSS........SSSS........SS...',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  kaefer: [
+    '................................',
+    '..A..........................A..',
+    '..AA........................AA..',
+    '...AA......................AA...',
+    '....AA....BBBBBBBBBB.....AA.....',
+    '.....AA..BBBBBBBBBBBB...AA......',
+    '......A.BBBBBBBBBBBBBB.A........',
+    '.......BBBBBBBBBBBBBBBB.........',
+    '......BBEEEEEBBBBEEEEEBB........',
+    '......BEEEPPPEBBEEEPPPEB........',
+    '......BEEEPPPEBBEEEPPPEB........',
+    '......BBEEEEEBBBBEEEEEBB........',
+    '.....BBBBBBBBBBBBBBBBBBBB.......',
+    '.....BBBBBBMMMMMMMMBBBBBB.......',
+    '....BBBBBBBBBBBBBBBBBBBBBB......',
+    '...BBBBBBBBBBBBBBBBBBBBBBBB.....',
+    '..BBBBBBLLLLBBBBLLLLBBBBBBBB....',
+    '.SBBBBBBLLLLBBBBLLLLBBBBBBBBS...',
+    'SSBBBBBBBLLBBBBBBLLBBBBBBBBBSS..',
+    'SSBBBBBBBBBBBBBBBBBBBBBBBBBBSS..',
+    '.SBBBBBBBBBBBBBBBBBBBBBBBBBBS...',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBBB....',
+    '..SS.SS..SS..........SS..SS.....',
+    '.SS...SS..SS........SS....SS....',
+    'SS.....SS..SS......SS......SS...',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  geist: [
+    '................................',
+    '................................',
+    '..........BBBBBBBBBBBB..........',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '....BBBBEEEEEBBBBEEEEEBBBBBB....',
+    '....BBBEEEEEEEBBEEEEEEEBBBBB....',
+    '....BBBEEEPPPEBBEEEPPPEBBBBB....',
+    '....BBBEEEPPPEBBEEEPPPEBBBBB....',
+    '....BBBEEEEEEEBBEEEEEEEBBBBB....',
+    '....BBBBEEEEEBBBBEEEEEBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '..CCBBBBBBBMMMMMMMMBBBBBBBBCC...',
+    '.CCCBBBBBBBMMMMMMMMBBBBBBBBCCC..',
+    '.CCCBBBBBBBBMMMMMMBBBBBBBBBCCC..',
+    '..CCBBBBBBBBBBBBBBBBBBBBBBBCC...',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....LLLBBBBBBBBBBBBBBBBBBLLL....',
+    '....LLLLLLLLLLLLLLLLLLLLLLLL....',
+    '....LLLLLLLLLLLLLLLLLLLLLLLL....',
+    '....LLLL..LLLLLL..LLLLLLLLLL....',
+    '....LLL....LLLL....LLLL..LLL....',
+    '....LL......LL......LL....LL....',
+    '.....L.......L.......L.....L....',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  drache: [
+    '....A......................A....',
+    '...AA......................AA...',
+    'A.AAA......................AAA.A',
+    'AAACAA....................AACAAA',
+    'AACCCAA....BBBBBB........AACCCAA',
+    'ACCCCCAA..BBBBBBBB......AACCCCCA',
+    'ACCCCCCA.BBBBBBBBBB....ACCCCCCCA',
+    'ACCCCCCAABBBBBBBBBBBBAACCCCCCCCA',
+    'AACCCCCABBEEEEBBEEEEBBACCCCCCCAA',
+    'AAACCCCABBEEEPPEBEEPPEBACCCCCAAA',
+    '.AAACCCABBEEEPPEBEEPPEBACCCCAAA.',
+    '..AAACCABBBEEEEBBEEEEBBACCCAAA..',
+    '...AAACAABBBBBBBBBBBBBBAACAAA...',
+    '....AAAA.BBBMMMMMMMMBBB.AAAA....',
+    '.....AA..BBBMMMMMMMMBBB..AA.....',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '......BBBLLLLBBBBLLLLBBBBB......',
+    '.......BBLLLLLLLLLLLLBBBB.......',
+    '.......BBBLLLLLLLLLLBBBBB.......',
+    '........BBBBBBBBBBBBBBBB....CC..',
+    '........BBBB......BBBB.....CCC..',
+    '........BBBB......BBBB...CCCC...',
+    '.......SSSSS.....SSSSS.CCCC.....',
+    '.......SSSSS.....SSSSS..........',
+    '.......SSSSS.....SSSSS..........',
+    '........SSS.......SSS...........',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  herrscher: [
+    '.....A....A....A....A...........',
+    '....AAA..AAA..AAA..AAA..........',
+    '....AAAAAAAAAAAAAAAAAA..........',
+    '....AAAAAAAAAAAAAAAAAA..........',
+    '.....BBBBBBBBBBBBBBBB...........',
+    '....BBBBBBBBBBBBBBBBBB..........',
+    '...BBBBBBBBBBBBBBBBBBBB.........',
+    '...BBEEEEEBBBBBBEEEEEBB.........',
+    '...BEEEPPPEBBBBEEEPPPEB.........',
+    '...BEEEPPPEBBBBEEEPPPEB.........',
+    '...BBEEEEEBBBBBBEEEEEBB.........',
+    '...BBBBBBBBBBBBBBBBBBBB.........',
+    '....BBBBMMMMMMMMMMBBBB..........',
+    '..C..BBBBBBBBBBBBBBB..C.........',
+    '.CCC..BBBBBBBBBBBBB..CCC........',
+    'CCCCC.BBBBBBBBBBBBBB.CCCCC......',
+    'CCCCCBBBBBBBBBBBBBBBBCCCCCC.....',
+    'CCCCCBBBBBBBBBBBBBBBBCCCCCC.....',
+    'CCCCCBBBBBBBBBBBBBBBBCCCCCC.....',
+    'CCCCCBBBLLLLBBBBLLLLBBCCCCC.....',
+    'CCCCCBBBLLLLLLLLLLLLBBCCCCC.....',
+    '.CCCCBBBBLLLLLLLLLLBBBCCCC......',
+    '..CCCBBBBBBBBBBBBBBBBBCCC.......',
+    '...CCCBBBBBBBBBBBBBBBCCC........',
+    '....C.BBBBBB....BBBBB.C.........',
+    '......BBBBBB....BBBBB...........',
+    '......SSSSSS....SSSSS...........',
+    '......SSSSSS....SSSSS...........',
+    '......SSSSSS....SSSSS...........',
+    '................................',
+    '................................',
+    '................................',
+  ],
+
+  /* ---- Neue Formen ab Welt 7 (siehe NEUE_FORMEN) ---- */
+  qualle: [
+    '................................',
+    '...........BBBBBBBBBB...........',
+    '.........BBBBBBBBBBBBBB.........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBAABBBBBBAABBBBB......',
+    '.....BBBBBAAAABBBBAAAABBBBB.....',
+    '.....BBBBBBAABBBBBBAABBBBBB.....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBEEEEBBBBBBBBBBEEEEBBB....',
+    '....BBEEEEEEBBBBBBBBEEEEEEBB....',
+    '....BBEEPPEEBBBBBBBBEEPPEEBB....',
+    '....BBEEPPEEBBBBBBBBEEPPEEBB....',
+    '....BBBEEEEBBBBBBBBBBEEEEBBB....',
+    '....BCCBBBBBBBMMMMBBBBBBBCCB....',
+    '....BBBBBBBBBBBMMBBBBBBBBBBB....',
+    '...LLLLLLLLLLLLLLLLLLLLLLLLLL...',
+    '...L.LLL.LLL.LLLLLL.LLL.LLL.L...',
+    '......CC...AA..CC..AA...CC......',
+    '.....CC....AA..CC..AA....CC.....',
+    '.....CC.....AA.CC.AA.....CC.....',
+    '......CC....AA.CC.AA....CC......',
+    '.......CC..AA..CC..AA..CC.......',
+    '.......CC..AA......AA..CC.......',
+    '......CC....AA....AA....CC......',
+    '.....CC.....AA....AA.....CC.....',
+    '.....CC....AA......AA....CC.....',
+    '......C.....A......A.....C......',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  fisch: [
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '..............AA................',
+    '.............AAAA...............',
+    '............AAAAAA..............',
+    '...........AAAAAAAA.............',
+    '........BBBBBBBBBBBBBBB.........',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    'AA...BBBBBBBBBBBBBBBBBBBBBBB....',
+    'AAA.BBBBBBBBBBBBBBBBBBEEEEBBB...',
+    'AAAABBBBBBBBBBBBBBBBBEEEEEEBB...',
+    'AAAAABBBBBCBBBBBBBBBBEEEPPEBBB..',
+    'AAAAABBBBBCBBBBBBBBBBEEEPPEBBB..',
+    'AAAAABBBBBCBBBBBBBBBBBEEEEBBBB..',
+    'AAAAABBBBBCBBBBBBBBBBBBBBCCBMM..',
+    'AAAAABBBBBCBBBBBBBBBBBBBBBBMMM..',
+    'AAAABBBBBBBLLLLLLLLLLLLLLLLLB...',
+    'AAA.LLLLLLLLLLLLLLLLLLLLLLLL....',
+    'AA...LLLLLLLLLLLLLLLLLLLLLL.....',
+    '......LLLLLLLLLLCCC.LLLLL.......',
+    '........LLLLLLL.CCC.............',
+    '.................CC.............',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  vogel: [
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................AAA.............',
+    '...............AAA..............',
+    '..............AA................',
+    '...........BBBBBBBBB............',
+    '.........BBBBBBBBBBBBB..........',
+    '........BBBBBBBBBBBBBBB.........',
+    '.......BBBBBBBBBBEEEEBBB........',
+    '.......BBBBBBBBBEEEEEEBB........',
+    '......BBBBBBBBBBEEEPPEBBCCCC....',
+    '......BBBBBBBBBBEEEPPEBBCCCCCC..',
+    '......BBBBBBBBBBBEEEEBBBCCCCC...',
+    '......BBBBBBBBBBBBBBBBBBCCC.....',
+    '.....BBBBBBBBBBBBBBBBBBBB.......',
+    '....AABBBBBBBBBBBBBBBBBBB.......',
+    '...AAAAABBBBBBBBBLLLLLBBB.......',
+    '..AAAAAAAABBBBBBLLLLLLLBB.......',
+    '.AAAAAAAAAAABBBBLLLLLLLBB.......',
+    'AAAAAAAAAAAAABBBLLLLLLLBB.......',
+    '..AAAAAAAAAABBBBLLLLLLBBB.......',
+    '....AAAAAABBBBBBBLLLLBBB........',
+    '.......BBBBBBBBBBBBBBBB.........',
+    '.........BBBBBBBBBBBB...........',
+    '...........C....C...............',
+    '...........C....C...............',
+    '..........CCC..CCC..............',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  krabbe: [
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '..AAAA....................AAAA..',
+    '.AAAAAA..................AAAAAA.',
+    'AAA..AA..................AA..AAA',
+    'AAA...A..................A...AAA',
+    'AAA.AAA..................AAA.AAA',
+    '.AAAAAA..EEEE......EEEE..AAAAAA.',
+    '..AAAA...EPPE......EPPE...AAAA..',
+    '...AA....EPPE......EPPE....AA...',
+    '...AA....EEEE......EEEE....AA...',
+    '...AA.....BB........BB.....AA...',
+    '....AA....BB........BB....AA....',
+    '.....AABBBBBBBBBBBBBBBBBBAA.....',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBBBBB..',
+    '..BBCCBBBBBBBMMMMMMBBBBBBBCCBB..',
+    '..BBBBBBBBBBBBMMMMBBBBBBBBBBBB..',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBBBBB..',
+    '...LLLLLLLLLLLLLLLLLLLLLLLLLL...',
+    '....LLLLLLLLLLLLLLLLLLLLLLLL....',
+    '...S..S..S............S..S..S...',
+    '..S..S..S..............S..S..S..',
+    '.S..S..S................S..S..S.',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  roboter: [
+    '..............AAAA..............',
+    '..............AAAA..............',
+    '...............CC...............',
+    '...............CC...............',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '.......BBEEEEBBBBBBEEEEBB.......',
+    '.......BBEPPEBBBBBBEPPEBB.......',
+    '.......BBEPPEBBBBBBEPPEBB.......',
+    '.......BBEEEEBBBBBBEEEEBB.......',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '.......BBBMMMMMMMMMMMMBBB.......',
+    '.......BBBMBMBMBBMBMBMBBB.......',
+    '........BBBBBBBBBBBBBBBB........',
+    '..........SSSSSSSSSSSS..........',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '..AABBBBBBBBBBBBBBBBBBBBBBBBAA..',
+    '..AABBBBBCCCCCCCCCCCCCCBBBBBAA..',
+    '..AABBBBBCALLCALLACLLACBBBBBAA..',
+    '..AABBBBBCCCCCCCCCCCCCCBBBBBAA..',
+    '..AABBBBBBBBBBBBBBBBBBBBBBBBAA..',
+    '.AAAABBBBBBBBBBBBBBBBBBBBBBAAAA.',
+    '.AAAABBBBBBBBBBBBBBBBBBBBBBAAAA.',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '.......SSSS..........SSSS.......',
+    '.......SSSS..........SSSS.......',
+    '......SSSSSS........SSSSSS......',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  stern: [
+    '...............AA...............',
+    '..............AAAA..............',
+    '..............ABBA..............',
+    '.............BBBBBB.............',
+    '.............BBBBBB.............',
+    '............BBBBBBBB............',
+    '............BBBBBBBB............',
+    '...........BBBBBBBBBB...........',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBBBBB..',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '....BBBBEEEEBBBBBBBBEEEEBBBB....',
+    '.....BBEEEEEEBBBBBBEEEEEEBB.....',
+    '......BEEPPEEBBBBBBEEPPEEB......',
+    '......BEEPPEEBBBBBBEEPPEEB......',
+    '......BCCEEEEBBBBBBEEEECCB......',
+    '......BBBBBBBBMMMMBBBBBBBB......',
+    '......BBBBBBBBBMMBBBBBBBBB......',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '.....BBBBLLLLLLLLLLLLLLBBBB.....',
+    '....BBBBBBLLLLLLLLLLLLBBBBBB....',
+    '....BBBBBBBLLLLLLLLLLBBBBBBB....',
+    '...BBBBBBBB..........BBBBBBBB...',
+    '...BBBBBBB............BBBBBBB...',
+    '..BBBBBBB..............BBBBBBB..',
+    '..BBBBBB................BBBBBB..',
+    '.SSSSS....................SSSSS.',
+    '.SSSS......................SSSS.',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  baer: [
+    '................................',
+    '................................',
+    '....BBBB................BBBB....',
+    '...BBBBBB..............BBBBBB...',
+    '...BBLLBB..............BBLLBB...',
+    '...BBLLBBBBBBBBBBBBBBBBBBLLBB...',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '...BBBBEEEEBBBBBBBBBBEEEEBBBB...',
+    '...BBBBEPPEBBBBBBBBBBEPPEBBBB...',
+    '...BBBBEPPEBBBBBBBBBBEPPEBBBB...',
+    '...BBBBEEEEBBLLLLLLBBEEEEBBBB...',
+    '...BBBBBBBBBLLLLLLLLBBBBBBBBB...',
+    '...BCCBBBBBBLLMMMMLLBBBBBBCCB...',
+    '....BBBBBBBBLLLLLLLLBBBBBBBB....',
+    '.....BBBBBBBBBLMMLBBBBBBBBB.....',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '.BBBBBBBBBBLLLLLLLLLLBBBBBBBBBB.',
+    'BBBBBBBBBBLLLLLLLLLLLLBBBBBBBBBB',
+    'BBB.BBBBBBLLLLLLLLLLLLBBBBBB.BBB',
+    '.B..BBBBBBLLLLLLLLLLLLBBBBBB..B.',
+    '....BBBBBBBLLLLLLLLLLBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....SSSSSS............SSSSSS....',
+    '....SSSSSS............SSSSSS....',
+    '....SSSSSS............SSSSSS....',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  hase: [
+    '.........BBB........BBB.........',
+    '........BBBBB......BBBBB........',
+    '........BLLLB......BLLLB........',
+    '........BLLLB......BLLLB........',
+    '........BLLLB......BLLLB........',
+    '........BLLLB......BLLLB........',
+    '........BLLLB......BLLLB........',
+    '.........BLLBB....BBLLB.........',
+    '.........BBBBBBBBBBBBBB.........',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '......BBEEEEBBBBBBBBEEEEBB......',
+    '......BEEEEEEBBBBBBEEEEEEB......',
+    '......BEEPPEEBBBBBBEEPPEEB......',
+    '......BEEPPEEBBBBBBEEPPEEB......',
+    '......BBEEEEBBBBBBBBEEEEBB......',
+    '......CCBBBBBBMMMMBBBBBBCC......',
+    '.......BBBBBBBBMMBBBBBBBB.......',
+    '........BBBBBBBEEBBBBBBB........',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '.....BBBBBBBLLLLLLLLBBBBBBB.....',
+    '....BBBBBBBLLLLLLLLLLBBBBBBB....',
+    '....BBBBBBBLLLLLLLLLLBBBBBBB....',
+    '....BBBBBBBLLLLLLLLLLBBBBBBB....',
+    '.....BBBBBBBLLLLLLLLBBBBBBB.....',
+    '......BBBBBBBBBBBBBBBBBBBB......',
+    '....SSSSSS............SSSSSS....',
+    '....SSSSSS............SSSSSS....',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  flamme: [
+    '................................',
+    '...............AA...............',
+    '..............AAAA..............',
+    '..........A...AAAA...A..........',
+    '.........AA..AABBAA..AA.........',
+    '.........AAAAABBBBAAAAA.........',
+    '........AAAABBBBBBBBAAAA........',
+    '........AABBBBBBBBBBBBAA........',
+    '.......AABBBBBBBBBBBBBBAA.......',
+    '......AABBBBBBBBBBBBBBBBAA......',
+    '......ABBBBBBBBBBBBBBBBBBA......',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '....BBBBEEEEBBBBBBBBEEEEBBBB....',
+    '....BBBEEEEEEBBBBBBEEEEEEBBB....',
+    '....BBBEEPPEEBBBBBBEEPPEEBBB....',
+    '....BBBEEPPEEBBBBBBEEPPEEBBB....',
+    '....BCCBEEEEBBBBBBBBEEEEBCCB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBBBBBBBMMMMMMBBBBBBBBB....',
+    '.....BBBBBBBBBMMMMBBBBBBBBB.....',
+    '.....BBBBBBBBBBBBBBBBBBBBBB.....',
+    '......LLLLLLLLLLLLLLLLLLLL......',
+    '.......LLLLLLLLLLLLLLLLLL.......',
+    '.........LLLLLLLLLLLLLL.........',
+    '...........LLLLLLLLLL...........',
+    '.............LLLLLL.............',
+    '...............LL...............',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  wurm: [
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '....................A....A......',
+    '.....................A..A.......',
+    '...................BBBBBBBB.....',
+    '..................BBBBBBBBBB....',
+    '.................BBBBBBBBBBBB...',
+    '.................BBEEEEBEEEEB...',
+    '.................BBEPPEBEPPEB...',
+    '.................BBEPPEBEPPEB...',
+    '.................BBEEEEBEEEEB...',
+    '.................BCCBBBBBBCCB...',
+    '.................BBBBMMMMMBBB...',
+    '..................BBBBBBBBBB....',
+    '...................BBBBBBBB.....',
+    '.................BBBBBBBBBB.....',
+    '................BBBBBBBBBBBB....',
+    '......BABBB.....BBBBBBBBBBBB....',
+    '....BBBBBBBBB.SBBBBBABBBBBBB....',
+    '...BBBBBBBBBSBBBBBBBBBBBBBBB....',
+    '..BBBBBBBBBBSBBBBBBSBBBBBBBB....',
+    '..BBBBBBBBBBSBBBBBBSBBBBBBB.....',
+    '..LLLLLLLLLLLLLLLLLLLLLLLLL.....',
+    '...LLLLLLLLLLLLLLLLLLLLLLL......',
+    '...SS..SS..SS..SS..SS..SS.......',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  kugel: [
+    '................................',
+    '................................',
+    '................................',
+    '.......A................A.......',
+    '........A..............A........',
+    '.........A............A.........',
+    '..........A..........A..........',
+    '..........BBBBBBBBBBBB..........',
+    '.........BBBBBBBBBBBBBB.........',
+    '.........BEEEEBBBBEEEEB.........',
+    '.........BEPPEBBBBEPPEB.........',
+    '.........BEEEEBBBBEEEEB.........',
+    '..........BBBMMMMMMBBB..........',
+    '......CCCCCCCCCMMCCCCCCCCC......',
+    '....CCCCCCCCCCCMMCCCCCCCCCCC....',
+    '...CCCMMCCCCCCCMMCCCCCCCMMCCC...',
+    '..CCCMMMMCCCCCCMMCCCCCCMMMMCCC..',
+    '..CCCCMMCCCCCCCMMCCCCCCCMMCCCC..',
+    '.CCCCCCCCCCMMCCMMCCMMCCCCCCCCCC.',
+    '.CCCCCCCCCMMMMCMMCMMMMCCCCCCCCC.',
+    '.CCCCCCCCCCMMCCMMCCMMCCCCCCCCCC.',
+    '.CCCMMCCCCCCCCCMMCCCCCCCCCMMCCC.',
+    '..CMMMMCCCCCCCCMMCCCCCCCCMMMMC..',
+    '..CCMMCCCCCCCCCMMCCCCCCCCCMMCC..',
+    '...CCCCCCCCCCCCMMCCCCCCCCCCCC...',
+    '....CCCCCCCCCCCMMCCCCCCCCCCC....',
+    '......LLLLLLLLLLLLLLLLLLLL......',
+    '.....S...S...S....S...S...S.....',
+    '....S...S...S......S...S...S....',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  wolke: [
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '..........BBBBBBBBBBBB..........',
+    '.........BBBBBBBBBBBBBB.........',
+    '..BBBB..BBBBBBBBBBBBBBBB..BBBB..',
+    '.BBBBBB.BBBBBBBBBBBBBBBB.BBBBBB.',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBBEEEEBBBBBBBBBBBBBBEEEEBBBBB',
+    'BBBBEEEEEEBBBBBBBBBBBBEEEEEEBBBB',
+    'BBBBEEPPEEBBBBBBBBBBBBEEPPEEBBBB',
+    'BBBBEEPPEEBBBBBBBBBBBBEEPPEEBBBB',
+    'BBBBBEEEEBBBBBBBBBBBBBBEEEEBBBBB',
+    'BBCCBBBBBBBBBMMMMMMBBBBBBBBBCCBB',
+    'BBBBBBBBBBBBBBMMMMBBBBBBBBBBBBBB',
+    '.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.',
+    '..LLLLLLLLLLLLLLLLLLLLLLLLLLLL..',
+    '...LLLLL.LLLLLLLLLLLLLL.LLLLL...',
+    '................................',
+    '.....A......A......A......A.....',
+    '.....A......A......A......A.....',
+    '........A..............A........',
+    '........A..............A........',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  drachling: [
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '.....A..............A...A.......',
+    '.....AA..............A.A........',
+    '.....AAA............BBBBBB......',
+    '.....AAAA..........BBBBBBBB.....',
+    '.....AACAA........BBBBBBBBBB....',
+    '.....AACCAA.......BBBEEEEBBBB...',
+    '.....AACCCAA......BBEEEPPEBBBB..',
+    '.....AACCCCAA.....BBEEEPPEBBBBB.',
+    '.....AACCCCCAA....BBBEEEEBBBBBB.',
+    '.....AACCCCCCAA...BBBBBBBBBMMBB.',
+    '.....AAAAAAAAAAA..BBBBBBBBBBBB..',
+    '...........BBBBBBBBBBBBBBBBB....',
+    '.........BBBBBBBBBBBBBBBB.......',
+    '........BBBBBBBBBBBBBBBBB.......',
+    '.......BBBBBBBBBLLLLLLBBB.......',
+    '..C....BBBBBBBBLLLLLLLLBB.......',
+    '..CC..BBBBBBBBBLLLLLLLLBB.......',
+    '..CCCBBBBBBBBBBBLLLLLLBBB.......',
+    '...CCCBBBBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBB.........',
+    '........BBBB.......BBBB.........',
+    '........BBBB.......BBBB.........',
+    '........SSSS.......SSSS.........',
+    '.......SSSSS......SSSSS.........',
+    '................................',
+    '................................',
+    '................................',
+  ],
+
+  /* ---- Neue Boss-Formen ab Welt 7 (siehe NEUE_BOSS_FORMEN) ---- */
+  sturmriese: [
+    '..........BBBBBBBBBBBB..........',
+    '.........BBBBBBBBBBBBBB.........',
+    '..BBBB..BBBBBBBBBBBBBBBB..BBBB..',
+    '.BBBBBB.BBBBBBBBBBBBBBBB.BBBBBB.',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    'BBBMMBBBBBBBBBBBBBBBBBBBBBBMMBBB',
+    'BBBBMMMBBBBBBBBBBBBBBBBBBMMMBBBB',
+    'BBBBEEMMMBBBBBBBBBBBBBBMMMEEBBBB',
+    'BBBEEEEEEBBBBBBBBBBBBBBEEEEEEBBB',
+    'BBBEEPPEEBBBBBBBBBBBBBBEEPPEEBBB',
+    'BBBEEPPEEBBBBBBBBBBBBBBEEPPEEBBB',
+    'BBBBEEEEBBBBBBBBBBBBBBBBEEEEBBBB',
+    'BCCBBBBBBBBMMMMMMMMMMBBBBBBBBCCB',
+    'BBBBBBBBBBMMEEEEEEEEMMBBBBBBBBBB',
+    '.BBBBBBBBBMMMMMMMMMMMMBBBBBBBBB.',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBBBBB..',
+    '...LLLLLLLLLLLLLLLLLLLLLLLLLL...',
+    '....LLLLL.LLLLLLLLLLLL.LLLLL....',
+    '................................',
+    '......AAAA............AAAA......',
+    '.....AAAA..............AAAA.....',
+    '....AAAAAAA..........AAAAAAA....',
+    '......AAAA............AAAA......',
+    '.....AAA................AAA.....',
+    '....AA....................AA....',
+    '...A........................A...',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  krake: [
+    '................................',
+    '..........BBBBBBBBBBBB..........',
+    '........BBBBBBBBBBBBBBBB........',
+    '.......BBBBBBBBBBBBBBBBBB.......',
+    '......BBBBAABBBBBBBBAABBBB......',
+    '.....BBBBAAAABBBBBBAAAABBBB.....',
+    '.....BBBBBAABBBBBBBBAABBBBB.....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBMMBBBBBBBBBBBBBBBBBBMMBB...',
+    '...BBBMMMBBBBBBBBBBBBBBMMMBBB...',
+    '...BBEEEEEEBBBBBBBBBBEEEEEEBB...',
+    '...BBEEPPEEBBBBBBBBBBEEPPEEBB...',
+    '...BBEEPPEEBBBBBBBBBBEEPPEEBB...',
+    '...BBBEEEEBBBBBBBBBBBBEEEEBBB...',
+    '...BCCBBBBBBBMMMMMMBBBBBBBCCB...',
+    '....BBBBBBBBBBMMMMBBBBBBBBBB....',
+    '....BBBBBBBBBBBBBBBBBBBBBBBB....',
+    '...BBBBBBBBBBBBBBBBBBBBBBBBBB...',
+    '..BBBBBBBBBBBBBBBBBBBBBBBBBBBB..',
+    '.BBBB.BBBB..BBB..BBB..BBBB.BBBB.',
+    '.BBL..BBLB..BLB..BLB..BLBB..LBB.',
+    'BBB...BBB...BBB..BBB...BBB...BBB',
+    'BLB..BBL.....BLBBLB.....LBB..BLB',
+    'BB...BBB.....BBBBBB.....BBB...BB',
+    'BBB...BB......BBBB......BB...BBB',
+    '.BB...BBB.....LBBL.....BBB...BB.',
+    '..BB...BB....BB..BB....BB...BB..',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  hexe: [
+    '................................',
+    '.....................AA.........',
+    '...................AAAA.........',
+    '..................AAAA..........',
+    '.................AAAA...........',
+    '................AAAAA...........',
+    '...............AAAAAA...........',
+    '..............AAAAAAA...........',
+    '.............AAAAAAAAA..........',
+    '............AACCCCCCAAA.....CCC.',
+    '......AAAAAAAAAAAAAAAAAAAAAACCCC',
+    '.......CCBBBBBBBBBBBBBBBCC..CCC.',
+    '.......CBBBBBBBBBBBBBBBBBC...S..',
+    '.......CBBEEEEBBBBEEEEBBBC...S..',
+    '.......CBBEPPEBBBBEPPEBBBC...S..',
+    '.......CBBEEEEBBBBEEEEBBBC...S..',
+    '.......CBBBBBBBMMBBBBBBBBC...S..',
+    '.......CBBBBBBBMMMBBBBBBBC...S..',
+    '.......CCBBMMMMMMMMMBBBBCC...S..',
+    '........C.BBBBBBBBBBBBB.C....S..',
+    '.........AAAACCCCCCAAAA......S..',
+    '........AAAAAAAAAAAAAAAA.....S..',
+    '.......AAAAAAAAAAAAAAAAAA....S..',
+    '...BB.AAAAAAAAAAAAAAAAAAAA..BBB.',
+    '...BBBAAAAAAAAAAAAAAAAAAAAABBB..',
+    '.....AAAAAAAAAAAAAAAAAAAAAA..S..',
+    '....AAAAAAAAAAAAAAAAAAAAAAAA.S..',
+    '...AAAAAAAAAAAAAAAAAAAAAAAAAAS..',
+    '...AA.AAAA.AAAAAA.AAAA.AAAA.AS..',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  koloss: [
+    '................................',
+    '...........AA..AA..AA...........',
+    '..........BBBBBBBBBBBB..........',
+    '.........BBBBBBBBBBBBBB.........',
+    '........BBBBBBBBBBBBBBBB........',
+    '........BBMMMMMMMMMMMMBB........',
+    '........BBMCCMMMMMMCCMBB........',
+    '........BBMCCMMMMMMCCMBB........',
+    '........BBMMMMMMMMMMMMBB........',
+    '........BBBBBBBBBBBBBBBB........',
+    '........BBBMBMBMMBMBMBBB........',
+    '.........BBBBBBBBBBBBBB.........',
+    '..AAA....SSSSSSSSSSSSSS....AAA..',
+    '.AAAAABBBBBBBBBBBBBBBBBBBBAAAAA.',
+    'AAAAAABBBBBBBAABBAABBBBBBBAAAAAA',
+    'AAAAAABBBBBAAAAAAAAAABBBBBAAAAAA',
+    '.BBBB.BBBBAAACCCCCCAAABBBB.BBBB.',
+    '.BBBB.BBBAAACCCMMCCCAAABBB.BBBB.',
+    '.BBBB.BBBBAAACCCCCCAAABBBB.BBBB.',
+    '.BBBB.BBBBBAAAAAAAAAABBBBB.BBBB.',
+    '.BBBB.BBBBBBBAABBAABBBBBBB.BBBB.',
+    'AAAAA.BBBBBBBBBBBBBBBBBBBB.AAAAA',
+    'AAAAA.BBBBBBBBBBBBBBBBBBBB.AAAAA',
+    'AAAAA.BBBBBBBBBBBBBBBBBBBB.AAAAA',
+    '......LLLLLLLLLLLLLLLLLLLL......',
+    '......BBBBB..........BBBBB......',
+    '......BBBBB..........BBBBB......',
+    '.....SSSSSSS........SSSSSSS.....',
+    '.....SSSSSSS........SSSSSSS.....',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  koenigin: [
+    '........A..A..A..A..A..A........',
+    '........AA.AA.AAAA.AA.AA........',
+    '........AAAAAAAAAAAAAAAA........',
+    '........ACAACAACCAACAACA........',
+    '........AAAAAAAAAAAAAAAA........',
+    '......CCBBBBBBBBBBBBBBBBCC......',
+    '.....CCBBBBBBBBBBBBBBBBBBCC.....',
+    '.....CCBBBBBBBBBBBBBBBBBBCC.....',
+    '.....CCBEEEEBBBBBBBBEEEEBCC.....',
+    '....CCCBEPPEBBBBBBBBEPPEBCCC....',
+    '....CCCBEPPEBBBBBBBBEPPEBCCC....',
+    '....CCCBEEEEBBBBBBBBEEEEBCCC....',
+    '....CCCBCCBBBBMMMMBBBBCCBCCC....',
+    '....CC.BBBBBBBBMMBBBBBBBB.CC....',
+    '........BBBBBBBBBBBBBBBB........',
+    '..........BBBBBBBBBBBB..........',
+    '........AAAAAAAAAAAAAAAA........',
+    '......BBAAAAAAAAAAAAAAAABB......',
+    '.....BB.AACAAAACCAAAACAA.BB.....',
+    '....BB..AAACAAAAAAAACAAA..BB....',
+    '...BB..AAAAACAAAAAACAAAAA..BB...',
+    '.......AAAAAACAAAACAAAAAA.......',
+    '......CAAAAAAACAACAAAAAAAC......',
+    '......ACAAAAAAACCAAAAAAACA......',
+    '.....AAACAAAAAAAAAAAAAACAAA.....',
+    '.....AAAACAAAAAAAAAAAACAAAA.....',
+    '....AAAAAACAAAAAAAAAACAAAAAA....',
+    '....AAAAAAACAAAAAAAACAAAAAAA....',
+    '...LLLLLLLLLLLLLLLLLLLLLLLLLL...',
+    '................................',
+    '................................',
+    '................................',
+  ],
+  kaiser: [
+    '...............AA...............',
+    '..............AAAA..............',
+    '..........A..AAAAAA..A..........',
+    '..........AAAAAAAAAAAA..........',
+    '..........ACAAACCAAACA..........',
+    '.........BBBBBBBBBBBBBB.........',
+    '........BBBBBBBBBBBBBBBB........',
+    '........BEEEEBBBBBBEEEEB........',
+    '........BEPPEBBBBBBEPPEB........',
+    '........BEPPEBBBBBBEPPEB........',
+    '........BEEEEBBBBBBEEEEB........',
+    '........BCCBBBMMMMBBBCCB........',
+    '........BLLLLLLLLLLLLLLB........',
+    '.........LLLLLLLLLLLLLL.........',
+    '....CC....LLLLLLLLLLLL....CC....',
+    '...CCCBBBBBLLLLLLLLLLBBBBBCCC...',
+    '..CCECBBBBBBLLLLLLLLBBBBBBCECC..',
+    '..CCCBBBBBBBBLLLLLLBBBBBBBBCCC..',
+    '.CCCCBBBBBBBBBBAABBBBBBBBBBCCCC.',
+    '.CECCBBBBBBBBBBAABBBBBBBBBBCCEC.',
+    '.CCCCBBBBBBBBBAAAABBBBBBBBBCCCC.',
+    '.CCCCLLBBBBBBBBAABBBBBBBBLLCCCC.',
+    '.CCECLLBBBBBBBBAABBBBBBBBLLCECC.',
+    '.CCCCC.BBBBBBBBAABBBBBBBB.CCCCC.',
+    '.CCCCC.BBBBBBBBAABBBBBBBB.CCCCC.',
+    '..CECC.BBBBBBBBAABBBBBBBB.CCEC..',
+    '..CCCC.BBBBBBBBAABBBBBBBB.CCCC..',
+    '...CCC..SSSS........SSSS..CCC...',
+    '........SSSS........SSSS........',
+    '................................',
+    '................................',
+    '................................',
+  ],
+};
+
+/**
+ * Prüft, ob alle Formen die richtige Größe haben.
+ * Wird vom Test in tests/regeln.test.mjs benutzt - eine verrutschte Zeile
+ * in einer Form würde die Figur sonst unbemerkt verunstalten.
+ *
+ * @returns {string[]} Liste der Probleme (leer = alles in Ordnung)
+ */
+export function formenPruefen() {
+  const probleme = [];
+  for (const [name, zeilen] of Object.entries(FORMEN)) {
+    if (zeilen.length !== GROESSE) {
+      probleme.push(`${name}: ${zeilen.length} Zeilen statt ${GROESSE}`);
+    }
+    zeilen.forEach((zeile, i) => {
+      if (zeile.length !== GROESSE) {
+        probleme.push(`${name}, Zeile ${i}: ${zeile.length} Zeichen statt ${GROESSE}`);
+      }
+    });
+  }
+  return probleme;
+}
+
+/** Die ersten Formen für normale Gegner (Welt 1 bis 6). */
+export const FORM_NAMEN = ['klecks', 'vierbeiner', 'fluegler', 'gestalt', 'schlange', 'golem', 'kaefer', 'geist'];
+
+/** Formen, die nur Bosse bekommen - damit sie sich abheben. */
+export const BOSS_FORMEN = ['drache', 'herrscher', 'golem'];
+
+/**
+ * Neue Formen ab Welt 7. Sie sind ausführlicher gezeichnet (Flossen, Scheren,
+ * Ohren, Muster) und passen zu den Bewohnern der späteren Welten. Welcher
+ * Gegner welche Form bekommt, steht in js/data/worlds.js (Feld "form").
+ */
+export const NEUE_FORMEN = [
+  'qualle', 'fisch', 'vogel', 'krabbe', 'roboter', 'stern', 'baer',
+  'hase', 'flamme', 'wurm', 'kugel', 'wolke', 'drachling',
+];
+
+/** Neue Boss-Formen ab Welt 7 - je Welt eine eigene. */
+export const NEUE_BOSS_FORMEN = ['sturmriese', 'krake', 'hexe', 'koloss', 'koenigin', 'kaiser'];
+
+/* ------------------------------------------------------------------ */
+/*  Zusätze                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Sucht den Kopfbereich einer Form: die oberste Zeile mit Körper und deren
+ * linken und rechten Rand. Dadurch sitzen Hörner und Stacheln bei jeder Form
+ * an der richtigen Stelle, ohne dass sie einzeln eingetragen werden müssen.
+ */
+function kopfBereich(grid) {
+  for (let y = 0; y < grid.length; y++) {
+    const links = grid[y].indexOf('B');
+    if (links >= 0) {
+      return { y, links, rechts: grid[y].lastIndexOf('B') };
+    }
+  }
+  return { y: 0, links: 12, rechts: 19 };
+}
+
+function setzen(grid, x, y, zeichen) {
+  if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) return;
+  const zeile = grid[y].split('');
+  zeile[x] = zeichen;
+  grid[y] = zeile.join('');
+}
+
+/** Zwei gebogene Hörner auf dem Kopf. */
+function hoerner(grid) {
+  const { y, links, rechts } = kopfBereich(grid);
+  for (let i = 0; i < 5; i++) {
+    setzen(grid, links + 2 - i, y - 1 - i, 'A');
+    setzen(grid, links + 3 - i, y - 1 - i, 'A');
+    setzen(grid, rechts - 2 + i, y - 1 - i, 'A');
+    setzen(grid, rechts - 3 + i, y - 1 - i, 'A');
+  }
+}
+
+/** Stachelkamm über dem Rücken. */
+function stacheln(grid) {
+  const { y, links, rechts } = kopfBereich(grid);
+  for (let x = links + 2; x <= rechts - 2; x += 4) {
+    setzen(grid, x, y - 1, 'A');
+    setzen(grid, x, y - 2, 'A');
+    setzen(grid, x - 1, y - 1, 'A');
+  }
+}
+
+/** Ein drittes Auge über den anderen beiden. */
+function drittesAuge(grid) {
+  // Die Zeile mit den ersten Augen finden und darüber ein weiteres setzen.
+  const augenZeile = grid.findIndex((zeile) => zeile.includes('P'));
+  if (augenZeile < 3) return;
+  const mitte = Math.floor(GROESSE / 2);
+  for (let x = mitte - 2; x <= mitte + 1; x++) {
+    setzen(grid, x, augenZeile - 3, 'E');
+    setzen(grid, x, augenZeile - 2, 'E');
+  }
+  setzen(grid, mitte - 1, augenZeile - 2, 'P');
+  setzen(grid, mitte, augenZeile - 2, 'P');
+}
+
+/** Ein Schweif, der seitlich heraussteht. */
+function schweif(grid) {
+  const unten = grid.reduce((letzte, zeile, y) => (zeile.includes('B') ? y : letzte), 0);
+  const start = Math.max(0, unten - 9);
+  for (let i = 0; i < 7; i++) {
+    setzen(grid, GROESSE - 3 + Math.min(2, i), start + i, 'C');
+    setzen(grid, GROESSE - 4 + Math.min(3, i), start + i, 'C');
+  }
+}
+
+const ZUSAETZE = [null, hoerner, stacheln, drittesAuge, schweif];
+
+/* ------------------------------------------------------------------ */
+/*  Farben                                                             */
+/* ------------------------------------------------------------------ */
+
+function farbwelt(hue, sattheit, akzentHue) {
+  return {
+    B: `hsl(${hue}, ${sattheit}%, 54%)`,
+    S: `hsl(${hue}, ${sattheit}%, 36%)`,
+    L: `hsl(${hue}, ${Math.round(sattheit * 0.85)}%, 72%)`,
+    A: `hsl(${akzentHue}, ${Math.min(95, sattheit + 15)}%, 62%)`,
+    C: `hsl(${(akzentHue + 40) % 360}, ${Math.min(95, sattheit + 10)}%, 55%)`,
+    E: '#ffffff',
+    P: '#141d33',
+    M: `hsl(${hue}, ${sattheit}%, 24%)`,
+    kante: `hsl(${hue}, ${Math.round(sattheit * 0.9)}%, 16%)`,
+  };
+}
+
+/** Aus einem Text eine immer gleiche Zahl machen - so bleibt jede Figur gleich. */
+function zahlAus(text) {
+  let wert = 0;
+  for (let i = 0; i < text.length; i++) wert = (wert * 31 + text.charCodeAt(i)) % 100000;
+  return wert;
+}
+
+/**
+ * Das Aussehen eines Monsters. Steht im Monster ein eigenes "look", wird das
+ * genommen; sonst wird eines aus der id abgeleitet - immer dasselbe.
+ */
+export function aussehenVon(monster) {
+  if (monster.look) return { ...standardAussehen(monster), ...monster.look };
+  return standardAussehen(monster);
+}
+
+function standardAussehen(monster) {
+  const zahl = zahlAus(monster.id ?? monster.name ?? 'monster');
+  return {
+    form: FORM_NAMEN[zahl % FORM_NAMEN.length],
+    hue: (zahl * 37) % 360,
+    sattheit: 55 + (zahl % 4) * 10,
+    akzentHue: (zahl * 37 + 140) % 360,
+    zusatz: zahl % ZUSAETZE.length,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Zeichnen                                                           */
+/* ------------------------------------------------------------------ */
+
+const zwischenspeicher = new Map();
+
+/** Wird von aussen gesetzt, damit sprite.js nichts ueber den Spielstand wissen muss. */
+let skinNachschlag = () => null;
+
+/**
+ * Legt fest, wie der aktive Skin eines Monsters gefunden wird.
+ * Wird einmal beim Start gesetzt (siehe js/main.js).
+ */
+export function setSkinNachschlag(funktion) {
+  skinNachschlag = funktion;
+}
+
+/** Der Skin, den eine Figur gerade trägt (oder null). */
+export function aktiverSkin(monster) {
+  return skinNachschlag(monster);
+}
+
+/**
+ * Welche Pose ein Bildpfad von Timo ist - als Nummer in SKIN_POSEN.
+ *
+ * Gebaut aus Timos eigenen Bildfeldern statt aus Dateinamen: In der
+ * Einzeldatei-Version sind alle Pfade durch eingebettete Bilder ersetzt, und
+ * dieselbe Datei ergibt dort dieselbe Zeichenkette - so klappt es in beiden.
+ */
+const POSE_VON = (() => {
+  const timo = MONSTERS.timo;
+  const pfade = [timo.image, timo.bildKampf, ...timo.bildSchlag, ...timo.bildStrahl, ...timo.bildTreffer];
+  const posen = ['front', 'stand', 'schlag-1', 'schlag-2', 'schlag-3', 'schlag-4', 'strahl-1', 'strahl-2',
+    'strahl-3', 'strahl-4', 'treffer-1', 'treffer-2', 'treffer-3', 'treffer-4'];
+  return new Map(pfade.map((pfad, i) => [pfad, SKIN_POSEN.indexOf(posen[i])]));
+})();
+
+/**
+ * Das Bild einer Pose im Outfit eines Skins.
+ *
+ * Outfit-Skins (mit "ordner", siehe SKINS in js/data/items.js) haben für jede
+ * Pose ein eigenes Bild mit Hut und neuer Kleidung (js/data/timo-skins.js).
+ * Ohne Outfit - oder für ein Bild, das keine Timo-Pose ist - bleibt es beim
+ * Original.
+ */
+export function skinBild(pfad, skin) {
+  // Eigene Outfits aus der Skin-Werkstatt bringen ihre Bilder selbst mit
+  // (solange sie noch gebaut werden, bleibt es beim Original).
+  if (skin?.eigen) return skin.bilder?.[POSE_VON.get(pfad)] ?? pfad;
+  if (!skin?.ordner) return pfad;
+  return SKIN_BILDER[skin.ordner]?.[POSE_VON.get(pfad)] ?? pfad;
+}
+
+/** Leert den Zwischenspeicher - nötig, wenn ein Skin gewechselt wurde. */
+export function spritesNeuZeichnen() {
+  zwischenspeicher.clear();
+}
+
+function feld(grid, x, y) {
+  if (y < 0 || y >= grid.length || x < 0 || x >= grid[y].length) return '.';
+  return grid[y][x];
+}
+
+/**
+ * Zeichnet die Figur und gibt sie als Bild-Adresse zurück.
+ * Jede Figur wird nur einmal gezeichnet und danach wiederverwendet.
+ */
+export function spriteDataUrl(monster, optionen = {}) {
+  // Ohne Vorgabe gilt der getragene Skin. Die Sammlung gibt dagegen gezielt
+  // einen bestimmten Skin vor, um ihn in der Vorschau zu zeigen - sonst
+  // saehen dort alle Skins wie der gerade getragene aus.
+  const skin = 'skin' in optionen ? optionen.skin : skinNachschlag(monster);
+  const key = `${monster.id ?? monster.name}${skin ? `+${skin.id}` : ''}`;
+  if (zwischenspeicher.has(key)) return zwischenspeicher.get(key);
+
+  // Ein Skin überschreibt nur die Farben, nicht die Form.
+  const look = { ...aussehenVon(monster), ...(skin?.look ?? {}) };
+  const grid = [...(FORMEN[look.form] ?? FORMEN.klecks)];
+  const zusatz = ZUSAETZE[look.zusatz % ZUSAETZE.length];
+  if (zusatz) zusatz(grid);
+
+  const farben = farbwelt(look.hue, look.sattheit, look.akzentHue);
+  const canvas = document.createElement('canvas');
+  canvas.width = GROESSE;
+  canvas.height = GROESSE;
+  const ctx = canvas.getContext('2d');
+
+  // 1. Kante: jedes belegte Feld wird nach allen Seiten um ein Feld
+  //    verbreitert. Das ergibt eine saubere dunkle Kontur, ohne dass sie
+  //    in jeder Form von Hand gezeichnet werden muss.
+  ctx.fillStyle = farben.kante;
+  for (let y = 0; y < GROESSE; y++) {
+    for (let x = 0; x < GROESSE; x++) {
+      if (feld(grid, x, y) === '.') continue;
+      ctx.fillRect(x - 1, y, 3, 1);
+      ctx.fillRect(x, y - 1, 1, 3);
+    }
+  }
+
+  // 2. Füllung mit automatischer Licht- und Schattenkante:
+  //    Körperfelder, über denen nichts liegt, bekommen Licht;
+  //    Körperfelder, unter denen nichts liegt, bekommen Schatten.
+  //    Dadurch wirken die Figuren rund, ohne dass jede Schattierung
+  //    von Hand gezeichnet werden muss.
+  for (let y = 0; y < GROESSE; y++) {
+    for (let x = 0; x < GROESSE; x++) {
+      const zeichen = feld(grid, x, y);
+      if (zeichen === '.') continue;
+
+      let farbe = farben[zeichen] ?? farben.B;
+
+      if (zeichen === 'B') {
+        if (feld(grid, x, y - 1) === '.') farbe = farben.L;
+        else if (feld(grid, x, y + 1) === '.') farbe = farben.S;
+      }
+
+      // Augenglanz: das obere linke Feld einer Pupille wird hell. Das gibt
+      // den Augen Leben, ohne dass es in jeder Form eingetragen werden muss.
+      if (zeichen === 'P' && feld(grid, x, y - 1) === 'E' && feld(grid, x - 1, y) === 'E') {
+        farbe = '#ffffff';
+      }
+
+      ctx.fillStyle = farbe;
+      ctx.fillRect(x, y, 1, 1);
+    }
+  }
+
+  const url = canvas.toDataURL('image/png');
+  zwischenspeicher.set(key, url);
+  return url;
+}
+
+/**
+ * Erzeugt das Bild einer Figur zum Einhängen in die Seite.
+ *
+ * @param {object} monster - Monster oder Gegner
+ * @param {object} [options]
+ * @param {string} [options.className] - zusätzliche CSS-Klassen
+ */
+export function createSprite(monster, optionen = {}) {
+  const img = document.createElement('img');
+  const skin = 'skin' in optionen ? optionen.skin : skinNachschlag(monster);
+
+  // Ein eigenes Bild hat Vorrang vor der berechneten Pixelfigur. So bekommt
+  // Timo seine gezeichneten Grafiken, alle Gegner weiterhin gerechnete.
+  const eigenesBild = optionen.bild ?? monster.image;
+
+  // Outfit-Skins haben eigene Bilder mit Platz für den Hut über dem Kopf.
+  const outfitBild = eigenesBild ? skinBild(eigenesBild, skin) : null;
+  const outfit = Boolean(outfitBild && outfitBild !== eigenesBild);
+
+  if (eigenesBild) {
+    img.src = outfitBild;
+    // Ein fertiges Bild lässt sich nicht umrechnen - ein Farb-Skin wird
+    // deshalb als Filter darübergelegt (siehe SKINS in js/data/items.js).
+    if (skin?.filter) img.style.filter = skin.filter;
+  } else {
+    img.src = spriteDataUrl(monster, optionen);
+  }
+
+  const klassen = ['pixel-sprite'];
+  // Menschen sind schmal und hoch und dürfen über den quadratischen Kasten
+  // hinauswachsen, sonst wirken sie neben den Gegnern winzig.
+  if (monster.hoch) klassen.push('pixel-sprite--hoch');
+  if (outfit) klassen.push('pixel-sprite--hut');
+  if (optionen.className) klassen.push(optionen.className);
+
+  img.alt = monster.name ?? '';
+  img.className = klassen.join(' ');
+  img.draggable = false;
+  return img;
+}
+
+/**
+ * Spielt eine Bildfolge auf einer Figur ab und kehrt danach zum Ausgangsbild
+ * zurück - so wird aus Einzelbildern eine Angriffsanimation.
+ *
+ * @param {HTMLElement} spriteElement - der Kasten mit dem Bild darin
+ * @param {string[]} bilder - die Bildadressen der Reihe nach
+ * @param {number} [proBild] - Anzeigedauer je Bild in Millisekunden
+ * @returns {function} Abbrechen - stoppt die Folge und stellt das Bild zurück
+ */
+export function spieleBildfolge(spriteElement, bilder, proBild = 75) {
+  const img = spriteElement?.querySelector('img');
+  if (!img || !bilder?.length) return () => {};
+
+  const ausgangsbild = img.src;
+  const timer = [];
+
+  bilder.forEach((bild, index) => {
+    timer.push(setTimeout(() => { img.src = bild; }, index * proBild));
+  });
+  timer.push(setTimeout(() => { img.src = ausgangsbild; }, bilder.length * proBild));
+
+  return () => {
+    timer.forEach(clearTimeout);
+    img.src = ausgangsbild;
+  };
+}
+
+/**
+ * Lädt Bilder im Voraus, damit die erste Animation nicht ruckelt.
+ * Wird einmal beim Start aufgerufen (js/main.js).
+ */
+export function bilderVorladen(bilder) {
+  bilder.filter(Boolean).forEach((bild) => {
+    const img = new Image();
+    img.src = bild;
+  });
+}
