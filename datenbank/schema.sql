@@ -323,6 +323,455 @@ end;
 $$;
 
 
+-- --- Freunde -------------------------------------------------------------
+-- Jeder Spieler bekommt eine Freundes-ID wie "MQ-58291". Sie ist NUR zum
+-- Suchen da und ersetzt die Spielernummer nie: Wer eine Freundes-ID kennt,
+-- kann damit weder einen Spielstand laden noch irgendetwas aendern. Alles,
+-- was etwas veraendert, verlangt weiterhin die eigene (geheime) Nummer -
+-- und aendert nur Eintraege, an denen dieser Spieler selbst beteiligt ist.
+--
+--   freundes_ids     - Spielernummer -> Freundes-ID (bleibt fuer immer gleich)
+--   freundschaften   - ein Paar, kleinere Nummer immer zuerst: so kann es
+--                      dieselbe Freundschaft gar nicht zweimal geben
+--   freundesanfragen - von -> an; erst "annehmen" macht daraus eine
+--                      Freundschaft
+--   duell_einladungen- "Komm in meine 2v2-Lobby" mit dem Lobby-Code;
+--                      gilt nur wenige Minuten und genau einmal
+--   anwesenheit      - wann ein Spieler zuletzt da war (fuer 🟢 / 🟡 / ⚫)
+
+create table if not exists public.freundes_ids (
+  spieler_id uuid primary key references public.spielstaende (id) on delete cascade,
+  kennung    text not null unique check (kennung ~ '^MQ-[0-9]{5,7}$')
+);
+
+create table if not exists public.freundschaften (
+  spieler_a   uuid not null references public.spielstaende (id) on delete cascade,
+  spieler_b   uuid not null references public.spielstaende (id) on delete cascade,
+  erstellt_am timestamptz not null default now(),
+  primary key (spieler_a, spieler_b),
+  check (spieler_a < spieler_b)
+);
+create index if not exists freundschaften_b_idx on public.freundschaften (spieler_b);
+
+create table if not exists public.freundesanfragen (
+  von         uuid not null references public.spielstaende (id) on delete cascade,
+  an          uuid not null references public.spielstaende (id) on delete cascade,
+  erstellt_am timestamptz not null default now(),
+  primary key (von, an),
+  check (von <> an)
+);
+create index if not exists freundesanfragen_an_idx on public.freundesanfragen (an);
+
+create table if not exists public.duell_einladungen (
+  id          uuid        primary key default gen_random_uuid(),
+  von         uuid        not null references public.spielstaende (id) on delete cascade,
+  an          uuid        not null references public.spielstaende (id) on delete cascade,
+  code        text        not null check (code ~ '^[A-Z0-9]{6}$'),
+  erstellt_am timestamptz not null default now(),
+  gueltig_bis timestamptz not null,
+  -- 'offen' | 'angenommen' | 'abgelehnt'
+  antwort     text        not null default 'offen' check (antwort in ('offen', 'angenommen', 'abgelehnt')),
+  -- Hat der Einladende die Antwort schon gesehen?
+  gemeldet    boolean     not null default false,
+  check (von <> an)
+);
+create index if not exists duell_einladungen_an_idx on public.duell_einladungen (an, antwort);
+create index if not exists duell_einladungen_von_idx on public.duell_einladungen (von, erstellt_am desc);
+
+create table if not exists public.anwesenheit (
+  spieler_id uuid        primary key references public.spielstaende (id) on delete cascade,
+  zustand    text        not null default 'online' check (zustand in ('online', 'kampf')),
+  zuletzt    timestamptz not null default now()
+);
+
+alter table public.freundes_ids      enable row level security;
+alter table public.freundschaften    enable row level security;
+alter table public.freundesanfragen  enable row level security;
+alter table public.duell_einladungen enable row level security;
+alter table public.anwesenheit       enable row level security;
+
+revoke all on table public.freundes_ids      from anon, authenticated;
+revoke all on table public.freundschaften    from anon, authenticated;
+revoke all on table public.freundesanfragen  from anon, authenticated;
+revoke all on table public.duell_einladungen from anon, authenticated;
+revoke all on table public.anwesenheit       from anon, authenticated;
+
+-- Helfer (von aussen NICHT aufrufbar): Gibt es den Spieler? Sonst Abbruch.
+create or replace function public.mq_spieler_pruefen(p_id uuid)
+returns void
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if p_id is null or not exists (select 1 from public.spielstaende where id = p_id) then
+    raise exception 'kein_spielstand';
+  end if;
+end;
+$$;
+
+-- Helfer: die Freundes-ID eines Spielers - beim ersten Mal ausgewuerfelt.
+create or replace function public.mq_kennung(p_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_kennung text;
+  v_versuch integer := 0;
+begin
+  select kennung into v_kennung from public.freundes_ids where spieler_id = p_id;
+  if v_kennung is not null then
+    return v_kennung;
+  end if;
+  loop
+    v_versuch := v_versuch + 1;
+    -- Erst fuenfstellig wie "MQ-58291"; wird es eng, laengere Nummern.
+    if v_versuch <= 30 then
+      v_kennung := 'MQ-' || (10000 + floor(random() * 90000))::int;
+    elsif v_versuch <= 60 then
+      v_kennung := 'MQ-' || (1000000 + floor(random() * 9000000))::int;
+    else
+      raise exception 'Keine freie Freundes-ID gefunden';
+    end if;
+    begin
+      insert into public.freundes_ids (spieler_id, kennung) values (p_id, v_kennung);
+      return v_kennung;
+    exception when unique_violation then
+      -- Zwei gleichzeitige Aufrufe fuer denselben Spieler: der andere war schneller.
+      select kennung into v_kennung from public.freundes_ids where spieler_id = p_id;
+      if v_kennung is not null then
+        return v_kennung;
+      end if;
+    end;
+  end loop;
+end;
+$$;
+
+-- Helfer: Spielernummer zu einer Freundes-ID (oder null). Nur intern -
+-- nach aussen geht nie eine Spielernummer.
+create or replace function public.mq_id_von(p_kennung text)
+returns uuid
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select spieler_id from public.freundes_ids
+   where kennung = upper(regexp_replace(coalesce(p_kennung, ''), '\s', '', 'g'));
+$$;
+
+-- Helfer: was andere ueber einen Spieler sehen duerfen - Freundes-ID, Name,
+-- Figur, deren Level und Skin. Nicht mehr.
+create or replace function public.mq_profil(p_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select jsonb_build_object(
+           'kennung', f.kennung,
+           'name', left(coalesce(nullif(btrim(s.daten ->> 'name'), ''), 'Spieler'), 16),
+           'figur', left(coalesce(s.daten ->> 'aktiveFigur', 'timo'), 20),
+           'level', least(greatest(coalesce(
+                      public.mq_zahl(s.daten, 'characters', coalesce(s.daten ->> 'aktiveFigur', 'timo'), 'level'), 1), 1), 999)::int,
+           'skin', left(s.daten -> 'activeSkin' ->> coalesce(s.daten ->> 'aktiveFigur', 'timo'), 60))
+    from public.spielstaende s
+    join public.freundes_ids f on f.spieler_id = s.id
+   where s.id = p_id;
+$$;
+
+-- Helfer: sind die beiden befreundet?
+create or replace function public.mq_befreundet(p_a uuid, p_b uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (select 1 from public.freundschaften
+                  where spieler_a = least(p_a, p_b) and spieler_b = greatest(p_a, p_b));
+$$;
+
+-- --- Alles auf einmal: Freunde, Anfragen, Einladungen -------------------
+-- Das Spiel ruft das regelmaessig auf, solange es offen ist. Dabei wird
+-- auch "ich bin da" vermerkt (p_zustand: 'online' oder 'kampf'; null =
+-- nichts vermerken). Online gilt, wer sich in den letzten 90 Sekunden
+-- gemeldet hat.
+create or replace function public.mq_freunde(p_id uuid, p_zustand text default null)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_ergebnis jsonb;
+  v_antworten jsonb;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  perform public.mq_kennung(p_id);
+
+  if p_zustand in ('online', 'kampf') then
+    insert into public.anwesenheit (spieler_id, zustand, zuletzt)
+         values (p_id, p_zustand, now())
+    on conflict (spieler_id) do update set zustand = excluded.zustand, zuletzt = now();
+  end if;
+
+  -- Alte Einladungen wegraeumen, damit die Tabelle klein bleibt.
+  delete from public.duell_einladungen where gueltig_bis < now() - interval '1 day';
+
+  -- Antworten auf eigene Einladungen: genau einmal melden.
+  with gemeldet as (
+    update public.duell_einladungen e
+       set gemeldet = true
+     where e.von = p_id and e.antwort <> 'offen' and not e.gemeldet
+    returning e.an, e.antwort
+  )
+  select coalesce(jsonb_agg(public.mq_profil(g.an) || jsonb_build_object('angenommen', g.antwort = 'angenommen')), '[]'::jsonb)
+    into v_antworten
+    from gemeldet g;
+
+  select jsonb_build_object(
+    'kennung', public.mq_kennung(p_id),
+    'freunde', coalesce((
+      select jsonb_agg(public.mq_profil(x.freund) || jsonb_build_object(
+               'status', case
+                 when a.zuletzt is null or a.zuletzt < now() - interval '90 seconds' then 'offline'
+                 when a.zustand = 'kampf' then 'kampf'
+                 else 'online' end))
+        from (select case when spieler_a = p_id then spieler_b else spieler_a end as freund
+                from public.freundschaften
+               where spieler_a = p_id or spieler_b = p_id) x
+        left join public.anwesenheit a on a.spieler_id = x.freund
+    ), '[]'::jsonb),
+    'erhalten', coalesce((
+      select jsonb_agg(public.mq_profil(r.von) order by r.erstellt_am desc)
+        from public.freundesanfragen r where r.an = p_id
+    ), '[]'::jsonb),
+    'gesendet', coalesce((
+      select jsonb_agg(public.mq_profil(r.an) order by r.erstellt_am desc)
+        from public.freundesanfragen r where r.von = p_id
+    ), '[]'::jsonb),
+    'einladungen', coalesce((
+      select jsonb_agg(public.mq_profil(e.von) || jsonb_build_object(
+               'id', e.id, 'code', e.code,
+               'sekunden', greatest(0, floor(extract(epoch from e.gueltig_bis - now())))::int)
+             order by e.erstellt_am desc)
+        from public.duell_einladungen e
+       where e.an = p_id and e.antwort = 'offen' and e.gueltig_bis > now()
+         and public.mq_befreundet(e.von, p_id)
+    ), '[]'::jsonb),
+    'antworten', v_antworten
+  ) into v_ergebnis;
+
+  return v_ergebnis;
+end;
+$$;
+
+-- --- Freund suchen ---------------------------------------------------------
+-- Antwort: das oeffentliche Profil oder null.
+create or replace function public.mq_freund_suchen(p_id uuid, p_kennung text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_freund uuid;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  v_freund := public.mq_id_von(p_kennung);
+  if v_freund is null then
+    return null;
+  end if;
+  return public.mq_profil(v_freund) || jsonb_build_object(
+    'ich', v_freund = p_id,
+    'freund', public.mq_befreundet(p_id, v_freund),
+    'gesendet', exists (select 1 from public.freundesanfragen where von = p_id and an = v_freund),
+    'erhalten', exists (select 1 from public.freundesanfragen where von = v_freund and an = p_id));
+end;
+$$;
+
+-- --- Freundschaftsanfrage senden -------------------------------------------
+-- Antwort (Text): 'gesendet', 'unbekannt', 'selbst', 'schon_freunde',
+-- 'schon_gesendet', 'gegenanfrage' (der andere hat schon gefragt - bitte
+-- dessen Anfrage annehmen), 'zu_viele'.
+create or replace function public.mq_anfrage_senden(p_id uuid, p_kennung text)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_freund uuid;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  perform public.mq_kennung(p_id);
+  v_freund := public.mq_id_von(p_kennung);
+  if v_freund is null then return 'unbekannt'; end if;
+  if v_freund = p_id then return 'selbst'; end if;
+  if public.mq_befreundet(p_id, v_freund) then return 'schon_freunde'; end if;
+  if exists (select 1 from public.freundesanfragen where von = v_freund and an = p_id) then
+    return 'gegenanfrage';
+  end if;
+  if exists (select 1 from public.freundesanfragen where von = p_id and an = v_freund) then
+    return 'schon_gesendet';
+  end if;
+  -- Bremsen gegen Massen-Anfragen.
+  if (select count(*) from public.freundesanfragen where von = p_id) >= 30
+     or (select count(*) from public.freundschaften where spieler_a = p_id or spieler_b = p_id) >= 100 then
+    return 'zu_viele';
+  end if;
+
+  insert into public.freundesanfragen (von, an) values (p_id, v_freund)
+  on conflict do nothing;
+  return 'gesendet';
+end;
+$$;
+
+-- --- Anfrage annehmen oder ablehnen ----------------------------------------
+-- Nur Anfragen, die AN diesen Spieler gingen. Antwort: true = erledigt,
+-- false = keine solche Anfrage (mehr).
+create or replace function public.mq_anfrage_antworten(p_id uuid, p_kennung text, p_annehmen boolean)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_freund uuid;
+  v_weg integer;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  v_freund := public.mq_id_von(p_kennung);
+  if v_freund is null then return false; end if;
+
+  delete from public.freundesanfragen where von = v_freund and an = p_id;
+  get diagnostics v_weg = row_count;
+  if v_weg = 0 then return false; end if;
+
+  if coalesce(p_annehmen, false) then
+    insert into public.freundschaften (spieler_a, spieler_b)
+         values (least(p_id, v_freund), greatest(p_id, v_freund))
+    on conflict do nothing;
+    -- Eine eigene Anfrage in die andere Richtung ist damit erledigt.
+    delete from public.freundesanfragen where von = p_id and an = v_freund;
+  end if;
+  return true;
+end;
+$$;
+
+-- --- Eigene Anfrage zurueckziehen ------------------------------------------
+create or replace function public.mq_anfrage_zurueckziehen(p_id uuid, p_kennung text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_weg integer;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  delete from public.freundesanfragen where von = p_id and an = public.mq_id_von(p_kennung);
+  get diagnostics v_weg = row_count;
+  return v_weg > 0;
+end;
+$$;
+
+-- --- Freund entfernen --------------------------------------------------------
+-- Loescht nur die Freundschaft, an der dieser Spieler selbst beteiligt ist,
+-- und offene 2v2-Einladungen zwischen beiden.
+create or replace function public.mq_freund_entfernen(p_id uuid, p_kennung text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_freund uuid;
+  v_weg integer;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  v_freund := public.mq_id_von(p_kennung);
+  if v_freund is null then return false; end if;
+  delete from public.freundschaften
+   where spieler_a = least(p_id, v_freund) and spieler_b = greatest(p_id, v_freund);
+  get diagnostics v_weg = row_count;
+  delete from public.duell_einladungen
+   where antwort = 'offen' and ((von = p_id and an = v_freund) or (von = v_freund and an = p_id));
+  return v_weg > 0;
+end;
+$$;
+
+-- --- 2v2-Einladung senden ----------------------------------------------------
+-- Nur an Freunde. Die Einladung traegt den Code der eigenen 2v2-Lobby und
+-- gilt 5 Minuten. Eine neue Einladung an denselben Freund ersetzt die alte;
+-- Einladungen in eine fruehere Lobby desselben Gastgebers verfallen.
+-- Antwort: 'gesendet', 'kein_freund', 'zu_viele'.
+create or replace function public.mq_einladung_senden(p_id uuid, p_kennung text, p_code text)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_freund uuid;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  if p_code is null or p_code !~ '^[A-Z0-9]{6}$' then
+    raise exception 'Ungueltiger Lobby-Code';
+  end if;
+  v_freund := public.mq_id_von(p_kennung);
+  if v_freund is null or not public.mq_befreundet(p_id, v_freund) then
+    return 'kein_freund';
+  end if;
+  if (select count(*) from public.duell_einladungen
+       where von = p_id and erstellt_am > now() - interval '10 minutes') >= 30 then
+    return 'zu_viele';
+  end if;
+
+  delete from public.duell_einladungen
+   where von = p_id and antwort = 'offen' and (an = v_freund or code <> p_code);
+  insert into public.duell_einladungen (von, an, code, gueltig_bis)
+       values (p_id, v_freund, p_code, now() + interval '5 minutes');
+  return 'gesendet';
+end;
+$$;
+
+-- --- 2v2-Einladung annehmen oder ablehnen -------------------------------------
+-- Nur Einladungen AN diesen Spieler, nur offene und nur, solange sie gelten.
+-- Jede Einladung laesst sich genau einmal beantworten.
+-- Antwort: beim Annehmen der Lobby-Code, beim Ablehnen 'abgelehnt',
+-- null = gibt es nicht (mehr) oder abgelaufen.
+create or replace function public.mq_einladung_antworten(p_id uuid, p_einladung uuid, p_annehmen boolean)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_code text;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  update public.duell_einladungen
+     set antwort = case when coalesce(p_annehmen, false) then 'angenommen' else 'abgelehnt' end
+   where id = p_einladung and an = p_id and antwort = 'offen' and gueltig_bis > now()
+     and public.mq_befreundet(von, p_id)
+  returning code into v_code;
+  if v_code is null then return null; end if;
+  if not coalesce(p_annehmen, false) then return 'abgelehnt'; end if;
+  -- Wer eine Einladung annimmt, braucht die anderen offenen nicht mehr.
+  update public.duell_einladungen set antwort = 'abgelehnt'
+   where an = p_id and antwort = 'offen' and id <> p_einladung;
+  return v_code;
+end;
+$$;
+
+
 -- -------------------------------------------------------------------------
 -- 5. Wer darf die Funktionen aufrufen
 -- -------------------------------------------------------------------------
@@ -340,6 +789,32 @@ grant execute on function public.mq_code_erstellen(uuid)     to anon, authentica
 grant execute on function public.mq_code_einloesen(text)     to anon, authenticated;
 grant execute on function public.mq_rangliste(uuid, integer) to anon, authenticated;
 grant execute on function public.mq_duell_belohnung(uuid, text, jsonb) to anon, authenticated;
+
+-- Freunde. Die Helfer (mq_kennung, mq_id_von, mq_profil, ...) bleiben
+-- gesperrt - auch fuer anon ausdruecklich, denn Supabase gibt neuen
+-- Funktionen sonst von selbst das Aufrufrecht. mq_id_von wuerde sonst zu
+-- einer Freundes-ID die geheime Spielernummer verraten.
+revoke all on function public.mq_spieler_pruefen(uuid) from public, anon, authenticated;
+revoke all on function public.mq_kennung(uuid) from public, anon, authenticated;
+revoke all on function public.mq_id_von(text) from public, anon, authenticated;
+revoke all on function public.mq_profil(uuid) from public, anon, authenticated;
+revoke all on function public.mq_befreundet(uuid, uuid) from public, anon, authenticated;
+revoke all on function public.mq_freunde(uuid, text) from public;
+revoke all on function public.mq_freund_suchen(uuid, text) from public;
+revoke all on function public.mq_anfrage_senden(uuid, text) from public;
+revoke all on function public.mq_anfrage_antworten(uuid, text, boolean) from public;
+revoke all on function public.mq_anfrage_zurueckziehen(uuid, text) from public;
+revoke all on function public.mq_freund_entfernen(uuid, text) from public;
+revoke all on function public.mq_einladung_senden(uuid, text, text) from public;
+revoke all on function public.mq_einladung_antworten(uuid, uuid, boolean) from public;
+grant execute on function public.mq_freunde(uuid, text) to anon, authenticated;
+grant execute on function public.mq_freund_suchen(uuid, text) to anon, authenticated;
+grant execute on function public.mq_anfrage_senden(uuid, text) to anon, authenticated;
+grant execute on function public.mq_anfrage_antworten(uuid, text, boolean) to anon, authenticated;
+grant execute on function public.mq_anfrage_zurueckziehen(uuid, text) to anon, authenticated;
+grant execute on function public.mq_freund_entfernen(uuid, text) to anon, authenticated;
+grant execute on function public.mq_einladung_senden(uuid, text, text) to anon, authenticated;
+grant execute on function public.mq_einladung_antworten(uuid, uuid, boolean) to anon, authenticated;
 
 
 -- -------------------------------------------------------------------------
