@@ -282,7 +282,12 @@ grant execute on function public.mq_rangliste(uuid, integer) to anon, authentica
 -- die wichtigsten Werte aus dem Spielstand heraus, damit du nicht jedes Mal
 -- JSON lesen musst. Von aussen ist sie nicht erreichbar.
 
-create or replace view public.spielstaende_uebersicht as
+-- Erst die alte Ansicht wegwerfen: Ältere Fassungen hatten andere Spalten,
+-- und "create or replace view" darf Spalten nicht umbenennen. Eine Ansicht
+-- speichert keine Daten - die Spielstände bleiben unberührt.
+drop view if exists public.spielstaende_uebersicht;
+
+create view public.spielstaende_uebersicht as
   select
     s.id,
     -- Der vom Spieler gewaehlte Name. Steht er nicht im Spielstand, bleibt
@@ -300,8 +305,6 @@ create or replace view public.spielstaende_uebersicht as
     s.speicherungen,
     s.erstellt_am,
     s.gespeichert_am,
-    -- Neue Spalten nur HINTEN anhaengen: "create or replace view" darf
-    -- vorhandene Spalten nicht verschieben.
     public.mq_zahl(s.daten, 'trophaeen')::int as trophaeen
   from public.spielstaende s
   order by s.gespeichert_am desc;
