@@ -8714,15 +8714,6 @@ body.no-animations *::after {
   filter: grayscale(1) brightness(0.65);
 }
 
-.duell-wiederbeleben {
-  grid-column: 1 / -1;
-  min-height: 46px;
-  color: #fff;
-  border-color: rgba(12, 18, 48, 0.4);
-  background: linear-gradient(180deg, #ffb0d8, #ff6ab0 45%, #d43585);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 4px 0 #8f1f57, 0 0 16px rgba(255, 106, 176, 0.5);
-  animation: kraft-bereit 1.2s ease-in-out infinite;
-}
 
 /* ---------- Die Arena mit vier Plätzen ---------- */
 .duell-arena {
@@ -9168,9 +9159,6 @@ body.no-animations *::after {
     display: none;
   }
 
-  .duell-wiederbeleben {
-    min-height: 36px;
-  }
 
   .duell-arena {
     --sprite: 50px;
@@ -9303,12 +9291,6 @@ var KLAENGE = {
     ton("triangle", 784, 784, 0.22, 0.2, { start: 0.12 }),
     ton("triangle", 988, 988, 0.22, 0.18, { start: 0.12 }),
     ton("triangle", 1175, 1568, 0.3, 0.16, { start: 0.16 })
-  ],
-  // Wiederbelebung: ein weicher Bogen nach oben.
-  wiederbelebung: [
-    ton("sine", 392, 784, 0.45, 0.24, { anstieg: 0.05 }),
-    ton("triangle", 523, 1047, 0.5, 0.14, { start: 0.08, anstieg: 0.06 }),
-    ton("sine", 1568, 2093, 0.35, 0.06, { start: 0.3, anstieg: 0.08 })
   ],
   // Team-Signal: kurzes, freundliches Ploppen.
   signal: [ton("sine", 880, 1320, 0.08, 0.2), ton("sine", 1320, 1320, 0.06, 0.12, { start: 0.07 })],
@@ -13235,7 +13217,7 @@ function neuerDuellStand() {
     // { "welt-grad": Sterne }
     wahl: null,
     // zuletzt gewählte Welt/Gegner/Schwierigkeit in der Lobby
-    statistik: { kaempfe: 0, siege: 0, niederlagen: 0, kombos: 0, wiederbelebt: 0, bosse: 0, makellos: 0 }
+    statistik: { kaempfe: 0, siege: 0, niederlagen: 0, kombos: 0, bosse: 0, makellos: 0 }
   };
 }
 var gameState = createNewGame();
@@ -14714,7 +14696,7 @@ var DUELL_AUFGABEN = [
     id: "duell-heilen-60",
     icon: "💚",
     name: "Sanitäter",
-    text: "Heile im 2v2 deinen Teamkameraden um 60 LP (Wiederbeleben zählt mit).",
+    text: "Heile im 2v2 deinen Teamkameraden um 60 LP.",
     typ: "teamHeilung",
     ziel: 60,
     muenzen: 250,
@@ -15870,12 +15852,6 @@ var DUELL = {
    * endlose Kette entstehen. Für das Gegnerteam gilt dieselbe Regel.
    */
   kombo: { fenster: 2, bonus: 0.1, cooldown: 8 },
-  /**
-   * Wiederbeleben: Der Teamkamerad zahlt `kosten` Energie aus SEINEM Vorrat.
-   * Jeder Spieler kann pro Kampf höchstens einmal wiederbelebt werden und
-   * kommt mit `leben` Anteil seiner Lebenspunkte zurück.
-   */
-  wiederbelebung: { kosten: 3, leben: 0.35, proSpieler: 1 },
   /**
    * Flächenkarten treffen beide Gegner, jeden mit diesem Anteil des
    * Kartenschadens (zusammen also etwas mehr als ein Einzeltreffer).
@@ -21288,12 +21264,8 @@ function kiZug(sicht, { grad, partnerKi = false, zufall: zufall2 = Math.random, 
   return bester.zug;
 }
 function partnerZug(sicht, ich, { zufall: zufall2, kiPartner }) {
-  const partner = finde(sicht, sicht.partner);
   const gegner = feinde(sicht);
   if (gegner.length === 0) return null;
-  if (partner?.ko && partner.wiederbelebt < sicht.wiederbelebMax && ich.energie >= sicht.wiederbelebKosten) {
-    return { typ: "wiederbeleben", ziel: partner.id };
-  }
   const signal = sicht.gedaechtnis?.signalBis > sicht.zeit ? finde(sicht, sicht.gedaechtnis.signalZiel) : null;
   const vomPartner = finde(sicht, sicht.zielWahlPartner);
   const ankuender = gegner.find((g) => g.ansage);
@@ -21356,7 +21328,6 @@ function createDuell(setup, { onEvent } = {}) {
       // name -> Restsekunden
       sperrSchutz: 0,
       ko: false,
-      wiederbelebt: 0,
       kraftId: def.kraft ?? null,
       kraft: 0,
       // 0..1 Ladung der Boss-Kraft
@@ -21391,7 +21362,7 @@ function createDuell(setup, { onEvent } = {}) {
       ki: { sparenAb: null },
       zielWahl: null,
       // zuletzt gewähltes Ziel eines Menschen (für den KI-Ersatz)
-      statistik: { schaden: 0, geheilt: 0, teamHeilung: 0, kombos: 0, besiegt: 0, ko: 0, karten: 0, wiederbelebt: 0 }
+      statistik: { schaden: 0, geheilt: 0, teamHeilung: 0, kombos: 0, besiegt: 0, ko: 0, karten: 0 }
     };
     kaempfer.set(def.id, k);
     reihenfolge.push(k);
@@ -21768,22 +21739,6 @@ function createDuell(setup, { onEvent } = {}) {
     kraftWirken(k, k.kraftDef, zielId);
     return { ok: true };
   }
-  function wiederbeleben(k, zielId) {
-    const ziel = kaempfer.get(zielId);
-    if (!ziel || ziel.team !== k.team || ziel.id === k.id) return { ok: false, grund: "ungueltig" };
-    if (!ziel.s.ko) return { ok: false, grund: "nicht-kampfunfaehig" };
-    if (ziel.s.wiederbelebt >= DUELL.wiederbelebung.proSpieler) return { ok: false, grund: "schon-wiederbelebt" };
-    if (!k.fighter.canAfford(DUELL.wiederbelebung.kosten)) return { ok: false, grund: "zu-wenig-energie" };
-    k.fighter.energieAendern(-DUELL.wiederbelebung.kosten);
-    ziel.s.ko = false;
-    ziel.s.wiederbelebt += 1;
-    ziel.s.hp = Math.max(1, Math.round(ziel.s.maxHp * DUELL.wiederbelebung.leben));
-    ziel.s.shield = 0;
-    k.statistik.wiederbelebt += 1;
-    k.statistik.teamHeilung += ziel.s.hp;
-    emit({ typ: "wiederbelebt", von: k.id, ziel: ziel.id, hp: ziel.s.hp });
-    return { ok: true };
-  }
   function faehigkeitStarten(k, id, zielId) {
     const f = FAEHIGKEITEN[id];
     if (!f || !k.faehigkeiten.includes(id)) return { ok: false, grund: "unbekannt" };
@@ -21805,9 +21760,6 @@ function createDuell(setup, { onEvent } = {}) {
         break;
       case "faehigkeit":
         faehigkeitStarten(k, zug.id, zug.ziel);
-        break;
-      case "wiederbeleben":
-        wiederbeleben(k, zug.ziel);
         break;
       case "kraft":
         if (k.team === "rot") {
@@ -21836,7 +21788,6 @@ function createDuell(setup, { onEvent } = {}) {
       energie: x.s.energie,
       defense: x.s.defense,
       ko: x.s.ko,
-      wiederbelebt: x.s.wiederbelebt,
       status: { ...x.s.status },
       gesperrt: gesperrt(x),
       kraftBereit: x.s.kraftBereit,
@@ -21862,8 +21813,6 @@ function createDuell(setup, { onEvent } = {}) {
       teamTreffer: Object.fromEntries(Object.entries(letzterTreffer[k.team]).map(([ziel, t]) => [ziel, { von: t.von, vor: state.zeit - t.zeit }])),
       gedaechtnis: kiTeam[k.team],
       zielWahlPartner: k.partnerId ? kaempfer.get(k.partnerId)?.zielWahl ?? null : null,
-      wiederbelebKosten: DUELL.wiederbelebung.kosten,
-      wiederbelebMax: DUELL.wiederbelebung.proSpieler,
       patience: k.patience,
       sparen: k.ki
     };
@@ -21964,8 +21913,6 @@ function createDuell(setup, { onEvent } = {}) {
         return karteSpielen(k, Number(a.hand), a.karte, a.ziel);
       case "kraft":
         return kraftEinsetzen(k, a.ziel);
-      case "wiederbeleben":
-        return wiederbeleben(k, a.ziel);
       default:
         return { ok: false, grund: "unbekannt" };
     }
@@ -22024,7 +21971,6 @@ function zustandAus(state) {
       st: Object.fromEntries(Object.entries(s.status).map(([n, v]) => [n, r2(v)])),
       ss: r2(s.sperrSchutz),
       ko: s.ko,
-      wb: s.wiederbelebt,
       kr: r2(s.kraft),
       kb: s.kraftBereit,
       an: s.ansage ? { ...s.ansage, rest: r2(s.ansage.rest) } : null,
@@ -22055,7 +22001,6 @@ function zustandUebernehmen(spiegel, z) {
     s.status = { ...w.st };
     s.sperrSchutz = w.ss;
     s.ko = w.ko;
-    s.wiederbelebt = w.wb;
     s.kraft = w.kr;
     s.kraftBereit = w.kb;
     s.ansage = w.an;
@@ -23077,7 +23022,6 @@ async function duellBelohnung({ matchId, ende, ich, setup }, { wuerfeln = Math.r
   if (sieg) d.statistik.siege += 1;
   else d.statistik.niederlagen += 1;
   d.statistik.kombos += meine.kombos ?? 0;
-  d.statistik.wiederbelebt += meine.wiederbelebt ?? 0;
   if (sieg && boss) d.statistik.bosse += 1;
   if (sieg && ende.teamKo === 0) d.statistik.makellos += 1;
   statErhoehen("schaden", meine.schaden ?? 0);
@@ -23589,7 +23533,6 @@ var duellScreen = {
             </span>
             <span class="duell-plakette__ziel" aria-hidden="true">💚</span>
           </button>`).join("")}
-        <button class="btn btn--small duell-wiederbeleben" id="btn-wiederbeleben" type="button" data-klang="keiner" hidden>💖 Wiederbeleben · ${DUELL.wiederbelebung.kosten}⚡</button>
       </section>
 
       <section class="wert-leiste">
@@ -23611,7 +23554,6 @@ var duellScreen = {
       energieText: screen.querySelector("#energie-text"),
       energieLeiste: screen.querySelector(".wert-leiste"),
       battlefield: screen.querySelector(".battlefield"),
-      wiederbeleben: screen.querySelector("#btn-wiederbeleben"),
       signale: screen.querySelector("#signale"),
       netz: screen.querySelector("#netz")
     };
@@ -23711,7 +23653,7 @@ var duellScreen = {
     for (const id of ids) {
       platz[id].el.addEventListener("click", () => id.startsWith("g") ? zielGegnerSetzen(id) : zielFreundSetzen(id));
     }
-    const cache = { k: {}, hand: -1, energie: -1, kartenEnergie: -1, gesperrt: null, ziel: null, kraft: -1, kraftBereit: null, band: null, netz: null, wb: null, ende: false };
+    const cache = { k: {}, hand: -1, energie: -1, kartenEnergie: -1, gesperrt: null, ziel: null, kraft: -1, kraftBereit: null, band: null, netz: null, ende: false };
     let letzteHand = null;
     let karten = [];
     let handGesperrt = false;
@@ -23903,7 +23845,6 @@ var duellScreen = {
     }
     function partnerZeichnen(k) {
       const p = k[partnerId];
-      const me = k[ich];
       const t = tafel[partnerId];
       const steu = p.steuerung;
       const steuKey = `${steu}|${p.ko}|${p.kraftBereit}`;
@@ -23913,13 +23854,6 @@ var duellScreen = {
         t.kraft.textContent = kraft ? `${kraft.icon}${p.kraftBereit ? "✨" : ""}` : "";
         t.kraft.title = kraft ? `${kraft.name}${p.kraftBereit ? " - bereit!" : ""}` : "";
         cache.steu = steuKey;
-      }
-      const wbMoeglich = p.ko && p.wiederbelebt < DUELL.wiederbelebung.proSpieler && !me.ko && !sitzung.matchState().ende;
-      const wbKey = `${wbMoeglich}|${me.energie >= DUELL.wiederbelebung.kosten}`;
-      if (wbKey !== cache.wb) {
-        ui.wiederbeleben.hidden = !wbMoeglich;
-        ui.wiederbeleben.disabled = me.energie < DUELL.wiederbelebung.kosten;
-        cache.wb = wbKey;
       }
     }
     function bandZeichnen() {
@@ -23939,10 +23873,6 @@ var duellScreen = {
         }
       }
     }
-    ui.wiederbeleben.addEventListener("click", () => {
-      const r = sitzung.aktion({ typ: "wiederbeleben", ziel: partnerId });
-      if (!r.ok) blitz(ui.wiederbeleben, "shake");
-    });
     let zahlen = 0;
     function name(id) {
       if (id === ich) return "Du";
@@ -24095,19 +24025,12 @@ var duellScreen = {
           break;
         }
         case "ko":
-          ui.log.textContent = e.ziel === ich ? "💤 Du bist kampfunfähig - dein Teamkamerad kann dich wiederbeleben!" : `💤 ${name(e.ziel)} ist kampfunfähig!`;
+          ui.log.textContent = e.ziel === ich ? "💤 Du bist kampfunfähig - dein Teamkamerad kämpft allein weiter!" : `💤 ${name(e.ziel)} ist kampfunfähig!`;
           spieleKlang("niederlage");
           break;
         case "besiegt":
           blase(e.ziel, "💥 Besiegt!", "duell-blase--gut");
           ui.log.textContent = `${name(e.ziel)} ist besiegt!`;
-          break;
-        case "wiederbelebt":
-          blitz(platz[e.ziel].sprite, "heal");
-          trefferFunke(platz[e.ziel].sprite, "#7ee06a", sparsam ? 4 : 14);
-          zahl(e.ziel, `+${e.hp}`, "heal", true);
-          spieleKlang("wiederbelebung");
-          ui.log.textContent = `💖 ${name(e.von)} belebt ${e.ziel === ich ? "dich" : name(e.ziel)} wieder!`;
           break;
         case "phase":
           banner2("PHASE 2", "duell-banner--phase");

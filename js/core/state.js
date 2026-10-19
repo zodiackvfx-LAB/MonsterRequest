@@ -133,7 +133,7 @@ function neuerDuellStand() {
     bossTruheDatum: null, // Tag, an dem es die Boss-Duell-Truhe gab
     besteSterne: {}, // { "welt-grad": Sterne }
     wahl: null, // zuletzt gewählte Welt/Gegner/Schwierigkeit in der Lobby
-    statistik: { kaempfe: 0, siege: 0, niederlagen: 0, kombos: 0, wiederbelebt: 0, bosse: 0, makellos: 0 },
+    statistik: { kaempfe: 0, siege: 0, niederlagen: 0, kombos: 0, bosse: 0, makellos: 0 },
   };
 }
 

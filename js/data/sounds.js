@@ -150,13 +150,6 @@ export const KLAENGE = {
     ton('triangle', 1175, 1568, 0.3, 0.16, { start: 0.16 }),
   ],
 
-  // Wiederbelebung: ein weicher Bogen nach oben.
-  wiederbelebung: [
-    ton('sine', 392, 784, 0.45, 0.24, { anstieg: 0.05 }),
-    ton('triangle', 523, 1047, 0.5, 0.14, { start: 0.08, anstieg: 0.06 }),
-    ton('sine', 1568, 2093, 0.35, 0.06, { start: 0.3, anstieg: 0.08 }),
-  ],
-
   // Team-Signal: kurzes, freundliches Ploppen.
   signal: [ton('sine', 880, 1320, 0.08, 0.2), ton('sine', 1320, 1320, 0.06, 0.12, { start: 0.07 })],
 

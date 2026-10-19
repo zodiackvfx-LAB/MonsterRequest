@@ -149,8 +149,8 @@ export function createFighter(monster, { zufall = Math.random } = {}) {
 
   /**
    * Energie ausgeben oder abziehen (negativ) bzw. zurückgeben (positiv) -
-   * nie über 10, nie unter 0. Genutzt im 2v2: Rollen-Fähigkeiten und
-   * Wiederbeleben kosten Energie, manche Effekte entziehen welche.
+   * nie über 10, nie unter 0. Genutzt im 2v2: Rollen-Fähigkeiten kosten
+   * Energie, manche Effekte entziehen welche.
    */
   function energieAendern(menge) {
     genaueEnergie += menge;

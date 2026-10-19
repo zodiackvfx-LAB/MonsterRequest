@@ -150,7 +150,6 @@ export const duellScreen = {
             </span>
             <span class="duell-plakette__ziel" aria-hidden="true">💚</span>
           </button>`).join('')}
-        <button class="btn btn--small duell-wiederbeleben" id="btn-wiederbeleben" type="button" data-klang="keiner" hidden>💖 Wiederbeleben · ${DUELL.wiederbelebung.kosten}⚡</button>
       </section>
 
       <section class="wert-leiste">
@@ -173,7 +172,6 @@ export const duellScreen = {
       energieText: screen.querySelector('#energie-text'),
       energieLeiste: screen.querySelector('.wert-leiste'),
       battlefield: screen.querySelector('.battlefield'),
-      wiederbeleben: screen.querySelector('#btn-wiederbeleben'),
       signale: screen.querySelector('#signale'),
       netz: screen.querySelector('#netz'),
     };
@@ -287,7 +285,7 @@ export const duellScreen = {
     }
 
     /* ---------- 3. Anzeige ---------- */
-    const cache = { k: {}, hand: -1, energie: -1, kartenEnergie: -1, gesperrt: null, ziel: null, kraft: -1, kraftBereit: null, band: null, netz: null, wb: null, ende: false };
+    const cache = { k: {}, hand: -1, energie: -1, kartenEnergie: -1, gesperrt: null, ziel: null, kraft: -1, kraftBereit: null, band: null, netz: null, ende: false };
     let letzteHand = null;
     let karten = [];
     let handGesperrt = false;
@@ -495,7 +493,6 @@ export const duellScreen = {
 
     function partnerZeichnen(k) {
       const p = k[partnerId];
-      const me = k[ich];
       const t = tafel[partnerId];
       const steu = p.steuerung;
       const steuKey = `${steu}|${p.ko}|${p.kraftBereit}`;
@@ -505,13 +502,6 @@ export const duellScreen = {
         t.kraft.textContent = kraft ? `${kraft.icon}${p.kraftBereit ? '✨' : ''}` : '';
         t.kraft.title = kraft ? `${kraft.name}${p.kraftBereit ? ' - bereit!' : ''}` : '';
         cache.steu = steuKey;
-      }
-      const wbMoeglich = p.ko && p.wiederbelebt < DUELL.wiederbelebung.proSpieler && !me.ko && !sitzung.matchState().ende;
-      const wbKey = `${wbMoeglich}|${me.energie >= DUELL.wiederbelebung.kosten}`;
-      if (wbKey !== cache.wb) {
-        ui.wiederbeleben.hidden = !wbMoeglich;
-        ui.wiederbeleben.disabled = me.energie < DUELL.wiederbelebung.kosten;
-        cache.wb = wbKey;
       }
     }
 
@@ -532,11 +522,6 @@ export const duellScreen = {
         }
       }
     }
-
-    ui.wiederbeleben.addEventListener('click', () => {
-      const r = sitzung.aktion({ typ: 'wiederbeleben', ziel: partnerId });
-      if (!r.ok) blitz(ui.wiederbeleben, 'shake');
-    });
 
     /* ---------- 4. Ereignisse: Animation, Klang, Log ---------- */
     let zahlen = 0;
@@ -700,19 +685,12 @@ export const duellScreen = {
           break;
         }
         case 'ko':
-          ui.log.textContent = e.ziel === ich ? '💤 Du bist kampfunfähig - dein Teamkamerad kann dich wiederbeleben!' : `💤 ${name(e.ziel)} ist kampfunfähig!`;
+          ui.log.textContent = e.ziel === ich ? '💤 Du bist kampfunfähig - dein Teamkamerad kämpft allein weiter!' : `💤 ${name(e.ziel)} ist kampfunfähig!`;
           spieleKlang('niederlage');
           break;
         case 'besiegt':
           blase(e.ziel, '💥 Besiegt!', 'duell-blase--gut');
           ui.log.textContent = `${name(e.ziel)} ist besiegt!`;
-          break;
-        case 'wiederbelebt':
-          blitz(platz[e.ziel].sprite, 'heal');
-          trefferFunke(platz[e.ziel].sprite, '#7ee06a', sparsam ? 4 : 14);
-          zahl(e.ziel, `+${e.hp}`, 'heal', true);
-          spieleKlang('wiederbelebung');
-          ui.log.textContent = `💖 ${name(e.von)} belebt ${e.ziel === ich ? 'dich' : name(e.ziel)} wieder!`;
           break;
         case 'phase':
           banner('PHASE 2', 'duell-banner--phase');

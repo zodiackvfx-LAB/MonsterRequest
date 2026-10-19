@@ -754,15 +754,6 @@
   filter: grayscale(1) brightness(0.65);
 }
 
-.duell-wiederbeleben {
-  grid-column: 1 / -1;
-  min-height: 46px;
-  color: #fff;
-  border-color: rgba(12, 18, 48, 0.4);
-  background: linear-gradient(180deg, #ffb0d8, #ff6ab0 45%, #d43585);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 4px 0 #8f1f57, 0 0 16px rgba(255, 106, 176, 0.5);
-  animation: kraft-bereit 1.2s ease-in-out infinite;
-}
 
 /* ---------- Die Arena mit vier Plätzen ---------- */
 .duell-arena {
@@ -1208,9 +1199,6 @@
     display: none;
   }
 
-  .duell-wiederbeleben {
-    min-height: 36px;
-  }
 
   .duell-arena {
     --sprite: 50px;

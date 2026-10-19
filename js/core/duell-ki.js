@@ -240,19 +240,12 @@ export function kiZug(sicht, { grad, partnerKi = false, zufall = Math.random, ki
 
 /**
  * Die verbündete KI: hilft, statt zu glänzen. Sie folgt Team-Signalen und
- * dem Ziel ihres menschlichen Partners, belebt ihn wieder, heilt ihn, wenn
- * es eng wird, und spielt sonst solide - etwas langsamer und fehlerhafter
+ * dem Ziel ihres menschlichen Partners, heilt ihn, wenn es eng wird, und spielt sonst solide - etwas langsamer und fehlerhafter
  * als ein aufmerksamer Mensch (siehe KI_PARTNER in js/data/duell.js).
  */
 function partnerZug(sicht, ich, { zufall, kiPartner }) {
-  const partner = finde(sicht, sicht.partner);
   const gegner = feinde(sicht);
   if (gegner.length === 0) return null;
-
-  // 1. Partner wiederbeleben.
-  if (partner?.ko && partner.wiederbelebt < sicht.wiederbelebMax && ich.energie >= sicht.wiederbelebKosten) {
-    return { typ: 'wiederbeleben', ziel: partner.id };
-  }
 
   // Ziel: Signal > Ziel des Partners > wer gerade etwas ankündigt > der Schwächste.
   const signal = sicht.gedaechtnis?.signalBis > sicht.zeit ? finde(sicht, sicht.gedaechtnis.signalZiel) : null;
@@ -261,7 +254,7 @@ function partnerZug(sicht, ich, { zufall, kiPartner }) {
   const schwaechster = [...gegner].sort((a, b) => anteil(a) - anteil(b))[0];
   const ziel = [signal, vomPartner, ankuender, schwaechster].find((z) => z && !z.ko && z.team !== sicht.team);
 
-  // 2. Boss-Kraft einsetzen, sobald sie bereit ist.
+  // Boss-Kraft einsetzen, sobald sie bereit ist.
   if (sicht.kraftBereit) return { typ: 'kraft', ziel: ziel?.id ?? null };
 
   const optionen = [];

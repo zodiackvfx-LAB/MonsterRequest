@@ -15,7 +15,7 @@
  * Neu im 2v2:
  *   - Ziele: ein Gegner, beide Gegner, man selbst, der Teamkamerad ...
  *   - Team-Kombo: beide treffen denselben Gegner kurz nacheinander
- *   - Kampfunfähig und Wiederbeleben
+ *   - Kampfunfähig: wer auf 0 LP fällt, ist bis zum Kampfende draußen
  *   - Status-Effekte (verlangsamt, geschwächt, verstärkt, Gift, Brand, Sperren)
  *   - Gegner-Rollen mit Fähigkeiten und angekündigten Spezialangriffen
  *   - Boss-Duell mit Phase 2
@@ -82,7 +82,6 @@ export function createDuell(setup, { onEvent } = {}) {
       status: {}, // name -> Restsekunden
       sperrSchutz: 0,
       ko: false,
-      wiederbelebt: 0,
       kraftId: def.kraft ?? null,
       kraft: 0, // 0..1 Ladung der Boss-Kraft
       kraftBereit: false,
@@ -110,7 +109,7 @@ export function createDuell(setup, { onEvent } = {}) {
       denkTimer: 0.6 + index * 0.35,
       ki: { sparenAb: null },
       zielWahl: null, // zuletzt gewähltes Ziel eines Menschen (für den KI-Ersatz)
-      statistik: { schaden: 0, geheilt: 0, teamHeilung: 0, kombos: 0, besiegt: 0, ko: 0, karten: 0, wiederbelebt: 0 },
+      statistik: { schaden: 0, geheilt: 0, teamHeilung: 0, kombos: 0, besiegt: 0, ko: 0, karten: 0 },
     };
     kaempfer.set(def.id, k);
     reihenfolge.push(k);
@@ -577,23 +576,6 @@ export function createDuell(setup, { onEvent } = {}) {
     return { ok: true };
   }
 
-  function wiederbeleben(k, zielId) {
-    const ziel = kaempfer.get(zielId);
-    if (!ziel || ziel.team !== k.team || ziel.id === k.id) return { ok: false, grund: 'ungueltig' };
-    if (!ziel.s.ko) return { ok: false, grund: 'nicht-kampfunfaehig' };
-    if (ziel.s.wiederbelebt >= DUELL.wiederbelebung.proSpieler) return { ok: false, grund: 'schon-wiederbelebt' };
-    if (!k.fighter.canAfford(DUELL.wiederbelebung.kosten)) return { ok: false, grund: 'zu-wenig-energie' };
-    k.fighter.energieAendern(-DUELL.wiederbelebung.kosten);
-    ziel.s.ko = false;
-    ziel.s.wiederbelebt += 1;
-    ziel.s.hp = Math.max(1, Math.round(ziel.s.maxHp * DUELL.wiederbelebung.leben));
-    ziel.s.shield = 0;
-    k.statistik.wiederbelebt += 1;
-    k.statistik.teamHeilung += ziel.s.hp;
-    emit({ typ: 'wiederbelebt', von: k.id, ziel: ziel.id, hp: ziel.s.hp });
-    return { ok: true };
-  }
-
   /** Startet eine Fähigkeit eines Gegners (Energie wird sofort bezahlt). */
   function faehigkeitStarten(k, id, zielId) {
     const f = FAEHIGKEITEN[id];
@@ -615,7 +597,6 @@ export function createDuell(setup, { onEvent } = {}) {
     switch (zug.typ) {
       case 'karte': karteSpielen(k, zug.hand, k.s.hand[zug.hand], zug.ziel); break;
       case 'faehigkeit': faehigkeitStarten(k, zug.id, zug.ziel); break;
-      case 'wiederbeleben': wiederbeleben(k, zug.ziel); break;
       case 'kraft':
         if (k.team === 'rot') {
           // Der Boss kündigt seine Kraft an - man kann reagieren.
@@ -650,7 +631,6 @@ export function createDuell(setup, { onEvent } = {}) {
       energie: x.s.energie,
       defense: x.s.defense,
       ko: x.s.ko,
-      wiederbelebt: x.s.wiederbelebt,
       status: { ...x.s.status },
       gesperrt: gesperrt(x),
       kraftBereit: x.s.kraftBereit,
@@ -678,8 +658,6 @@ export function createDuell(setup, { onEvent } = {}) {
       teamTreffer: Object.fromEntries(Object.entries(letzterTreffer[k.team]).map(([ziel, t]) => [ziel, { von: t.von, vor: state.zeit - t.zeit }])),
       gedaechtnis: kiTeam[k.team],
       zielWahlPartner: k.partnerId ? kaempfer.get(k.partnerId)?.zielWahl ?? null : null,
-      wiederbelebKosten: DUELL.wiederbelebung.kosten,
-      wiederbelebMax: DUELL.wiederbelebung.proSpieler,
       patience: k.patience,
       sparen: k.ki,
     };
@@ -796,7 +774,7 @@ export function createDuell(setup, { onEvent } = {}) {
    * @param {string} vonId - die Figur, die handelt ('p1' oder 'p2'). Wer
    *        welche Figur steuern darf, entscheidet die Sitzung - hier wird
    *        nur geprüft, dass es eine Spielerfigur ist.
-   * @param {object} a - { aktionId, typ: 'karte'|'kraft'|'wiederbeleben', hand, karte, ziel }
+   * @param {object} a - { aktionId, typ: 'karte'|'kraft', hand, karte, ziel }
    * @returns {{ok: boolean, grund?: string}}
    */
   function aktion(vonId, a = {}) {
@@ -819,7 +797,6 @@ export function createDuell(setup, { onEvent } = {}) {
     switch (a.typ) {
       case 'karte': return karteSpielen(k, Number(a.hand), a.karte, a.ziel);
       case 'kraft': return kraftEinsetzen(k, a.ziel);
-      case 'wiederbeleben': return wiederbeleben(k, a.ziel);
       default: return { ok: false, grund: 'unbekannt' };
     }
   }
@@ -897,7 +874,6 @@ export function zustandAus(state) {
       st: Object.fromEntries(Object.entries(s.status).map(([n, v]) => [n, r2(v)])),
       ss: r2(s.sperrSchutz),
       ko: s.ko,
-      wb: s.wiederbelebt,
       kr: r2(s.kraft),
       kb: s.kraftBereit,
       an: s.ansage ? { ...s.ansage, rest: r2(s.ansage.rest) } : null,
@@ -934,7 +910,6 @@ export function zustandUebernehmen(spiegel, z) {
     s.status = { ...w.st };
     s.sperrSchutz = w.ss;
     s.ko = w.ko;
-    s.wiederbelebt = w.wb;
     s.kraft = w.kr;
     s.kraftBereit = w.kb;
     s.ansage = w.an;

@@ -8,7 +8,7 @@
  *
  * Grundsatz: Es gelten dieselben Kampfregeln wie im Abenteuer (8 Karten im
  * Deck, 4 auf der Hand, höchstens 10 Energie, 1 Energie pro Sekunde, Krits,
- * Boss-Kräfte). Neu sind nur Ziele, Team-Kombos, Wiederbeleben und die
+ * Boss-Kräfte). Neu sind nur Ziele, Team-Kombos, Kampfunfähigkeit und die
  * Rollen der Gegner.
  */
 
@@ -29,13 +29,6 @@ export const DUELL = {
    * endlose Kette entstehen. Für das Gegnerteam gilt dieselbe Regel.
    */
   kombo: { fenster: 2.0, bonus: 0.1, cooldown: 8 },
-
-  /**
-   * Wiederbeleben: Der Teamkamerad zahlt `kosten` Energie aus SEINEM Vorrat.
-   * Jeder Spieler kann pro Kampf höchstens einmal wiederbelebt werden und
-   * kommt mit `leben` Anteil seiner Lebenspunkte zurück.
-   */
-  wiederbelebung: { kosten: 3, leben: 0.35, proSpieler: 1 },
 
   /**
    * Flächenkarten treffen beide Gegner, jeden mit diesem Anteil des

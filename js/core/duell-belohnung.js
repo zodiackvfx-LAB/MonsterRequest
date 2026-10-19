@@ -128,7 +128,6 @@ export async function duellBelohnung({ matchId, ende, ich, setup }, { wuerfeln =
   if (sieg) d.statistik.siege += 1;
   else d.statistik.niederlagen += 1;
   d.statistik.kombos += meine.kombos ?? 0;
-  d.statistik.wiederbelebt += meine.wiederbelebt ?? 0;
   if (sieg && boss) d.statistik.bosse += 1;
   if (sieg && ende.teamKo === 0) d.statistik.makellos += 1;
   statErhoehen('schaden', meine.schaden ?? 0);

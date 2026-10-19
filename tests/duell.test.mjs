@@ -4,7 +4,7 @@
  *     node tests/duell.test.mjs
  *
  * Geprüft werden die Regeln (eigene Energie, eigene Decks, Ziele, Team-Kombo,
- * Wiederbeleben, Sieg und Niederlage), die KI, und der Online-Koop: Zwei
+ * Kampfunfähigkeit, Sieg und Niederlage), die KI, und der Online-Koop: Zwei
  * echte Sitzungen sprechen über eine Leitung im Arbeitsspeicher miteinander
  * - mit absichtlichen Verbindungsabbrüchen.
  */
@@ -90,7 +90,7 @@ console.log('\nDaten');
     DUELL_GRADE.every((g, i) => i === 0 || (g.fehler <= DUELL_GRADE[i - 1].fehler && g.reaktion <= DUELL_GRADE[i - 1].reaktion)));
   pruefe('Kombo-Werte zentral: 10 % Bonus, 8 s Abklingzeit', DUELL.kombo.bonus === 0.1 && DUELL.kombo.cooldown === 8);
   pruefe('Fünf Team-Signale', SIGNALE.length === 5);
-  pruefe('Neue Klänge sind eingetragen', ['teamKombo', 'wiederbelebung', 'signal', 'ansage', 'unterbrochen', 'bossPhase'].every((k) => KLAENGE[k]));
+  pruefe('Neue Klänge sind eingetragen', ['teamKombo', 'signal', 'ansage', 'unterbrochen', 'bossPhase'].every((k) => KLAENGE[k]));
   pruefe('Empfohlenes Team-Level steigt mit der Welt',
     WORLDS.every((w, i) => i === 0 || aufbau.empfohlenesLevel(w.id) >= aufbau.empfohlenesLevel(WORLDS[i - 1].id)));
 }
@@ -244,7 +244,7 @@ console.log('\nTeam-Kombo');
 }
 
 /* ===================================================================== */
-console.log('\nKampfunfähig und Wiederbeleben');
+console.log('\nKampfunfähig');
 {
   const { d, ereignisse } = ruhigerKampf();
   warte(d, 10);
@@ -262,20 +262,8 @@ console.log('\nKampfunfähig und Wiederbeleben');
   pruefe('Kampfunfähige können nichts spielen', d.aktion('p2', { typ: 'karte', hand: 0, ziel: 'g1' }).grund === 'kampfunfaehig');
 
   warte(d, 10);
-  const vorher = d.kaempfer('p1').energie;
-  const r = d.aktion('p1', { typ: 'wiederbeleben', ziel: 'p2' });
-  pruefe('Wiederbeleben klappt', r.ok && !p2.ko);
-  pruefe('...kostet 3 Energie des Helfers', d.kaempfer('p1').energie === vorher - 3);
-  pruefe('...mit begrenzten Lebenspunkten', p2.hp === Math.round(p2.maxHp * DUELL.wiederbelebung.leben));
-  pruefe('Ereignis "wiederbelebt" für die Animation', ereignisse.some((e) => e.typ === 'wiederbelebt'));
-
-  // Nur einmal pro Spieler und Kampf.
-  p2.hp = 1;
-  d.kaempfer('g1').steuerung = 'gegnerKi';
-  for (let t = 0; t < 400 && !p2.ko; t++) d.schritt(0.1);
-  d.kaempfer('g1').steuerung = 'leer';
-  warte(d, 5);
-  pruefe('Ein zweites Mal geht nicht', d.aktion('p1', { typ: 'wiederbeleben', ziel: 'p2' }).grund === 'schon-wiederbelebt');
+  pruefe('Wiederbeleben gibt es nicht', !d.aktion('p1', { typ: 'wiederbeleben', ziel: 'p2' }).ok && p2.ko);
+  pruefe('Kampfunfähige bleiben draußen und laden keine Energie', d.kaempfer('p2').hp === 0 && d.kaempfer('p2').ko);
 
   // Niederlage, wenn beide fallen.
   const p1 = d.kaempfer('p1');
@@ -284,7 +272,7 @@ console.log('\nKampfunfähig und Wiederbeleben');
   d.kaempfer('g2').steuerung = 'gegnerKi';
   for (let t = 0; t < 600 && !d.state.ende; t++) d.schritt(0.1);
   pruefe('Beide kampfunfähig: Niederlage', d.state.ende?.ergebnis === 'niederlage');
-  pruefe('Im verlorenen Kampf kann niemand mehr wiederbeleben', d.aktion('p1', { typ: 'wiederbeleben', ziel: 'p2' }).grund === 'vorbei');
+  pruefe('Nach dem Ende ist nichts mehr spielbar', d.aktion('p1', { typ: 'karte', hand: 0, ziel: 'g1' }).grund === 'vorbei');
 }
 
 /* ===================================================================== */
@@ -503,10 +491,13 @@ async function laufen(sitzungen, sekunden, schritt = 0.05) {
   // Kampf beenden und Belohnung (Test 16).
   he.kaempfer('g1').hp = 1;
   he.kaempfer('g2').hp = 1;
-  await laufen([host, gast], 0.2);
-  he.aktion('p1', { typ: 'karte', hand: schadenKarte(he, 'p1'), ziel: 'g1' });
-  await laufen([host, gast], 0.2);
-  he.aktion('p1', { typ: 'karte', hand: Math.max(0, schadenKarte(he, 'p1')), ziel: 'g2' });
+  // Spieler 1 spielt, bis beide Gegner fallen (wartet bei Bedarf auf Energie).
+  for (let t = 0; t < 40 && !he.state.ende; t++) {
+    const ziel = he.kaempfer('g1').ko ? 'g2' : 'g1';
+    const hand = schadenKarte(he, 'p1');
+    if (hand >= 0) he.aktion('p1', { typ: 'karte', hand, ziel });
+    await laufen([host, gast], 0.5);
+  }
   await laufen([host, gast], 6);
   pruefe('Sieg auf beiden Geräten', host.info.phase === 'ergebnis' && gast.info.phase === 'ergebnis' && gast.info.ergebnis?.ende?.ergebnis === he.state.ende?.ergebnis);
   // Erneut verbinden nach dem Ende: keine zweite Belohnung.
@@ -573,7 +564,7 @@ console.log('\nBelohnung');
 {
   resetProgress();
   const setup = aufbau.duellSetup({ matchId: 'belohnung-1', welt: 3, profile: [profil('timo'), profil('rocco')] });
-  const ende = { ergebnis: 'sieg', teamAnteil: 0.8, teamKo: 0, statistik: { p1: { schaden: 300, kombos: 2, teamHeilung: 30, karten: 12, wiederbelebt: 0 } } };
+  const ende = { ergebnis: 'sieg', teamAnteil: 0.8, teamKo: 0, statistik: { p1: { schaden: 300, kombos: 2, teamHeilung: 30, karten: 12 } } };
   const vorher = { coins: gameState.coins, trophaeen: gameState.trophaeen, gratis: gameState.gratisTruheZaehler, truhen: gameState.truhenPlaetze.filter(Boolean).length };
   const b1 = await duellBelohnung({ matchId: 'belohnung-1', ende, ich: 'p1', setup }, { server: null, wuerfeln: () => 0.1 });
   pruefe('Sieg bringt Münzen und Erfahrung', b1.stuecke.some((s) => s.art === 'muenzen' && s.menge > 0) && gameState.coins > vorher.coins);

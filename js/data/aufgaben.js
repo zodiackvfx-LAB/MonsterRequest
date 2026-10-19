@@ -152,7 +152,7 @@ export const DUELL_AUFGABEN = [
     id: 'duell-heilen-60',
     icon: '💚',
     name: 'Sanitäter',
-    text: 'Heile im 2v2 deinen Teamkameraden um 60 LP (Wiederbeleben zählt mit).',
+    text: 'Heile im 2v2 deinen Teamkameraden um 60 LP.',
     typ: 'teamHeilung',
     ziel: 60,
     muenzen: 250,

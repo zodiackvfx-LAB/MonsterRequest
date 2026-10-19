@@ -99,7 +99,7 @@ js/
     truhenplaetze.js    Die 4 Truhenplätze: Freischalten, Sofort-Öffnen
     zeittruhen.js       Tägliche Gratis-Truhen (Holz und Gold, je einmal am Tag)
     trophaeen.js        Trophäen gewinnen und verlieren
-    duell.js            2v2: Kampfregeln (Ziele, Kombo, Wiederbeleben, Rollen)
+    duell.js            2v2: Kampfregeln (Ziele, Kombo, Kampfunfähig, Rollen)
     duell-ki.js         2v2: KI der Gegner und der KI-Partnerin
     duell-aufbau.js     2v2: Profile prüfen, Gegner aufstellen, Team-Ausgleich
     duell-sitzung.js    2v2: Lobby und Match (solo, Gastgeber, Gast)
@@ -260,9 +260,8 @@ Spieler getrennt:
 * **Team-Kombo:** Trefft ihr denselben Gegner innerhalb von 2 Sekunden, gibt
   es 10 % Bonus auf den zweiten Treffer, danach 8 Sekunden Pause fürs Team.
   Gift, Brand und der Bonus selbst lösen nie eine Kombo aus.
-* **Kampfunfähig & Wiederbeleben:** Wer auf 0 LP fällt, ist raus – der andere
-  kämpft weiter und kann ihn einmal pro Kampf für **3 eigene Energie** mit
-  35 % LP zurückholen. Fallen beide, ist der Kampf verloren.
+* **Kampfunfähig:** Wer auf 0 LP fällt, ist bis zum Kampfende raus – der
+  andere kämpft allein weiter. Fallen beide, ist der Kampf verloren.
 * **Team-Signale** (💬): „Greif links an!“, „Greif rechts an!“, „Ich brauche
   Hilfe!“, „Team-Kombo!“, „Guter Angriff!“ – die KI-Partnerin hört darauf.
 
@@ -299,7 +298,7 @@ Gratis-Truhen-Zählung; nach 6 Siegen am Tag gibt es nur noch 30 %. Täglich
 kommt eine **2v2-Bonusaufgabe** zu den drei normalen Aufgaben, dazu zwei
 Erfolge (Teamgeist, Kombo-Meister).
 
-**Alle Werte** (Kombo, Wiederbeleben, Rollen, Fähigkeiten, Gegnerpaare je
+**Alle Werte** (Kombo, Rollen, Fähigkeiten, Gegnerpaare je
 Welt, Grade, Belohnungen, Netzwerk-Fristen) stehen in `js/data/duell.js`.
 
 ### So funktioniert der Online-Koop
