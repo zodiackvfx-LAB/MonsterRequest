@@ -267,15 +267,18 @@ export const duellScreen = {
     let zielGegner = 'g1';
     let zielFreund = ich;
 
+    // Die Markierung erscheint sofort beim Tippen, nicht erst im nächsten Bild.
     function zielGegnerSetzen(id) {
       zielGegner = id;
       cache.ziel = null;
       spieleKlang('tipp');
+      render();
     }
     function zielFreundSetzen(id) {
       zielFreund = id;
       cache.ziel = null;
       spieleKlang('tipp');
+      render();
     }
     screen.querySelectorAll('[data-ziel]').forEach((el) => el.addEventListener('click', () => zielGegnerSetzen(el.dataset.ziel)));
     screen.querySelectorAll('[data-freund]').forEach((el) => el.addEventListener('click', () => zielFreundSetzen(el.dataset.freund)));
