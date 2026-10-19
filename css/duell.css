@@ -1222,3 +1222,37 @@
     font-size: 1.2rem;
   }
 }
+
+/* ---------- Freund in die eigene Lobby einladen ---------- */
+.duell-freunde__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.duell-freunde__eintrag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.duell-freunde__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.duell-freunde__name small {
+  color: var(--text-dim);
+  font-weight: 400;
+}

@@ -103,6 +103,7 @@ js/
     duell-ki.js         2v2: KI der Gegner und der KI-Partnerin
     duell-aufbau.js     2v2: Profile prüfen, Gegner aufstellen, Team-Ausgleich
     duell-sitzung.js    2v2: Lobby und Match (solo, Gastgeber, Gast)
+    freunde.js          Freunde: Liste, Anfragen, 2v2-Einladungen, Onlinestatus
     duell-belohnung.js  2v2: Belohnungen genau einmal
     netz.js             Echtzeit-Leitung (Supabase Realtime / Tabs / Tests)
     zufall.js           Wiederholbarer Zufall aus einem Startwert
@@ -128,6 +129,7 @@ js/
     collection.js       Sammlung aller Kreaturen
     settings.js         Einstellungen
     duell-lobby.js      2v2-Lobby (Code, Team, Welt, Schwierigkeit, Bereit)
+    freunde.js          👥 Freunde: Freundes-ID, Liste, Anfragen, Hinzufügen
     duell.js            2v2-Arena (vier Figuren, Ziele, Hand, Ergebnis)
 ```
 
@@ -344,6 +346,35 @@ Kampf. Um Mitternacht (Uhrzeit des Geräts) liegen die nächsten bereit. Sie
 belegen keinen Truhenplatz und öffnen sich direkt; nicht abgeholte Truhen
 stapeln sich nicht. Einstellbar in `ZEIT_TRUHEN` (`js/data/shop.js`).
 
+### 👥 Freunde
+
+Oben in der Spielerleiste sitzt der Knopf **👥** (mit roter Zahl, wenn
+Anfragen oder Einladungen warten). Dort gibt es:
+
+- **Deine Freundes-ID** (z. B. `MQ-58291`) – die gibst du Freunden.
+- **Meine Freunde** – Name, Level, Figur, Skin und Onlinestatus
+  (🟢 Online, 🟡 Im Kampf, ⚫ Offline; Online-Freunde stehen oben), dazu
+  „⚔️ Zum 2v2 einladen“ und „Entfernen“.
+- **Anfragen** – erhaltene annehmen oder ablehnen, gesendete zurückziehen.
+- **Hinzufügen** – Freundes-ID eingeben, suchen, Anfrage senden.
+
+**Zum 2v2 einladen** öffnet die eigene 2v2-Lobby und schickt dem Freund
+eine Einladung mit dem Einladungscode. Er bekommt ein Fenster mit
+„Annehmen“/„Ablehnen“ und tritt beim Annehmen über genau diesen Code bei –
+es ist dieselbe Lobby wie beim Code von Hand. Der Einladungscode zum
+Kopieren und Teilen funktioniert unverändert weiter. In der eigenen Lobby
+steht außerdem die Liste „👥 Freund einladen“, solange Platz 2 frei ist.
+
+Einladungen gelten 5 Minuten und lassen sich nur einmal annehmen. Während
+eines Kampfes erscheint keine Einladung – sie wartet bis danach.
+
+Die Freundes-ID ist nur zum Suchen da: Wer sie kennt, kommt damit an
+keinen Spielstand heran. Gespeichert wird alles in der Datenbank (siehe
+`datenbank/schema.sql`, Abschnitt „Freunde“) – Freunde bleiben also auch
+nach einem Gerätewechsel oder einem übertragenen Spielstand erhalten. Ohne
+Netz gibt es keine neuen Anfragen und Einladungen; alles andere, auch das
+Solo-2v2 mit KI-Partner, läuft weiter.
+
 ---
 
 ## Das Deck des Spielers
@@ -455,6 +486,15 @@ selbst – du brauchst dafür kein Konto und keine Einrichtung:
 
 ```bash
 node tests/datenbank.test.mjs
+```
+
+Die Freundesliste hat einen Browser-Test mit zwei Spielern auf zwei
+„Geräten“ (Anfragen, Annehmen, Ablehnen, Entfernen, 2v2-Einladung,
+Einladungscode, offline). Er startet die Testdatenbank selbst und braucht
+Playwright:
+
+```bash
+node tests/freunde-browser.test.mjs
 ```
 
 Wenn du an `data/` oder `core/` etwas änderst, lohnt sich ein Durchlauf –

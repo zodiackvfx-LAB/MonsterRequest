@@ -2388,6 +2388,65 @@ body.no-animations *::after {
   100% { opacity: 0; }
 }
 
+/* ---------- Freunde-Knopf in der Spielerleiste ---------- */
+.hud__freunde {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  padding: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+  background: linear-gradient(180deg, #2a3c7d 0%, var(--fantasy-tief) 100%);
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 10px rgba(10, 16, 44, 0.4);
+}
+
+.hud__freunde:active {
+  transform: translateY(2px);
+}
+
+.hud__freunde-zahl {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--danger);
+  border: 2px solid var(--panel-solid);
+}
+
+.hud__freunde-zahl[hidden] {
+  display: none;
+}
+
+/* Auf der Weltkarte ist rechts schon wenig Platz - Freunde gibt es im Menü. */
+.screen--map .hud__freunde {
+  display: none;
+}
+
+/* Die 2v2-Einladung liegt über jedem Bildschirm. */
+.overlay--einladung {
+  position: fixed;
+  z-index: 70;
+}
+
+.einladung .freund__bild {
+  width: 88px;
+  height: 88px;
+}
+
 /* ===== css/screens.css ===== */
 /* =========================================================================
    MonsterQuest · screens.css
@@ -4914,6 +4973,153 @@ body.no-animations *::after {
 
 .fighter-bar__variante {
   margin-left: 6px;
+}
+
+/* ---------- 👥 Freunde ---------- */
+.freunde-ich {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.freunde-ich__text {
+  display: grid;
+}
+
+.freunde-ich__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.freunde-ich__id {
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  color: var(--gold-1);
+}
+
+.freunde__tabs {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.freunde__zahl {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  color: #fff;
+  background: var(--danger);
+}
+
+.freunde__unter {
+  margin-top: 14px;
+}
+
+.freunde__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.freund {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+}
+
+.freund--online {
+  border-color: rgba(126, 224, 106, 0.45);
+}
+
+.freund--kampf {
+  border-color: rgba(255, 197, 61, 0.45);
+}
+
+.freund--offline {
+  opacity: 0.85;
+}
+
+.freund__bild {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+}
+
+.freund__bild img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.freund__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.freund__name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.freund__info,
+.freund__status {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.freund__knoepfe {
+  display: grid;
+  gap: 6px;
+  justify-items: stretch;
+}
+
+.freund__knoepfe .btn {
+  white-space: nowrap;
+}
+
+.freund--gefunden {
+  grid-template-columns: 52px minmax(0, 1fr);
+  margin: 10px 0;
+}
+
+.freunde__meldung {
+  margin-top: 8px;
+}
+
+/* Schmale Handys: Knöpfe unter den Namen statt daneben. */
+@media (max-width: 420px) {
+  .freund {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .freund__knoepfe {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .freund__knoepfe .btn:only-child {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ===== css/erlebnis.css ===== */
@@ -9183,6 +9389,40 @@ body.no-animations *::after {
   }
 }
 
+/* ---------- Freund in die eigene Lobby einladen ---------- */
+.duell-freunde__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.duell-freunde__eintrag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.duell-freunde__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.duell-freunde__name small {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
   </style>
 </head>
 <body>
@@ -13073,6 +13313,10 @@ async function cloudDuellBelohnung(matchId, daten = {}) {
     return null;
   }
 }
+async function cloudFreunde(name, parameter = {}) {
+  if (!cloudAktiv()) throw new Error("Keine Datenbank eingetragen");
+  return rufe(name, { ...parameter, p_id: spielerId() });
+}
 function cloudEreignisse() {
   if (!cloudAktiv()) return;
   addEventListener("pagehide", () => {
@@ -13395,9 +13639,9 @@ function truhenUebernehmen(saved) {
     else gameState.truhenWarteschlange.push(id);
   });
 }
-function eigeneOutfitsPruefen(liste) {
-  if (!Array.isArray(liste)) return [];
-  return liste.filter((e) => e && typeof e.id === "string" && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === "object").slice(0, 8).map((e) => ({
+function eigeneOutfitsPruefen(liste2) {
+  if (!Array.isArray(liste2)) return [];
+  return liste2.filter((e) => e && typeof e.id === "string" && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === "object").slice(0, 8).map((e) => ({
     id: e.id,
     name: String(e.name ?? "").trim().slice(0, 20) || "Mein Outfit",
     seltenheit: ["gewoehnlich", "selten", "episch", "legendaer"].includes(e.seltenheit) ? e.seltenheit : "episch",
@@ -13412,7 +13656,7 @@ function rezeptPruefen(rezept) {
     const n = Number(wert);
     return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : standard;
   };
-  const auswahl = (wert, liste, standard) => typeof wert === "string" && Object.hasOwn(liste, wert) ? wert : standard;
+  const auswahl = (wert, liste2, standard) => typeof wert === "string" && Object.hasOwn(liste2, wert) ? wert : standard;
   return {
     kleidung: farbe2(r.kleidung),
     helligkeit: zahl(r.helligkeit, -0.2, 0.2, 0),
@@ -14004,6 +14248,10 @@ function tonEinstellungenAnwenden() {
 var screens = /* @__PURE__ */ new Map();
 var rootElement = null;
 var currentScreen = null;
+var currentName = null;
+function aktuellerScreenName() {
+  return currentName;
+}
 function initScreens(element) {
   rootElement = element;
 }
@@ -14034,6 +14282,7 @@ function showScreen(name, params = {}) {
   musikStarten(typeof screen.musik === "function" ? screen.musik(params) : screen.musik ?? "menue");
   rootElement.innerHTML = "";
   currentScreen = screen;
+  currentName = name;
   screen.mount(rootElement, params);
   const neu = rootElement.querySelector(":scope > .screen");
   if (neu && !document.body.classList.contains("no-animations")) {
@@ -14935,6 +15184,387 @@ function attackeAufLevel(attacke, level) {
   };
 }
 
+// js/core/netz.js
+var HERZSCHLAG_MS = 25e3;
+var WIEDERHOLEN_MS = [500, 1e3, 2e3, 4e3, 8e3];
+function netzArt() {
+  try {
+    if (typeof location !== "undefined" && new URLSearchParams(location.search).get("netz") === "lokal") {
+      return typeof BroadcastChannel === "function" ? "lokal" : null;
+    }
+  } catch {
+  }
+  if (CLOUD.url && CLOUD.schluessel && typeof WebSocket === "function") return "supabase";
+  return null;
+}
+function geraetOnline() {
+  return typeof navigator === "undefined" || navigator.onLine !== false;
+}
+function raumOeffnen(raum, { art = netzArt(), bus = null } = {}) {
+  if (art === "supabase") return supabaseRaum(raum);
+  if (art === "lokal") return lokalerRaum(raum);
+  if (art === "speicher") return speicherRaum(raum, bus);
+  throw new Error("Keine Online-Verbindung möglich");
+}
+function grundgeruest() {
+  const empfaenger = /* @__PURE__ */ new Set();
+  const statusHoerer = /* @__PURE__ */ new Set();
+  let status2 = "verbinde";
+  return {
+    empfangen(nachricht) {
+      if (!nachricht || typeof nachricht !== "object" || typeof nachricht.typ !== "string") return;
+      empfaenger.forEach((fn) => {
+        try {
+          fn(nachricht);
+        } catch (fehler) {
+          console.warn("Nachricht nicht verarbeitet:", fehler);
+        }
+      });
+    },
+    setzeStatus(neu) {
+      if (neu === status2) return;
+      status2 = neu;
+      statusHoerer.forEach((fn) => fn(status2));
+    },
+    schnittstelle(senden2, schliessen) {
+      return {
+        senden: senden2,
+        an(fn) {
+          empfaenger.add(fn);
+          return () => empfaenger.delete(fn);
+        },
+        get status() {
+          return status2;
+        },
+        beobachten(fn) {
+          statusHoerer.add(fn);
+          return () => statusHoerer.delete(fn);
+        },
+        schliessen
+      };
+    }
+  };
+}
+function supabaseRaum(raum) {
+  const g = grundgeruest();
+  const thema = `realtime:${raum}`;
+  const adresse = `${CLOUD.url.replace(/^http/, "ws")}/realtime/v1/websocket?apikey=${encodeURIComponent(CLOUD.schluessel)}&vsn=1.0.0`;
+  let ws = null;
+  let ref = 0;
+  let joinRef = null;
+  let herz = null;
+  let versuch = 0;
+  let zu = false;
+  let wiederTimer = null;
+  function roh(nachricht) {
+    if (ws?.readyState !== 1) return false;
+    ws.send(JSON.stringify({ ...nachricht, ref: String(++ref) }));
+    return true;
+  }
+  function verbinden() {
+    if (zu) return;
+    g.setzeStatus("verbinde");
+    try {
+      ws = new WebSocket(adresse);
+    } catch {
+      planeNeu();
+      return;
+    }
+    ws.onopen = () => {
+      joinRef = String(++ref);
+      ws.send(JSON.stringify({
+        topic: thema,
+        event: "phx_join",
+        payload: { config: { broadcast: { self: false, ack: false }, presence: { key: "" }, private: false } },
+        ref: joinRef,
+        join_ref: joinRef
+      }));
+      herz = setInterval(() => roh({ topic: "phoenix", event: "heartbeat", payload: {} }), HERZSCHLAG_MS);
+    };
+    ws.onmessage = (ereignis) => {
+      let n;
+      try {
+        n = JSON.parse(ereignis.data);
+      } catch {
+        return;
+      }
+      if (n.topic !== thema) return;
+      if (n.event === "phx_reply" && n.ref === joinRef) {
+        if (n.payload?.status === "ok") {
+          versuch = 0;
+          g.setzeStatus("verbunden");
+        } else {
+          g.setzeStatus("fehler");
+          ws.close();
+        }
+      } else if (n.event === "broadcast" && n.payload?.type === "broadcast") {
+        g.empfangen({ ...n.payload.payload, typ: n.payload.event });
+      } else if (n.event === "phx_error" || n.event === "phx_close") {
+        ws.close();
+      }
+    };
+    ws.onclose = () => {
+      clearInterval(herz);
+      herz = null;
+      if (!zu) planeNeu();
+    };
+    ws.onerror = () => {
+    };
+  }
+  function planeNeu() {
+    g.setzeStatus("getrennt");
+    const warten = WIEDERHOLEN_MS[Math.min(versuch, WIEDERHOLEN_MS.length - 1)];
+    versuch += 1;
+    clearTimeout(wiederTimer);
+    wiederTimer = setTimeout(verbinden, warten);
+  }
+  const online = () => {
+    if (!zu && g && ws?.readyState !== 1) {
+      clearTimeout(wiederTimer);
+      versuch = 0;
+      verbinden();
+    }
+  };
+  if (typeof addEventListener === "function") addEventListener("online", online);
+  verbinden();
+  return g.schnittstelle(
+    (typ, daten = {}) => roh({ topic: thema, event: "broadcast", payload: { type: "broadcast", event: typ, payload: daten } }),
+    () => {
+      zu = true;
+      clearTimeout(wiederTimer);
+      clearInterval(herz);
+      if (typeof removeEventListener === "function") removeEventListener("online", online);
+      try {
+        roh({ topic: thema, event: "phx_leave", payload: {} });
+        ws?.close();
+      } catch {
+      }
+      g.setzeStatus("zu");
+    }
+  );
+}
+function lokalerRaum(raum) {
+  const g = grundgeruest();
+  const kanal = new BroadcastChannel(raum);
+  kanal.onmessage = (ereignis) => g.empfangen(ereignis.data);
+  setTimeout(() => g.setzeStatus("verbunden"), 50);
+  return g.schnittstelle(
+    (typ, daten = {}) => {
+      kanal.postMessage({ ...daten, typ });
+      return true;
+    },
+    () => {
+      kanal.close();
+      g.setzeStatus("zu");
+    }
+  );
+}
+function speicherRaum(raum, bus) {
+  if (!bus) throw new Error("speicherRaum braucht einen Bus (speicherBus())");
+  const g = grundgeruest();
+  if (!bus.raeume.has(raum)) bus.raeume.set(raum, /* @__PURE__ */ new Set());
+  const teilnehmer = bus.raeume.get(raum);
+  const ich = {
+    online: true,
+    zustellen(nachricht) {
+      if (ich.online) g.empfangen(nachricht);
+    }
+  };
+  teilnehmer.add(ich);
+  queueMicrotask(() => g.setzeStatus("verbunden"));
+  const schnitt = g.schnittstelle(
+    (typ, daten = {}) => {
+      if (!ich.online) return false;
+      bus.gesendet += 1;
+      const text = JSON.stringify({ ...daten, typ });
+      teilnehmer.forEach((t) => {
+        if (t !== ich) queueMicrotask(() => t.zustellen(JSON.parse(text)));
+      });
+      return true;
+    },
+    () => {
+      teilnehmer.delete(ich);
+      g.setzeStatus("zu");
+    }
+  );
+  schnitt.trennen = () => {
+    ich.online = false;
+    g.setzeStatus("getrennt");
+  };
+  schnitt.verbinden = () => {
+    ich.online = true;
+    g.setzeStatus("verbunden");
+  };
+  return schnitt;
+}
+
+// js/core/freunde.js
+var NACHFRAGEN_MS = 15e3;
+var BEKANNT_KEY = "monsterquest.freunde.bekannt";
+var KAMPF_SCREENS = ["battle", "duell"];
+var zustand = cloudAktiv() ? "laedt" : "aus";
+var lage = null;
+var laufend = null;
+var uhr2 = null;
+var beobachter = /* @__PURE__ */ new Set();
+var melder = /* @__PURE__ */ new Set();
+function freundeMoeglich() {
+  return cloudAktiv();
+}
+function freundeZustand() {
+  if (!cloudAktiv()) return "aus";
+  if (!geraetOnline()) return "offline";
+  return zustand;
+}
+function freundeLage() {
+  return lage;
+}
+function freundeBeobachten(fn) {
+  beobachter.add(fn);
+  return () => beobachter.delete(fn);
+}
+function freundeMeldungen(fn) {
+  melder.add(fn);
+  return () => melder.delete(fn);
+}
+function offeneAnzahl() {
+  return (lage?.erhalten.length ?? 0) + (lage?.einladungen.length ?? 0);
+}
+function freundeSortiert(liste2 = lage?.freunde ?? []) {
+  const rang = { online: 0, kampf: 1, offline: 2 };
+  return [...liste2].sort((a, b) => (rang[a.status] ?? 2) - (rang[b.status] ?? 2) || a.name.localeCompare(b.name, "de"));
+}
+function kennungPruefen(eingabe) {
+  const ziffern = String(eingabe ?? "").toUpperCase().replace(/^\s*MQ/, "").replace(/[\s-]/g, "");
+  return /^[0-9]{5,7}$/.test(ziffern) ? `MQ-${ziffern}` : null;
+}
+async function rufe2(name, parameter) {
+  try {
+    return await cloudFreunde(name, parameter);
+  } catch (fehler) {
+    if (!String(fehler?.message).includes("kein_spielstand")) throw fehler;
+    saveProgress();
+    await cloudJetztSenden();
+    return cloudFreunde(name, parameter);
+  }
+}
+function freundeAktualisieren() {
+  if (!cloudAktiv() || !geraetOnline()) return Promise.resolve(lage);
+  if (laufend) return laufend;
+  const ichBin = KAMPF_SCREENS.includes(aktuellerScreenName()) ? "kampf" : "online";
+  laufend = rufe2("mq_freunde", { p_zustand: ichBin }).then((antwort) => {
+    if (!antwort || typeof antwort !== "object") throw new Error("Leere Antwort");
+    const neu = {
+      kennung: String(antwort.kennung ?? ""),
+      freunde: liste(antwort.freunde),
+      erhalten: liste(antwort.erhalten),
+      gesendet: liste(antwort.gesendet),
+      einladungen: liste(antwort.einladungen).filter((e) => typeof e.id === "string" && typeof e.code === "string"),
+      antworten: liste(antwort.antworten)
+    };
+    neuigkeitenMelden(neu);
+    lage = neu;
+    zustand = "bereit";
+    return lage;
+  }).catch((fehler) => {
+    zustand = fehler?.status === 404 ? "fehlt" : "fehler";
+    if (fehler?.status !== 404) console.warn("Freunde nicht geladen:", fehler);
+    return lage;
+  }).finally(() => {
+    laufend = null;
+    beobachter.forEach((fn) => {
+      try {
+        fn(lage);
+      } catch (fehler) {
+        console.warn("Freunde-Beobachter:", fehler);
+      }
+    });
+  });
+  return laufend;
+}
+function liste(wert) {
+  return Array.isArray(wert) ? wert.filter((e) => e && typeof e.kennung === "string" && typeof e.name === "string") : [];
+}
+function bekanntLesen() {
+  try {
+    const gemerkt = JSON.parse(localStorage.getItem(BEKANNT_KEY));
+    if (gemerkt && Array.isArray(gemerkt.erhalten) && Array.isArray(gemerkt.freunde)) return gemerkt;
+  } catch {
+  }
+  return null;
+}
+var selbstAngenommen = /* @__PURE__ */ new Set();
+function neuigkeitenMelden(neu) {
+  const bekannt = bekanntLesen();
+  const meldungen = [];
+  if (bekannt) {
+    neu.erhalten.filter((p) => !bekannt.erhalten.includes(p.kennung)).forEach((profil) => meldungen.push({ art: "anfrage", profil }));
+    neu.freunde.filter((p) => !bekannt.freunde.includes(p.kennung) && !selbstAngenommen.has(p.kennung)).forEach((profil) => meldungen.push({ art: "angenommen", profil }));
+  }
+  neu.antworten.forEach((profil) => meldungen.push({ art: profil.angenommen ? "einladung_angenommen" : "einladung_abgelehnt", profil }));
+  selbstAngenommen.clear();
+  try {
+    localStorage.setItem(BEKANNT_KEY, JSON.stringify({
+      erhalten: neu.erhalten.map((p) => p.kennung),
+      freunde: neu.freunde.map((p) => p.kennung)
+    }));
+  } catch {
+  }
+  meldungen.forEach((m) => melder.forEach((fn) => {
+    try {
+      fn(m);
+    } catch (fehler) {
+      console.warn("Freunde-Meldung:", fehler);
+    }
+  }));
+}
+async function undNeuLaden(ergebnis) {
+  await freundeAktualisieren();
+  return ergebnis;
+}
+async function freundSuchen(kennung) {
+  const sauber = kennungPruefen(kennung);
+  if (!sauber) return null;
+  const profil = await rufe2("mq_freund_suchen", { p_kennung: sauber });
+  return profil && typeof profil === "object" && profil.kennung ? profil : null;
+}
+async function anfrageSenden(kennung) {
+  const sauber = kennungPruefen(kennung);
+  if (!sauber) return "unbekannt";
+  return undNeuLaden(await rufe2("mq_anfrage_senden", { p_kennung: sauber }));
+}
+async function anfrageAntworten(kennung, annehmen) {
+  if (annehmen) selbstAngenommen.add(kennung);
+  return undNeuLaden(await rufe2("mq_anfrage_antworten", { p_kennung: kennung, p_annehmen: Boolean(annehmen) }));
+}
+async function anfrageZurueckziehen(kennung) {
+  return undNeuLaden(await rufe2("mq_anfrage_zurueckziehen", { p_kennung: kennung }));
+}
+async function freundEntfernen(kennung) {
+  return undNeuLaden(await rufe2("mq_freund_entfernen", { p_kennung: kennung }));
+}
+async function einladungSenden(kennung, code) {
+  return rufe2("mq_einladung_senden", { p_kennung: kennung, p_code: code });
+}
+async function einladungAntworten(id, annehmen) {
+  const antwort = await rufe2("mq_einladung_antworten", { p_einladung: id, p_annehmen: Boolean(annehmen) });
+  if (lage) lage = { ...lage, einladungen: lage.einladungen.filter((e) => e.id !== id) };
+  freundeAktualisieren();
+  return typeof antwort === "string" ? antwort : null;
+}
+function freundeStarten() {
+  if (!cloudAktiv() || uhr2) return;
+  const tick = () => {
+    if (typeof document !== "undefined" && document.hidden) return;
+    if (zustand === "fehlt") return;
+    freundeAktualisieren();
+  };
+  uhr2 = setInterval(tick, NACHFRAGEN_MS);
+  setTimeout(tick, 2500);
+  addEventListener("online", tick);
+  document.addEventListener("visibilitychange", tick);
+}
+
 // js/ui/hud.js
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (z) => ({
@@ -14969,6 +15599,10 @@ function createHud() {
       </span>
     </div>
     <div class="hud__rechts">
+      ${freundeMoeglich() ? `<button class="hud__freunde" type="button" aria-label="Freunde">
+        <span aria-hidden="true">👥</span>
+        <span class="hud__freunde-zahl" data-freunde-zahl ${offeneAnzahl() ? "" : "hidden"}>${offeneAnzahl() > 9 ? "9+" : offeneAnzahl()}</span>
+      </button>` : ""}
       <button class="hud__trophaeen" type="button" style="--liga-farbe:${ligaVon(gameState.trophaeen).farbe}"
               aria-label="${gameState.trophaeen} Trophäen - Rangliste öffnen">
         <span class="hud__trophaeen-icon" aria-hidden="true">🏆</span>
@@ -14982,6 +15616,7 @@ function createHud() {
   `;
   hud.querySelector(".hud__avatar").appendChild(createSprite(starter));
   hud.querySelector(".hud__trophaeen").addEventListener("click", () => showScreen("rangliste"));
+  hud.querySelector(".hud__freunde")?.addEventListener("click", () => showScreen("freunde"));
   return hud;
 }
 function createTopbar(title, onBack) {
@@ -15222,16 +15857,16 @@ function freischaltenStarten(index, jetzt = Date.now()) {
   return true;
 }
 function sofortPreis(index, jetzt = Date.now()) {
-  const { zustand, truhe, rest, dauer } = platzZustand(index, jetzt);
-  if (zustand === "leer" || zustand === "bereit") return 0;
+  const { zustand: zustand2, truhe, rest, dauer } = platzZustand(index, jetzt);
+  if (zustand2 === "leer" || zustand2 === "bereit") return 0;
   const wert = SOFORT_WERT[truhe.id] ?? truhe.preis ?? 0;
   const anteil2 = dauer > 0 ? rest / dauer : 0;
   return Math.max(SOFORT_MINDESTPREIS, Math.ceil(wert * anteil2));
 }
 function truheAusPlatz(index, { sofort = false, jetzt = Date.now() } = {}) {
-  const { zustand, truhe } = platzZustand(index, jetzt);
-  if (zustand === "leer") return null;
-  if (zustand !== "bereit") {
+  const { zustand: zustand2, truhe } = platzZustand(index, jetzt);
+  if (zustand2 === "leer") return null;
+  if (zustand2 !== "bereit") {
     if (!sofort) return null;
     const preis = sofortPreis(index, jetzt);
     if (gameState.coins < preis) return null;
@@ -15290,20 +15925,20 @@ function alleZeitTruhen(jetzt = Date.now()) {
   return ZEIT_TRUHEN.map(({ id }) => zeitTruheZustand(id, jetzt));
 }
 function zeitTruheAbholen(id, jetzt = Date.now()) {
-  const zustand = zeitTruheZustand(id, jetzt);
-  if (!zustand?.bereit) return null;
+  const zustand2 = zeitTruheZustand(id, jetzt);
+  if (!zustand2?.bereit) return null;
   if (!gameState.zeitTruhen || typeof gameState.zeitTruhen !== "object") gameState.zeitTruhen = {};
   gameState.zeitTruhen[id] = naechsteMitternacht(jetzt);
   saveProgress();
-  return zustand.truhe;
+  return zustand2.truhe;
 }
 
 // js/core/loot.js
 function zwischen(min, max) {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
-function zufall(liste) {
-  return liste[Math.floor(Math.random() * liste.length)];
+function zufall(liste2) {
+  return liste2[Math.floor(Math.random() * liste2.length)];
 }
 function wuerfleSeltenheit(chancen) {
   const summe = Object.values(chancen).reduce((a, b) => a + b, 0);
@@ -15366,8 +16001,8 @@ function muenzStueck() {
   const seltenheit = menge >= 400 ? "episch" : menge >= 250 ? "selten" : "gewoehnlich";
   return { art: "muenzen", seltenheit, menge, name: `${menge} Münzen`, icon: MUENZE };
 }
-function mischen(liste) {
-  const kopie2 = [...liste];
+function mischen(liste2) {
+  const kopie2 = [...liste2];
   for (let i = kopie2.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [kopie2[i], kopie2[j]] = [kopie2[j], kopie2[i]];
@@ -15760,6 +16395,27 @@ function banner(erfolg) {
     el.classList.remove("is-shown");
     setTimeout(() => el.remove(), 400);
   }, 2600);
+}
+function zeigeHinweisToast({ icon, label, text }) {
+  const el = document.createElement("div");
+  el.className = "erfolg-toast";
+  el.setAttribute("role", "status");
+  el.innerHTML = `
+    <span class="erfolg-toast__icon"></span>
+    <span class="erfolg-toast__body">
+      <span class="erfolg-toast__label"></span>
+      <span class="erfolg-toast__name"></span>
+    </span>
+  `;
+  el.querySelector(".erfolg-toast__icon").textContent = icon;
+  el.querySelector(".erfolg-toast__label").textContent = label;
+  el.querySelector(".erfolg-toast__name").textContent = text;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("is-shown"));
+  setTimeout(() => {
+    el.classList.remove("is-shown");
+    setTimeout(() => el.remove(), 400);
+  }, 3200);
 }
 
 // js/data/modi.js
@@ -16321,13 +16977,13 @@ function modusGegner(modus) {
 }
 function modusLevel(modus) {
   const def = MODI[modus.id];
-  const liste = modusGegner(modus);
-  const gegner = liste[modus.schritt - 1];
+  const liste2 = modusGegner(modus);
+  const gegner = liste2[modus.schritt - 1];
   if (!def || !gegner) return null;
   const welt = getWorld(gegner.worldId) ?? getWorld(1);
   return {
     id: `modus-${modus.id}-${modus.schritt}`,
-    modus: { ...modus, anzahl: liste.length },
+    modus: { ...modus, anzahl: liste2.length },
     worldId: gegner.worldId,
     number: modus.schritt,
     name: gegner.name,
@@ -16337,7 +16993,7 @@ function modusLevel(modus) {
     music: welt.music,
     gegner,
     kniff: modus.id === "tages" ? tagesHerausforderung(modus.datum, modus.welt).kniff : null,
-    titel: `${def.icon} ${def.kurz}${liste.length > 1 ? ` · ${modus.schritt}/${liste.length}` : ""}`
+    titel: `${def.icon} ${def.kurz}${liste2.length > 1 ? ` · ${modus.schritt}/${liste2.length}` : ""}`
   };
 }
 function truheGeben(id) {
@@ -16432,18 +17088,18 @@ function zeigeSpielmodi(screen) {
       <div class="spielmodi__liste"></div>
     </div>
   `;
-  const liste = overlay.querySelector(".spielmodi__liste");
+  const liste2 = overlay.querySelector(".spielmodi__liste");
   SPIELMODI.forEach((modus) => {
     if (modus.vorschau === "duell") {
-      liste.appendChild(duellKarte(modus));
+      liste2.appendChild(duellKarte(modus));
       return;
     }
-    const gesperrt = modus.modus && !modusFrei(modus.modus).frei;
+    const gesperrt2 = modus.modus && !modusFrei(modus.modus).frei;
     const info = modus.modus ? modusInfo(modus.modus) : modus.info?.(gameState);
     const karte = document.createElement("button");
     karte.type = "button";
-    karte.className = `spielmodus${gesperrt ? " is-gesperrt" : ""}`;
-    if (gesperrt) karte.dataset.klang = "keiner";
+    karte.className = `spielmodus${gesperrt2 ? " is-gesperrt" : ""}`;
+    if (gesperrt2) karte.dataset.klang = "keiner";
     karte.innerHTML = `
       <span class="spielmodus__icon">${modus.icon}</span>
       <span class="spielmodus__body">
@@ -16451,17 +17107,17 @@ function zeigeSpielmodi(screen) {
         <span class="spielmodus__text">${modus.text}</span>
         ${info ? `<span class="spielmodus__info">${info}</span>` : ""}
       </span>
-      <span class="spielmodus__pfeil">${gesperrt ? "🔒" : "›"}</span>
+      <span class="spielmodus__pfeil">${gesperrt2 ? "🔒" : "›"}</span>
     `;
     karte.addEventListener("click", () => {
-      if (gesperrt) {
+      if (gesperrt2) {
         spieleKlang("gesperrt");
         return;
       }
       if (modus.modus) showScreen("battle", { modus: modusStarten(modus.modus) });
       else showScreen(modus.screen);
     });
-    liste.appendChild(karte);
+    liste2.appendChild(karte);
   });
   const schliessen = () => overlay.remove();
   overlay.querySelector(".spielmodi__zu").addEventListener("click", schliessen);
@@ -16555,31 +17211,31 @@ function truhenDialog(screen, index) {
   const overlay = document.createElement("div");
   overlay.className = "overlay overlay--truhenplatz";
   screen.appendChild(overlay);
-  let uhr2 = null;
+  let uhr3 = null;
   const schliessen = () => {
-    clearInterval(uhr2);
+    clearInterval(uhr3);
     overlay.remove();
   };
   function zeichnen() {
-    const { zustand, truhe, rest, dauer } = platzZustand(index);
-    if (zustand === "leer") return schliessen();
-    if (zustand === "bereit") {
+    const { zustand: zustand2, truhe, rest, dauer } = platzZustand(index);
+    if (zustand2 === "leer") return schliessen();
+    if (zustand2 === "bereit") {
       schliessen();
       truheOeffnen2(screen, index);
       return;
     }
     const preis = sofortPreis(index);
-    const andereLaeuft = zustand === "wartet" && freischaltenLaeuft();
+    const andereLaeuft = zustand2 === "wartet" && freischaltenLaeuft();
     const genugMuenzen = gameState.coins >= preis;
     overlay.innerHTML = `
       <div class="overlay__box truhenplatz-dialog">
         <div class="truhenplatz-dialog__truhe">${truheSvg(truhe.design)}</div>
         <h3 class="overlay__title">${truhe.name}</h3>
-        ${zustand === "laeuft" ? `<p class="truhenplatz-dialog__zeit">⏳ Offen in <strong>${restText(rest)}</strong></p>
+        ${zustand2 === "laeuft" ? `<p class="truhenplatz-dialog__zeit">⏳ Offen in <strong>${restText(rest)}</strong></p>
              <span class="truhenplatz-dialog__balken" style="--anteil:${1 - rest / dauer}"></span>` : `<p class="overlay__text">Braucht <strong>${dauerText(dauer)}</strong> zum Freischalten.</p>`}
         ${andereLaeuft ? '<p class="truhenplatz-dialog__hinweis">Es wird immer nur eine Truhe gleichzeitig freigeschaltet.</p>' : ""}
         <div class="overlay__actions">
-          ${zustand === "wartet" && !andereLaeuft ? '<button class="btn btn--big btn--green" data-aktion="starten" type="button">⏳ Freischalten starten</button>' : ""}
+          ${zustand2 === "wartet" && !andereLaeuft ? '<button class="btn btn--big btn--green" data-aktion="starten" type="button">⏳ Freischalten starten</button>' : ""}
           <button class="btn${genugMuenzen ? "" : " btn--ghost"}" data-aktion="sofort" type="button" ${genugMuenzen ? "" : "disabled"}>
             Sofort öffnen: ${MUENZE} ${preis}
           </button>
@@ -16602,8 +17258,8 @@ function truhenDialog(screen, index) {
     if (e.target === overlay) schliessen();
   });
   zeichnen();
-  uhr2 = setInterval(() => {
-    if (!overlay.isConnected) return clearInterval(uhr2);
+  uhr3 = setInterval(() => {
+    if (!overlay.isConnected) return clearInterval(uhr3);
     zeichnen();
   }, 1e3);
 }
@@ -16790,7 +17446,7 @@ var startScreen = {
     actions.className = "start__actions";
     const aufgaben = getTagesAufgaben();
     const offen2 = offeneBelohnungen();
-    const erledigt = aufgaben.filter((e) => e.fertig).length;
+    const erledigt2 = aufgaben.filter((e) => e.fertig).length;
     const aufgabenKnopf = document.createElement("button");
     aufgabenKnopf.type = "button";
     aufgabenKnopf.className = `tagesbanner${offen2 > 0 ? " is-ready" : ""}`;
@@ -16798,7 +17454,7 @@ var startScreen = {
       <span class="tagesbanner__icon">📋</span>
       <span class="tagesbanner__body">
         <span class="tagesbanner__title">Tagesaufgaben</span>
-        <span class="tagesbanner__text">${offen2 > 0 ? `${offen2} Belohnung${offen2 > 1 ? "en" : ""} abholbereit` : `${erledigt} von ${aufgaben.length} geschafft`}</span>
+        <span class="tagesbanner__text">${offen2 > 0 ? `${offen2} Belohnung${offen2 > 1 ? "en" : ""} abholbereit` : `${erledigt2} von ${aufgaben.length} geschafft`}</span>
       </span>
       ${offen2 > 0 ? `<span class="tagesbanner__punkt">${offen2}</span>` : '<span class="tagesbanner__pfeil">›</span>'}
     `;
@@ -16962,20 +17618,20 @@ var shopScreen = {
     let aktiv2 = REITER3.some((r) => r.id === params.tab) ? params.tab : "truhen";
     function zeichne() {
       reiterLeiste.innerHTML = "";
-      REITER3.forEach((reiter) => {
+      REITER3.forEach((reiter2) => {
         const knopf = document.createElement("button");
-        knopf.className = `tab${reiter.id === aktiv2 ? " is-active" : ""}`;
+        knopf.className = `tab${reiter2.id === aktiv2 ? " is-active" : ""}`;
         knopf.type = "button";
-        knopf.textContent = reiter.label;
+        knopf.textContent = reiter2.label;
         knopf.addEventListener("click", () => {
-          if (aktiv2 === reiter.id) return;
-          aktiv2 = reiter.id;
+          if (aktiv2 === reiter2.id) return;
+          aktiv2 = reiter2.id;
           zeichne();
         });
         reiterLeiste.appendChild(knopf);
       });
       content.innerHTML = "";
-      REITER3.find((reiter) => reiter.id === aktiv2).bauen(content);
+      REITER3.find((reiter2) => reiter2.id === aktiv2).bauen(content);
       content.scrollTop = 0;
     }
     zeichne();
@@ -17150,20 +17806,20 @@ var monsterScreen = {
     let aktiv2 = REITER3.some((r) => r.id === params.tab) ? params.tab : "werte";
     function zeichne() {
       reiterLeiste.innerHTML = "";
-      REITER3.forEach((reiter) => {
+      REITER3.forEach((reiter2) => {
         const knopf = document.createElement("button");
-        knopf.className = `tab${reiter.id === aktiv2 ? " is-active" : ""}`;
+        knopf.className = `tab${reiter2.id === aktiv2 ? " is-active" : ""}`;
         knopf.type = "button";
-        knopf.textContent = reiter.label;
+        knopf.textContent = reiter2.label;
         knopf.addEventListener("click", () => {
-          if (aktiv2 === reiter.id) return;
-          aktiv2 = reiter.id;
+          if (aktiv2 === reiter2.id) return;
+          aktiv2 = reiter2.id;
           zeichne();
         });
         reiterLeiste.appendChild(knopf);
       });
       content.innerHTML = "";
-      REITER3.find((reiter) => reiter.id === aktiv2).bauen(content);
+      REITER3.find((reiter2) => reiter2.id === aktiv2).bauen(content);
       content.scrollTop = 0;
     }
     zeichne();
@@ -17446,7 +18102,7 @@ var SORTIERUNGEN = [
 ];
 var nachName = (a, b) => a.name.localeCompare(b.name, "de");
 function sortiereAttacken(eintraege, art, attackeVon = (e) => e) {
-  const liste = [...eintraege];
+  const liste2 = [...eintraege];
   const vergleiche = {
     name: (a, b) => nachName(a, b),
     "kosten-auf": (a, b) => a.cost - b.cost || nachName(a, b),
@@ -17454,8 +18110,8 @@ function sortiereAttacken(eintraege, art, attackeVon = (e) => e) {
     "schaden-auf": (a, b) => schadenVergleich(a, b, 1),
     "schaden-ab": (a, b) => schadenVergleich(a, b, -1)
   }[art];
-  if (!vergleiche) return liste;
-  return liste.sort((x, y) => vergleiche(attackeVon(x), attackeVon(y)));
+  if (!vergleiche) return liste2;
+  return liste2.sort((x, y) => vergleiche(attackeVon(x), attackeVon(y)));
 }
 function schadenVergleich(a, b, richtung) {
   const aSchaden = (a.damage ?? 0) > 0;
@@ -17495,13 +18151,13 @@ var deckScreen = {
       `;
       content.appendChild(intro);
       content.appendChild(sortierLeiste());
-      const liste = document.createElement("div");
-      liste.className = "deck-list";
+      const liste2 = document.createElement("div");
+      liste2.className = "deck-list";
       const eintraege = deck.map((attackId, platz) => ({ attackId, platz, attacke: attackeMitLevel(getAttack(attackId)) }));
       sortiereAttacken(eintraege, sortierung(), (e) => e.attacke).forEach(({ attackId, platz }) => {
-        liste.appendChild(deckZeile(attackId, platz, deck));
+        liste2.appendChild(deckZeile(attackId, platz, deck));
       });
-      content.appendChild(liste);
+      content.appendChild(liste2);
       const ersatz = verfuegbareAttacken().filter((a) => !deck.includes(a.id));
       const info = document.createElement("div");
       info.className = "panel panel--tight";
@@ -17588,7 +18244,7 @@ var deckScreen = {
           </div>
         </div>
       `;
-      const liste = overlay.querySelector("#swap");
+      const liste2 = overlay.querySelector("#swap");
       auswahl.forEach((roh) => {
         const attacke = attackeMitLevel(roh);
         const imDeck = deck.includes(attacke.id);
@@ -17609,7 +18265,7 @@ var deckScreen = {
           overlay.remove();
           zeichnen();
         });
-        liste.appendChild(knopf);
+        liste2.appendChild(knopf);
       });
       overlay.querySelector("#btn-cancel").addEventListener("click", () => overlay.remove());
       screen.appendChild(overlay);
@@ -17710,21 +18366,21 @@ var collectionScreen = {
     screen.appendChild(content);
     function zeichne() {
       reiterLeiste.innerHTML = "";
-      REITER.forEach((reiter) => {
+      REITER.forEach((reiter2) => {
         const knopf = document.createElement("button");
-        knopf.className = `tab${reiter.id === aktiv2 ? " is-active" : ""}`;
+        knopf.className = `tab${reiter2.id === aktiv2 ? " is-active" : ""}`;
         knopf.type = "button";
-        knopf.textContent = reiter.label;
+        knopf.textContent = reiter2.label;
         knopf.addEventListener("click", () => {
-          if (aktiv2 === reiter.id) return;
-          aktiv2 = reiter.id;
+          if (aktiv2 === reiter2.id) return;
+          aktiv2 = reiter2.id;
           zeichne();
         });
         reiterLeiste.appendChild(knopf);
       });
       reiterLeiste.querySelector(".is-active")?.scrollIntoView({ inline: "center", block: "nearest" });
       content.innerHTML = "";
-      REITER.find((reiter) => reiter.id === aktiv2).bauen(content);
+      REITER.find((reiter2) => reiter2.id === aktiv2).bauen(content);
       content.scrollTop = 0;
     }
     zeichne();
@@ -17811,8 +18467,8 @@ function attackenBlock(titel, attacken, istBesessen) {
   block.className = "panel";
   const anzahl = attacken.filter(istBesessen).length;
   block.innerHTML = `<div class="panel__title">${titel} <span class="panel__count">${anzahl}/${attacken.length}</span></div>`;
-  const liste = document.createElement("div");
-  liste.className = "katalog";
+  const liste2 = document.createElement("div");
+  liste2.className = "katalog";
   attacken.forEach((attacke) => {
     const besessen = istBesessen(attacke);
     const seltenheit = SELTENHEITEN[attacke.seltenheit] ?? SELTENHEITEN.gewoehnlich;
@@ -17833,9 +18489,9 @@ function attackenBlock(titel, attacken, istBesessen) {
       </span>
       <span class="katalog-item__cost">${attacke.cost}</span>
     `;
-    liste.appendChild(zeile3);
+    liste2.appendChild(zeile3);
   });
-  block.appendChild(liste);
+  block.appendChild(liste2);
   return block;
 }
 function wirkungsText(attacke) {
@@ -17864,8 +18520,8 @@ function baueKraefte(content) {
   const block = document.createElement("div");
   block.className = "panel";
   block.innerHTML = `<div class="panel__title">Boss-Kräfte <span class="panel__count">${frei}/${BOSS_KRAEFTE.length}</span></div>`;
-  const liste = document.createElement("div");
-  liste.className = "katalog";
+  const liste2 = document.createElement("div");
+  liste2.className = "katalog";
   BOSS_KRAEFTE.forEach((kraft) => {
     const hat = besitztKraft(kraft.id);
     const getragen = gameState.bossPower === kraft.id;
@@ -17885,9 +18541,9 @@ function baueKraefte(content) {
         <span class="katalog-item__rarity">Welt ${kraft.welt} · ${welt?.name ?? ""} · ${art.label}</span>
       </span>
     `;
-    liste.appendChild(zeile3);
+    liste2.appendChild(zeile3);
   });
-  block.appendChild(liste);
+  block.appendChild(liste2);
   content.appendChild(block);
 }
 function baueSkins(content) {
@@ -17953,8 +18609,8 @@ function baueErfolge(content) {
   const block = document.createElement("div");
   block.className = "panel";
   block.innerHTML = `<div class="panel__title">Erfolge <span class="panel__count">${frei}/${ERFOLGE.length}</span></div>`;
-  const liste = document.createElement("div");
-  liste.className = "katalog";
+  const liste2 = document.createElement("div");
+  liste2.className = "katalog";
   ERFOLGE.forEach((erfolg) => {
     const geschafft = erfolgFrei(erfolg.id) || erfolgErreicht(erfolg);
     const wert = Math.min(erfolg.wert(), erfolg.ziel);
@@ -17976,9 +18632,9 @@ function baueErfolge(content) {
         </span>
       </span>
     `;
-    liste.appendChild(zeile3);
+    liste2.appendChild(zeile3);
   });
-  block.appendChild(liste);
+  block.appendChild(liste2);
   content.appendChild(block);
 }
 function zaehler(html) {
@@ -18050,20 +18706,20 @@ var settingsScreen = {
     function zeichne() {
       melderAbmelden();
       reiterLeiste.innerHTML = "";
-      REITER2.forEach((reiter) => {
+      REITER2.forEach((reiter2) => {
         const knopf = document.createElement("button");
-        knopf.className = `tab${reiter.id === aktiv2 ? " is-active" : ""}`;
+        knopf.className = `tab${reiter2.id === aktiv2 ? " is-active" : ""}`;
         knopf.type = "button";
-        knopf.textContent = reiter.label;
+        knopf.textContent = reiter2.label;
         knopf.addEventListener("click", () => {
-          if (aktiv2 === reiter.id) return;
-          aktiv2 = reiter.id;
+          if (aktiv2 === reiter2.id) return;
+          aktiv2 = reiter2.id;
           zeichne();
         });
         reiterLeiste.appendChild(knopf);
       });
       content.innerHTML = "";
-      REITER2.find((reiter) => reiter.id === aktiv2).bauen(content, screen, zeichne);
+      REITER2.find((reiter2) => reiter2.id === aktiv2).bauen(content, screen, zeichne);
       content.scrollTop = 0;
     }
     zeichne();
@@ -18271,12 +18927,12 @@ function spielstandBlock() {
   const block = document.createElement("div");
   block.className = "panel";
   block.innerHTML = '<div class="panel__title">Spielstand</div>';
-  const zustand = document.createElement("p");
-  zustand.className = "setting-row__hint";
-  zustand.id = "cloud-zustand";
-  block.appendChild(zustand);
+  const zustand2 = document.createElement("p");
+  zustand2.className = "setting-row__hint";
+  zustand2.id = "cloud-zustand";
+  block.appendChild(zustand2);
   if (!cloudAktiv()) {
-    zustand.textContent = STATUS_TEXT.aus;
+    zustand2.textContent = STATUS_TEXT.aus;
     const hinweis = document.createElement("p");
     hinweis.className = "setting-row__hint";
     hinweis.style.marginTop = "6px";
@@ -18285,7 +18941,7 @@ function spielstandBlock() {
     return block;
   }
   abmelden = cloudBeobachten((status2) => {
-    zustand.textContent = STATUS_TEXT[status2] ?? status2;
+    zustand2.textContent = STATUS_TEXT[status2] ?? status2;
   });
   const raus = document.createElement("div");
   raus.className = "setting-row";
@@ -18474,14 +19130,14 @@ var lobbyScreen = {
     const GLEIT_MS = 300;
     let gleitTimer = null;
     const bewegt = () => !document.body.classList.contains("no-animations");
-    function lage(seite, versatz, zug = 0, sichtbar = true) {
+    function lage2(seite, versatz, zug = 0, sichtbar = true) {
       const el = seite.behaelter;
       el.style.visibility = sichtbar ? "visible" : "hidden";
       el.style.transform = versatz === 0 && zug === 0 ? "none" : `translate3d(calc(${versatz * 100}% + ${zug}px), 0, 0)`;
     }
     function ruhen(index) {
       seitenBereich.classList.remove("ist-gleitend");
-      seiten.forEach((seite, i) => lage(seite, i - index, 0, i === index));
+      seiten.forEach((seite, i) => lage2(seite, i - index, 0, i === index));
     }
     function gleiten(von, nach, zug = 0) {
       clearTimeout(gleitTimer);
@@ -18493,14 +19149,14 @@ var lobbyScreen = {
       const richtung = Math.sign(nach - von) || Math.sign(-zug) || 1;
       seitenBereich.classList.remove("ist-gleitend");
       seiten.forEach((seite, i) => {
-        if (i === von) lage(seite, 0, zug, true);
-        else if (i === nach) lage(seite, richtung, zug, true);
-        else lage(seite, 0, 0, false);
+        if (i === von) lage2(seite, 0, zug, true);
+        else if (i === nach) lage2(seite, richtung, zug, true);
+        else lage2(seite, 0, 0, false);
       });
       void seitenBereich.offsetWidth;
       seitenBereich.classList.add("ist-gleitend");
-      if (von !== nach) lage(seiten[von], -richtung, 0, true);
-      lage(seiten[nach], 0, 1e-4, true);
+      if (von !== nach) lage2(seiten[von], -richtung, 0, true);
+      lage2(seiten[nach], 0, 1e-4, true);
       gleitTimer = setTimeout(() => ruhen(nach), GLEIT_MS + 30);
     }
     function blaettern(index) {
@@ -18534,7 +19190,7 @@ var lobbyScreen = {
       ziehen.dx = amRand ? dx * 0.25 : dx;
       seiten.forEach((seite, i) => {
         const versatz = i - aktiv2;
-        lage(seite, versatz, ziehen.dx, Math.abs(versatz) <= 1);
+        lage2(seite, versatz, ziehen.dx, Math.abs(versatz) <= 1);
       });
     });
     function loslassen(event) {
@@ -18551,7 +19207,7 @@ var lobbyScreen = {
       if (ziel === aktiv2) {
         if (bewegt()) {
           seitenBereich.classList.add("ist-gleitend");
-          seiten.forEach((seite, i) => lage(seite, i - aktiv2, 1e-4, Math.abs(i - aktiv2) <= 1));
+          seiten.forEach((seite, i) => lage2(seite, i - aktiv2, 1e-4, Math.abs(i - aktiv2) <= 1));
           gleitTimer = setTimeout(() => ruhen(aktiv2), GLEIT_MS + 30);
         } else {
           ruhen(aktiv2);
@@ -19490,7 +20146,7 @@ function spieleKampfIntro(screen, { gegner, sprite, fertig }) {
   const buehne = sprite.parentElement;
   const kamera = screen.querySelector(".battlefield");
   const timer = [];
-  let erledigt = false;
+  let erledigt2 = false;
   if (!animationenAn3()) {
     fertig();
     return () => {
@@ -19532,8 +20188,8 @@ function spieleKampfIntro(screen, { gegner, sprite, fertig }) {
     schleier.remove();
   }
   function beenden() {
-    if (erledigt) return;
-    erledigt = true;
+    if (erledigt2) return;
+    erledigt2 = true;
     abschluss();
     fertig();
   }
@@ -19550,8 +20206,8 @@ function spieleKampfIntro(screen, { gegner, sprite, fertig }) {
   plan.forEach(([zeit, schritt]) => timer.push(setTimeout(schritt, zeit)));
   schleier.addEventListener("click", beenden);
   return () => {
-    if (erledigt) return;
-    erledigt = true;
+    if (erledigt2) return;
+    erledigt2 = true;
     abschluss();
   };
 }
@@ -20682,19 +21338,19 @@ var dailyScreen = {
         <p class="map__info-text">${MUENZE} ${gameState.coins} · 💠 ${gameState.materials}</p>
       `;
       content.appendChild(kopf);
-      const liste = document.createElement("div");
-      liste.className = "panel";
-      liste.innerHTML = '<div class="panel__title">Heute</div>';
-      aufgaben.forEach(({ aufgabe, stand, fertig: erledigt, abgeholt }) => {
-        liste.appendChild(aufgabenZeile(aufgabe, stand, erledigt, abgeholt, zeichnen));
+      const liste2 = document.createElement("div");
+      liste2.className = "panel";
+      liste2.innerHTML = '<div class="panel__title">Heute</div>';
+      aufgaben.forEach(({ aufgabe, stand, fertig: erledigt2, abgeholt }) => {
+        liste2.appendChild(aufgabenZeile(aufgabe, stand, erledigt2, abgeholt, zeichnen));
       });
-      content.appendChild(liste);
+      content.appendChild(liste2);
     }
     zeichnen();
     root.appendChild(screen);
   }
 };
-function aufgabenZeile(aufgabe, stand, erledigt, abgeholt, neuZeichnen) {
+function aufgabenZeile(aufgabe, stand, erledigt2, abgeholt, neuZeichnen) {
   const zeile3 = document.createElement("div");
   zeile3.className = `aufgabe${abgeholt ? " is-done" : ""}`;
   zeile3.innerHTML = `
@@ -20714,7 +21370,7 @@ function aufgabenZeile(aufgabe, stand, erledigt, abgeholt, neuZeichnen) {
     knopf.classList.add("btn--ghost");
     knopf.disabled = true;
     knopf.textContent = "Geholt";
-  } else if (erledigt) {
+  } else if (erledigt2) {
     knopf.classList.add("btn--green");
     knopf.innerHTML = `${MUENZE}&nbsp;${aufgabe.muenzen}<br>💠&nbsp;${aufgabe.material}`;
     knopf.dataset.klang = "keiner";
@@ -20790,11 +21446,11 @@ var ranglisteScreen = {
     screen.appendChild(content);
     content.appendChild(meineLiga());
     content.appendChild(ligenLeiste());
-    const liste = document.createElement("div");
-    liste.className = "panel rangliste";
-    content.appendChild(liste);
+    const liste2 = document.createElement("div");
+    liste2.className = "panel rangliste";
+    content.appendChild(liste2);
     root.appendChild(screen);
-    listeLaden(liste);
+    listeLaden(liste2);
   }
 };
 function meineLiga() {
@@ -21391,7 +22047,7 @@ function createDuell(setup, { onEvent } = {}) {
   };
   const letzterTreffer = { blau: {}, rot: {} };
   const kiTeam = { rot: { fokus: null, fokusBis: 0 }, blau: { signalZiel: null, signalBis: 0 } };
-  const erledigt = /* @__PURE__ */ new Map();
+  const erledigt2 = /* @__PURE__ */ new Map();
   function emit(ereignis) {
     state.seq += 1;
     const e = { seq: state.seq, zeit: Math.round(state.zeit * 100) / 100, ...ereignis };
@@ -21402,7 +22058,7 @@ function createDuell(setup, { onEvent } = {}) {
   const gegnerVon = (k) => reihenfolge.filter((x) => x.team !== k.team);
   const verbuendeteVon = (k) => reihenfolge.filter((x) => x.team === k.team);
   const partnerVon = (k) => k.partnerId ? kaempfer.get(k.partnerId) : null;
-  const gesperrt = (k) => (k.s.status.betaeubt ?? 0) > 0 || (k.s.status.gefroren ?? 0) > 0;
+  const gesperrt2 = (k) => (k.s.status.betaeubt ?? 0) > 0 || (k.s.status.gefroren ?? 0) > 0;
   function statusFaktor(k) {
     let f = 1;
     if (k.s.status.verstaerkt > 0) f *= STATUS.verstaerkt.faktor;
@@ -21490,7 +22146,7 @@ function createDuell(setup, { onEvent } = {}) {
   function statusSetzen(ziel, name, dauer, von = null) {
     if (!lebt(ziel) || state.ende || dauer <= 0) return false;
     const sperre = name === "betaeubt" || name === "gefroren";
-    if (sperre && (ziel.s.sperrSchutz > 0 || gesperrt(ziel))) {
+    if (sperre && (ziel.s.sperrSchutz > 0 || gesperrt2(ziel))) {
       emit({ typ: "immun", ziel: ziel.id, status: name });
       return false;
     }
@@ -21789,7 +22445,7 @@ function createDuell(setup, { onEvent } = {}) {
       defense: x.s.defense,
       ko: x.s.ko,
       status: { ...x.s.status },
-      gesperrt: gesperrt(x),
+      gesperrt: gesperrt2(x),
       kraftBereit: x.s.kraftBereit,
       ansage: x.s.ansage ? { name: x.s.ansage.name, ziel: x.s.ansage.ziel, rest: x.s.ansage.rest } : null,
       druck: x.s.druck
@@ -21836,8 +22492,8 @@ function createDuell(setup, { onEvent } = {}) {
           k.s.status[name] = neu;
         }
       }
-      if (k.s.sperrSchutz > 0 && !gesperrt(k)) k.s.sperrSchutz = Math.max(0, k.s.sperrSchutz - d);
-      if (!gesperrt(k)) {
+      if (k.s.sperrSchutz > 0 && !gesperrt2(k)) k.s.sperrSchutz = Math.max(0, k.s.sperrSchutz - d);
+      if (!gesperrt2(k)) {
         k.fighter.energieAufladen(d * (k.s.status.verlangsamt > 0 ? STATUS.verlangsamt.faktor : 1));
       }
       for (const id of Object.keys(k.pausen)) k.pausen[id] = Math.max(0, k.pausen[id] - d);
@@ -21860,7 +22516,7 @@ function createDuell(setup, { onEvent } = {}) {
       k.treffer = k.treffer.filter((t) => state.zeit - t.zeit <= DRUCK_FENSTER);
       k.s.druck = k.treffer.reduce((summe, t) => summe + t.menge, 0);
       if (k.s.ansage) {
-        if (!gesperrt(k)) k.s.ansage.rest -= d;
+        if (!gesperrt2(k)) k.s.ansage.rest -= d;
         if (k.s.ansage && k.s.ansage.rest <= 0) {
           const ansage = k.s.ansage;
           k.s.ansage = null;
@@ -21871,7 +22527,7 @@ function createDuell(setup, { onEvent } = {}) {
       }
       if (k.s.steuerung === "gegnerKi" || k.s.steuerung === "ki") {
         k.denkTimer -= d;
-        if (k.denkTimer <= 0 && !gesperrt(k)) {
+        if (k.denkTimer <= 0 && !gesperrt2(k)) {
           const partnerKi = k.s.steuerung === "ki";
           const grundZeit = partnerKi ? setup.kiPartner?.reaktion ?? 1.3 : k.reaktion * (grad.reaktion ?? 1);
           k.denkTimer = grundZeit * (0.85 + zufall2() * 0.3);
@@ -21893,11 +22549,11 @@ function createDuell(setup, { onEvent } = {}) {
     emit({ typ: "phase", phase: 2, von: boss.id, text: `${boss.s.name} wird wütend!` });
   }
   function aktion(vonId, a = {}) {
-    if (a.aktionId && erledigt.has(a.aktionId)) return { ...erledigt.get(a.aktionId), doppelt: true };
+    if (a.aktionId && erledigt2.has(a.aktionId)) return { ...erledigt2.get(a.aktionId), doppelt: true };
     const ergebnis = aktionPruefenUndAusfuehren(vonId, a);
     if (a.aktionId) {
-      erledigt.set(a.aktionId, ergebnis);
-      if (erledigt.size > 600) erledigt.delete(erledigt.keys().next().value);
+      erledigt2.set(a.aktionId, ergebnis);
+      if (erledigt2.size > 600) erledigt2.delete(erledigt2.keys().next().value);
     }
     return ergebnis;
   }
@@ -21907,7 +22563,7 @@ function createDuell(setup, { onEvent } = {}) {
     const k = kaempfer.get(vonId);
     if (!k || k.team !== "blau") return { ok: false, grund: "keine-figur" };
     if (k.s.ko) return { ok: false, grund: "kampfunfaehig" };
-    if (gesperrt(k)) return { ok: false, grund: "gesperrt" };
+    if (gesperrt2(k)) return { ok: false, grund: "gesperrt" };
     switch (a.typ) {
       case "karte":
         return karteSpielen(k, Number(a.hand), a.karte, a.ziel);
@@ -21939,7 +22595,7 @@ function createDuell(setup, { onEvent } = {}) {
     if (state.ende) return;
     state.laeuft = laeuft;
   }
-  function zustand() {
+  function zustand2() {
     return zustandAus(state);
   }
   return {
@@ -21950,7 +22606,7 @@ function createDuell(setup, { onEvent } = {}) {
     signal,
     abbrechen,
     setLaeuft,
-    zustand,
+    zustand: zustand2,
     kaempfer: (id) => kaempfer.get(id)?.s ?? null,
     handAttacken: (id) => kaempfer.get(id)?.fighter.handAttacks() ?? []
   };
@@ -22006,220 +22662,6 @@ function zustandUebernehmen(spiegel, z) {
     s.ansage = w.an;
     s.steuerung = w.steu;
   }
-}
-
-// js/core/netz.js
-var HERZSCHLAG_MS = 25e3;
-var WIEDERHOLEN_MS = [500, 1e3, 2e3, 4e3, 8e3];
-function netzArt() {
-  try {
-    if (typeof location !== "undefined" && new URLSearchParams(location.search).get("netz") === "lokal") {
-      return typeof BroadcastChannel === "function" ? "lokal" : null;
-    }
-  } catch {
-  }
-  if (CLOUD.url && CLOUD.schluessel && typeof WebSocket === "function") return "supabase";
-  return null;
-}
-function geraetOnline() {
-  return typeof navigator === "undefined" || navigator.onLine !== false;
-}
-function raumOeffnen(raum, { art = netzArt(), bus = null } = {}) {
-  if (art === "supabase") return supabaseRaum(raum);
-  if (art === "lokal") return lokalerRaum(raum);
-  if (art === "speicher") return speicherRaum(raum, bus);
-  throw new Error("Keine Online-Verbindung möglich");
-}
-function grundgeruest() {
-  const empfaenger = /* @__PURE__ */ new Set();
-  const statusHoerer = /* @__PURE__ */ new Set();
-  let status2 = "verbinde";
-  return {
-    empfangen(nachricht) {
-      if (!nachricht || typeof nachricht !== "object" || typeof nachricht.typ !== "string") return;
-      empfaenger.forEach((fn) => {
-        try {
-          fn(nachricht);
-        } catch (fehler) {
-          console.warn("Nachricht nicht verarbeitet:", fehler);
-        }
-      });
-    },
-    setzeStatus(neu) {
-      if (neu === status2) return;
-      status2 = neu;
-      statusHoerer.forEach((fn) => fn(status2));
-    },
-    schnittstelle(senden2, schliessen) {
-      return {
-        senden: senden2,
-        an(fn) {
-          empfaenger.add(fn);
-          return () => empfaenger.delete(fn);
-        },
-        get status() {
-          return status2;
-        },
-        beobachten(fn) {
-          statusHoerer.add(fn);
-          return () => statusHoerer.delete(fn);
-        },
-        schliessen
-      };
-    }
-  };
-}
-function supabaseRaum(raum) {
-  const g = grundgeruest();
-  const thema = `realtime:${raum}`;
-  const adresse = `${CLOUD.url.replace(/^http/, "ws")}/realtime/v1/websocket?apikey=${encodeURIComponent(CLOUD.schluessel)}&vsn=1.0.0`;
-  let ws = null;
-  let ref = 0;
-  let joinRef = null;
-  let herz = null;
-  let versuch = 0;
-  let zu = false;
-  let wiederTimer = null;
-  function roh(nachricht) {
-    if (ws?.readyState !== 1) return false;
-    ws.send(JSON.stringify({ ...nachricht, ref: String(++ref) }));
-    return true;
-  }
-  function verbinden() {
-    if (zu) return;
-    g.setzeStatus("verbinde");
-    try {
-      ws = new WebSocket(adresse);
-    } catch {
-      planeNeu();
-      return;
-    }
-    ws.onopen = () => {
-      joinRef = String(++ref);
-      ws.send(JSON.stringify({
-        topic: thema,
-        event: "phx_join",
-        payload: { config: { broadcast: { self: false, ack: false }, presence: { key: "" }, private: false } },
-        ref: joinRef,
-        join_ref: joinRef
-      }));
-      herz = setInterval(() => roh({ topic: "phoenix", event: "heartbeat", payload: {} }), HERZSCHLAG_MS);
-    };
-    ws.onmessage = (ereignis) => {
-      let n;
-      try {
-        n = JSON.parse(ereignis.data);
-      } catch {
-        return;
-      }
-      if (n.topic !== thema) return;
-      if (n.event === "phx_reply" && n.ref === joinRef) {
-        if (n.payload?.status === "ok") {
-          versuch = 0;
-          g.setzeStatus("verbunden");
-        } else {
-          g.setzeStatus("fehler");
-          ws.close();
-        }
-      } else if (n.event === "broadcast" && n.payload?.type === "broadcast") {
-        g.empfangen({ ...n.payload.payload, typ: n.payload.event });
-      } else if (n.event === "phx_error" || n.event === "phx_close") {
-        ws.close();
-      }
-    };
-    ws.onclose = () => {
-      clearInterval(herz);
-      herz = null;
-      if (!zu) planeNeu();
-    };
-    ws.onerror = () => {
-    };
-  }
-  function planeNeu() {
-    g.setzeStatus("getrennt");
-    const warten = WIEDERHOLEN_MS[Math.min(versuch, WIEDERHOLEN_MS.length - 1)];
-    versuch += 1;
-    clearTimeout(wiederTimer);
-    wiederTimer = setTimeout(verbinden, warten);
-  }
-  const online = () => {
-    if (!zu && g && ws?.readyState !== 1) {
-      clearTimeout(wiederTimer);
-      versuch = 0;
-      verbinden();
-    }
-  };
-  if (typeof addEventListener === "function") addEventListener("online", online);
-  verbinden();
-  return g.schnittstelle(
-    (typ, daten = {}) => roh({ topic: thema, event: "broadcast", payload: { type: "broadcast", event: typ, payload: daten } }),
-    () => {
-      zu = true;
-      clearTimeout(wiederTimer);
-      clearInterval(herz);
-      if (typeof removeEventListener === "function") removeEventListener("online", online);
-      try {
-        roh({ topic: thema, event: "phx_leave", payload: {} });
-        ws?.close();
-      } catch {
-      }
-      g.setzeStatus("zu");
-    }
-  );
-}
-function lokalerRaum(raum) {
-  const g = grundgeruest();
-  const kanal = new BroadcastChannel(raum);
-  kanal.onmessage = (ereignis) => g.empfangen(ereignis.data);
-  setTimeout(() => g.setzeStatus("verbunden"), 50);
-  return g.schnittstelle(
-    (typ, daten = {}) => {
-      kanal.postMessage({ ...daten, typ });
-      return true;
-    },
-    () => {
-      kanal.close();
-      g.setzeStatus("zu");
-    }
-  );
-}
-function speicherRaum(raum, bus) {
-  if (!bus) throw new Error("speicherRaum braucht einen Bus (speicherBus())");
-  const g = grundgeruest();
-  if (!bus.raeume.has(raum)) bus.raeume.set(raum, /* @__PURE__ */ new Set());
-  const teilnehmer = bus.raeume.get(raum);
-  const ich = {
-    online: true,
-    zustellen(nachricht) {
-      if (ich.online) g.empfangen(nachricht);
-    }
-  };
-  teilnehmer.add(ich);
-  queueMicrotask(() => g.setzeStatus("verbunden"));
-  const schnitt = g.schnittstelle(
-    (typ, daten = {}) => {
-      if (!ich.online) return false;
-      bus.gesendet += 1;
-      const text = JSON.stringify({ ...daten, typ });
-      teilnehmer.forEach((t) => {
-        if (t !== ich) queueMicrotask(() => t.zustellen(JSON.parse(text)));
-      });
-      return true;
-    },
-    () => {
-      teilnehmer.delete(ich);
-      g.setzeStatus("zu");
-    }
-  );
-  schnitt.trennen = () => {
-    ich.online = false;
-    g.setzeStatus("getrennt");
-  };
-  schnitt.verbinden = () => {
-    ich.online = true;
-    g.setzeStatus("verbunden");
-  };
-  return schnitt;
 }
 
 // js/core/duell-sitzung.js
@@ -22303,9 +22745,9 @@ function createSitzung({
   };
   const hoerer = /* @__PURE__ */ new Set();
   const ereignisHoerer = /* @__PURE__ */ new Set();
-  let uhr2 = 0;
+  let uhr3 = 0;
   let raum = null;
-  let abmelden2 = [];
+  let abmelden3 = [];
   let geschlossen = false;
   let engine = null;
   let sendeTakt = 0;
@@ -22455,7 +22897,7 @@ function createSitzung({
         return;
       }
       partnerGeraet = n.geraet;
-      partnerZuletzt = uhr2;
+      partnerZuletzt = uhr3;
       info.spieler[1] = { geraet: n.geraet, profil: profilPruefen(n.profil), bereit: false, online: true, ki: false };
       info.partnerOnline = true;
       info.hinweis = "";
@@ -22475,7 +22917,7 @@ function createSitzung({
       return;
     }
     if (!istGast) return;
-    partnerZuletzt = uhr2;
+    partnerZuletzt = uhr3;
     if (!info.spieler[1].online) {
       info.spieler[1].online = true;
       info.partnerOnline = true;
@@ -22553,7 +22995,7 @@ function createSitzung({
         const ichDrin = n.spieler?.[1]?.geraet === geraet;
         if (!ichDrin) return;
         partnerGeraet = n.geraet;
-        partnerZuletzt = uhr2;
+        partnerZuletzt = uhr3;
         info.partnerOnline = true;
         info.lobbyId = n.lobbyId;
         info.wahl = { ...info.wahl, ...n.wahl };
@@ -22582,7 +23024,7 @@ function createSitzung({
       case "start": {
         if (!n.setup || !n.matchId) return;
         partnerGeraet = n.geraet;
-        partnerZuletzt = uhr2;
+        partnerZuletzt = uhr3;
         const neu = info.match?.matchId !== n.matchId;
         if (neu) {
           info.match = { matchId: n.matchId, setup: n.setup };
@@ -22599,7 +23041,7 @@ function createSitzung({
       }
       case "zustand": {
         if (!engine || n.matchId !== info.match?.matchId || !n.z) return;
-        partnerZuletzt = uhr2;
+        partnerZuletzt = uhr3;
         for (const e of n.ev ?? []) {
           if (e.seq > letzteSeq) {
             letzteSeq = e.seq;
@@ -22622,7 +23064,7 @@ function createSitzung({
         ereignisWeitergeben({ typ: "signal", von: "p1", signal: n.signal });
         break;
       case "ping":
-        partnerZuletzt = uhr2;
+        partnerZuletzt = uhr3;
         break;
       case "verlassen":
         info.partnerOnline = false;
@@ -22639,7 +23081,7 @@ function createSitzung({
         geaendert();
         break;
       default:
-        if (n.typ !== "ping") partnerZuletzt = uhr2;
+        if (n.typ !== "ping") partnerZuletzt = uhr3;
         break;
     }
   }
@@ -22650,7 +23092,7 @@ function createSitzung({
   }
   function takt(dt) {
     if (geschlossen) return;
-    uhr2 += dt;
+    uhr3 += dt;
     if (host && info.phase === "countdown") {
       info.countdown = Math.max(0, (info.countdown ?? 0) - dt);
       if (info.countdown <= 0) matchStarten();
@@ -22690,17 +23132,17 @@ function createSitzung({
     }
     if (art === "gast") {
       for (const [id, offen2] of offeneAktionen) {
-        if (uhr2 - offen2.zeit < AKTION_WIEDERHOLEN) continue;
+        if (uhr3 - offen2.zeit < AKTION_WIEDERHOLEN) continue;
         if (offen2.versuche >= AKTION_VERSUCHE) {
           offeneAktionen.delete(id);
           ereignisWeitergeben({ typ: "abgelehnt", aktionId: id, grund: "keine-antwort", aktion: offen2.aktion });
           continue;
         }
-        offen2.zeit = uhr2;
+        offen2.zeit = uhr3;
         offen2.versuche += 1;
         senden2("aktion", { matchId: info.match?.matchId, aktion: offen2.aktion });
       }
-      if (info.phase === "verbinde" && uhr2 - anfrageSeit > 8) {
+      if (info.phase === "verbinde" && uhr3 - anfrageSeit > 8) {
         info.phase = "fehler";
         info.fehler = "Keine Lobby mit diesem Code gefunden. Stimmt der Code?";
         geaendert();
@@ -22712,18 +23154,18 @@ function createSitzung({
     const netz = DUELL.netz;
     const partnerDa = info.spieler[1 - meinIndex] && !info.spieler[1 - meinIndex].ki;
     if (!partnerDa || info.phase === "verbinde" || info.phase === "fehler") return;
-    const still = uhr2 - partnerZuletzt;
+    const still = uhr3 - partnerZuletzt;
     const vorher = info.partnerOnline;
     info.partnerOnline = still < netz.getrenntNach && info.verbindung === "verbunden";
     if (art === "host") {
       const gast = info.spieler[1];
       if (gast) gast.online = info.partnerOnline;
       if (info.verbindung !== "verbunden") {
-        eigeneLeitungWegSeit ??= uhr2;
+        eigeneLeitungWegSeit ??= uhr3;
         if (engine && info.phase === "match" && !engine.state.ende) {
           engine.setLaeuft(false);
           info.hinweis = "Verbindung unterbrochen - der Kampf wartet …";
-          if (uhr2 - eigeneLeitungWegSeit > netz.abbruchNach) {
+          if (uhr3 - eigeneLeitungWegSeit > netz.abbruchNach) {
             engine.setLaeuft(true);
             engine.abbrechen("verbindung");
           }
@@ -22738,8 +23180,8 @@ function createSitzung({
       }
       if (engine && info.phase === "match" && !engine.state.ende && info.verbindung === "verbunden") {
         if (!info.partnerOnline) {
-          gastWegSeit ??= uhr2;
-          const weg = uhr2 - gastWegSeit + netz.getrenntNach;
+          gastWegSeit ??= uhr3;
+          const weg = uhr3 - gastWegSeit + netz.getrenntNach;
           if (weg >= netz.kiErsatzNach) {
             if (engine.kaempfer("p2")?.steuerung !== "ki") engine.setSteuerung("p2", "ki");
             info.hinweis = "Dein Teamkamerad ist nicht erreichbar - die KI spielt für ihn.";
@@ -22788,8 +23230,8 @@ function createSitzung({
       return;
     }
     raum = raumOeffnen(`mq2v2-${info.code}`, raumOptionen);
-    abmelden2.push(raum.an(empfangen));
-    abmelden2.push(raum.beobachten((status2) => {
+    abmelden3.push(raum.an(empfangen));
+    abmelden3.push(raum.beobachten((status2) => {
       const vorher = info.verbindung;
       info.verbindung = status2 === "verbunden" ? "verbunden" : status2 === "verbinde" ? "verbinde" : "getrennt";
       if (status2 === "verbunden") {
@@ -22801,7 +23243,7 @@ function createSitzung({
           lobbySenden();
           if (engine && info.phase === "match") zustandSenden();
         } else if (info.phase === "verbinde") {
-          anfrageSeit = uhr2;
+          anfrageSeit = uhr3;
           senden2("beitreten", { profil: profilPruefen(profil()) });
         } else if (vorher !== "verbunden") {
           senden2("hallo", { matchId: info.match?.matchId ?? null });
@@ -22888,7 +23330,7 @@ function createSitzung({
       if (info.phase !== "match" || !engine) return { ok: false, grund: "kein-match" };
       if (host) return engine.aktion(`p${meinIndex + 1}`, { ...aktion, aktionId: `p1:${++aktionZaehler}` });
       const mitId = { ...aktion, aktionId: `${geraet.slice(0, 6)}-${++aktionZaehler}` };
-      offeneAktionen.set(mitId.aktionId, { aktion: mitId, zeit: uhr2, versuche: 1 });
+      offeneAktionen.set(mitId.aktionId, { aktion: mitId, zeit: uhr3, versuche: 1 });
       senden2("aktion", { matchId: info.match.matchId, aktion: mitId });
       return { ok: true, wartet: true, aktionId: mitId.aktionId };
     },
@@ -22931,8 +23373,8 @@ function createSitzung({
     schliessen() {
       geschlossen = true;
       clearInterval(intervall);
-      abmelden2.forEach((fn) => fn());
-      abmelden2 = [];
+      abmelden3.forEach((fn) => fn());
+      abmelden3 = [];
       raum?.schliessen();
       raum = null;
       if (online) lobbyMerken(null);
@@ -23090,9 +23532,281 @@ function rueckkehrEntfernen() {
   pille = null;
 }
 
+// js/screens/freunde.js
+var reiter = "freunde";
+var abmelden2 = null;
+var STATUS2 = {
+  online: { icon: "🟢", text: "Online" },
+  kampf: { icon: "🟡", text: "Im Kampf" },
+  offline: { icon: "⚫", text: "Offline" }
+};
+var ANFRAGE_TEXT = {
+  gesendet: "Freundschaftsanfrage gesendet!",
+  unbekannt: "Zu dieser Freundes-ID gibt es keinen Spieler.",
+  selbst: "Das ist deine eigene Freundes-ID.",
+  schon_freunde: "Ihr seid schon befreundet.",
+  schon_gesendet: "Du hast schon eine Anfrage geschickt.",
+  gegenanfrage: "Dieser Spieler hat dir schon eine Anfrage geschickt - nimm sie unter „Anfragen“ an.",
+  zu_viele: "Du hast gerade zu viele offene Anfragen oder Freunde."
+};
+function profilText(p) {
+  const monster = MONSTERS[p.figur] ?? MONSTERS.timo;
+  const skin = p.skin ? getSkin(p.skin) : null;
+  return `Lv ${Number(p.level) || 1} · ${monster.icon} ${sicher2(monster.name)}${skin && skin.id !== "skin-standard" ? ` · ${sicher2(skin.name)}` : ""}`;
+}
+function profilBild(p) {
+  const monster = MONSTERS[p.figur] ?? MONSTERS.timo;
+  const span = document.createElement("span");
+  span.className = "freund__bild";
+  span.appendChild(figurBild(monster, p.skin ? getSkin(p.skin) ?? null : null));
+  return span;
+}
+var freundeScreen = {
+  mount(root) {
+    const screen = document.createElement("div");
+    screen.className = "screen screen--page screen--freunde";
+    screen.appendChild(createScenery({ dimmed: true }));
+    screen.appendChild(createTopbar("👥 Freunde", () => showScreen("start")));
+    const content = document.createElement("div");
+    content.className = "page__content freunde";
+    screen.appendChild(content);
+    root.appendChild(screen);
+    content.innerHTML = `
+      <div class="panel panel--tight freunde-ich"></div>
+      <p class="duell-hinweis freunde__hinweis" hidden></p>
+      <div class="tabs freunde__tabs" role="tablist">
+        <button class="tab" type="button" data-reiter="freunde">Meine Freunde</button>
+        <button class="tab" type="button" data-reiter="anfragen">Anfragen</button>
+        <button class="tab" type="button" data-reiter="hinzufuegen">Hinzufügen</button>
+      </div>
+      <div class="panel freunde__inhalt"></div>
+    `;
+    const kopf = content.querySelector(".freunde-ich");
+    const hinweis = content.querySelector(".freunde__hinweis");
+    const inhalt = content.querySelector(".freunde__inhalt");
+    const knoepfe = [...content.querySelectorAll("[data-reiter]")];
+    knoepfe.forEach((k) => k.addEventListener("click", () => {
+      reiter = k.dataset.reiter;
+      zeichnen(true);
+    }));
+    function zeichnen(alles = false) {
+      const lage2 = freundeLage();
+      const zustand2 = freundeZustand();
+      const offen2 = lage2?.erhalten.length ?? 0;
+      knoepfe.forEach((k) => k.classList.toggle("is-active", k.dataset.reiter === reiter));
+      knoepfe[0].textContent = `Meine Freunde${lage2 ? ` (${lage2.freunde.length})` : ""}`;
+      knoepfe[1].innerHTML = `Anfragen${offen2 ? ` <span class="freunde__zahl">${offen2}</span>` : ""}`;
+      kopf.innerHTML = lage2?.kennung ? `<div class="freunde-ich__text">
+             <span class="freunde-ich__label">Deine Freundes-ID</span>
+             <strong class="freunde-ich__id">${sicher2(lage2.kennung)}</strong>
+           </div>
+           <button class="btn btn--small" data-aktion="kopieren" type="button">📋 Kopieren</button>` : `<p class="map__info-text">${hinweisText(zustand2)}</p>
+           ${zustand2 === "fehler" ? '<button class="btn btn--small" type="button" data-aktion="nochmal">Nochmal versuchen</button>' : ""}`;
+      kopf.querySelector('[data-aktion="kopieren"]')?.addEventListener("click", async (event) => {
+        try {
+          await navigator.clipboard.writeText(lage2.kennung);
+          event.target.textContent = "✔ Kopiert";
+        } catch {
+          event.target.textContent = lage2.kennung;
+        }
+      });
+      kopf.querySelector('[data-aktion="nochmal"]')?.addEventListener("click", () => freundeAktualisieren());
+      hinweis.hidden = !lage2 || !["offline", "fehler"].includes(zustand2);
+      if (!hinweis.hidden) hinweis.textContent = hinweisText(zustand2);
+      if (!lage2) {
+        inhalt.innerHTML = "";
+        inhalt.hidden = true;
+        return;
+      }
+      inhalt.hidden = false;
+      if (reiter === "freunde") freundeZeichnen(inhalt, lage2, zustand2);
+      else if (reiter === "anfragen") anfragenZeichnen(inhalt, lage2, zustand2);
+      else if (alles || !inhalt.querySelector("form")) hinzufuegenZeichnen(inhalt, zustand2);
+    }
+    abmelden2?.();
+    abmelden2 = freundeBeobachten(() => {
+      if (content.isConnected) zeichnen();
+    });
+    zeichnen(true);
+    freundeAktualisieren();
+  },
+  unmount() {
+    abmelden2?.();
+    abmelden2 = null;
+  }
+};
+function hinweisText(zustand2) {
+  return {
+    aus: "Freunde brauchen die Online-Datenbank. Sie ist in diesem Spiel nicht eingerichtet.",
+    offline: "📡 Du bist offline. Freunde hinzufügen und einladen geht wieder, sobald du online bist. Alles andere - auch das Solo-2v2 - funktioniert weiter.",
+    fehlt: "Die Freundesliste ist in der Datenbank noch nicht eingerichtet. (Für den Spielebauer: datenbank/schema.sql einmal neu einspielen.)",
+    fehler: "Die Freundesliste ist gerade nicht erreichbar. Bist du online?"
+  }[zustand2] ?? "Lädt …";
+}
+function gesperrt(zustand2) {
+  return zustand2 === "offline" ? "disabled" : "";
+}
+async function mitKnopf(knopf, aktion) {
+  knopf.disabled = true;
+  try {
+    return await aktion();
+  } catch (fehler) {
+    console.warn("Freunde-Aktion fehlgeschlagen:", fehler);
+    zeigeHinweisToast({ icon: "📡", label: "Hat nicht geklappt", text: "Bist du online? Versuch es gleich nochmal." });
+    return null;
+  } finally {
+    if (knopf.isConnected) knopf.disabled = false;
+  }
+}
+function freundeZeichnen(inhalt, lage2, zustand2) {
+  const liste2 = freundeSortiert(lage2.freunde);
+  if (!liste2.length) {
+    inhalt.innerHTML = `
+      <div class="panel__title">Meine Freunde</div>
+      <p class="map__info-text">Noch keine Freunde. Gib unter „Hinzufügen“ die Freundes-ID eines Freundes ein - oder schick ihm deine.</p>`;
+    return;
+  }
+  inhalt.innerHTML = `
+    <div class="panel__title">Meine Freunde</div>
+    <ul class="freunde__liste">
+      ${liste2.map((f) => `
+        <li class="freund freund--${f.status}" data-kennung="${sicher2(f.kennung)}">
+          <span class="freund__platz"></span>
+          <span class="freund__text">
+            <span class="freund__name">${sicher2(f.name)}</span>
+            <span class="freund__info">${profilText(f)}</span>
+            <span class="freund__status">${STATUS2[f.status]?.icon ?? "⚫"} ${STATUS2[f.status]?.text ?? "Offline"} · ${sicher2(f.kennung)}</span>
+          </span>
+          <span class="freund__knoepfe">
+            <button class="btn btn--small btn--green" type="button" data-aktion="einladen" ${gesperrt(zustand2)}>⚔️ Zum 2v2 einladen</button>
+            <button class="btn btn--small btn--ghost" type="button" data-aktion="entfernen" ${gesperrt(zustand2)}>Entfernen</button>
+          </span>
+        </li>`).join("")}
+    </ul>`;
+  inhalt.querySelectorAll(".freund").forEach((zeile3, i) => {
+    const f = liste2[i];
+    zeile3.querySelector(".freund__platz").replaceWith(profilBild(f));
+    zeile3.querySelector('[data-aktion="einladen"]').addEventListener("click", () => {
+      showScreen("duell-lobby", { einladen: f.kennung, einladenName: f.name });
+    });
+    const weg = zeile3.querySelector('[data-aktion="entfernen"]');
+    weg.addEventListener("click", async () => {
+      if (!weg.classList.contains("ist-sicher")) {
+        weg.classList.add("ist-sicher");
+        weg.textContent = "Wirklich entfernen?";
+        return;
+      }
+      const ok = await mitKnopf(weg, () => freundEntfernen(f.kennung));
+      if (ok !== null) zeigeHinweisToast({ icon: "👋", label: "Freund entfernt", text: f.name });
+    });
+  });
+}
+function anfragenZeichnen(inhalt, lage2, zustand2) {
+  inhalt.innerHTML = `
+    <div class="panel__title">Erhaltene Anfragen</div>
+    ${lage2.erhalten.length ? `<ul class="freunde__liste">${lage2.erhalten.map((p) => `
+          <li class="freund" data-kennung="${sicher2(p.kennung)}">
+            <span class="freund__platz"></span>
+            <span class="freund__text">
+              <span class="freund__name">${sicher2(p.name)}</span>
+              <span class="freund__info">${profilText(p)}</span>
+              <span class="freund__status">${sicher2(p.kennung)}</span>
+            </span>
+            <span class="freund__knoepfe">
+              <button class="btn btn--small btn--green" type="button" data-aktion="annehmen" ${gesperrt(zustand2)}>✔ Annehmen</button>
+              <button class="btn btn--small btn--ghost" type="button" data-aktion="ablehnen" ${gesperrt(zustand2)}>Ablehnen</button>
+            </span>
+          </li>`).join("")}</ul>` : '<p class="map__info-text">Keine neuen Anfragen.</p>'}
+    <div class="panel__title freunde__unter">Gesendete Anfragen</div>
+    ${lage2.gesendet.length ? `<ul class="freunde__liste">${lage2.gesendet.map((p) => `
+          <li class="freund" data-kennung="${sicher2(p.kennung)}">
+            <span class="freund__platz"></span>
+            <span class="freund__text">
+              <span class="freund__name">${sicher2(p.name)}</span>
+              <span class="freund__status">⏳ wartet auf Antwort · ${sicher2(p.kennung)}</span>
+            </span>
+            <span class="freund__knoepfe">
+              <button class="btn btn--small btn--ghost" type="button" data-aktion="zurueckziehen" ${gesperrt(zustand2)}>Zurückziehen</button>
+            </span>
+          </li>`).join("")}</ul>` : '<p class="map__info-text">Keine offenen Anfragen.</p>'}
+  `;
+  const profile = [...lage2.erhalten, ...lage2.gesendet];
+  inhalt.querySelectorAll(".freund").forEach((zeile3, i) => {
+    const p = profile[i];
+    zeile3.querySelector(".freund__platz").replaceWith(profilBild(p));
+    zeile3.querySelector('[data-aktion="annehmen"]')?.addEventListener("click", async (e) => {
+      if (await mitKnopf(e.currentTarget, () => anfrageAntworten(p.kennung, true))) {
+        spieleKlang("aufgabe");
+        zeigeHinweisToast({ icon: "🤝", label: "Neuer Freund", text: `${p.name} ist jetzt dein Freund!` });
+      }
+    });
+    zeile3.querySelector('[data-aktion="ablehnen"]')?.addEventListener("click", (e) => mitKnopf(e.currentTarget, () => anfrageAntworten(p.kennung, false)));
+    zeile3.querySelector('[data-aktion="zurueckziehen"]')?.addEventListener("click", (e) => mitKnopf(e.currentTarget, () => anfrageZurueckziehen(p.kennung)));
+  });
+}
+function hinzufuegenZeichnen(inhalt, zustand2) {
+  inhalt.innerHTML = `
+    <div class="panel__title">Freund hinzufügen</div>
+    <p class="map__info-text">Frag deinen Freund nach seiner Freundes-ID (steht bei ihm oben unter „Freunde“).</p>
+    <form class="duell-code freunde__suche" autocomplete="off">
+      <input class="duell-code__feld" name="kennung" inputmode="text" maxlength="12" placeholder="MQ-12345"
+             aria-label="Freundes-ID" autocapitalize="characters" spellcheck="false" ${gesperrt(zustand2)}>
+      <button class="btn" type="submit" ${gesperrt(zustand2)}>🔍 Suchen</button>
+    </form>
+    <div class="freunde__ergebnis" aria-live="polite"></div>
+  `;
+  const form = inhalt.querySelector("form");
+  const ergebnis = inhalt.querySelector(".freunde__ergebnis");
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const kennung = kennungPruefen(form.kennung.value);
+    if (!kennung) {
+      spieleKlang("gesperrt");
+      form.classList.remove("shake");
+      void form.offsetWidth;
+      form.classList.add("shake");
+      ergebnis.innerHTML = '<p class="duell-hinweis">Eine Freundes-ID sieht so aus: MQ-12345</p>';
+      return;
+    }
+    form.kennung.value = kennung;
+    ergebnis.innerHTML = '<p class="map__info-text">Suche …</p>';
+    const knopf = form.querySelector("button");
+    const profil = await mitKnopf(knopf, () => freundSuchen(kennung));
+    if (!ergebnis.isConnected) return;
+    if (!profil) {
+      ergebnis.innerHTML = `<p class="duell-hinweis">${ANFRAGE_TEXT.unbekannt}</p>`;
+      return;
+    }
+    const status2 = profil.ich ? ANFRAGE_TEXT.selbst : profil.freund ? ANFRAGE_TEXT.schon_freunde : profil.gesendet ? ANFRAGE_TEXT.schon_gesendet : profil.erhalten ? ANFRAGE_TEXT.gegenanfrage : "";
+    ergebnis.innerHTML = `
+      <div class="freund freund--gefunden">
+        <span class="freund__platz"></span>
+        <span class="freund__text">
+          <span class="freund__name">${sicher2(profil.name)}</span>
+          <span class="freund__info">${profilText(profil)}</span>
+          <span class="freund__status">${sicher2(profil.kennung)}</span>
+        </span>
+      </div>
+      ${status2 ? `<p class="map__info-text freunde__meldung">${status2}</p>` : '<button class="btn btn--big btn--green" type="button" data-aktion="senden">➕ Freundschaftsanfrage senden</button>'}
+    `;
+    ergebnis.querySelector(".freund__platz").replaceWith(profilBild(profil));
+    ergebnis.querySelector('[data-aktion="senden"]')?.addEventListener("click", async (e) => {
+      const knopf2 = e.currentTarget;
+      const antwort = await mitKnopf(knopf2, () => anfrageSenden(profil.kennung));
+      if (antwort === null || !ergebnis.isConnected) return;
+      knopf2.replaceWith(Object.assign(document.createElement("p"), {
+        className: "map__info-text freunde__meldung",
+        textContent: ANFRAGE_TEXT[antwort] ?? "Hat nicht geklappt."
+      }));
+      if (antwort === "gesendet") spieleKlang("aufgabe");
+    });
+  });
+}
+
 // js/screens/duell-lobby.js
 var aufraeumen2 = [];
 var bleibtOffen = false;
+var eingeladen = /* @__PURE__ */ new Map();
 function gemerkteWahl() {
   const w = gameState.duell?.wahl ?? {};
   return {
@@ -23121,7 +23835,14 @@ function starten(art, code = null) {
   return sitzung;
 }
 var duellLobbyScreen = {
-  mount(root) {
+  /**
+   * @param {object} [params]
+   * @param {string} [params.beitreten] - Code: gleich dieser Lobby beitreten
+   *        (nach einer angenommenen Freundes-Einladung)
+   * @param {string} [params.einladen] - Freundes-ID: eigene Lobby öffnen und
+   *        diesen Freund einladen (aus der Freundesliste)
+   */
+  mount(root, params = {}) {
     rueckkehrEntfernen();
     bleibtOffen = false;
     const screen = document.createElement("div");
@@ -23133,23 +23854,23 @@ var duellLobbyScreen = {
     screen.appendChild(content);
     root.appendChild(screen);
     let sitzung = aktuelleSitzung();
-    let abmelden2 = null;
+    let abmelden3 = null;
     function verlassen() {
       sitzung?.verlassen();
       showScreen("start");
     }
     function verbinden(neu) {
-      abmelden2?.();
+      abmelden3?.();
       sitzung = neu;
       if (!sitzung) {
         zeichnen();
         return;
       }
       sitzung.profilAktualisieren();
-      abmelden2 = sitzung.beobachten(() => zeichnen());
+      abmelden3 = sitzung.beobachten(() => zeichnen());
       zeichnen();
     }
-    aufraeumen2.push(() => abmelden2?.());
+    aufraeumen2.push(() => abmelden3?.());
     function zeichnen() {
       if (!sitzung || sitzung.info.phase === "geschlossen") {
         sitzung = null;
@@ -23189,6 +23910,7 @@ var duellLobbyScreen = {
                         placeholder="CODE" aria-label="Einladungscode" autocapitalize="characters" spellcheck="false">
                  <button class="btn" type="submit">Beitreten</button>
                </form>
+               ${freundeMoeglich() ? '<button class="btn btn--small duell-letzte" data-aktion="freunde" type="button">👥 Freund aus der Freundesliste einladen</button>' : ""}
                ${letzte ? `<button class="btn btn--ghost btn--small duell-letzte" data-aktion="letzte" type="button">↩ Lobby ${sicher2(letzte.code)} erneut betreten</button>` : ""}` : `<p class="map__info-text duell-hinweis">📡 Online-Koop braucht eine Internetverbindung. Solo mit KI-Partner geht immer - auch offline.</p>`}
         </div>
 
@@ -23203,6 +23925,7 @@ var duellLobbyScreen = {
       bild.appendChild(figurBild(ich, void 0));
       paarGegner(gameState.unlockedWorld, 0).forEach(({ gegner }) => bild.appendChild(createSprite(gegner)));
       content.querySelector('[data-aktion="erstellen"]')?.addEventListener("click", () => verbinden(starten("host")));
+      content.querySelector('[data-aktion="freunde"]')?.addEventListener("click", () => verbinden(starten("host")));
       content.querySelector('[data-aktion="solo"]').addEventListener("click", () => verbinden(starten("solo")));
       content.querySelector('[data-aktion="letzte"]')?.addEventListener("click", () => verbinden(starten(letzte.art === "host" ? "host" : "gast", letzte.code)));
       const form = content.querySelector('form[data-aktion="beitreten"]');
@@ -23281,6 +24004,8 @@ var duellLobbyScreen = {
             ${spielerKarte(info.spieler[1], 1, info)}
           </div>
         </div>
+
+        ${host && !solo && !partner && freundeMoeglich() ? freundePanel(info.code) : ""}
 
         <div class="panel duell-wahl-panel">
           <div class="panel__title">🎯 Deine Figur und Boss-Kraft</div>
@@ -23393,8 +24118,53 @@ var duellLobbyScreen = {
         content.querySelectorAll("[data-grad]").forEach((k) => k.addEventListener("click", () => aendern({ schwierigkeit: k.dataset.grad })));
       }
       content.querySelector('[data-aktion="bereit"]')?.addEventListener("click", () => sitz.bereitSetzen(!ich?.bereit));
+      content.querySelectorAll("[data-einladen]").forEach((k) => k.addEventListener("click", () => freundEinladen(k.dataset.einladen)));
     }
-    verbinden(sitzung);
+    async function freundEinladen(kennung, name = null) {
+      const sitz = sitzung;
+      if (!sitz || sitz.info.art !== "host") return;
+      const freund = freundeLage()?.freunde.find((f) => f.kennung === kennung);
+      const wer = freund?.name ?? name ?? kennung;
+      let antwort = null;
+      try {
+        antwort = await einladungSenden(kennung, sitz.info.code);
+      } catch (fehler) {
+        console.warn("Einladung nicht gesendet:", fehler);
+      }
+      if (antwort === "gesendet") {
+        if (!eingeladen.has(sitz.info.code)) eingeladen.set(sitz.info.code, /* @__PURE__ */ new Set());
+        eingeladen.get(sitz.info.code).add(kennung);
+        zeigeHinweisToast({ icon: "📨", label: "2v2-Einladung gesendet", text: `an ${wer} - gilt 5 Minuten` });
+      } else {
+        zeigeHinweisToast({
+          icon: "📡",
+          label: "Einladung nicht gesendet",
+          text: antwort === "kein_freund" ? `${wer} ist nicht (mehr) dein Freund.` : antwort === "zu_viele" ? "Zu viele Einladungen - warte kurz." : "Bist du online? Versuch es gleich nochmal."
+        });
+      }
+      if (aktuelleSitzung() === sitz) zeichnen();
+    }
+    const freundeAus = freundeBeobachten(() => {
+      const info = sitzung?.info;
+      if (content.isConnected && info && info.art === "host" && ["verbinde", "lobby"].includes(info.phase) && !info.spieler[1]) zeichnen();
+    });
+    aufraeumen2.push(freundeAus);
+    if (freundeMoeglich()) freundeAktualisieren();
+    const beitreten = codePruefen(params.beitreten);
+    if (beitreten) {
+      verbinden(starten("gast", beitreten));
+    } else if (params.einladen) {
+      const offen2 = sitzung && sitzung.info.art === "host" && ["verbinde", "lobby"].includes(sitzung.info.phase);
+      if (!offen2 && !(netzArt() && geraetOnline())) {
+        verbinden(sitzung);
+        zeigeHinweisToast({ icon: "📡", label: "Offline", text: "Freunde einladen geht nur mit Internet." });
+      } else {
+        verbinden(offen2 ? sitzung : starten("host"));
+        freundEinladen(params.einladen, params.einladenName);
+      }
+    } else {
+      verbinden(sitzung);
+    }
   },
   unmount() {
     aufraeumen2.forEach((fn) => fn());
@@ -23402,6 +24172,22 @@ var duellLobbyScreen = {
     if (bleibtOffen && aktuelleSitzung()?.info.phase !== "match" && aktuelleSitzung()?.info.phase !== "ergebnis") rueckkehrZeigen();
   }
 };
+function freundePanel(code) {
+  const lage2 = freundeLage();
+  const zustand2 = freundeZustand();
+  const schon = eingeladen.get(code) ?? /* @__PURE__ */ new Set();
+  const liste2 = freundeSortiert(lage2?.freunde ?? []);
+  const inhalt = !lage2 ? `<p class="duell-klein">${zustand2 === "offline" ? "📡 Offline - Freunde einladen geht gerade nicht." : zustand2 === "fehlt" ? "Die Freundesliste ist in der Datenbank noch nicht eingerichtet." : "Freundesliste lädt …"}</p>` : !liste2.length ? '<p class="duell-klein">Noch keine Freunde - füge sie unter 👥 Freunde hinzu. Oder schick den Code oben.</p>' : `<ul class="duell-freunde__liste">${liste2.map((f) => `
+          <li class="duell-freunde__eintrag freund--${f.status}">
+            <span class="duell-freunde__name">${STATUS2[f.status]?.icon ?? "⚫"} ${sicher2(f.name)} <small>Lv ${Number(f.level) || 1}</small></span>
+            ${schon.has(f.kennung) ? '<span class="duell-klein">✔ Eingeladen</span>' : `<button class="btn btn--small btn--green" type="button" data-einladen="${sicher2(f.kennung)}" ${zustand2 === "offline" ? "disabled" : ""}>Einladen</button>`}
+          </li>`).join("")}</ul>`;
+  return `
+    <div class="panel duell-freunde">
+      <div class="panel__title">👥 Freund einladen</div>
+      ${inhalt}
+    </div>`;
+}
 function ausgleichText(a) {
   if (a.schaden === 1 && a.hp === 1) return "Gegner unverändert";
   const prozent = (f) => `${f > 1 ? "+" : "−"}${Math.round(Math.abs(f - 1) * 100)} %`;
@@ -23737,9 +24523,9 @@ var duellScreen = {
     }
     function eigeneLeisteZeichnen(state, s) {
       if (state.zeit !== letzterZustand.t) letzterZustand = { t: state.zeit, wann: performance.now() };
-      const gesperrt = s.ko || s.status.betaeubt > 0 || s.status.gefroren > 0;
+      const gesperrt2 = s.ko || s.status.betaeubt > 0 || s.status.gefroren > 0;
       const tempo = (s.energieProSekunde ?? 1) * (s.status.verlangsamt > 0 ? STATUS.verlangsamt.faktor : 1);
-      const extra = gesperrt || state.ende ? 0 : (performance.now() - letzterZustand.wann) / 1e3 * tempo;
+      const extra = gesperrt2 || state.ende ? 0 : (performance.now() - letzterZustand.wann) / 1e3 * tempo;
       const genau = Math.min(MAX_ENERGIE, s.energie + s.energieFortschritt + (solo || ich === "p1" ? 0 : extra));
       const ganz = Math.min(MAX_ENERGIE, Math.floor(genau));
       if (ganz !== cache.energie) {
@@ -23777,16 +24563,16 @@ var duellScreen = {
         handBauen(s);
         cache.kartenEnergie = -1;
       }
-      const gesperrt = s.ko || s.status.betaeubt > 0 || s.status.gefroren > 0 || Boolean(state.ende);
-      if (s.energie !== cache.kartenEnergie || gesperrt !== cache.gesperrt) {
+      const gesperrt2 = s.ko || s.status.betaeubt > 0 || s.status.gefroren > 0 || Boolean(state.ende);
+      if (s.energie !== cache.kartenEnergie || gesperrt2 !== cache.gesperrt) {
         karten.forEach(({ el, attacke }) => {
-          const ok = attacke.cost <= s.energie && !gesperrt;
+          const ok = attacke.cost <= s.energie && !gesperrt2;
           if (ok && el.classList.contains("is-disabled")) blitz(el, "karte-bereit");
           el.classList.toggle("is-ready", ok);
           el.classList.toggle("is-disabled", !ok);
         });
         cache.kartenEnergie = s.energie;
-        cache.gesperrt = gesperrt;
+        cache.gesperrt = gesperrt2;
       }
     }
     function handBauen(s) {
@@ -24253,6 +25039,109 @@ var duellScreen = {
   }
 };
 
+// js/ui/freunde-hinweise.js
+var KEINE_EINLADUNG = ["battle", "duell"];
+var erledigt = /* @__PURE__ */ new Set();
+var fenster = null;
+var MELDUNG = {
+  anfrage: (p) => ({ icon: "👥", label: "Neue Freundschaftsanfrage", text: `${p.name} möchte dein Freund sein` }),
+  angenommen: (p) => ({ icon: "🤝", label: "Anfrage angenommen", text: `${p.name} ist jetzt dein Freund!` }),
+  einladung_angenommen: (p) => ({ icon: "⚔️", label: "2v2-Einladung angenommen", text: `${p.name} kommt in deine Lobby` }),
+  einladung_abgelehnt: (p) => ({ icon: "✋", label: "2v2-Einladung abgelehnt", text: `${p.name} kann gerade nicht` })
+};
+function freundeHinweiseStarten() {
+  freundeMeldungen(({ art, profil }) => {
+    const m = MELDUNG[art]?.(profil);
+    if (!m) return;
+    spieleKlang("aufgabe");
+    zeigeHinweisToast(m);
+  });
+  freundeBeobachten((lage2) => {
+    abzeichenSetzen();
+    einladungPruefen(lage2);
+  });
+  freundeStarten();
+}
+function abzeichenSetzen() {
+  const zahl = offeneAnzahl();
+  document.querySelectorAll("[data-freunde-zahl]").forEach((el) => {
+    el.textContent = zahl > 9 ? "9+" : String(zahl);
+    el.hidden = zahl === 0;
+  });
+}
+function einladungPruefen(lage2) {
+  const imKampf = KEINE_EINLADUNG.includes(aktuellerScreenName());
+  if (fenster) {
+    if (imKampf || !lage2?.einladungen.some((e) => e.id === fenster.id)) fensterZu();
+    return;
+  }
+  if (imKampf) return;
+  const einladung = lage2?.einladungen.find((e) => !erledigt.has(e.id));
+  if (einladung) fensterAuf(einladung);
+}
+function fensterZu() {
+  clearInterval(fenster?.uhr);
+  fenster?.el.remove();
+  fenster = null;
+}
+function fensterAuf(einladung) {
+  const el = document.createElement("div");
+  el.className = "overlay overlay--einladung";
+  el.innerHTML = `
+    <div class="overlay__box einladung" role="dialog" aria-label="2v2-Einladung">
+      <span class="einladung__bild"></span>
+      <h3 class="overlay__title">2v2-Einladung!</h3>
+      <p class="overlay__text"><strong>${sicher2(einladung.name)}</strong> lädt dich zum 2v2 Monster-Duell ein.</p>
+      <p class="duell-klein">${profilText(einladung)}</p>
+      <p class="duell-klein einladung__zeit"></p>
+      <div class="overlay__actions">
+        <button class="btn btn--big btn--green" type="button" data-aktion="annehmen">✔ Annehmen</button>
+        <button class="btn btn--ghost" type="button" data-aktion="ablehnen">Ablehnen</button>
+      </div>
+    </div>
+  `;
+  el.querySelector(".einladung__bild").replaceWith(profilBild(einladung));
+  document.body.appendChild(el);
+  spieleKlang("aufgabe");
+  const ende = Date.now() + einladung.sekunden * 1e3;
+  const zeit = el.querySelector(".einladung__zeit");
+  const ticken = () => {
+    const rest = Math.max(0, Math.round((ende - Date.now()) / 1e3));
+    zeit.textContent = `Gilt noch ${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, "0")}`;
+    if (rest === 0) {
+      erledigt.add(einladung.id);
+      fensterZu();
+    }
+  };
+  fenster = { id: einladung.id, el, uhr: setInterval(ticken, 1e3) };
+  ticken();
+  const knoepfe = el.querySelectorAll("button");
+  const antworten = async (annehmen) => {
+    knoepfe.forEach((k) => k.disabled = true);
+    erledigt.add(einladung.id);
+    let antwort = null;
+    try {
+      antwort = await einladungAntworten(einladung.id, annehmen);
+    } catch (fehler) {
+      console.warn("Einladung nicht beantwortet:", fehler);
+      erledigt.delete(einladung.id);
+      knoepfe.forEach((k) => k.disabled = false);
+      zeigeHinweisToast({ icon: "📡", label: "Hat nicht geklappt", text: "Bist du online? Versuch es gleich nochmal." });
+      return;
+    }
+    fensterZu();
+    if (!annehmen) return;
+    const code = codePruefen(antwort);
+    if (!code) {
+      zeigeHinweisToast({ icon: "⌛", label: "Einladung abgelaufen", text: "Die Einladung gilt nicht mehr." });
+      return;
+    }
+    showScreen("duell-lobby", { beitreten: code });
+  };
+  el.querySelector('[data-aktion="annehmen"]').addEventListener("click", () => antworten(true));
+  el.querySelector('[data-aktion="ablehnen"]').addEventListener("click", () => antworten(false));
+}
+
 // js/main.js
 var hatSpielstand = loadProgress();
 applySettings();
@@ -24304,6 +25193,7 @@ registerScreen("arena", arenaScreen);
 registerScreen("rangliste", ranglisteScreen);
 registerScreen("duell-lobby", duellLobbyScreen);
 registerScreen("duell", duellScreen);
+registerScreen("freunde", freundeScreen);
 var getragenesOutfit = getAktiverSkin("timo");
 if (istEigenerSkin(getragenesOutfit)) {
   await outfitVorbereitenId(getragenesOutfit).catch((fehler) => console.warn("Outfit nicht gebaut:", fehler));
@@ -24325,6 +25215,7 @@ cloudStart(() => {
   outfitVorbereitenId(getAktiverSkin("timo")).catch(() => {
   }).then(() => showScreen("start", { neu: true }));
 });
+freundeHinweiseStarten();
 if ("serviceWorker" in navigator) {
   const hatteVersion = Boolean(navigator.serviceWorker.controller);
   window.addEventListener("load", () => {

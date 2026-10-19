@@ -28,6 +28,8 @@ import { arenaScreen } from './screens/arena.js';
 import { ranglisteScreen } from './screens/rangliste.js';
 import { duellLobbyScreen } from './screens/duell-lobby.js';
 import { duellScreen } from './screens/duell.js';
+import { freundeScreen } from './screens/freunde.js';
+import { freundeHinweiseStarten } from './ui/freunde-hinweise.js';
 
 const hatSpielstand = loadProgress();
 applySettings();
@@ -116,6 +118,8 @@ registerScreen('rangliste', ranglisteScreen);
 // 2v2 Monster-Duell: Lobby und Arena (siehe js/core/duell-sitzung.js).
 registerScreen('duell-lobby', duellLobbyScreen);
 registerScreen('duell', duellScreen);
+// Freunde und 2v2-Einladungen (siehe js/core/freunde.js).
+registerScreen('freunde', freundeScreen);
 
 /*
  * Trägt Timo ein selbst gebautes Outfit (Skin-Werkstatt), werden dessen
@@ -164,6 +168,10 @@ cloudStart(() => {
     .catch(() => {})
     .then(() => showScreen('start', { neu: true }));
 });
+
+// Freunde: fragt im Hintergrund nach Anfragen und 2v2-Einladungen. Ohne
+// Datenbank oder ohne Netz passiert nichts.
+freundeHinweiseStarten();
 
 /*
  * Als App installierbar ("Zum Home-Bildschirm") und offline spielbar machen.

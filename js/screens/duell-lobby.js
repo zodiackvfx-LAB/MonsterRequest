@@ -2,7 +2,9 @@
  * Die 2v2-Lobby.
  *
  * Erst wählt man, WIE gespielt wird: Lobby erstellen (Einladungscode an
- * einen Freund), Code eingeben, oder solo mit einer KI-Partnerin. Danach
+ * einen Freund), Code eingeben, oder solo mit einer KI-Partnerin. In einer
+ * eigenen Lobby kann man außerdem Freunde aus der Freundesliste einladen -
+ * die Einladung trägt einfach den Einladungscode (js/core/freunde.js). Danach
  * zeigt die Lobby beide Spieler (Figur, Level, Boss-Kraft, Deck, bereit?)
  * und den Kampf (Welt, Gegnerteam, Boss-Duell, Schwierigkeit). Sind beide
  * bereit, startet der Kampf auf beiden Geräten.
@@ -25,12 +27,17 @@ import { aktuelleSitzung, codePruefen, letzteLobby, sitzungStarten } from '../co
 import { duellBelohnung } from '../core/duell-belohnung.js';
 import { geraetOnline, netzArt } from '../core/netz.js';
 import { createSprite } from '../ui/sprite.js';
+import { einladungSenden, freundeAktualisieren, freundeBeobachten, freundeLage, freundeMoeglich, freundeSortiert, freundeZustand } from '../core/freunde.js';
+import { zeigeHinweisToast } from '../ui/toast.js';
+import { STATUS } from './freunde.js';
 import { deckReihe, figurBild, rueckkehrEntfernen, rueckkehrZeigen, sicher, skinAusProfil } from '../ui/duell-ansicht.js';
 
 /** Abmelde-Funktionen der gerade gezeigten Lobby. */
 let aufraeumen = [];
 /** Wohin der Bildschirm verlassen wird - zum Deck bleibt die Sitzung offen. */
 let bleibtOffen = false;
+/** Wer in welche Lobby (Code) schon eingeladen wurde - für "✔ Eingeladen". */
+const eingeladen = new Map();
 
 /** Die zuletzt gewählte Welt usw. - passend zum eigenen Fortschritt. */
 function gemerkteWahl() {
@@ -65,7 +72,14 @@ function starten(art, code = null) {
 }
 
 export const duellLobbyScreen = {
-  mount(root) {
+  /**
+   * @param {object} [params]
+   * @param {string} [params.beitreten] - Code: gleich dieser Lobby beitreten
+   *        (nach einer angenommenen Freundes-Einladung)
+   * @param {string} [params.einladen] - Freundes-ID: eigene Lobby öffnen und
+   *        diesen Freund einladen (aus der Freundesliste)
+   */
+  mount(root, params = {}) {
     rueckkehrEntfernen();
     bleibtOffen = false;
 
@@ -144,6 +158,7 @@ export const duellLobbyScreen = {
                         placeholder="CODE" aria-label="Einladungscode" autocapitalize="characters" spellcheck="false">
                  <button class="btn" type="submit">Beitreten</button>
                </form>
+               ${freundeMoeglich() ? '<button class="btn btn--small duell-letzte" data-aktion="freunde" type="button">👥 Freund aus der Freundesliste einladen</button>' : ''}
                ${letzte ? `<button class="btn btn--ghost btn--small duell-letzte" data-aktion="letzte" type="button">↩ Lobby ${sicher(letzte.code)} erneut betreten</button>` : ''}`
             : `<p class="map__info-text duell-hinweis">📡 Online-Koop braucht eine Internetverbindung. Solo mit KI-Partner geht immer - auch offline.</p>`}
         </div>
@@ -160,6 +175,8 @@ export const duellLobbyScreen = {
       paarGegner(gameState.unlockedWorld, 0).forEach(({ gegner }) => bild.appendChild(createSprite(gegner)));
 
       content.querySelector('[data-aktion="erstellen"]')?.addEventListener('click', () => verbinden(starten('host')));
+      // Eine eigene Lobby - darin steht dann die Freundesliste zum Einladen.
+      content.querySelector('[data-aktion="freunde"]')?.addEventListener('click', () => verbinden(starten('host')));
       content.querySelector('[data-aktion="solo"]').addEventListener('click', () => verbinden(starten('solo')));
       content.querySelector('[data-aktion="letzte"]')?.addEventListener('click', () => verbinden(starten(letzte.art === 'host' ? 'host' : 'gast', letzte.code)));
       const form = content.querySelector('form[data-aktion="beitreten"]');
@@ -243,6 +260,8 @@ export const duellLobbyScreen = {
             ${spielerKarte(info.spieler[1], 1, info)}
           </div>
         </div>
+
+        ${host && !solo && !partner && freundeMoeglich() ? freundePanel(info.code) : ''}
 
         <div class="panel duell-wahl-panel">
           <div class="panel__title">🎯 Deine Figur und Boss-Kraft</div>
@@ -363,9 +382,60 @@ export const duellLobbyScreen = {
         content.querySelectorAll('[data-grad]').forEach((k) => k.addEventListener('click', () => aendern({ schwierigkeit: k.dataset.grad })));
       }
       content.querySelector('[data-aktion="bereit"]')?.addEventListener('click', () => sitz.bereitSetzen(!ich?.bereit));
+      content.querySelectorAll('[data-einladen]').forEach((k) => k.addEventListener('click', () => freundEinladen(k.dataset.einladen)));
     }
 
-    verbinden(sitzung);
+    /** Schickt einem Freund den Code der eigenen Lobby. */
+    async function freundEinladen(kennung, name = null) {
+      const sitz = sitzung;
+      if (!sitz || sitz.info.art !== 'host') return;
+      const freund = freundeLage()?.freunde.find((f) => f.kennung === kennung);
+      const wer = freund?.name ?? name ?? kennung;
+      let antwort = null;
+      try {
+        antwort = await einladungSenden(kennung, sitz.info.code);
+      } catch (fehler) {
+        console.warn('Einladung nicht gesendet:', fehler);
+      }
+      if (antwort === 'gesendet') {
+        if (!eingeladen.has(sitz.info.code)) eingeladen.set(sitz.info.code, new Set());
+        eingeladen.get(sitz.info.code).add(kennung);
+        zeigeHinweisToast({ icon: '📨', label: '2v2-Einladung gesendet', text: `an ${wer} - gilt 5 Minuten` });
+      } else {
+        zeigeHinweisToast({
+          icon: '📡',
+          label: 'Einladung nicht gesendet',
+          text: antwort === 'kein_freund' ? `${wer} ist nicht (mehr) dein Freund.` : antwort === 'zu_viele' ? 'Zu viele Einladungen - warte kurz.' : 'Bist du online? Versuch es gleich nochmal.',
+        });
+      }
+      if (aktuelleSitzung() === sitz) zeichnen();
+    }
+
+    // Neue Freundesliste: nur neu zeichnen, wenn sie gerade zu sehen ist.
+    const freundeAus = freundeBeobachten(() => {
+      const info = sitzung?.info;
+      if (content.isConnected && info && info.art === 'host' && ['verbinde', 'lobby'].includes(info.phase) && !info.spieler[1]) zeichnen();
+    });
+    aufraeumen.push(freundeAus);
+    if (freundeMoeglich()) freundeAktualisieren();
+
+    const beitreten = codePruefen(params.beitreten);
+    if (beitreten) {
+      // Angenommene Freundes-Einladung: derselbe Weg wie "Code eingeben".
+      verbinden(starten('gast', beitreten));
+    } else if (params.einladen) {
+      // Aus der Freundesliste: in die eigene offene Lobby einladen, sonst eine neue erstellen.
+      const offen = sitzung && sitzung.info.art === 'host' && ['verbinde', 'lobby'].includes(sitzung.info.phase);
+      if (!offen && !(netzArt() && geraetOnline())) {
+        verbinden(sitzung);
+        zeigeHinweisToast({ icon: '📡', label: 'Offline', text: 'Freunde einladen geht nur mit Internet.' });
+      } else {
+        verbinden(offen ? sitzung : starten('host'));
+        freundEinladen(params.einladen, params.einladenName);
+      }
+    } else {
+      verbinden(sitzung);
+    }
   },
 
   unmount() {
@@ -377,6 +447,30 @@ export const duellLobbyScreen = {
     if (bleibtOffen && aktuelleSitzung()?.info.phase !== 'match' && aktuelleSitzung()?.info.phase !== 'ergebnis') rueckkehrZeigen();
   },
 };
+
+/** Die Freundesliste in der eigenen Lobby: online zuerst, mit "Einladen". */
+function freundePanel(code) {
+  const lage = freundeLage();
+  const zustand = freundeZustand();
+  const schon = eingeladen.get(code) ?? new Set();
+  const liste = freundeSortiert(lage?.freunde ?? []);
+  const inhalt = !lage
+    ? `<p class="duell-klein">${zustand === 'offline' ? '📡 Offline - Freunde einladen geht gerade nicht.' : zustand === 'fehlt' ? 'Die Freundesliste ist in der Datenbank noch nicht eingerichtet.' : 'Freundesliste lädt …'}</p>`
+    : !liste.length
+      ? '<p class="duell-klein">Noch keine Freunde - füge sie unter 👥 Freunde hinzu. Oder schick den Code oben.</p>'
+      : `<ul class="duell-freunde__liste">${liste.map((f) => `
+          <li class="duell-freunde__eintrag freund--${f.status}">
+            <span class="duell-freunde__name">${STATUS[f.status]?.icon ?? '⚫'} ${sicher(f.name)} <small>Lv ${Number(f.level) || 1}</small></span>
+            ${schon.has(f.kennung)
+              ? '<span class="duell-klein">✔ Eingeladen</span>'
+              : `<button class="btn btn--small btn--green" type="button" data-einladen="${sicher(f.kennung)}" ${zustand === 'offline' ? 'disabled' : ''}>Einladen</button>`}
+          </li>`).join('')}</ul>`;
+  return `
+    <div class="panel duell-freunde">
+      <div class="panel__title">👥 Freund einladen</div>
+      ${inhalt}
+    </div>`;
+}
 
 /** Kurzer Text, wie sich die Gegner an das Team anpassen. */
 function ausgleichText(a) {

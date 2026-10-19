@@ -9,6 +9,7 @@ import { createSprite } from './sprite.js';
 import { MUENZE } from '../data/items.js';
 import { ligaVon } from '../data/trophaeen.js';
 import { showScreen } from '../core/screens.js';
+import { freundeMoeglich, offeneAnzahl } from '../core/freunde.js';
 
 /**
  * Macht Text sicher fürs Einsetzen in HTML.
@@ -44,8 +45,9 @@ export function balkenFuellen(element, anteil) {
 }
 
 /**
- * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken, Trophäen und
- * Münzen. Ein Tipp auf die Trophäen öffnet die Rangliste.
+ * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken, Freunde, Trophäen
+ * und Münzen. Ein Tipp auf die Trophäen öffnet die Rangliste, einer auf 👥
+ * die Freunde (nur, wenn es die Datenbank gibt).
  */
 export function createHud() {
   const starter = getMonster(getAktiveFigur());
@@ -70,6 +72,10 @@ export function createHud() {
       </span>
     </div>
     <div class="hud__rechts">
+      ${freundeMoeglich() ? `<button class="hud__freunde" type="button" aria-label="Freunde">
+        <span aria-hidden="true">👥</span>
+        <span class="hud__freunde-zahl" data-freunde-zahl ${offeneAnzahl() ? '' : 'hidden'}>${offeneAnzahl() > 9 ? '9+' : offeneAnzahl()}</span>
+      </button>` : ''}
       <button class="hud__trophaeen" type="button" style="--liga-farbe:${ligaVon(gameState.trophaeen).farbe}"
               aria-label="${gameState.trophaeen} Trophäen - Rangliste öffnen">
         <span class="hud__trophaeen-icon" aria-hidden="true">🏆</span>
@@ -83,6 +89,7 @@ export function createHud() {
   `;
   hud.querySelector('.hud__avatar').appendChild(createSprite(starter));
   hud.querySelector('.hud__trophaeen').addEventListener('click', () => showScreen('rangliste'));
+  hud.querySelector('.hud__freunde')?.addEventListener('click', () => showScreen('freunde'));
   return hud;
 }
 

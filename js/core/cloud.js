@@ -325,6 +325,20 @@ export async function cloudDuellBelohnung(matchId, daten = {}) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Freunde                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ruft eine der Freundes-Funktionen aus datenbank/schema.sql auf
+ * (mq_freunde, mq_anfrage_senden, ...). Die eigene Spielernummer wird
+ * dabei immer als p_id mitgeschickt - siehe js/core/freunde.js.
+ */
+export async function cloudFreunde(name, parameter = {}) {
+  if (!cloudAktiv()) throw new Error('Keine Datenbank eingetragen');
+  return rufe(name, { ...parameter, p_id: spielerId() });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Start                                                              */
 /* ------------------------------------------------------------------ */
 

@@ -42,3 +42,32 @@ function banner(erfolg) {
     setTimeout(() => el.remove(), 400);
   }, 2600);
 }
+
+/**
+ * Ein einfacher Hinweis im selben Stil - z. B. "Neue Freundschaftsanfrage".
+ * Texte werden als Text gesetzt, nie als HTML (Namen kommen von anderen).
+ *
+ * @param {{icon: string, label: string, text: string}} hinweis
+ */
+export function zeigeHinweisToast({ icon, label, text }) {
+  const el = document.createElement('div');
+  el.className = 'erfolg-toast';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `
+    <span class="erfolg-toast__icon"></span>
+    <span class="erfolg-toast__body">
+      <span class="erfolg-toast__label"></span>
+      <span class="erfolg-toast__name"></span>
+    </span>
+  `;
+  el.querySelector('.erfolg-toast__icon').textContent = icon;
+  el.querySelector('.erfolg-toast__label').textContent = label;
+  el.querySelector('.erfolg-toast__name').textContent = text;
+  document.body.appendChild(el);
+
+  requestAnimationFrame(() => el.classList.add('is-shown'));
+  setTimeout(() => {
+    el.classList.remove('is-shown');
+    setTimeout(() => el.remove(), 400);
+  }, 3200);
+}

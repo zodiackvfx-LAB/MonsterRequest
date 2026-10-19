@@ -112,6 +112,19 @@ wurde.
 > Schritt funktioniert das 2v2 trotzdem - dann schützt nur die Liste im
 > Browser vor doppelten Belohnungen.
 >
+> **Für die Freundesliste (👥 Freunde):** Führe `schema.sql` einmal neu
+> aus (SQL-Editor → einfügen → Run). Das legt die Tabellen für
+> Freundes-IDs, Freundschaften, Anfragen, 2v2-Einladungen und den
+> Onlinestatus an – samt der Funktionen `mq_freunde`, `mq_freund_suchen`,
+> `mq_anfrage_senden`, `mq_anfrage_antworten`, `mq_anfrage_zurueckziehen`,
+> `mq_freund_entfernen`, `mq_einladung_senden` und `mq_einladung_antworten`.
+> Gefahrlos: Bestehende Spielstände bleiben unangetastet. Auch diese
+> Tabellen sind von außen gesperrt; jede Funktion verlangt die eigene
+> Spielernummer und ändert nur, woran dieser Spieler selbst beteiligt ist.
+> Danach `schema.test.sql` ausführen – unter *Messages* muss
+> „… bestanden, 0 fehlgeschlagen“ stehen. Ohne diesen Schritt zeigt der
+> Freunde-Bildschirm nur einen Hinweis; der Rest des Spiels läuft normal.
+>
 > Der Online-Koop selbst braucht **keine** Einrichtung: Er nutzt *Realtime
 > Broadcast* von Supabase, das in jedem Projekt eingeschaltet ist (unter
 > *Project Settings → Realtime* darf „Allow public access“ nicht
