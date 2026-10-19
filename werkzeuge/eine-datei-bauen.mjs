@@ -10,7 +10,7 @@
  * Was passiert:
  *   1. Alle JavaScript-Module werden mit esbuild zu einem Skript gebündelt
  *      (wird beim ersten Mal über npx geladen - dafür braucht es einmal Netz).
- *   2. Die vier CSS-Dateien kommen in der richtigen Reihenfolge in einen
+ *   2. Die CSS-Dateien kommen in der richtigen Reihenfolge in einen
  *      <style>-Block.
  *   3. Bilder und Schriften werden als data:-Adressen direkt eingebettet.
  *
@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 
 const WURZEL = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ZIEL = join(WURZEL, 'dist', 'MonsterQuest.html');
-const CSS = ['css/base.css', 'css/scenery.css', 'css/ui.css', 'css/screens.css', 'css/erlebnis.css'];
+const CSS = ['css/base.css', 'css/scenery.css', 'css/ui.css', 'css/screens.css', 'css/erlebnis.css', 'css/duell.css'];
 const ESBUILD = 'esbuild@0.24.0';
 
 const MIME = { png: 'image/png', woff2: 'font/woff2', svg: 'image/svg+xml', jpg: 'image/jpeg' };

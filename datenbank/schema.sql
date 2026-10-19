@@ -14,7 +14,7 @@
 -- Spielcode steht und fuer jeden sichtbar ist) NICHT einfach die Tabelle
 -- lesen duerfen. Sonst koennte jeder alle Spielstaende herunterladen.
 -- Loesung: Die Tabellen sind komplett gesperrt (RLS ohne Regeln). Nach
--- aussen gibt es nur vier Funktionen, und jede verlangt die Nummer.
+-- aussen gibt es nur wenige Funktionen, und jede verlangt die Nummer.
 -- =========================================================================
 
 
@@ -258,6 +258,71 @@ as $$
 $$;
 
 
+-- --- 2v2 Monster-Duell: jede Belohnung genau einmal ---------------------
+-- Nach einem 2v2-Kampf meldet jedes Geraet: "Ich hole mir die Belohnung fuer
+-- dieses Match." Jedes Paar aus Match und Spieler wird nur EINMAL
+-- angenommen - ein zweites Geraet mit demselben Spielstand oder ein
+-- erneutes Verbinden bekommt dieselbe Belohnung nicht noch einmal.
+-- Antwort: true = zum ersten Mal, false = gab es schon.
+--
+-- Die Tabelle merkt sich nur Match-Kennung, Spielernummer und ein paar
+-- Eckdaten (Ergebnis, Welt, Schwierigkeit). Eintraege, die aelter als 30
+-- Tage sind, werden beim naechsten Aufruf geloescht.
+
+create table if not exists public.duell_belohnungen (
+  match_id    text        not null,
+  spieler_id  uuid        not null,
+  daten       jsonb       not null default '{}'::jsonb,
+  erstellt_am timestamptz not null default now(),
+  primary key (match_id, spieler_id)
+);
+
+create index if not exists duell_belohnungen_spieler_idx
+  on public.duell_belohnungen (spieler_id, erstellt_am desc);
+create index if not exists duell_belohnungen_alter_idx
+  on public.duell_belohnungen (erstellt_am);
+
+alter table public.duell_belohnungen enable row level security;
+revoke all on table public.duell_belohnungen from anon, authenticated;
+
+create or replace function public.mq_duell_belohnung(p_id uuid, p_match text, p_daten jsonb default '{}'::jsonb)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_neu integer;
+begin
+  if p_id is null then
+    raise exception 'Keine Spielernummer angegeben';
+  end if;
+  -- Match-Kennungen baut das Spiel aus Kleinbuchstaben, Ziffern und "-".
+  if p_match is null or p_match !~ '^[a-z0-9-]{8,80}$' then
+    raise exception 'Ungueltige Match-Kennung';
+  end if;
+  if jsonb_typeof(coalesce(p_daten, '{}'::jsonb)) is distinct from 'object'
+     or pg_column_size(p_daten) > 2048 then
+    raise exception 'Ungueltige Match-Daten';
+  end if;
+
+  delete from public.duell_belohnungen where erstellt_am < now() - interval '30 days';
+
+  -- Bremse gegen Massen-Anfragen: hoechstens 200 Belohnungen pro Tag.
+  if (select count(*) from public.duell_belohnungen
+       where spieler_id = p_id and erstellt_am > now() - interval '1 day') >= 200 then
+    return false;
+  end if;
+
+  insert into public.duell_belohnungen (match_id, spieler_id, daten)
+       values (p_match, p_id, coalesce(p_daten, '{}'::jsonb))
+  on conflict (match_id, spieler_id) do nothing;
+  get diagnostics v_neu = row_count;
+  return v_neu = 1;
+end;
+$$;
+
+
 -- -------------------------------------------------------------------------
 -- 5. Wer darf die Funktionen aufrufen
 -- -------------------------------------------------------------------------
@@ -267,12 +332,14 @@ revoke all on function public.mq_laden(uuid)                 from public;
 revoke all on function public.mq_code_erstellen(uuid)        from public;
 revoke all on function public.mq_code_einloesen(text)        from public;
 revoke all on function public.mq_rangliste(uuid, integer)    from public;
+revoke all on function public.mq_duell_belohnung(uuid, text, jsonb) from public;
 
 grant execute on function public.mq_speichern(uuid, jsonb)   to anon, authenticated;
 grant execute on function public.mq_laden(uuid)              to anon, authenticated;
 grant execute on function public.mq_code_erstellen(uuid)     to anon, authenticated;
 grant execute on function public.mq_code_einloesen(text)     to anon, authenticated;
 grant execute on function public.mq_rangliste(uuid, integer) to anon, authenticated;
+grant execute on function public.mq_duell_belohnung(uuid, text, jsonb) to anon, authenticated;
 
 
 -- -------------------------------------------------------------------------

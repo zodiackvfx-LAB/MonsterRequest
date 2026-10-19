@@ -103,6 +103,8 @@ function createNewGame() {
       arenaBest: 0, // beste Rundenzahl in der Endlos-Arena
       erfolge: [], // ids der freigeschalteten Erfolge
     },
+    // 2v2 Monster-Duell - siehe js/core/duell-belohnung.js
+    duell: neuerDuellStand(),
     // Tagesaufgaben - siehe js/core/aufgaben.js
     dailies: {
       datum: null, // "JJJJ-MM-TT" des Tages, fuer den die Aufgaben gelten
@@ -119,6 +121,19 @@ function createNewGame() {
       deckSortierung: 'deck', // Anzeige im Deckmenü (siehe js/core/sortierung.js)
       rangliste: true, // mit Name und Trophäen in der Rangliste erscheinen
     },
+  };
+}
+
+/** Der 2v2-Teil des Spielstands (frisch). */
+function neuerDuellStand() {
+  return {
+    belohnt: [], // Match-ids, deren Belohnung schon verbucht ist (die letzten 60)
+    tag: null, // "JJJJ-MM-TT" - für die vollen Belohnungen pro Tag
+    siegeHeute: 0,
+    bossTruheDatum: null, // Tag, an dem es die Boss-Duell-Truhe gab
+    besteSterne: {}, // { "welt-grad": Sterne }
+    wahl: null, // zuletzt gewählte Welt/Gegner/Schwierigkeit in der Lobby
+    statistik: { kaempfe: 0, siege: 0, niederlagen: 0, kombos: 0, wiederbelebt: 0, bosse: 0, makellos: 0 },
   };
 }
 
@@ -328,6 +343,7 @@ function uebernehmen(saved) {
     abgeholt: Array.isArray(saved.dailies?.abgeholt) ? saved.dailies.abgeholt : [],
   };
   gameState.gesehen = saved.gesehen && typeof saved.gesehen === 'object' ? { ...saved.gesehen } : {};
+  duellUebernehmen(saved);
   // Statistik: fehlende Zähler bekommen 0, damit ein alter Stand nicht bricht.
   const st = saved.statistik && typeof saved.statistik === 'object' ? saved.statistik : {};
   gameState.statistik = {
@@ -386,12 +402,6 @@ function truhenUebernehmen(saved) {
  */
 function eigeneOutfitsPruefen(liste) {
   if (!Array.isArray(liste)) return [];
-  const farbe = (wert) => (typeof wert === 'string' && /^#[0-9a-f]{6}$/i.test(wert) ? wert.toLowerCase() : null);
-  const zahl = (wert, min, max, standard) => {
-    const n = Number(wert);
-    return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : standard;
-  };
-  const auswahl = (wert, liste, standard) => (typeof wert === 'string' && Object.hasOwn(liste, wert) ? wert : standard);
   return liste
     .filter((e) => e && typeof e.id === 'string' && /^eigen-[a-z0-9]{1,20}$/.test(e.id) && e.rezept && typeof e.rezept === 'object')
     .slice(0, 8)
@@ -400,15 +410,63 @@ function eigeneOutfitsPruefen(liste) {
       name: String(e.name ?? '').trim().slice(0, 20) || 'Mein Outfit',
       seltenheit: ['gewoehnlich', 'selten', 'episch', 'legendaer'].includes(e.seltenheit) ? e.seltenheit : 'episch',
       text: String(e.text ?? '').trim().slice(0, 80),
-      rezept: {
-        kleidung: farbe(e.rezept.kleidung),
-        helligkeit: zahl(e.rezept.helligkeit, -0.2, 0.2, 0),
-        muster: auswahl(e.rezept.muster, MUSTER, 'keins'),
-        musterFarbe: farbe(e.rezept.musterFarbe),
-        hut: auswahl(e.rezept.hut, HUETE, 'keiner'),
-        hutFarbe: farbe(e.rezept.hutFarbe),
-      },
+      rezept: rezeptPruefen(e.rezept),
     }));
+}
+
+/**
+ * Ein Outfit-Rezept in sichere Form bringen: nur gültige Farben, Hüte und
+ * Muster. Auch für Rezepte von anderen Geräten (2v2-Teamkamerad).
+ */
+export function rezeptPruefen(rezept) {
+  const r = rezept && typeof rezept === 'object' ? rezept : {};
+  const farbe = (wert) => (typeof wert === 'string' && /^#[0-9a-f]{6}$/i.test(wert) ? wert.toLowerCase() : null);
+  const zahl = (wert, min, max, standard) => {
+    const n = Number(wert);
+    return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : standard;
+  };
+  const auswahl = (wert, liste, standard) => (typeof wert === 'string' && Object.hasOwn(liste, wert) ? wert : standard);
+  return {
+    kleidung: farbe(r.kleidung),
+    helligkeit: zahl(r.helligkeit, -0.2, 0.2, 0),
+    muster: auswahl(r.muster, MUSTER, 'keins'),
+    musterFarbe: farbe(r.musterFarbe),
+    hut: auswahl(r.hut, HUETE, 'keiner'),
+    hutFarbe: farbe(r.hutFarbe),
+  };
+}
+
+/**
+ * Den 2v2-Teil übernehmen. Ältere Stände kennen ihn nicht - dann gilt der
+ * frische Stand. Nur Werte in der erwarteten Form zählen.
+ */
+function duellUebernehmen(saved) {
+  const d = saved.duell && typeof saved.duell === 'object' ? saved.duell : {};
+  const frisch = neuerDuellStand();
+  const datum = (wert) => (typeof wert === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(wert) ? wert : null);
+  const zahl = (wert) => Math.max(0, Math.floor(Number(wert) || 0));
+  const st = d.statistik && typeof d.statistik === 'object' ? d.statistik : {};
+  gameState.duell = {
+    belohnt: Array.isArray(d.belohnt) ? d.belohnt.filter((id) => typeof id === 'string' && id.length <= 80).slice(-60) : [],
+    tag: datum(d.tag),
+    siegeHeute: zahl(d.siegeHeute),
+    bossTruheDatum: datum(d.bossTruheDatum),
+    besteSterne: Object.fromEntries(
+      Object.entries(d.besteSterne && typeof d.besteSterne === 'object' ? d.besteSterne : {})
+        .filter(([key]) => /^\d{1,2}-[a-z]+$/.test(key))
+        .map(([key, wert]) => [key, Math.max(0, Math.min(3, zahl(wert)))])
+    ),
+    wahl: d.wahl && typeof d.wahl === 'object'
+      ? {
+          welt: Math.max(1, Math.min(WORLDS.length, zahl(d.wahl.welt) || 1)),
+          paar: Math.min(9, zahl(d.wahl.paar)),
+          bossDuell: d.wahl.bossDuell === true,
+          schwierigkeit: typeof d.wahl.schwierigkeit === 'string' ? d.wahl.schwierigkeit.slice(0, 12) : 'normal',
+          partner: typeof d.wahl.partner === 'string' && MONSTERS[d.wahl.partner] ? d.wahl.partner : null,
+        }
+      : null,
+    statistik: Object.fromEntries(Object.keys(frisch.statistik).map((key) => [key, zahl(st[key])])),
+  };
 }
 
 /** Kampf-Modi übernehmen - nur Daten in der erwarteten Form. */

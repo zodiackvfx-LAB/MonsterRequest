@@ -104,6 +104,19 @@ wurde.
 > neu aus (SQL-Editor → einfügen → Run) – das ist gefahrlos, es überschreibt
 > nur die Ansicht und lässt alle Spielstände unangetastet.
 
+> **Für das 2v2 Monster-Duell:** Führe `schema.sql` einmal neu aus
+> (SQL-Editor → einfügen → Run). Das legt die Tabelle `duell_belohnungen` und
+> die Funktion `mq_duell_belohnung` an - damit gibt es die Belohnung eines
+> 2v2-Matches pro Spieler garantiert nur einmal, auch über mehrere Geräte.
+> Gefahrlos: Bestehende Spielstände bleiben unangetastet. Ohne diesen
+> Schritt funktioniert das 2v2 trotzdem - dann schützt nur die Liste im
+> Browser vor doppelten Belohnungen.
+>
+> Der Online-Koop selbst braucht **keine** Einrichtung: Er nutzt *Realtime
+> Broadcast* von Supabase, das in jedem Projekt eingeschaltet ist (unter
+> *Project Settings → Realtime* darf „Allow public access“ nicht
+> ausgeschaltet sein). Dabei wird nichts in der Datenbank gespeichert.
+
 ---
 
 ## Wie es funktioniert
@@ -125,7 +138,7 @@ er die Tabellen **nicht** direkt lesen. Genau das stellt `schema.sql` ein:
 
 * Beide Tabellen haben *Row Level Security* an und **keine** Regel. Damit ist
   von außen nichts zu holen – auch nicht mit dem Schlüssel.
-* Nach außen gibt es nur vier Funktionen. Jede verlangt entweder die
+* Nach außen gibt es nur wenige Funktionen. Jede verlangt entweder die
   Spielernummer oder einen gültigen Code.
 
 `datenbank/schema.test.sql` prüft genau das nach.

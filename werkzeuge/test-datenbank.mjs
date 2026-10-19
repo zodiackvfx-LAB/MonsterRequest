@@ -32,6 +32,8 @@ const SCHLUESSEL = 'test-schluessel';
 const spielstaende = new Map();
 /** code -> { id, gueltigBis } */
 const codes = new Map();
+// 2v2: welche Belohnungen schon geholt wurden ("match|spieler").
+const duellBelohnungen = new Set();
 
 const TYPEN = {
   '.html': 'text/html; charset=utf-8',
@@ -69,7 +71,7 @@ function json(antwort, status, wert) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Die vier Funktionen - gleiche Regeln wie in schema.sql             */
+/*  Die Funktionen - gleiche Regeln wie in schema.sql                  */
 /* ------------------------------------------------------------------ */
 
 const FUNKTIONEN = {
@@ -141,6 +143,18 @@ const FUNKTIONEN = {
       ich: ich ? { platz: ich.platz, trophaeen: ich.trophaeen } : null,
       spieler: liste.length,
     };
+  },
+
+  // Gleiche Regeln wie mq_duell_belohnung in schema.sql: jedes Paar aus
+  // Match und Spieler genau einmal.
+  mq_duell_belohnung({ p_id, p_match, p_daten }) {
+    if (!p_id) throw new Error('Keine Spielernummer angegeben');
+    if (typeof p_match !== 'string' || !/^[a-z0-9-]{8,80}$/.test(p_match)) throw new Error('Ungueltige Match-Kennung');
+    if (p_daten != null && (typeof p_daten !== 'object' || Array.isArray(p_daten))) throw new Error('Ungueltige Match-Daten');
+    const schluessel = `${p_match}|${p_id}`;
+    if (duellBelohnungen.has(schluessel)) return false;
+    duellBelohnungen.add(schluessel);
+    return true;
   },
 };
 

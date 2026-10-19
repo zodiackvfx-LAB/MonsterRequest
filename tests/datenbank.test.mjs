@@ -165,6 +165,14 @@ try {
     pruefe('Keine Spielernummern in der Antwort', !JSON.stringify(liste).includes(ich) && !JSON.stringify(liste).includes(fremd(1)));
   }
 
+  console.log('\n2v2: Belohnung genau einmal');
+  {
+    pruefe('Erste Meldung eines Matches wird angenommen', (await cloud.cloudDuellBelohnung('testlobby01-abcdefgh', { ergebnis: 'sieg' })) === true);
+    pruefe('Dasselbe Match gibt es kein zweites Mal', (await cloud.cloudDuellBelohnung('testlobby01-abcdefgh')) === false);
+    pruefe('Ein anderes Match geht wieder', (await cloud.cloudDuellBelohnung('testlobby01-zweites1')) === true);
+    pruefe('Unsinnige Match-Kennung ergibt "unbekannt" statt eines Absturzes', (await cloud.cloudDuellBelohnung('DROP TABLE')) === null);
+  }
+
   console.log('\nGrenzen');
   {
     pruefe('Ein zu grosser Spielstand wird abgelehnt', await zuGrossWirdAbgelehnt());

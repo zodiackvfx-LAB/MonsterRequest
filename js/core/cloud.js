@@ -294,6 +294,37 @@ export async function cloudRangliste(anzahl = 50) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  2v2: Belohnung genau einmal                                        */
+/* ------------------------------------------------------------------ */
+
+/** So lange wartet das Ergebnisfenster höchstens auf die Datenbank. */
+const DUELL_ZEITGRENZE = 3500;
+
+/**
+ * Meldet der Datenbank: "Ich hole mir die Belohnung für dieses Match."
+ * Die Datenbank merkt sich jedes Paar aus Match und Spieler nur einmal -
+ * ein zweites Gerät mit demselben Spielstand oder ein wiederholtes
+ * Verbinden bekommt dieselbe Belohnung nicht noch einmal.
+ *
+ * @returns {Promise<true|false|null>} true = erstes Mal, false = gab es
+ *   schon, null = keine Datenbank / nicht erreichbar / Funktion fehlt noch
+ *   (dann schützt die lokale Liste in js/core/duell-belohnung.js)
+ */
+export async function cloudDuellBelohnung(matchId, daten = {}) {
+  if (!cloudAktiv()) return null;
+  try {
+    const antwort = await Promise.race([
+      rufe('mq_duell_belohnung', { p_id: spielerId(), p_match: matchId, p_daten: daten }),
+      new Promise((fertig) => setTimeout(() => fertig(null), DUELL_ZEITGRENZE)),
+    ]);
+    return antwort === true ? true : antwort === false ? false : null;
+  } catch (fehler) {
+    if (fehler.status !== 404) console.warn('2v2-Belohnung nicht gemeldet:', fehler);
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Start                                                              */
 /* ------------------------------------------------------------------ */
 

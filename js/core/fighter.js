@@ -13,9 +13,9 @@
  *   - jede Attacke kostet Energie und kann nur bezahlt gespielt werden
  */
 
-import { getAttack } from '../data/attacks.js';
+import { getAttack, stufenId } from '../data/attacks.js';
 import { createDeck } from './deck.js';
-import { attackeMitLevel } from './progression.js';
+import { attackeAufLevel, attackeMitLevel } from './progression.js';
 
 /** Maximale Energie eines Kämpfers. */
 export const MAX_ENERGIE = 10;
@@ -26,9 +26,20 @@ export const START_ENERGIE = 3;
 
 /**
  * Erzeugt einen Kämpfer aus einem Monster (js/data/monsters.js).
+ *
+ * @param {object} [optionen]
+ * @param {function} [optionen.zufall] - Zufallsquelle fürs Mischen (Standard
+ *        Math.random). Der 2v2-Modus gibt eine feste vor (js/core/zufall.js).
+ *
+ * Bringt das Monster eigene Karten-Level mit (monster.kartenLevel, z. B. die
+ * des Teamkameraden im 2v2), gelten diese statt der Level aus dem eigenen
+ * Spielstand. Ohne Angabe bleibt alles wie bisher.
  */
-export function createFighter(monster) {
-  const deck = createDeck(monster.deck);
+export function createFighter(monster, { zufall = Math.random } = {}) {
+  const deck = createDeck(monster.deck, undefined, zufall);
+  const mitLevel = monster.kartenLevel
+    ? (attacke) => attackeAufLevel(attacke, monster.kartenLevel[stufenId(attacke.id)] ?? 1)
+    : attackeMitLevel;
 
   // Werte aus dem Fortschritt. Wer nichts mitbringt, kämpft mit den
   // Grundwerten - so bleiben Gegner unverändert.
@@ -77,7 +88,7 @@ export function createFighter(monster) {
    * aktuellen Attacken-Level (siehe js/core/progression.js).
    */
   function handAttacks() {
-    return state.hand.map((id) => attackeMitLevel(getAttack(id)));
+    return state.hand.map((id) => mitLevel(getAttack(id)));
   }
 
   /**
@@ -89,7 +100,7 @@ export function createFighter(monster) {
     const cardId = state.hand[handIndex];
     if (!cardId) return null;
 
-    const attack = attackeMitLevel(getAttack(cardId));
+    const attack = mitLevel(getAttack(cardId));
     if (!canAfford(attack.cost)) return null;
 
     genaueEnergie -= attack.cost;
@@ -136,6 +147,16 @@ export function createFighter(monster) {
     syncXp();
   }
 
+  /**
+   * Energie ausgeben oder abziehen (negativ) bzw. zurückgeben (positiv) -
+   * nie über 10, nie unter 0. Genutzt im 2v2: Rollen-Fähigkeiten und
+   * Wiederbeleben kosten Energie, manche Effekte entziehen welche.
+   */
+  function energieAendern(menge) {
+    genaueEnergie += menge;
+    syncXp();
+  }
+
   function heal(amount) {
     state.hp = Math.min(state.maxHp, state.hp + amount);
   }
@@ -156,6 +177,7 @@ export function createFighter(monster) {
     entferneSchild,
     energieVoll,
     energieLeeren,
+    energieAendern,
     heal,
     missingHp,
   };

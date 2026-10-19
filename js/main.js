@@ -26,6 +26,8 @@ import { dailyScreen } from './screens/daily.js';
 import { applySettings } from './screens/settings.js';
 import { arenaScreen } from './screens/arena.js';
 import { ranglisteScreen } from './screens/rangliste.js';
+import { duellLobbyScreen } from './screens/duell-lobby.js';
+import { duellScreen } from './screens/duell.js';
 
 const hatSpielstand = loadProgress();
 applySettings();
@@ -111,6 +113,9 @@ registerScreen('battle', battleScreen);
 registerScreen('daily', dailyScreen);
 registerScreen('arena', arenaScreen);
 registerScreen('rangliste', ranglisteScreen);
+// 2v2 Monster-Duell: Lobby und Arena (siehe js/core/duell-sitzung.js).
+registerScreen('duell-lobby', duellLobbyScreen);
+registerScreen('duell', duellScreen);
 
 /*
  * Trägt Timo ein selbst gebautes Outfit (Skin-Werkstatt), werden dessen

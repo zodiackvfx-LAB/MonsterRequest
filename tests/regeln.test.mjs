@@ -613,7 +613,8 @@ console.log('\nTagesaufgaben');
   // Fortschritt melden und abholen
   resetProgress();
   const heutige = getTagesAufgaben();
-  pruefe('Es stehen heute Aufgaben an', heutige.length === AUFGABEN_PRO_TAG);
+  // Drei normale Aufgaben und eine 2v2-Bonusaufgabe (siehe DUELL_AUFGABEN).
+  pruefe('Es stehen heute Aufgaben an', heutige.length === AUFGABEN_PRO_TAG + 1);
   pruefe('Am Anfang ist nichts abholbar', offeneBelohnungen() === 0);
 
   const erste = heutige[0].aufgabe;

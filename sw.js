@@ -17,7 +17,7 @@
  *   werden dann alle alten Caches gelöscht.
  */
 
-const CACHE = 'monsterquest-v32';
+const CACHE = 'monsterquest-v33';
 
 // Das komplette Spiel, das schon beim ersten Besuch fest in den Cache soll -
 // alle Seiten, Daten, Bilder. So läuft es auch offline vollständig, sobald die
@@ -36,6 +36,7 @@ const SCHALE = [
   'css/ui.css',
   'css/screens.css',
   'css/erlebnis.css',
+  'css/duell.css',
   'css/werkstatt.css',
   'js/core/audio.js',
   'js/core/aufgaben.js',
@@ -43,11 +44,17 @@ const SCHALE = [
   'js/core/belohnung.js',
   'js/core/cloud.js',
   'js/core/deck.js',
+  'js/core/duell.js',
+  'js/core/duell-aufbau.js',
+  'js/core/duell-belohnung.js',
+  'js/core/duell-ki.js',
+  'js/core/duell-sitzung.js',
   'js/core/eigene-skins.js',
   'js/core/fighter.js',
   'js/core/haptik.js',
   'js/core/loot.js',
   'js/core/modi.js',
+  'js/core/netz.js',
   'js/core/outfit.js',
   'js/core/progression.js',
   'js/core/screens.js',
@@ -59,10 +66,12 @@ const SCHALE = [
   'js/core/trophaeen.js',
   'js/core/truhenplaetze.js',
   'js/core/zeittruhen.js',
+  'js/core/zufall.js',
   'js/data/arena.js',
   'js/data/attacks.js',
   'js/data/aufgaben.js',
   'js/data/cloud-config.js',
+  'js/data/duell.js',
   'js/data/enemies.js',
   'js/data/erfolge.js',
   'js/data/gegnerarten.js',
@@ -88,6 +97,8 @@ const SCHALE = [
   'js/screens/collection.js',
   'js/screens/daily.js',
   'js/screens/deck.js',
+  'js/screens/duell.js',
+  'js/screens/duell-lobby.js',
   'js/screens/lobby.js',
   'js/screens/map.js',
   'js/screens/monster.js',
@@ -96,6 +107,7 @@ const SCHALE = [
   'js/screens/shop.js',
   'js/screens/start.js',
   'js/screens/worlds.js',
+  'js/ui/duell-ansicht.js',
   'js/ui/effekte.js',
   'js/ui/hud.js',
   'js/ui/kampfintro.js',

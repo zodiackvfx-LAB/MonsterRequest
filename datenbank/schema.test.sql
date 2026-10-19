@@ -214,6 +214,45 @@ begin
   reset role;
 
   -- ---------------------------------------------------------------- --
+  raise notice '--- 2v2: Belohnung genau einmal ---';
+  set local role anon;
+
+  if public.mq_duell_belohnung(v_a, 'testlobby01-match0001', '{"ergebnis":"sieg"}'::jsonb) then
+    v_gut := v_gut + 1; raise notice 'ok   Erste Meldung eines Matches wird angenommen';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Erste Meldung wurde abgelehnt';
+  end if;
+
+  if not public.mq_duell_belohnung(v_a, 'testlobby01-match0001', '{}'::jsonb) then
+    v_gut := v_gut + 1; raise notice 'ok   Dasselbe Match gibt es kein zweites Mal';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Dasselbe Match wurde zweimal belohnt';
+  end if;
+
+  if public.mq_duell_belohnung(v_b, 'testlobby01-match0001', '{}'::jsonb) then
+    v_gut := v_gut + 1; raise notice 'ok   Der Teamkamerad bekommt seine eigene Belohnung';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Der Teamkamerad wurde abgelehnt';
+  end if;
+
+  begin
+    perform public.mq_duell_belohnung(v_a, 'DROP TABLE x;', '{}'::jsonb);
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Eine unsinnige Match-Kennung wurde angenommen';
+  exception when others then
+    v_gut := v_gut + 1; raise notice 'ok   Unsinnige Match-Kennungen werden abgelehnt';
+  end;
+
+  begin
+    execute 'select count(*) from public.duell_belohnungen';
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL anon darf die 2v2-Tabelle lesen';
+  exception when insufficient_privilege then
+    v_gut := v_gut + 1; raise notice 'ok   anon kann die 2v2-Tabelle nicht lesen';
+  end;
+  reset role;
+
+  delete from public.duell_belohnungen where spieler_id in (v_a, v_b, v_c, v_d);
+
+  -- ---------------------------------------------------------------- --
   delete from public.spielstaende where id in (v_a, v_b, v_c, v_d);
 
   raise notice '';
