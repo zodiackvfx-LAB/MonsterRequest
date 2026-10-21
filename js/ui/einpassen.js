@@ -2,11 +2,10 @@
  * Fenster passen immer auf den Bildschirm.
  *
  * Ein Fenster (.overlay__box - Sieg, Niederlage, Einladung ... - und die
- * Truhen-Öffnung) kann
- * mal mehr enthalten als sonst: Beute, Truhe, Level-Aufstieg, neue Welt,
+ * Truhen-Öffnung) kann mal mehr enthalten als sonst: Beute, Truhe, Level-Aufstieg, neue Welt,
  * Erfolge. Auf einem Handy wurde es dann höher als der Bildschirm, und man
  * musste darin scrollen, um "Weiter" zu finden. Jetzt wird so ein Fenster
- * gleichmäßig verkleinert (CSS zoom), bis alles auf einmal zu sehen ist.
+ * gleichmäßig verkleinert (CSS scale), bis alles auf einmal zu sehen ist.
  *
  * Nur wenn es dafür zu klein würde (unter MIN_ZOOM), darf es wie bisher
  * scrollen - lesbar bleibt es dann trotzdem.
@@ -37,7 +36,16 @@ function planen() {
   });
 }
 
-/** Rechnet aus, wie stark ein Fenster verkleinert werden muss. */
+/**
+ * Rechnet aus, wie stark ein Fenster verkleinert werden muss.
+ *
+ * Verkleinert wird mit der CSS-Eigenschaft "scale" (nicht "zoom" - die
+ * rechnet Safari auf dem iPhone anders als Chrome). scale ändert die
+ * Größe nur beim Zeichnen: Das Fenster ist im Aufbau so hoch wie sein
+ * Inhalt, steht mittig und wird um die Mitte herum so weit verkleinert,
+ * dass es genau in den Platz passt. Die Einblend-Animation (transform)
+ * stört das nicht - scale ist eine eigene Eigenschaft.
+ */
 function einpassen(box) {
   const overlay = box.parentElement;
   if (!overlay || !box.isConnected) return;
@@ -46,20 +54,31 @@ function einpassen(box) {
   const platz = overlay.clientHeight - parseFloat(stil.paddingTop) - parseFloat(stil.paddingBottom) - 2;
   if (!(platz > 0)) return;
 
-  // Ohne Verkleinerung messen - in derselben Rechnung, ohne Flackern.
-  // scrollHeight ist die volle Höhe des Inhalts, auch wenn das Fenster
-  // gerade (max-height) scrollt; dazu kommt der Rahmen.
-  box.style.zoom = '';
-  box.style.maxHeight = '';
-  const hoehe = box.scrollHeight + (box.offsetHeight - box.clientHeight);
+  // Volle Höhe des Inhalts messen: Die Höchsthöhe aus dem CSS kurz
+  // aufheben (scale selbst ändert an den Maßen nichts).
+  box.style.maxHeight = 'none';
+  const hoehe = box.offsetHeight;
+  if (hoehe <= platz) {
+    box.style.maxHeight = '';
+    box.style.scale = '';
+    box.style.marginBlock = '';
+    overlay.style.overflow = '';
+    return;
+  }
 
-  // Gleich groß zurückgesetzt = keine neue Größe, der Beobachter meldet
-  // sich also nicht noch einmal - keine Schleife.
-  const zoom = hoehe > platz ? Math.max(MIN_ZOOM, Math.floor((platz / hoehe) * 1000) / 1000) : 1;
-  box.style.zoom = zoom < 1 ? String(zoom) : '';
-  // Die Höchsthöhe aus dem CSS würde mit verkleinert - das Fenster bliebe
-  // dann zu kurz und scrollte doch. Also umrechnen auf den ganzen Platz.
-  box.style.maxHeight = zoom < 1 ? `${platz / zoom}px` : '';
+  const faktor = Math.max(MIN_ZOOM, Math.floor((platz / hoehe) * 1000) / 1000);
+  // Reicht selbst das kleinste Maß nicht, darf das Fenster wie früher
+  // scrollen - dann aber genau so hoch, dass es verkleinert passt.
+  const aufbau = hoehe * faktor <= platz + 1 ? hoehe : platz / faktor;
+  box.style.maxHeight = aufbau < hoehe ? `${aufbau}px` : 'none';
+  box.style.scale = String(faktor);
+  // Im Aufbau nimmt das Fenster genau den Platz ein (negative Ränder
+  // oben und unten) und steht so in jedem Browser mittig - verkleinert
+  // um seine Mitte passt es dann genau hinein.
+  box.style.marginBlock = `${-(aufbau - platz) / 2}px`;
+  // Das unverkleinerte Fenster ragt im Aufbau über den Rand hinaus - das
+  // darf die Seite dahinter nicht scrollbar machen.
+  overlay.style.overflow = 'hidden';
 }
 
 function alleEinpassen() {
@@ -77,8 +96,8 @@ function alleEinpassen() {
  * Ergebnisfenster (Sieg, Niederlage, Arena, Modi, 2v2) in zwei Gruppen
  * teilen: links Kopf, Sterne, Monster, der erste Text und die Knöpfe -
  * rechts der Rest (Beute, Truhen, Aufstieg, Erfolge). Die Knöpfe stehen
- * hochkant trotzdem ganz unten (order in css/erlebnis.css). Hochkant sind die Gruppen unsichtbar
- * (display: contents) und nichts ändert sich; im Querformat stehen sie
+ * hochkant trotzdem ganz unten (order in css/erlebnis.css). Hochkant sind
+ * die Gruppen unsichtbar (display: contents) und nichts ändert sich; im Querformat stehen sie
  * nebeneinander (css/erlebnis.css), damit alles auf den flachen
  * Bildschirm passt.
  */
@@ -108,7 +127,7 @@ function aufnehmen(box) {
 
 /** Einmal beim Start (js/main.js). */
 export function fensterEinpassenStarten() {
-  if (typeof MutationObserver !== 'function' || !CSS.supports?.('zoom', '0.5')) return;
+  if (typeof MutationObserver !== 'function' || !CSS.supports?.('scale', '0.5')) return;
 
   // Das Fenster selbst wird größer oder kleiner (z. B. gedreht).
   if (typeof ResizeObserver === 'function') groessenBeobachter = new ResizeObserver(planen);

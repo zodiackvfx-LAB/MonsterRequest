@@ -25318,12 +25318,21 @@ function einpassen(box) {
   const stil = getComputedStyle(overlay);
   const platz = overlay.clientHeight - parseFloat(stil.paddingTop) - parseFloat(stil.paddingBottom) - 2;
   if (!(platz > 0)) return;
-  box.style.zoom = "";
-  box.style.maxHeight = "";
-  const hoehe = box.scrollHeight + (box.offsetHeight - box.clientHeight);
-  const zoom = hoehe > platz ? Math.max(MIN_ZOOM, Math.floor(platz / hoehe * 1e3) / 1e3) : 1;
-  box.style.zoom = zoom < 1 ? String(zoom) : "";
-  box.style.maxHeight = zoom < 1 ? `${platz / zoom}px` : "";
+  box.style.maxHeight = "none";
+  const hoehe = box.offsetHeight;
+  if (hoehe <= platz) {
+    box.style.maxHeight = "";
+    box.style.scale = "";
+    box.style.marginBlock = "";
+    overlay.style.overflow = "";
+    return;
+  }
+  const faktor = Math.max(MIN_ZOOM, Math.floor(platz / hoehe * 1e3) / 1e3);
+  const aufbau = hoehe * faktor <= platz + 1 ? hoehe : platz / faktor;
+  box.style.maxHeight = aufbau < hoehe ? `${aufbau}px` : "none";
+  box.style.scale = String(faktor);
+  box.style.marginBlock = `${-(aufbau - platz) / 2}px`;
+  overlay.style.overflow = "hidden";
 }
 function alleEinpassen() {
   fenster2.forEach((box) => {
@@ -25358,7 +25367,7 @@ function aufnehmen(box) {
   einpassen(box);
 }
 function fensterEinpassenStarten() {
-  if (typeof MutationObserver !== "function" || !CSS.supports?.("zoom", "0.5")) return;
+  if (typeof MutationObserver !== "function" || !CSS.supports?.("scale", "0.5")) return;
   if (typeof ResizeObserver === "function") groessenBeobachter = new ResizeObserver(planen);
   new MutationObserver((aenderungen) => {
     let geaendert = false;
