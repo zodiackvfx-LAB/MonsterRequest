@@ -30,6 +30,7 @@ import { duellLobbyScreen } from './screens/duell-lobby.js';
 import { duellScreen } from './screens/duell.js';
 import { freundeScreen } from './screens/freunde.js';
 import { freundeHinweiseStarten } from './ui/freunde-hinweise.js';
+import { fensterEinpassenStarten } from './ui/einpassen.js';
 
 const hatSpielstand = loadProgress();
 applySettings();
@@ -103,6 +104,8 @@ app.addEventListener('scroll', () => {
 });
 
 initScreens(app);
+// Fenster (Sieg, Truhe, Einladung ...) passen immer ganz auf den Bildschirm.
+fensterEinpassenStarten();
 
 // Die Lobby: Startbildschirm, Shop, Figur, Deck, Welten, Sammlung und
 // Einstellungen als Seiten zum Wischen (siehe js/screens/lobby.js). Wer

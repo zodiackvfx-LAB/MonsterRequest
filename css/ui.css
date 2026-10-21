@@ -1527,3 +1527,61 @@
   width: 88px;
   height: 88px;
 }
+
+/* Schmale Handys: Spielerleiste mit 👥, Trophäen und Münzen muss in eine
+   Reihe passen - auch mit vierstelligen Trophäen und fünfstelligen Münzen.
+   Die Anzeigen rücken zusammen, und ein langer Name wird früher gekürzt. */
+@media (max-width: 400px) {
+  .hud {
+    gap: 6px;
+  }
+
+  .hud__player {
+    min-width: 0;
+    flex: 0 1 auto;
+    gap: 6px;
+    padding-right: 10px;
+  }
+
+  .hud__level {
+    min-width: 0;
+  }
+
+  .hud__name {
+    max-width: 84px;
+  }
+
+  .hud__rechts {
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+
+  .hud__rechts .hud__coins,
+  .hud__trophaeen {
+    padding: 6px 9px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .hud__rechts .hud__coins {
+    gap: 4px;
+  }
+
+  .hud__freunde {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+  }
+}
+
+/* Sehr schmal (320-360 px): Name und Balken weg, nur noch das Bild -
+   wie auf der Weltkarte. Level und Name stehen ja auf der Figur-Seite. */
+@media (max-width: 360px) {
+  .screen--start .hud__level {
+    display: none;
+  }
+
+  .screen--start .hud__player {
+    padding: 4px;
+  }
+}

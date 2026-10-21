@@ -497,6 +497,14 @@ Playwright:
 node tests/freunde-browser.test.mjs
 ```
 
+Ob die Fenster (Sieg, Niederlage, Truhen ...) auf kleinen und großen Handys
+hochkant und quer ganz auf den Bildschirm passen, ohne darin zu scrollen,
+prüft ein weiterer Browser-Test:
+
+```bash
+node tests/fenster-browser.test.mjs
+```
+
 Wenn du an `data/` oder `core/` etwas änderst, lohnt sich ein Durchlauf –
 er zeigt sofort, wenn eine Grundregel verletzt ist.
 
