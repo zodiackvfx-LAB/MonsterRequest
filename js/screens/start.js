@@ -287,13 +287,15 @@ function baueZeitTruhen(screen) {
   });
 
   function aktualisieren() {
-    alleZeitTruhen().forEach(({ truhe, bereit, rest }, index) => {
+    alleZeitTruhen().forEach(({ truhe, bereit, geholt, rest }, index) => {
       const knopf = knoepfe[index];
       knopf.classList.toggle('ist-bereit', bereit);
-      const text = bereit ? 'Öffnen!' : restText(rest);
+      // Heute schon abgeholt: Die nächste startet mit dem ersten Spielstart
+      // morgen - eine genaue Restzeit gibt es dafür nicht.
+      const text = bereit ? 'Öffnen!' : geholt ? 'Morgen' : restText(rest);
       const feld = knopf.querySelector('.zeit-truhe__text');
       if (feld.textContent !== text) feld.textContent = text;
-      knopf.setAttribute('aria-label', `Tägliche Gratis-${truhe.name}: ${bereit ? 'jetzt öffnen' : `wieder da in ${text}`}`);
+      knopf.setAttribute('aria-label', `Tägliche Gratis-${truhe.name}: ${bereit ? 'jetzt öffnen' : geholt ? 'morgen wieder da' : `bereit in ${text}`}`);
     });
   }
 

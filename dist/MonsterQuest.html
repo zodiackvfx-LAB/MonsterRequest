@@ -12679,7 +12679,10 @@ var GRATIS_TRUHE_ID = "holztruhe";
 var TRUHEN_PLAETZE = 4;
 var SOFORT_WERT = { holztruhe: 250, silbertruhe: 800, goldtruhe: 2e3, bosstruhe: 600 };
 var SOFORT_MINDESTPREIS = 5;
-var ZEIT_TRUHEN = [{ id: "holztruhe" }, { id: "goldtruhe" }];
+var ZEIT_TRUHEN = [
+  { id: "holztruhe", warten: 0 },
+  { id: "goldtruhe", warten: 2 * 60 * 60 * 1e3 }
+];
 function getTruhe(id) {
   return TRUHEN.find((truhe) => truhe.id === id);
 }
@@ -13530,8 +13533,9 @@ function createNewGame() {
     truhenPlaetze: Array(TRUHEN_PLAETZE).fill(null),
     truhenWarteschlange: [],
     // Bosstruhen, die gerade keinen Platz finden
-    // Zeit-Truhen (siehe js/core/zeittruhen.js): je Truhen-id der Zeitpunkt
-    // in Millisekunden, ab dem die nächste bereitsteht. Fehlt er: sofort.
+    // Zeit-Truhen (siehe js/core/zeittruhen.js): der Tag des ersten
+    // Spielstarts ("tag") und je Truhen-id der Zeitpunkt in Millisekunden,
+    // ab dem sie bereitsteht - null = heute schon abgeholt.
     zeitTruhen: {},
     // Kampf-Modi (siehe js/core/modi.js): an welchem Tag die Tagesbelohnung
     // zuletzt geholt wurde, und die Bestzeiten im Zeitangriff je Welt.
@@ -13861,12 +13865,29 @@ function modiUebernehmen(saved) {
 function zeitTruhenUebernehmen(saved) {
   const gespeichert = saved.zeitTruhen && typeof saved.zeitTruhen === "object" ? saved.zeitTruhen : {};
   const jetzt = Date.now();
+  const tagGueltig = typeof gespeichert.tag === "string" && /^\d{4}-\d{2}-\d{2}$/.test(gespeichert.tag);
+  let altHeuteGeholt = false;
   gameState.zeitTruhen = {};
   ZEIT_TRUHEN.forEach(({ id }) => {
-    const ab = Number(gespeichert[id]);
-    if (!Number.isFinite(ab)) return;
+    const wert = gespeichert[id];
+    if (wert === null) {
+      if (tagGueltig) gameState.zeitTruhen[id] = null;
+      return;
+    }
+    const ab = Number(wert);
+    if (wert === void 0 || !Number.isFinite(ab)) return;
+    if (!tagGueltig && ab > jetzt) {
+      gameState.zeitTruhen[id] = null;
+      altHeuteGeholt = true;
+      return;
+    }
     gameState.zeitTruhen[id] = Math.min(ab, jetzt + 24 * 60 * 60 * 1e3);
   });
+  if (tagGueltig) gameState.zeitTruhen.tag = gespeichert.tag;
+  else if (altHeuteGeholt) {
+    const d = new Date(jetzt);
+    gameState.zeitTruhen.tag = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
 }
 function trophaeenUebernehmen(saved) {
   const zahl = (wert) => Math.max(0, Math.min(TROPHAEEN_MAX, Math.floor(Number(wert) || 0)));
@@ -16069,13 +16090,37 @@ function naechsteMitternacht(jetzt = Date.now()) {
   datum.setHours(24, 0, 0, 0);
   return datum.getTime();
 }
+function tagVon(jetzt = Date.now()) {
+  const d = new Date(jetzt);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function speicher() {
+  if (!gameState.zeitTruhen || typeof gameState.zeitTruhen !== "object") gameState.zeitTruhen = {};
+  return gameState.zeitTruhen;
+}
+function tagesStart(jetzt = Date.now()) {
+  const z = speicher();
+  const heute2 = tagVon(jetzt);
+  if (z.tag === heute2) return false;
+  ZEIT_TRUHEN.forEach(({ id, warten }) => {
+    const neu = jetzt + warten;
+    const alt = z[id];
+    z[id] = typeof alt === "number" && Number.isFinite(alt) ? Math.min(alt, neu) : neu;
+  });
+  z.tag = heute2;
+  saveProgress();
+  return true;
+}
 function zeitTruheZustand(id, jetzt = Date.now()) {
   const eintrag = ZEIT_TRUHEN.find((z) => z.id === id);
   if (!eintrag) return null;
-  const dauer = TAG;
-  const ab = Number(gameState.zeitTruhen?.[id]) || 0;
-  const rest = Math.max(0, ab - jetzt);
-  return { truhe: truheNachId(id), bereit: rest === 0, rest, dauer };
+  tagesStart(jetzt);
+  const ab = speicher()[id];
+  if (ab === null) {
+    return { truhe: truheNachId(id), bereit: false, geholt: true, rest: Math.max(0, naechsteMitternacht(jetzt) - jetzt), dauer: TAG };
+  }
+  const rest = Math.min(Math.max(0, (Number(ab) || 0) - jetzt), eintrag.warten);
+  return { truhe: truheNachId(id), bereit: rest === 0, geholt: false, rest, dauer: eintrag.warten || TAG };
 }
 function alleZeitTruhen(jetzt = Date.now()) {
   return ZEIT_TRUHEN.map(({ id }) => zeitTruheZustand(id, jetzt));
@@ -16083,8 +16128,7 @@ function alleZeitTruhen(jetzt = Date.now()) {
 function zeitTruheAbholen(id, jetzt = Date.now()) {
   const zustand2 = zeitTruheZustand(id, jetzt);
   if (!zustand2?.bereit) return null;
-  if (!gameState.zeitTruhen || typeof gameState.zeitTruhen !== "object") gameState.zeitTruhen = {};
-  gameState.zeitTruhen[id] = naechsteMitternacht(jetzt);
+  speicher()[id] = null;
   saveProgress();
   return zustand2.truhe;
 }
@@ -17511,13 +17555,13 @@ function baueZeitTruhen(screen) {
     return knopf;
   });
   function aktualisieren() {
-    alleZeitTruhen().forEach(({ truhe, bereit, rest }, index) => {
+    alleZeitTruhen().forEach(({ truhe, bereit, geholt, rest }, index) => {
       const knopf = knoepfe[index];
       knopf.classList.toggle("ist-bereit", bereit);
-      const text = bereit ? "Öffnen!" : restText(rest);
+      const text = bereit ? "Öffnen!" : geholt ? "Morgen" : restText(rest);
       const feld2 = knopf.querySelector(".zeit-truhe__text");
       if (feld2.textContent !== text) feld2.textContent = text;
-      knopf.setAttribute("aria-label", `Tägliche Gratis-${truhe.name}: ${bereit ? "jetzt öffnen" : `wieder da in ${text}`}`);
+      knopf.setAttribute("aria-label", `Tägliche Gratis-${truhe.name}: ${bereit ? "jetzt öffnen" : geholt ? "morgen wieder da" : `bereit in ${text}`}`);
     });
   }
   aktualisieren();

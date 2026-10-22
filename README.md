@@ -342,9 +342,11 @@ Browser-Kanal statt über das Netz.
 
 **Tägliche Gratis-Truhen:** Neben der Figur auf der Startseite gibt es
 **einmal am Tag eine Holztruhe** und **einmal am Tag eine Goldtruhe** – ohne
-Kampf. Um Mitternacht (Uhrzeit des Geräts) liegen die nächsten bereit. Sie
-belegen keinen Truhenplatz und öffnen sich direkt; nicht abgeholte Truhen
-stapeln sich nicht. Einstellbar in `ZEIT_TRUHEN` (`js/data/shop.js`).
+Kampf. Die Uhr startet mit dem **ersten Spielstart des Tages** (Uhrzeit des
+Geräts): Die Holztruhe ist dann sofort da, die Goldtruhe **2 Stunden
+später**. Abgeholt zeigt die Truhe „Morgen“. Sie belegen keinen Truhenplatz
+und öffnen sich direkt; nicht abgeholte Truhen verfallen nicht, stapeln sich
+aber auch nicht. Einstellbar in `ZEIT_TRUHEN` (`js/data/shop.js`).
 
 ### 👥 Freunde
 

@@ -70,8 +70,9 @@ function createNewGame() {
     // Zeitpunkt in Millisekunden, ab dem die Truhe offen ist.
     truhenPlaetze: Array(TRUHEN_PLAETZE).fill(null),
     truhenWarteschlange: [], // Bosstruhen, die gerade keinen Platz finden
-    // Zeit-Truhen (siehe js/core/zeittruhen.js): je Truhen-id der Zeitpunkt
-    // in Millisekunden, ab dem die nächste bereitsteht. Fehlt er: sofort.
+    // Zeit-Truhen (siehe js/core/zeittruhen.js): der Tag des ersten
+    // Spielstarts ("tag") und je Truhen-id der Zeitpunkt in Millisekunden,
+    // ab dem sie bereitsteht - null = heute schon abgeholt.
     zeitTruhen: {},
     // Kampf-Modi (siehe js/core/modi.js): an welchem Tag die Tagesbelohnung
     // zuletzt geholt wurde, und die Bestzeiten im Zeitangriff je Welt.
@@ -484,20 +485,42 @@ function modiUebernehmen(saved) {
 }
 
 /**
- * Zeit-Truhen übernehmen: nur bekannte ids mit einer echten Zahl. Liegt der
- * Zeitpunkt weiter weg als eine ganze Wartezeit (Uhr am Gerät verstellt),
- * wird er auf eine Wartezeit ab jetzt gekürzt - sonst wartet man ewig.
+ * Zeit-Truhen übernehmen (Regeln in js/core/zeittruhen.js): der Tag, an dem
+ * die Uhren zuletzt losliefen, und je bekannter Truhe ein Zeitpunkt oder
+ * null (heute schon abgeholt). Unsinn fliegt raus; ein Zeitpunkt weiter
+ * weg als ein Tag (Uhr am Gerät verstellt) wird gekürzt.
+ *
+ * Ältere Spielstände kennen keinen Tag: Dort hieß ein Zeitpunkt in der
+ * Zukunft "abgeholt, wieder da um Mitternacht" - das wird zu "heute schon
+ * abgeholt", damit niemand durch das Update eine Truhe doppelt bekommt.
  */
 function zeitTruhenUebernehmen(saved) {
   const gespeichert = saved.zeitTruhen && typeof saved.zeitTruhen === 'object' ? saved.zeitTruhen : {};
   const jetzt = Date.now();
+  const tagGueltig = typeof gespeichert.tag === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(gespeichert.tag);
+  let altHeuteGeholt = false;
   gameState.zeitTruhen = {};
   ZEIT_TRUHEN.forEach(({ id }) => {
-    const ab = Number(gespeichert[id]);
-    if (!Number.isFinite(ab)) return;
+    const wert = gespeichert[id];
+    if (wert === null) {
+      if (tagGueltig) gameState.zeitTruhen[id] = null;
+      return;
+    }
+    const ab = Number(wert);
+    if (wert === undefined || !Number.isFinite(ab)) return;
+    if (!tagGueltig && ab > jetzt) {
+      gameState.zeitTruhen[id] = null;
+      altHeuteGeholt = true;
+      return;
+    }
     // Länger als ein Tag kann man nie warten müssen.
     gameState.zeitTruhen[id] = Math.min(ab, jetzt + 24 * 60 * 60 * 1000);
   });
+  if (tagGueltig) gameState.zeitTruhen.tag = gespeichert.tag;
+  else if (altHeuteGeholt) {
+    const d = new Date(jetzt);
+    gameState.zeitTruhen.tag = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
 }
 
 /**

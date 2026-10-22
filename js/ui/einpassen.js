@@ -2,8 +2,8 @@
  * Fenster passen immer auf den Bildschirm.
  *
  * Ein Fenster (.overlay__box - Sieg, Niederlage, Einladung ... - und die
- * Truhen-Öffnung) kann mal mehr enthalten als sonst: Beute, Truhe, Level-Aufstieg, neue Welt,
- * Erfolge. Auf einem Handy wurde es dann höher als der Bildschirm, und man
+ * Truhen-Öffnung) kann mal mehr enthalten als sonst: Beute, Truhe,
+ * Level-Aufstieg, neue Welt, Erfolge. Auf einem Handy wurde es dann höher als der Bildschirm, und man
  * musste darin scrollen, um "Weiter" zu finden. Jetzt wird so ein Fenster
  * gleichmäßig verkleinert (CSS scale), bis alles auf einmal zu sehen ist.
  *
@@ -97,9 +97,9 @@ function alleEinpassen() {
  * teilen: links Kopf, Sterne, Monster, der erste Text und die Knöpfe -
  * rechts der Rest (Beute, Truhen, Aufstieg, Erfolge). Die Knöpfe stehen
  * hochkant trotzdem ganz unten (order in css/erlebnis.css). Hochkant sind
- * die Gruppen unsichtbar (display: contents) und nichts ändert sich; im Querformat stehen sie
- * nebeneinander (css/erlebnis.css), damit alles auf den flachen
- * Bildschirm passt.
+ * die Gruppen unsichtbar (display: contents) und nichts ändert sich; im
+ * Querformat stehen sie nebeneinander (css/erlebnis.css), damit alles auf
+ * den flachen Bildschirm passt.
  */
 function spaltenBilden(box) {
   if (box.dataset.spalten || !box.parentElement?.classList.contains('overlay--ergebnis')) return;
