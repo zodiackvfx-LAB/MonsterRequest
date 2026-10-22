@@ -633,8 +633,9 @@ begin
   end;
   reset role;
 
+  -- Byteweise suchen: Der Fingerabdruck ist kein Text (er kann Null-Bytes enthalten).
   if not exists (select 1 from public.wiederherstellungscodes w
-                  where convert_from(w.code_hash, 'LATIN1') like '%' || replace(v_wert, '-', '') || '%') then
+                  where position(convert_to(replace(v_wert, '-', ''), 'UTF8') in w.code_hash) > 0) then
     v_gut := v_gut + 1; raise notice 'ok   Der Code steht nicht im Klartext in der Datenbank';
   else
     v_schlecht := v_schlecht + 1; raise notice 'FEHL Der Code steht im Klartext in der Datenbank';

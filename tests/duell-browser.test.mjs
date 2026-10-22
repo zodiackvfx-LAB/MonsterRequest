@@ -92,6 +92,8 @@ try {
       await p.waitForTimeout(300);
     }
   }
+  /** Wartet, bis fn() im Browser true ergibt - höchstens ms. */
+  const bis = (p, fn, ms) => p.waitForFunction(fn, null, { timeout: ms, polling: 250 }).then(() => true, () => false);
   const lp = (p) => p.$$eval('.duell-plakette [data-hp]', (els) => els.map((e) => e.textContent).join(' '));
   /**
    * Gleicher Stand auf beiden Geräten? Der Gast bekommt den Zustand 8-mal
@@ -143,16 +145,18 @@ try {
 
   console.log('\nVerbindung');
   await B.reload();
-  await A.waitForTimeout(7000);
-  pruefe('Spieler 1 wird über den Abbruch informiert', /Verbindung verloren/.test(await A.textContent('#band')));
-  await A.waitForTimeout(10000);
-  pruefe('Nach der Frist spielt die KI für Spieler 2', /KI/.test(await A.textContent('.duell-team-halb.ist-partner [data-steuerung]')));
+  // Nicht eine feste Zeit warten, sondern bis es passiert (mit Obergrenze):
+  // Auf langsamen Rechnern (z. B. bei GitHub) dauert alles etwas länger.
+  pruefe('Spieler 1 wird über den Abbruch informiert',
+    await bis(A, () => /Verbindung verloren/.test(document.querySelector('#band')?.textContent ?? ''), 20000));
+  pruefe('Nach der Frist spielt die KI für Spieler 2',
+    await bis(A, () => /KI/.test(document.querySelector('.duell-team-halb.ist-partner [data-steuerung]')?.textContent ?? ''), 30000));
   await B.click('.modi-knopf');
   await B.click('.spielmodus--duell .spielmodus__spielen');
   await B.click('[data-aktion="letzte"]');
   await B.waitForSelector('.screen--duell', { timeout: 8000 });
-  await A.waitForTimeout(1000);
-  pruefe('Spieler 2 kommt zurück ins laufende Match', (await A.textContent('.duell-team-halb.ist-partner [data-steuerung]')).trim() === '');
+  pruefe('Spieler 2 kommt zurück ins laufende Match',
+    await bis(A, () => (document.querySelector('.duell-team-halb.ist-partner [data-steuerung]')?.textContent ?? 'x').trim() === '', 15000));
   pruefe('...und sieht denselben Stand', await gleicherStand(A, B));
 
   console.log('\nErgebnis');
@@ -178,6 +182,18 @@ try {
   pruefe('Die Endlos-Arena startet weiterhin', true);
   await C.goto(`${ADRESSE}/`);
   await C.waitForTimeout(2500); // Service Worker füllt den Cache
+  if (process.env.MQ_BROWSER === 'webkit') {
+    // Playwright kann WebKit nicht offline neu laden ("internal error") -
+    // deshalb hier prüfen, dass das Spiel für offline gespeichert ist.
+    let gespeichert = false;
+    for (let i = 0; i < 30 && !gespeichert; i++) {
+      gespeichert = await C.evaluate(async () => Boolean(await caches.match('index.html'))
+        && Boolean(await caches.match('js/main.js')) && Boolean(await caches.match('js/core/duell.js')));
+      if (!gespeichert) await C.waitForTimeout(500);
+    }
+    pruefe('Offline: Spiel ist für offline gespeichert (WebKit)', gespeichert);
+    throw new Error('ENDE');
+  }
   await ctx.setOffline(true);
   await C.reload();
   await C.waitForSelector('.modi-knopf', { timeout: 8000 });
@@ -189,8 +205,10 @@ try {
   pruefe('Offline: Spiel startet und 2v2 Solo läuft', true);
   await ctx.setOffline(false);
 } catch (e) {
-  fehler++;
-  console.log(`  FEHL Abbruch: ${e.message.split('\n')[0]}`);
+  if (e.message !== 'ENDE') {
+    fehler++;
+    console.log(`  FEHL Abbruch: ${e.message.split('\n')[0]}`);
+  }
 } finally {
   await browser.close();
   server.close();
