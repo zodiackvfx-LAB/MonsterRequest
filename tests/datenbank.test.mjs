@@ -152,16 +152,21 @@ try {
   {
     const ich = cloud.spielerId();
     const fremd = (n) => `00000000-0000-4000-8000-00000000000${n}`;
-    await ruf('mq_speichern', { p_id: fremd(1), p_daten: { name: 'Ass', trophaeen: 900 } });
-    await ruf('mq_speichern', { p_id: fremd(2), p_daten: { name: 'Versteckt', trophaeen: 5000, settings: { rangliste: false } } });
+    // Die Rangliste glaubt nur erspielte Trophaeen: Die Testspieler haben
+    // dafuer ganze Welten geschafft (Welt 1-4 bringt 1170, Welt 1-2 455).
+    const welten = (bis) => Array.from({ length: bis * 12 }, (_, i) => `${Math.floor(i / 12) + 1}-${(i % 12) + 1}`);
+    await ruf('mq_speichern', { p_id: fremd(1), p_daten: { name: 'Ass', trophaeen: 900, clearedLevels: welten(4) } });
+    await ruf('mq_speichern', { p_id: fremd(2), p_daten: { name: 'Versteckt', trophaeen: 5000, clearedLevels: welten(4), settings: { rangliste: false } } });
     await ruf('mq_speichern', { p_id: fremd(3), p_daten: { name: 'Neuling', trophaeen: 0 } });
+    await ruf('mq_speichern', { p_id: fremd(4), p_daten: { name: 'Schummler', trophaeen: 99999 } });
     // Der eigene Stand geht über cloudMerken mit - cloudRangliste schickt ihn vorher los.
-    cloud.cloudMerken({ revision: 20, name: 'Ich', trophaeen: 300, settings: { rangliste: true } });
+    cloud.cloudMerken({ revision: 20, name: 'Ich', trophaeen: 300, clearedLevels: welten(2), settings: { rangliste: true } });
     const liste = await cloud.cloudRangliste(10);
     pruefe('Die Rangliste ist nach Trophaeen sortiert',
       liste.spitze.map((e) => e.name).join() === 'Ass,Ich');
     pruefe('Der eigene Platz kommt mit', liste.ich?.platz === 2 && liste.spitze[1].ich === true);
     pruefe('Ausgeblendete und Spieler ohne Trophaeen fehlen', liste.spieler === 2);
+    pruefe('Eingetragene 99999 ohne Spiel zaehlen nicht', !JSON.stringify(liste).includes('Schummler'));
     pruefe('Keine Spielernummern in der Antwort', !JSON.stringify(liste).includes(ich) && !JSON.stringify(liste).includes(fremd(1)));
   }
 

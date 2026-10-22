@@ -106,6 +106,7 @@ const FUNKTIONEN = {
       erstellt: alt?.erstellt ?? jetzt,
       gespeichert: jetzt,
       speicherungen: (alt?.speicherungen ?? 0) + 1,
+      rang: rangNachfuehren(alt?.rang, p_daten),
     });
     return jetzt;
   },
@@ -143,7 +144,8 @@ const FUNKTIONEN = {
       .map(([id, e]) => ({
         id,
         name: (String(e.daten?.name ?? '').trim() || 'Spieler').slice(0, 16),
-        trophaeen: Math.floor(Math.min(100000, Math.max(0, zahl(e.daten?.trophaeen)))),
+        // Nie mehr als das erspielte Guthaben (wie in schema.sql).
+        trophaeen: Math.floor(Math.min(100000, Math.max(0, zahl(e.daten?.trophaeen)), e.rang?.erlaubt ?? 0)),
         gespeichert: e.gespeichert,
       }))
       .filter((e) => e.trophaeen > 0)
@@ -307,6 +309,38 @@ const FUNKTIONEN = {
     return e.code;
   },
 };
+
+/* --- Trophaeen-Guthaben fuer die Rangliste (wie mq_speichern) -------- */
+
+/** Trophaeen fuer den ersten Sieg in einem Level - wie mq_level_trophaeen. */
+function levelTrophaeen(id) {
+  const teile = /^(\d{1,2})-(\d{1,2})$/.exec(String(id));
+  if (!teile) return 0;
+  const welt = Number(teile[1]);
+  const kampf = Number(teile[2]);
+  if (welt < 1 || welt > 50 || kampf < 1 || kampf > 20) return 0;
+  return (10 + 5 * welt) * (kampf >= 12 ? 2 : 1);
+}
+
+/** Neue Level bringen ihre Trophaeen, weitere Siege je 4 (hoechstens einer je 10 s). */
+function rangNachfuehren(alt, daten) {
+  const levels = [...new Set(Array.isArray(daten.clearedLevels) ? daten.clearedLevels : [])].filter((x) => levelTrophaeen(x) > 0);
+  const siegeWert = Number(daten.statistik?.siege);
+  const siege = Number.isFinite(siegeWert) ? Math.max(0, Math.floor(siegeWert)) : 0;
+  const summe = (liste) => liste.reduce((s, x) => s + levelTrophaeen(x), 0);
+  const jetzt = Date.now();
+  if (!alt) {
+    return { erlaubt: summe(levels) + 4 * Math.min(Math.max(siege - levels.length, 0), 250), siege, levels, am: jetzt };
+  }
+  const neue = levels.filter((x) => !alt.levels.includes(x));
+  const siegePlus = Math.min(Math.max(siege - alt.siege - neue.length, 0), Math.floor((jetzt - alt.am) / 10000) + 1);
+  return {
+    erlaubt: Math.min(alt.erlaubt + summe(neue) + 4 * siegePlus, 100000),
+    siege: Math.max(alt.siege, siege),
+    levels: [...alt.levels, ...neue],
+    am: jetzt,
+  };
+}
 
 /* --- Helfer fuer die Freunde ---------------------------------------- */
 

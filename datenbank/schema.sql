@@ -34,6 +34,15 @@ create table if not exists public.spielstaende (
 create index if not exists spielstaende_gespeichert_idx
   on public.spielstaende (gespeichert_am desc);
 
+-- Trophaeen-Guthaben fuer die Rangliste (siehe mq_speichern): Wie viele
+-- Trophaeen dieser Spieler nach dem Spielverlauf hoechstens haben kann.
+-- Die Rangliste zeigt das Kleinere aus Spielstand und Guthaben - wer sich
+-- im Browser 99999 eintraegt, steht trotzdem nur mit dem Erspielten drin.
+alter table public.spielstaende add column if not exists rang_erlaubt integer;
+alter table public.spielstaende add column if not exists rang_siege   integer not null default 0;
+alter table public.spielstaende add column if not exists rang_levels  text[]  not null default '{}';
+alter table public.spielstaende add column if not exists rang_am      timestamptz;
+
 -- Kurze Codes, um einen Spielstand auf ein anderes Geraet zu holen.
 -- Sie leben nur 30 Minuten - ein 8-Zeichen-Code waere sonst zu kurz.
 create table if not exists public.uebertragungscodes (
@@ -90,7 +99,34 @@ $$;
 -- wird festgenagelt, damit niemand die Funktion auf fremde Tabellen
 -- umbiegen kann.
 
+-- --- Trophaeen fuer den ersten Sieg in einem Level ----------------------
+-- Gleiche Regel wie trophaeenFuerSieg in js/data/trophaeen.js:
+-- 10 + 5 je Welt, der Boss (Kampf 12) doppelt. Unsinn bringt 0.
+create or replace function public.mq_level_trophaeen(p_level text)
+returns integer
+language sql
+immutable
+set search_path = public, pg_temp
+as $$
+  select case
+    when p_level ~ '^[0-9]{1,2}-[0-9]{1,2}$'
+         and split_part(p_level, '-', 1)::int between 1 and 50
+         and split_part(p_level, '-', 2)::int between 1 and 20
+    then (10 + 5 * split_part(p_level, '-', 1)::int)
+         * case when split_part(p_level, '-', 2)::int >= 12 then 2 else 1 end
+    else 0
+  end;
+$$;
+
 -- --- speichern -----------------------------------------------------------
+-- Speichert den Spielstand so, wie er kommt - und fuehrt nebenbei das
+-- Trophaeen-Guthaben fuer die Rangliste nach:
+--   * ein Level, das zum ersten Mal geschafft ist: genau dessen Trophaeen
+--     (jedes Level nur einmal im ganzen Spielerleben)
+--   * jeder weitere Sieg: 4 (mehr gibt kein Wiederholungssieg), aber
+--     hoechstens ein Sieg alle 10 Sekunden seit dem letzten Speichern
+-- Verluste muss das Guthaben nicht kennen: Die Rangliste nimmt ohnehin das
+-- Kleinere aus Spielstand und Guthaben.
 create or replace function public.mq_speichern(p_id uuid, p_daten jsonb)
 returns timestamptz
 language plpgsql
@@ -99,6 +135,12 @@ set search_path = public, pg_temp
 as $$
 declare
   v_zeit timestamptz;
+  v_levels text[];
+  v_siege integer;
+  v_alt record;
+  v_neue_levels text[];
+  v_siege_plus integer;
+  v_gutschrift integer;
 begin
   if p_id is null then
     raise exception 'Keine Spielernummer angegeben';
@@ -113,17 +155,68 @@ begin
     raise exception 'Spielstand ist zu gross';
   end if;
 
-  insert into public.spielstaende as s (id, daten)
-       values (p_id, p_daten)
-  on conflict (id) do update
-     set daten          = excluded.daten,
+  -- Die geschafften Level (nur gueltige, jedes einmal) und die Siege.
+  v_levels := array(
+    select distinct x
+      from jsonb_array_elements_text(
+             case when jsonb_typeof(p_daten -> 'clearedLevels') = 'array'
+                  then p_daten -> 'clearedLevels' else '[]'::jsonb end) x
+     where public.mq_level_trophaeen(x) > 0
+     limit 1000);
+  v_siege := least(greatest(coalesce(public.mq_zahl(p_daten, 'statistik', 'siege'), 0), 0), 10000000)::int;
+
+  select rang_erlaubt, rang_siege, rang_levels, rang_am into v_alt
+    from public.spielstaende where id = p_id for update;
+
+  if not found then
+    -- Neuer Spieler: so viel, wie seine Level und (hoechstens 250) weitere
+    -- Siege hergeben.
+    insert into public.spielstaende (id, daten, rang_erlaubt, rang_siege, rang_levels, rang_am)
+         values (p_id, p_daten,
+                 (select coalesce(sum(public.mq_level_trophaeen(x)), 0) from unnest(v_levels) x)
+                   + 4 * least(greatest(v_siege - cardinality(v_levels), 0), 250),
+                 v_siege, v_levels, now())
+    returning gespeichert_am into v_zeit;
+    return v_zeit;
+  end if;
+
+  v_neue_levels := array(select x from unnest(v_levels) x where not x = any (coalesce(v_alt.rang_levels, '{}')));
+  -- Jeder erste Sieg in einem Level ist auch ein Sieg - der zaehlt schon
+  -- ueber das Level und nicht noch einmal.
+  v_siege_plus := least(
+    greatest(v_siege - coalesce(v_alt.rang_siege, 0) - cardinality(v_neue_levels), 0),
+    floor(extract(epoch from now() - coalesce(v_alt.rang_am, now() - interval '1 day')) / 10)::int + 1);
+  v_gutschrift := (select coalesce(sum(public.mq_level_trophaeen(x)), 0) from unnest(v_neue_levels) x)
+                  + 4 * v_siege_plus;
+
+  update public.spielstaende s
+     set daten          = p_daten,
          gespeichert_am = now(),
-         speicherungen  = s.speicherungen + 1
+         speicherungen  = s.speicherungen + 1,
+         rang_erlaubt   = least(coalesce(s.rang_erlaubt, 0) + v_gutschrift, 100000),
+         rang_siege     = greatest(coalesce(s.rang_siege, 0), v_siege),
+         rang_levels    = (select array(select distinct x from unnest(coalesce(s.rang_levels, '{}') || v_neue_levels) x limit 2000)),
+         rang_am        = now()
+   where s.id = p_id
   returning gespeichert_am into v_zeit;
 
   return v_zeit;
 end;
 $$;
+
+-- Spielstaende von vor dem Guthaben: Ihr jetziger Stand gilt als erspielt.
+update public.spielstaende s
+   set rang_erlaubt = least(greatest(coalesce(public.mq_zahl(s.daten, 'trophaeen'), 0), 0), 100000)::int,
+       rang_siege   = least(greatest(coalesce(public.mq_zahl(s.daten, 'statistik', 'siege'), 0), 0), 10000000)::int,
+       rang_levels  = array(
+         select distinct x
+           from jsonb_array_elements_text(
+                  case when jsonb_typeof(s.daten -> 'clearedLevels') = 'array'
+                       then s.daten -> 'clearedLevels' else '[]'::jsonb end) x
+          where public.mq_level_trophaeen(x) > 0
+          limit 1000),
+       rang_am      = now()
+ where s.rang_erlaubt is null;
 
 -- --- laden ---------------------------------------------------------------
 create or replace function public.mq_laden(p_id uuid)
@@ -230,7 +323,9 @@ as $$
            -- Name: hoechstens 16 Zeichen, leer wird "Spieler".
            left(coalesce(nullif(btrim(s.daten ->> 'name'), ''), 'Spieler'), 16) as name,
            -- Unsinn (Text, negativ, riesig) darf die Liste nicht kippen.
-           least(greatest(coalesce(public.mq_zahl(s.daten, 'trophaeen'), 0), 0), 100000)::int as trophaeen,
+           -- Nie mehr als das erspielte Guthaben (siehe mq_speichern).
+           least(greatest(coalesce(public.mq_zahl(s.daten, 'trophaeen'), 0), 0), 100000,
+                 coalesce(s.rang_erlaubt, 0))::int as trophaeen,
            s.gespeichert_am
       from public.spielstaende s
      where coalesce(s.daten #>> '{settings,rangliste}', 'true') <> 'false'
@@ -889,6 +984,7 @@ $$;
 -- -------------------------------------------------------------------------
 
 revoke all on function public.mq_speichern(uuid, jsonb)      from public;
+revoke all on function public.mq_level_trophaeen(text)    from public, anon, authenticated;
 revoke all on function public.mq_laden(uuid)                 from public;
 revoke all on function public.mq_code_erstellen(uuid)        from public;
 revoke all on function public.mq_code_einloesen(text)        from public;

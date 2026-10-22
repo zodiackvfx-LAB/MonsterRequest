@@ -186,6 +186,10 @@ begin
   perform public.mq_speichern(v_b, '{"name":"   ","trophaeen":99999}'::jsonb);
   perform public.mq_speichern(v_c, '{"name":"Versteckt","trophaeen":99999,"settings":{"rangliste":false}}'::jsonb);
   perform public.mq_speichern(v_d, '{"name":"Kaputt","trophaeen":"viele"}'::jsonb);
+  -- Diese Testspieler haben nichts wirklich erspielt - fuer den Test der
+  -- Anzeige bekommen sie ihr Guthaben direkt (der Schutz selbst wird
+  -- weiter unten geprueft).
+  update public.spielstaende set rang_erlaubt = 100000 where id in (v_a, v_b, v_c, v_d);
   set local role anon;
 
   v_liste := public.mq_rangliste(v_b, 5);
@@ -222,6 +226,77 @@ begin
     v_schlecht := v_schlecht + 1; raise notice 'FEHL Die Laenge der Rangliste stimmt nicht';
   end if;
   reset role;
+
+  -- ---------------------------------------------------------------- --
+  raise notice '--- Rangliste: Schutz gegen Schummeln ---';
+  set local role anon;
+  -- Neuer Spieler traegt sich 99999 Trophaeen ein, hat aber nichts gespielt.
+  perform public.mq_speichern(v_f2, '{"name":"Schummler","trophaeen":99999}'::jsonb);
+  v_liste := public.mq_rangliste(v_f2, 100);
+  if coalesce((v_liste -> 'ich' ->> 'trophaeen')::int, 0) = 0 then
+    v_gut := v_gut + 1; raise notice 'ok   Eingetragene 99999 ohne Spiel zaehlen nicht';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Schummler steht mit % in der Liste', v_liste -> 'ich';
+  end if;
+
+  -- Ehrlicher Spieler: Welt 1, Kampf 1-3 geschafft = 3 x 15 Trophaeen.
+  perform public.mq_speichern(v_f3, '{"name":"Ehrlich","trophaeen":45,"clearedLevels":["1-1","1-2","1-3"],"statistik":{"siege":3}}'::jsonb);
+  if (public.mq_rangliste(v_f3, 100) -> 'ich' ->> 'trophaeen')::int = 45 then
+    v_gut := v_gut + 1; raise notice 'ok   Ehrlich erspielte Trophaeen zaehlen voll';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Ehrlicher Spieler: %', public.mq_rangliste(v_f3, 100) -> 'ich';
+  end if;
+
+  -- Boss von Welt 1 zum ersten Mal: (10 + 5) x 2 = 30 dazu.
+  perform public.mq_speichern(v_f3, '{"name":"Ehrlich","trophaeen":75,"clearedLevels":["1-1","1-2","1-3","1-12"],"statistik":{"siege":4}}'::jsonb);
+  if (public.mq_rangliste(v_f3, 100) -> 'ich' ->> 'trophaeen')::int = 75 then
+    v_gut := v_gut + 1; raise notice 'ok   Neuer Boss-Sieg: Trophaeen kommen sofort dazu';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Boss-Sieg: %', public.mq_rangliste(v_f3, 100) -> 'ich';
+  end if;
+
+  -- Schummeln beim selben Spieler: 99999 eingetragen, Level raus und wieder rein.
+  perform public.mq_speichern(v_f3, '{"name":"Ehrlich","trophaeen":99999,"clearedLevels":[],"statistik":{"siege":4}}'::jsonb);
+  perform public.mq_speichern(v_f3, '{"name":"Ehrlich","trophaeen":99999,"clearedLevels":["1-1","1-2","1-3","1-12"],"statistik":{"siege":4}}'::jsonb);
+  if (public.mq_rangliste(v_f3, 100) -> 'ich' ->> 'trophaeen')::int <= 79 then
+    v_gut := v_gut + 1; raise notice 'ok   Hochgesetzte Trophaeen und wiederholte Level bringen nichts';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Schummeln wirkt: %', public.mq_rangliste(v_f3, 100) -> 'ich';
+  end if;
+
+  -- 1000 Siege auf einmal eingetragen: hoechstens ein Sieg je 10 Sekunden.
+  perform public.mq_speichern(v_f3, '{"name":"Ehrlich","trophaeen":99999,"clearedLevels":["1-1","1-2","1-3","1-12"],"statistik":{"siege":1004}}'::jsonb);
+  if (public.mq_rangliste(v_f3, 100) -> 'ich' ->> 'trophaeen')::int <= 83 then
+    v_gut := v_gut + 1; raise notice 'ok   Tausend Siege auf einmal: zaehlt nur wie ein Sieg';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Massen-Siege wirken: %', public.mq_rangliste(v_f3, 100) -> 'ich';
+  end if;
+
+  -- Niederlage: weniger Trophaeen zaehlen sofort, und danach wieder hoch.
+  perform public.mq_speichern(v_f3, '{"name":"Ehrlich","trophaeen":40,"clearedLevels":["1-1","1-2","1-3","1-12"],"statistik":{"siege":1004}}'::jsonb);
+  v_wert := public.mq_rangliste(v_f3, 100) -> 'ich' ->> 'trophaeen';
+  perform public.mq_speichern(v_f3, '{"name":"Ehrlich","trophaeen":75,"clearedLevels":["1-1","1-2","1-3","1-12"],"statistik":{"siege":1004}}'::jsonb);
+  if v_wert = '40' and (public.mq_rangliste(v_f3, 100) -> 'ich' ->> 'trophaeen')::int = 75 then
+    v_gut := v_gut + 1; raise notice 'ok   Verluste zaehlen sofort, schon Erspieltes kommt wieder';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Verlust/Wiedergewinn: % / %', v_wert, public.mq_rangliste(v_f3, 100) -> 'ich';
+  end if;
+
+  if public.mq_laden(v_f3) ->> 'trophaeen' = '75' then
+    v_gut := v_gut + 1; raise notice 'ok   Der Spielstand selbst bleibt unveraendert';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Spielstand wurde veraendert';
+  end if;
+
+  begin
+    perform public.mq_level_trophaeen('1-1');
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL anon darf den Level-Helfer aufrufen';
+  exception when insufficient_privilege then
+    v_gut := v_gut + 1; raise notice 'ok   Der Level-Helfer bleibt intern';
+  end;
+  reset role;
+
+  delete from public.spielstaende where id in (v_f2, v_f3);
 
   -- ---------------------------------------------------------------- --
   raise notice '--- 2v2: Belohnung genau einmal ---';

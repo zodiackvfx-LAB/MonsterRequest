@@ -190,6 +190,16 @@ Die Zeichen `I`, `O`, `0` und `1` kommen nicht vor, die verwechselt man sonst.
 Achtung: Der geholte Spielstand **ersetzt** den Stand auf dem Gerät, auf dem
 man den Code eingibt.
 
+### Schutz der Rangliste
+
+Trophäen rechnet das Gerät aus. Damit niemand sich einfach 99999 einträgt
+und auf Platz 1 steht, führt `mq_speichern` je Spieler ein
+**Trophäen-Guthaben** (Spalten `rang_erlaubt`, `rang_siege`, `rang_levels`,
+`rang_am` in `spielstaende`): Neue Level bringen genau ihre Trophäen, jeder
+weitere Sieg 4 (höchstens einer alle 10 Sekunden). Die Rangliste zeigt das
+Kleinere aus Spielstand und Guthaben. Beim Einspielen bekommen alle
+bestehenden Spieler ihren jetzigen Stand als Guthaben – niemand rutscht ab.
+
 ### Der Wiederherstellungs-Code 🔑
 
 Ebenfalls unter *Spielstand*: ein **fester** Code aus 12 Zeichen

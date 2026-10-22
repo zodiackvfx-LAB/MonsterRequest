@@ -217,6 +217,15 @@ die Bosstruhe) werden nicht sofort geöffnet: Sie kommen in einen der
 oder sofort mit Münzen geöffnet. Siege bringen außerdem **Trophäen** für
 Liga und Rangliste (Tipp auf den Pokal oben).
 
+**Schutz der Rangliste:** Trophäen rechnet das Gerät aus – wer sich im
+Browser selbst welche einträgt, soll damit nicht nach oben kommen. Die
+Datenbank führt deshalb je Spieler ein **Trophäen-Guthaben** mit
+(`mq_speichern` in `datenbank/schema.sql`): Ein zum ersten Mal geschafftes
+Level bringt genau seine Trophäen (jedes Level nur einmal), jeder weitere
+Sieg 4 – aber höchstens ein Sieg alle 10 Sekunden. Die Rangliste zeigt das
+Kleinere aus Spielstand und Guthaben. Für ehrliche Spieler ändert sich
+nichts; der Spielstand selbst bleibt unverändert.
+
 **Spielmodi** (Knopf „Modi“ neben „Spiel starten“):
 
 | Modus | Worum es geht | Belohnung |
