@@ -31,6 +31,7 @@ import { duellScreen } from './screens/duell.js';
 import { freundeScreen } from './screens/freunde.js';
 import { freundeHinweiseStarten } from './ui/freunde-hinweise.js';
 import { fensterEinpassenStarten } from './ui/einpassen.js';
+import { sicherungErinnern } from './ui/wiederherstellung.js';
 
 const hatSpielstand = loadProgress();
 applySettings();
@@ -175,6 +176,11 @@ cloudStart(() => {
 // Freunde: fragt im Hintergrund nach Anfragen und 2v2-Einladungen. Ohne
 // Datenbank oder ohne Netz passiert nichts.
 freundeHinweiseStarten();
+
+// Wer schon etwas erspielt hat und noch keinen Wiederherstellungs-Code hat,
+// wird (höchstens einmal pro Woche) daran erinnert - erst wenn der Abgleich
+// mit der Datenbank durch ist und das Spiel in Ruhe dasteht.
+setTimeout(() => sicherungErinnern().catch(() => {}), 6000);
 
 /*
  * Als App installierbar ("Zum Home-Bildschirm") und offline spielbar machen.

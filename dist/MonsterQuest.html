@@ -2436,8 +2436,10 @@ body.no-animations *::after {
   display: none;
 }
 
-/* Die 2v2-Einladung liegt über jedem Bildschirm. */
-.overlay--einladung {
+/* Die 2v2-Einladung und die Erinnerung an den Wiederherstellungs-Code
+   liegen über jedem Bildschirm. */
+.overlay--einladung,
+.overlay--sicherung {
   position: fixed;
   z-index: 70;
 }
@@ -13311,6 +13313,7 @@ var CLOUD = {
 
 // js/core/cloud.js
 var SPIELER_KEY = "monsterquest.spieler";
+var WIEDERHERSTELLUNG_KEY = "monsterquest.wiederherstellung";
 var WARTEZEIT = 2500;
 var ZEITGRENZE = 8e3;
 var status = "aus";
@@ -13367,6 +13370,7 @@ function spielerId() {
 function spielerIdSetzen(id) {
   if (!NUMMER_FORM.test(id)) throw new Error("Keine gueltige Spielernummer");
   try {
+    if (localStorage.getItem(SPIELER_KEY) !== id) localStorage.removeItem(WIEDERHERSTELLUNG_KEY);
     localStorage.setItem(SPIELER_KEY, id);
   } catch (fehler) {
     console.warn("Spielernummer konnte nicht gemerkt werden:", fehler);
@@ -13447,6 +13451,46 @@ async function cloudCodeEinloesen(code) {
   const ergebnis = await rufe("mq_code_einloesen", { p_code: sauber });
   if (!ergebnis || !ergebnis.id || !ergebnis.daten) return null;
   return ergebnis;
+}
+function wiederherstellungGemerkt() {
+  try {
+    return localStorage.getItem(WIEDERHERSTELLUNG_KEY);
+  } catch {
+    return null;
+  }
+}
+function wiederherstellungMerken(code) {
+  try {
+    localStorage.setItem(WIEDERHERSTELLUNG_KEY, code);
+  } catch {
+  }
+}
+async function cloudWiederherstellungErstellen() {
+  if (!cloudAktiv()) throw new Error("Keine Datenbank eingetragen");
+  await cloudJetztSenden();
+  const code = await rufe("mq_wiederherstellung_erstellen", { p_id: spielerId() });
+  if (typeof code !== "string") throw new Error("Kein Code erhalten");
+  wiederherstellungMerken(code);
+  return code;
+}
+async function cloudWiederherstellungStatus() {
+  if (!cloudAktiv()) return false;
+  return await rufe("mq_wiederherstellung_status", { p_id: spielerId() }) === true;
+}
+function wiederherstellungsCode(eingabe) {
+  const sauber = String(eingabe ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return sauber.length === 12 ? `${sauber.slice(0, 4)}-${sauber.slice(4, 8)}-${sauber.slice(8)}` : null;
+}
+async function cloudWiederherstellen(eingabe) {
+  if (!cloudAktiv()) throw new Error("Keine Datenbank eingetragen");
+  const code = wiederherstellungsCode(eingabe);
+  if (!code) return null;
+  const ergebnis = await rufe("mq_wiederherstellen", { p_code: code });
+  if (!ergebnis || !ergebnis.id || !ergebnis.daten) return null;
+  return { ...ergebnis, code };
+}
+function wiederherstellungUebernehmen(code) {
+  wiederherstellungMerken(code);
 }
 async function cloudRangliste(anzahl = 50) {
   if (!cloudAktiv()) throw new Error("Keine Datenbank eingetragen");
@@ -18844,6 +18888,132 @@ function zaehler(html) {
   return panel;
 }
 
+// js/ui/wiederherstellung.js
+var ERINNERT_KEY = "monsterquest.wiederherstellung.erinnert";
+var WOCHE = 7 * 24 * 60 * 60 * 1e3;
+var AB_KAEMPFEN = 3;
+async function erstellen() {
+  saveProgress();
+  return cloudWiederherstellungErstellen();
+}
+async function kopieren(knopf, code) {
+  try {
+    await navigator.clipboard.writeText(code);
+    knopf.textContent = "✔ Kopiert";
+  } catch {
+    knopf.textContent = code;
+  }
+}
+function wiederherstellungZeile() {
+  const zeile3 = document.createElement("div");
+  zeile3.className = "setting-row setting-row--breit";
+  let neuSicher = false;
+  function zeichnen(code, schonWoanders = false) {
+    zeile3.innerHTML = `
+      <span class="setting-row__label">
+        <span class="setting-row__name">🔑 Wiederherstellungs-Code</span>
+        <span class="setting-row__hint" data-text>${code ? `<strong class="spielstand-code">${code}</strong><br>Aufschreiben oder abfotografieren! Damit holst du deinen Spielstand immer zurück - unter „Von einem anderen Gerät“.` : schonWoanders ? "Du hast schon einen Code (auf einem anderen Gerät erstellt). Ein neuer ersetzt ihn." : "Holt deinen Spielstand immer zurück - auch wenn dieses Gerät alles vergisst. Läuft nie ab."}</span>
+      </span>
+      <span class="eingabe-gruppe">
+        ${code ? '<button class="btn btn--small" type="button" data-aktion="kopieren">📋 Kopieren</button>' : ""}
+        <button class="btn btn--small${code ? " btn--ghost" : " btn--green"}" type="button" data-aktion="neu">${code || schonWoanders ? "Neuer Code" : "Code erstellen"}</button>
+      </span>
+    `;
+    zeile3.querySelector('[data-aktion="kopieren"]')?.addEventListener("click", (e) => kopieren(e.currentTarget, code));
+    const neu = zeile3.querySelector('[data-aktion="neu"]');
+    neu.addEventListener("click", async () => {
+      if ((code || schonWoanders) && !neuSicher) {
+        neuSicher = true;
+        neu.textContent = "Alter Code wird ungültig - sicher?";
+        return;
+      }
+      neuSicher = false;
+      neu.disabled = true;
+      zeile3.querySelector("[data-text]").textContent = "Wird erstellt …";
+      try {
+        zeichnen(await erstellen());
+      } catch (fehler) {
+        console.warn("Wiederherstellungs-Code nicht erstellt:", fehler);
+        zeile3.querySelector("[data-text]").textContent = fehler?.status === 404 ? "Ist in der Datenbank noch nicht eingerichtet. (Für den Spielebauer: datenbank/schema.sql neu einspielen.)" : "Hat nicht geklappt. Bist du online?";
+        neu.disabled = false;
+      }
+    });
+  }
+  const gemerkt = wiederherstellungGemerkt();
+  zeichnen(gemerkt);
+  if (!gemerkt && geraetOnline()) {
+    cloudWiederherstellungStatus().then((gibtEs) => {
+      if (gibtEs && zeile3.isConnected && !wiederherstellungGemerkt()) zeichnen(null, true);
+    }).catch(() => {
+    });
+  }
+  return zeile3;
+}
+function zuletztErinnert() {
+  try {
+    return Number(localStorage.getItem(ERINNERT_KEY)) || 0;
+  } catch {
+    return Date.now();
+  }
+}
+async function sicherungErinnern() {
+  if (!cloudAktiv() || !geraetOnline() || wiederherstellungGemerkt()) return;
+  if ((gameState.clearedLevels?.length ?? 0) < AB_KAEMPFEN) return;
+  if (Date.now() - zuletztErinnert() < WOCHE) return;
+  if (aktuellerScreenName() !== "lobby" || document.querySelector(".overlay")) return;
+  try {
+    if (await cloudWiederherstellungStatus()) return;
+  } catch {
+    return;
+  }
+  try {
+    localStorage.setItem(ERINNERT_KEY, String(Date.now()));
+  } catch {
+  }
+  fensterZeigen();
+}
+function fensterZeigen() {
+  const el = document.createElement("div");
+  el.className = "overlay overlay--sicherung";
+  el.innerHTML = `
+    <div class="overlay__box" role="dialog" aria-label="Spielstand sichern">
+      <div class="overlay__icon">🔑</div>
+      <h3 class="overlay__title">Sichere deinen Spielstand!</h3>
+      <p class="overlay__text" data-text>
+        Mit einem Wiederherstellungs-Code bekommst du deinen Spielstand immer zurück -
+        auch auf einem neuen Handy oder wenn der Browser alles vergisst.
+      </p>
+      <div class="overlay__actions">
+        <button class="btn btn--big btn--green" type="button" data-aktion="erstellen">Code erstellen</button>
+        <button class="btn btn--ghost" type="button" data-aktion="spaeter">Später</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(el);
+  const zu = () => el.remove();
+  el.querySelector('[data-aktion="spaeter"]').addEventListener("click", zu);
+  const knopf = el.querySelector('[data-aktion="erstellen"]');
+  knopf.addEventListener("click", async () => {
+    knopf.disabled = true;
+    const text = el.querySelector("[data-text]");
+    text.textContent = "Wird erstellt …";
+    try {
+      const code = await erstellen();
+      text.innerHTML = `<strong class="spielstand-code">${code}</strong><br><br>
+        Schreib ihn auf oder mach ein Foto! Du findest ihn auch später unter Optionen → Datenbank.`;
+      el.querySelector(".overlay__actions").innerHTML = `
+        <button class="btn btn--big btn--green" type="button" data-aktion="fertig">Fertig</button>
+        <button class="btn" type="button" data-aktion="kopieren">📋 Kopieren</button>`;
+      el.querySelector('[data-aktion="fertig"]').addEventListener("click", zu);
+      el.querySelector('[data-aktion="kopieren"]').addEventListener("click", (e) => kopieren(e.currentTarget, code));
+    } catch (fehler) {
+      console.warn("Wiederherstellungs-Code nicht erstellt:", fehler);
+      text.textContent = "Hat nicht geklappt. Du kannst es später unter Optionen → Datenbank nochmal versuchen.";
+      knopf.disabled = false;
+    }
+  });
+}
+
 // js/data/schwierigkeit.js
 var SCHWIERIGKEITEN = [
   { id: "leicht", name: "Leicht", icon: "🍀", hp: 0.8, schaden: 0.82 },
@@ -19171,23 +19341,24 @@ function spielstandBlock() {
   });
   raus.appendChild(codeKnopf);
   block.appendChild(raus);
+  block.appendChild(wiederherstellungZeile());
   const rein = document.createElement("div");
   rein.className = "setting-row setting-row--breit";
   rein.innerHTML = `
     <span class="setting-row__label">
       <span class="setting-row__name">Von einem anderen Gerät</span>
-      <span class="setting-row__hint" id="hol-befund">Code vom anderen Gerät eintippen.</span>
+      <span class="setting-row__hint" id="hol-befund">Übertragungscode oder 🔑 Wiederherstellungs-Code eintippen.</span>
     </span>
   `;
   const feld2 = document.createElement("input");
   feld2.type = "text";
   feld2.className = "eingabe eingabe--code";
-  feld2.maxLength = 8;
-  feld2.placeholder = "ABCD2345";
+  feld2.maxLength = 14;
+  feld2.placeholder = "Code";
   feld2.autocapitalize = "characters";
   feld2.autocomplete = "off";
   feld2.spellcheck = false;
-  feld2.setAttribute("aria-label", "Übertragungscode");
+  feld2.setAttribute("aria-label", "Übertragungscode oder Wiederherstellungs-Code");
   const holKnopf = document.createElement("button");
   holKnopf.type = "button";
   holKnopf.className = "btn btn--small btn--green";
@@ -19195,19 +19366,21 @@ function spielstandBlock() {
   holKnopf.addEventListener("click", async () => {
     const befund = rein.querySelector("#hol-befund");
     const code = feld2.value.trim().toUpperCase();
-    if (code.length !== 8) {
-      befund.textContent = "Der Code hat genau 8 Zeichen.";
+    const zeichen = code.replace(/[^A-Z0-9]/g, "").length;
+    if (zeichen !== 8 && zeichen !== 12) {
+      befund.textContent = "Der Übertragungscode hat 8 Zeichen, der Wiederherstellungs-Code 12.";
       return;
     }
     holKnopf.disabled = true;
     befund.textContent = "Wird geholt …";
     try {
-      const ergebnis = await cloudCodeEinloesen(code);
+      const ergebnis = zeichen === 12 ? await cloudWiederherstellen(code) : await cloudCodeEinloesen(code);
       if (!ergebnis) {
-        befund.textContent = "Der Code stimmt nicht oder ist abgelaufen.";
+        befund.textContent = zeichen === 12 ? "Diesen Wiederherstellungs-Code gibt es nicht." : "Der Code stimmt nicht oder ist abgelaufen.";
         return;
       }
       spielstandUebernehmenVonCode(ergebnis);
+      if (ergebnis.code) wiederherstellungUebernehmen(ergebnis.code);
       showScreen("start");
     } catch (fehler) {
       console.warn("Spielstand konnte nicht geholt werden:", fehler);
@@ -25505,6 +25678,8 @@ cloudStart(() => {
   }).then(() => showScreen("start", { neu: true }));
 });
 freundeHinweiseStarten();
+setTimeout(() => sicherungErinnern().catch(() => {
+}), 6e3);
 if ("serviceWorker" in navigator) {
   const hatteVersion = Boolean(navigator.serviceWorker.controller);
   window.addEventListener("load", () => {

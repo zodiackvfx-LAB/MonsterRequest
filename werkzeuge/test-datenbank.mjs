@@ -47,6 +47,8 @@ const anfragen = new Map();
 const einladungen = new Map();
 /** id -> { zustand, zuletzt } */
 const anwesenheit = new Map();
+/** Wiederherstellungs-Code (ohne Striche) -> id; je Spieler hoechstens einer. */
+const wiederherstellung = new Map();
 
 const TYPEN = {
   '.html': 'text/html; charset=utf-8',
@@ -168,6 +170,31 @@ const FUNKTIONEN = {
     if (duellBelohnungen.has(schluessel)) return false;
     duellBelohnungen.add(schluessel);
     return true;
+  },
+
+  // Gleiche Regeln wie im Abschnitt "Wiederherstellungs-Code" von
+  // schema.sql (dort nur als Fingerabdruck gespeichert).
+  mq_wiederherstellung_erstellen({ p_id }) {
+    spielerPruefen(p_id);
+    for (const [code, id] of wiederherstellung) if (id === p_id) wiederherstellung.delete(code);
+    let code;
+    do {
+      code = '';
+      for (let i = 0; i < 12; i++) code += CODE_ZEICHEN[Math.floor(Math.random() * CODE_ZEICHEN.length)];
+    } while (wiederherstellung.has(code));
+    wiederherstellung.set(code, p_id);
+    return `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8)}`;
+  },
+
+  mq_wiederherstellung_status({ p_id }) {
+    return [...wiederherstellung.values()].includes(p_id);
+  },
+
+  mq_wiederherstellen({ p_code }) {
+    const code = String(p_code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const id = code.length === 12 ? wiederherstellung.get(code) : null;
+    if (!id || !spielstaende.has(id)) return null;
+    return { id, daten: spielstaende.get(id).daten };
   },
 
   mq_freunde({ p_id, p_zustand }) {

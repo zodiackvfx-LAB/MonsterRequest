@@ -772,6 +772,118 @@ end;
 $$;
 
 
+-- --- Wiederherstellungs-Code ---------------------------------------------
+-- Ein fester Code (12 Zeichen, z. B. K7QM-X2PA-9RTD), mit dem man seinen
+-- Spielstand jederzeit zurueckholt - auch wenn der Browser alles vergessen
+-- hat. Anders als der Uebertragungscode laeuft er nicht ab.
+--
+-- Der Code ist so viel wert wie ein Passwort. Deshalb steht er hier NICHT
+-- im Klartext, sondern nur sein Fingerabdruck (SHA-256). Selbst wer die
+-- Tabelle saehe, koennte damit keinen Spielstand holen. 12 Zeichen aus 32
+-- sind 60 Bit Zufall - durchprobieren ist aussichtslos. Jeder Spieler hat
+-- hoechstens einen Code; ein neuer macht den alten ungueltig.
+
+create table if not exists public.wiederherstellungscodes (
+  spielstand_id uuid        primary key references public.spielstaende (id) on delete cascade,
+  code_hash     bytea       not null unique,
+  erstellt_am   timestamptz not null default now()
+);
+
+alter table public.wiederherstellungscodes enable row level security;
+revoke all on table public.wiederherstellungscodes from anon, authenticated;
+
+-- Helfer: Fingerabdruck eines Codes (Gross/klein, Striche und Leerzeichen
+-- egal). Nur intern.
+create or replace function public.mq_code_hash(p_code text)
+returns bytea
+language sql
+immutable
+set search_path = public, pg_temp
+as $$
+  select sha256(convert_to(upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')), 'UTF8'));
+$$;
+
+-- --- Code erstellen (ersetzt einen alten) ---------------------------------
+create or replace function public.mq_wiederherstellung_erstellen(p_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  -- Ohne I, O, 0 und 1 - die verwechselt man beim Abtippen.
+  v_zeichen constant text := '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  v_bytes bytea;
+  v_code text;
+  v_versuch integer := 0;
+  v_stellen constant integer[] := array[0, 1, 2, 3, 4, 5, 7, 9, 10, 11, 12, 13];
+  i integer;
+begin
+  perform public.mq_spieler_pruefen(p_id);
+  loop
+    v_versuch := v_versuch + 1;
+    if v_versuch > 10 then
+      raise exception 'Kein freier Code gefunden';
+    end if;
+    -- gen_random_uuid ist echter Zufall (anders als random()). Die Bytes 6
+    -- und 8 tragen feste Versionsbits und werden uebersprungen; 256 ist
+    -- durch 32 teilbar, also kommt jedes Zeichen gleich oft vor.
+    v_bytes := uuid_send(gen_random_uuid());
+    v_code := '';
+    foreach i in array v_stellen loop
+      v_code := v_code || substr(v_zeichen, 1 + (get_byte(v_bytes, i) % 32), 1);
+    end loop;
+    begin
+      insert into public.wiederherstellungscodes as w (spielstand_id, code_hash)
+           values (p_id, public.mq_code_hash(v_code))
+      on conflict (spielstand_id) do update
+         set code_hash = excluded.code_hash, erstellt_am = now();
+      return substr(v_code, 1, 4) || '-' || substr(v_code, 5, 4) || '-' || substr(v_code, 9, 4);
+    exception when unique_violation then
+      -- Derselbe Code gehoert schon jemand anderem: noch einmal wuerfeln.
+    end;
+  end loop;
+end;
+$$;
+
+-- --- Hat dieser Spieler schon einen Code? --------------------------------
+create or replace function public.mq_wiederherstellung_status(p_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (select 1 from public.wiederherstellungscodes where spielstand_id = p_id);
+$$;
+
+-- --- Spielstand mit dem Code zurueckholen -------------------------------
+-- Antwort wie mq_code_einloesen: { id, daten } oder null. Der Code bleibt
+-- gueltig.
+create or replace function public.mq_wiederherstellen(p_code text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_id uuid;
+begin
+  if length(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')) <> 12 then
+    return null;
+  end if;
+  select w.spielstand_id into v_id
+    from public.wiederherstellungscodes w
+   where w.code_hash = public.mq_code_hash(p_code);
+  if v_id is null then
+    return null;
+  end if;
+  return (select jsonb_build_object('id', s.id, 'daten', s.daten)
+            from public.spielstaende s where s.id = v_id);
+end;
+$$;
+
 -- -------------------------------------------------------------------------
 -- 5. Wer darf die Funktionen aufrufen
 -- -------------------------------------------------------------------------
@@ -815,6 +927,15 @@ grant execute on function public.mq_anfrage_zurueckziehen(uuid, text) to anon, a
 grant execute on function public.mq_freund_entfernen(uuid, text) to anon, authenticated;
 grant execute on function public.mq_einladung_senden(uuid, text, text) to anon, authenticated;
 grant execute on function public.mq_einladung_antworten(uuid, uuid, boolean) to anon, authenticated;
+
+-- Wiederherstellungs-Code. mq_code_hash bleibt intern.
+revoke all on function public.mq_code_hash(text) from public, anon, authenticated;
+revoke all on function public.mq_wiederherstellung_erstellen(uuid) from public;
+revoke all on function public.mq_wiederherstellung_status(uuid) from public;
+revoke all on function public.mq_wiederherstellen(text) from public;
+grant execute on function public.mq_wiederherstellung_erstellen(uuid) to anon, authenticated;
+grant execute on function public.mq_wiederherstellung_status(uuid) to anon, authenticated;
+grant execute on function public.mq_wiederherstellen(text) to anon, authenticated;
 
 
 -- -------------------------------------------------------------------------

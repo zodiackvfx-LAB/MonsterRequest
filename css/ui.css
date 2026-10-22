@@ -1517,8 +1517,10 @@
   display: none;
 }
 
-/* Die 2v2-Einladung liegt über jedem Bildschirm. */
-.overlay--einladung {
+/* Die 2v2-Einladung und die Erinnerung an den Wiederherstellungs-Code
+   liegen über jedem Bildschirm. */
+.overlay--einladung,
+.overlay--sicherung {
   position: fixed;
   z-index: 70;
 }

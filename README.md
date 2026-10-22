@@ -499,6 +499,13 @@ Playwright:
 node tests/freunde-browser.test.mjs
 ```
 
+Den Wiederherstellungs-Code (Erinnerung, Code erstellen, Spielstand auf
+einem neuen Gerät zurückholen) prüft ein eigener Browser-Test:
+
+```bash
+node tests/sicherung-browser.test.mjs
+```
+
 Ob die Fenster (Sieg, Niederlage, Truhen ...) auf kleinen und großen Handys
 hochkant und quer ganz auf den Bildschirm passen, ohne darin zu scrollen,
 prüft ein weiterer Browser-Test:
@@ -529,7 +536,10 @@ verhält sich genau wie vorher und schickt nichts ins Netz.
 Zusätzlich legt das Spiel eine **zweite, lokale Sicherung** an
 (`monsterquest.save.v3.sicherung`). Ist der Spielstand beim Start beschädigt,
 wird er daraus wiederhergestellt. Diese Sicherung liegt im selben Browser –
-gegen das Löschen der Browserdaten hilft nur der Übertragungscode.
+gegen das Löschen der Browserdaten hilft der **🔑 Wiederherstellungs-Code**
+(Optionen → Datenbank): ein fester Code, der nie abläuft und den Spielstand
+auf jedem Gerät zurückholt. Wer schon ein paar Kämpfe geschafft und noch
+keinen hat, wird höchstens einmal pro Woche daran erinnert.
 
 ---
 

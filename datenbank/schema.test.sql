@@ -459,6 +459,82 @@ begin
   delete from public.spielstaende where id in (v_f1, v_f2, v_f3);
 
   -- ---------------------------------------------------------------- --
+  raise notice '--- Wiederherstellungs-Code ---';
+  set local role anon;
+  perform public.mq_speichern(v_f1, '{"name":"Zodi","trophaeen":2000}'::jsonb);
+
+  if not public.mq_wiederherstellung_status(v_f1) then
+    v_gut := v_gut + 1; raise notice 'ok   Ohne Code: Status sagt nein';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Status sagt ja, obwohl es keinen Code gibt';
+  end if;
+
+  v_t := public.mq_wiederherstellung_erstellen(v_f1);
+  if v_t ~ '^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$' and public.mq_wiederherstellung_status(v_f1) then
+    v_gut := v_gut + 1; raise notice 'ok   Code erstellt (Form XXXX-XXXX-XXXX)';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Code hat die falsche Form: %', v_t;
+  end if;
+
+  v_r := public.mq_wiederherstellen(lower(replace(v_t, '-', ' ')));
+  if (v_r ->> 'id')::uuid = v_f1 and v_r -> 'daten' ->> 'name' = 'Zodi'
+     and (public.mq_wiederherstellen(v_t) ->> 'id')::uuid = v_f1 then
+    v_gut := v_gut + 1; raise notice 'ok   Code holt den Spielstand - auch klein und ohne Striche, beliebig oft';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Code holt den Spielstand nicht: %', v_r;
+  end if;
+
+  if public.mq_wiederherstellen('2222-2222-2222') is null and public.mq_wiederherstellen('kurz') is null
+     and public.mq_wiederherstellen(null) is null then
+    v_gut := v_gut + 1; raise notice 'ok   Falsche Codes holen nichts';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Ein falscher Code holt einen Spielstand';
+  end if;
+
+  v_wert := public.mq_wiederherstellung_erstellen(v_f1);
+  if v_wert <> v_t and public.mq_wiederherstellen(v_t) is null
+     and (public.mq_wiederherstellen(v_wert) ->> 'id')::uuid = v_f1 then
+    v_gut := v_gut + 1; raise notice 'ok   Ein neuer Code macht den alten ungueltig';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Alter Code gilt noch';
+  end if;
+
+  begin
+    perform public.mq_wiederherstellung_erstellen('00000000-0000-4000-8000-00000000ffff');
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Code fuer einen Spieler ohne Spielstand';
+  exception when others then
+    v_gut := v_gut + 1; raise notice 'ok   Ohne Spielstand kein Code';
+  end;
+
+  begin
+    execute 'select count(*) from public.wiederherstellungscodes';
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL anon darf die Code-Tabelle lesen';
+  exception when insufficient_privilege then
+    v_gut := v_gut + 1; raise notice 'ok   anon kann die Code-Tabelle nicht lesen';
+  end;
+  begin
+    perform public.mq_code_hash('x');
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL anon darf den Hash-Helfer aufrufen';
+  exception when insufficient_privilege then
+    v_gut := v_gut + 1; raise notice 'ok   Der Hash-Helfer bleibt intern';
+  end;
+  reset role;
+
+  if not exists (select 1 from public.wiederherstellungscodes w
+                  where convert_from(w.code_hash, 'LATIN1') like '%' || replace(v_wert, '-', '') || '%') then
+    v_gut := v_gut + 1; raise notice 'ok   Der Code steht nicht im Klartext in der Datenbank';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Der Code steht im Klartext in der Datenbank';
+  end if;
+
+  delete from public.spielstaende where id = v_f1;
+  if not exists (select 1 from public.wiederherstellungscodes where spielstand_id = v_f1) then
+    v_gut := v_gut + 1; raise notice 'ok   Geloeschter Spielstand nimmt seinen Code mit';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Code bleibt nach dem Loeschen';
+  end if;
+
+  -- ---------------------------------------------------------------- --
   delete from public.spielstaende where id in (v_a, v_b, v_c, v_d);
 
   raise notice '';

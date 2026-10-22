@@ -173,6 +173,24 @@ try {
     pruefe('Unsinnige Match-Kennung ergibt "unbekannt" statt eines Absturzes', (await cloud.cloudDuellBelohnung('DROP TABLE')) === null);
   }
 
+  console.log('\nWiederherstellungs-Code');
+  {
+    const ich = cloud.spielerId();
+    pruefe('Noch kein Code', (await cloud.cloudWiederherstellungStatus()) === false && cloud.wiederherstellungGemerkt() === null);
+    const code = await cloud.cloudWiederherstellungErstellen();
+    pruefe('Code hat die Form XXXX-XXXX-XXXX', /^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/.test(code));
+    pruefe('Code wird gemerkt und die Datenbank kennt ihn', cloud.wiederherstellungGemerkt() === code && (await cloud.cloudWiederherstellungStatus()) === true);
+    const geholt = await cloud.cloudWiederherstellen(code.toLowerCase().replace(/-/g, ' '));
+    pruefe('Code holt den eigenen Spielstand (auch klein und mit Leerzeichen)', geholt?.id === ich && geholt.code === code);
+    pruefe('Code gilt mehrmals', (await cloud.cloudWiederherstellen(code))?.id === ich);
+    pruefe('Falscher oder halber Code holt nichts', (await cloud.cloudWiederherstellen('2222-2222-2222')) === null && (await cloud.cloudWiederherstellen('ABCD')) === null);
+    const neu = await cloud.cloudWiederherstellungErstellen();
+    pruefe('Neuer Code macht den alten ungueltig', neu !== code && (await cloud.cloudWiederherstellen(code)) === null && (await cloud.cloudWiederherstellen(neu))?.id === ich);
+    cloud.spielerIdSetzen('00000000-0000-4000-8000-000000000077');
+    pruefe('Anderer Spieler auf dem Geraet: gemerkter Code ist weg', cloud.wiederherstellungGemerkt() === null);
+    cloud.spielerIdSetzen(ich);
+  }
+
   console.log('\nGrenzen');
   {
     pruefe('Ein zu grosser Spielstand wird abgelehnt', await zuGrossWirdAbgelehnt());

@@ -190,6 +190,22 @@ Die Zeichen `I`, `O`, `0` und `1` kommen nicht vor, die verwechselt man sonst.
 Achtung: Der geholte Spielstand **ersetzt** den Stand auf dem Gerät, auf dem
 man den Code eingibt.
 
+### Der Wiederherstellungs-Code 🔑
+
+Ebenfalls unter *Spielstand*: ein **fester** Code aus 12 Zeichen
+(z. B. `K7QM-X2PA-9RTD`), der **nie abläuft** und beliebig oft gilt. Er
+holt den Spielstand auch dann zurück, wenn der Browser alles gelöscht hat –
+eingegeben wird er im selben Feld wie der Übertragungscode. Ein neuer Code
+macht den alten ungültig. Wer schon ein paar Kämpfe geschafft und noch
+keinen Code hat, wird höchstens einmal pro Woche daran erinnert.
+
+In der Datenbank steht er **nicht im Klartext**, sondern nur sein
+Fingerabdruck (SHA-256, Tabelle `wiederherstellungscodes`). 12 Zeichen aus
+32 sind 60 Bit Zufall – durchprobieren ist aussichtslos.
+
+> **Einrichten:** `schema.sql` einmal neu ausführen (SQL-Editor → einfügen →
+> Run). Gefahrlos, bestehende Spielstände bleiben unangetastet.
+
 ---
 
 ## Was du wissen solltest

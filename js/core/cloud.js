@@ -24,6 +24,8 @@
 import { CLOUD } from '../data/cloud-config.js';
 
 const SPIELER_KEY = 'monsterquest.spieler';
+/** Der Wiederherstellungs-Code dieses Spielers - nur zum Wieder-Anzeigen. */
+const WIEDERHERSTELLUNG_KEY = 'monsterquest.wiederherstellung';
 
 /** So lange wird nach einer Aenderung gewartet, bevor gesendet wird. */
 const WARTEZEIT = 2500;
@@ -132,6 +134,8 @@ export function spielerId() {
 export function spielerIdSetzen(id) {
   if (!NUMMER_FORM.test(id)) throw new Error('Keine gueltige Spielernummer');
   try {
+    // Ein gemerkter Wiederherstellungs-Code gehoert zum alten Spieler.
+    if (localStorage.getItem(SPIELER_KEY) !== id) localStorage.removeItem(WIEDERHERSTELLUNG_KEY);
     localStorage.setItem(SPIELER_KEY, id);
   } catch (fehler) {
     console.warn('Spielernummer konnte nicht gemerkt werden:', fehler);
@@ -267,6 +271,79 @@ export async function cloudCodeEinloesen(code) {
   const ergebnis = await rufe('mq_code_einloesen', { p_code: sauber });
   if (!ergebnis || !ergebnis.id || !ergebnis.daten) return null;
   return ergebnis;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Wiederherstellungs-Code                                            */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Ein fester Code (z. B. K7QM-X2PA-9RTD), mit dem man den Spielstand
+ * jederzeit zurueckholt - auch wenn der Browser alles vergessen hat. Die
+ * Datenbank kennt nur seinen Fingerabdruck; im Klartext steht er nur hier
+ * im Browser (damit die Einstellungen ihn wieder zeigen koennen) und beim
+ * Spieler auf dem Zettel.
+ */
+
+/** Der Code auf diesem Geraet - oder null. */
+export function wiederherstellungGemerkt() {
+  try {
+    return localStorage.getItem(WIEDERHERSTELLUNG_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function wiederherstellungMerken(code) {
+  try {
+    localStorage.setItem(WIEDERHERSTELLUNG_KEY, code);
+  } catch {
+    /* privater Modus - dann eben nur aufschreiben */
+  }
+}
+
+/**
+ * Erstellt einen neuen Code. Ein alter wird damit ungueltig.
+ * @returns {Promise<string>} z. B. "K7QM-X2PA-9RTD"
+ */
+export async function cloudWiederherstellungErstellen() {
+  if (!cloudAktiv()) throw new Error('Keine Datenbank eingetragen');
+  // Der Stand muss oben sein - sonst gibt es zu dieser Nummer noch nichts.
+  await cloudJetztSenden();
+  const code = await rufe('mq_wiederherstellung_erstellen', { p_id: spielerId() });
+  if (typeof code !== 'string') throw new Error('Kein Code erhalten');
+  wiederherstellungMerken(code);
+  return code;
+}
+
+/** Hat dieser Spieler schon einen Code (vielleicht auf einem anderen Geraet)? */
+export async function cloudWiederherstellungStatus() {
+  if (!cloudAktiv()) return false;
+  return (await rufe('mq_wiederherstellung_status', { p_id: spielerId() })) === true;
+}
+
+/** Bringt Eingaben wie "k7qm x2pa 9rtd" in die Form "K7QM-X2PA-9RTD" - oder null. */
+export function wiederherstellungsCode(eingabe) {
+  const sauber = String(eingabe ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return sauber.length === 12 ? `${sauber.slice(0, 4)}-${sauber.slice(4, 8)}-${sauber.slice(8)}` : null;
+}
+
+/**
+ * Holt einen Spielstand ueber den Wiederherstellungs-Code.
+ * @returns {Promise<object|null>} { id, daten } oder null bei falschem Code
+ */
+export async function cloudWiederherstellen(eingabe) {
+  if (!cloudAktiv()) throw new Error('Keine Datenbank eingetragen');
+  const code = wiederherstellungsCode(eingabe);
+  if (!code) return null;
+  const ergebnis = await rufe('mq_wiederherstellen', { p_code: code });
+  if (!ergebnis || !ergebnis.id || !ergebnis.daten) return null;
+  return { ...ergebnis, code };
+}
+
+/** Nach dem Zurueckholen: Der Code gilt weiter - also gleich merken. */
+export function wiederherstellungUebernehmen(code) {
+  wiederherstellungMerken(code);
 }
 
 /* ------------------------------------------------------------------ */
