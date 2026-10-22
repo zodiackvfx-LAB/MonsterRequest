@@ -11,7 +11,15 @@
  * Solange das Spiel offen und online ist, fragt es alle paar Sekunden
  * "Was gibt es Neues?" (mq_freunde). Dabei meldet es auch "ich bin da" -
  * daraus wird der Onlinestatus der Freunde (🟢 online, 🟡 im Kampf,
- * ⚫ offline). Ein eigenes Echtzeit-System braucht es dafür nicht.
+ * ⚫ offline).
+ *
+ * KLINGEL: Damit Einladungen und Anfragen nicht erst beim nächsten
+ * Nachfragen ankommen, horcht jedes Spiel auf einem eigenen kleinen Kanal
+ * (Supabase Realtime, wie das 2v2 - js/core/netz.js), benannt nach der
+ * Freundes-ID. Wer etwas schickt, klingelt dort kurz, und der Freund fragt
+ * sofort nach. Die Klingel trägt KEINE Daten: Was es Neues gibt, steht
+ * nur in der Datenbank. Eine falsche Klingel bewirkt also höchstens ein
+ * Nachfragen.
  *
  * 2v2-EINLADUNG
  * Eine Einladung trägt einfach den Code der eigenen 2v2-Lobby. Nimmt der
@@ -23,7 +31,7 @@
  */
 
 import { cloudAktiv, cloudFreunde, cloudJetztSenden } from './cloud.js';
-import { geraetOnline } from './netz.js';
+import { geraetOnline, netzArt, raumOeffnen } from './netz.js';
 import { aktuellerScreenName } from './screens.js';
 import { saveProgress } from './state.js';
 
@@ -149,6 +157,7 @@ export function freundeAktualisieren() {
       neuigkeitenMelden(neu);
       lage = neu;
       zustand = 'bereit';
+      klingelHoeren(neu.kennung);
       return lage;
     })
     .catch((fehler) => {
@@ -227,6 +236,80 @@ function neuigkeitenMelden(neu) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Klingel                                                            */
+/* ------------------------------------------------------------------ */
+
+const KLINGEL_RAUM = 'mqk-';
+/** So oft fragt eine Klingel höchstens nach - auch bei Sturmklingeln. */
+const KLINGEL_ABSTAND_MS = 2000;
+
+let klingelRaum = null;
+let klingelKennung = null;
+let letzteKlingel = 0;
+let klingelPlan = null;
+
+/** Horcht auf dem eigenen Kanal. Einmal je Freundes-ID. */
+function klingelHoeren(kennung) {
+  if (!kennung || klingelKennung === kennung || !netzArt()) return;
+  klingelRaum?.schliessen();
+  klingelKennung = kennung;
+  try {
+    klingelRaum = raumOeffnen(KLINGEL_RAUM + kennung);
+  } catch {
+    klingelRaum = null;
+    return;
+  }
+  klingelRaum.an((nachricht) => {
+    if (nachricht.typ === 'klingel') geklingelt();
+  });
+}
+
+function geklingelt() {
+  const warten = letzteKlingel + KLINGEL_ABSTAND_MS - Date.now();
+  if (warten > 0) {
+    if (!klingelPlan) {
+      klingelPlan = setTimeout(() => {
+        klingelPlan = null;
+        geklingelt();
+      }, warten);
+    }
+    return;
+  }
+  letzteKlingel = Date.now();
+  freundeAktualisieren();
+}
+
+/** Klingelt kurz bei einem Freund: Kanal auf, "klingel", Kanal zu. */
+function klingeln(kennung) {
+  if (!kennung || !netzArt() || !geraetOnline()) return;
+  let raum;
+  try {
+    raum = raumOeffnen(KLINGEL_RAUM + kennung);
+  } catch {
+    return;
+  }
+  // Kommt keine Verbindung zustande, nach ein paar Sekunden aufgeben -
+  // dann kommt die Neuigkeit eben beim nächsten Nachfragen an.
+  const aufgeben = setTimeout(() => raum.schliessen(), 6000);
+  const senden = () => {
+    raum.senden('klingel', {});
+    setTimeout(() => {
+      clearTimeout(aufgeben);
+      raum.schliessen();
+    }, 300);
+  };
+  if (raum.status === 'verbunden') {
+    senden();
+    return;
+  }
+  const abmelden = raum.beobachten((status) => {
+    if (status !== 'verbunden') return;
+    abmelden();
+    senden();
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Aktionen                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -251,12 +334,16 @@ export async function freundSuchen(kennung) {
 export async function anfrageSenden(kennung) {
   const sauber = kennungPruefen(kennung);
   if (!sauber) return 'unbekannt';
-  return undNeuLaden(await rufe('mq_anfrage_senden', { p_kennung: sauber }));
+  const antwort = await rufe('mq_anfrage_senden', { p_kennung: sauber });
+  if (antwort === 'gesendet') klingeln(sauber);
+  return undNeuLaden(antwort);
 }
 
 export async function anfrageAntworten(kennung, annehmen) {
   if (annehmen) selbstAngenommen.add(kennung);
-  return undNeuLaden(await rufe('mq_anfrage_antworten', { p_kennung: kennung, p_annehmen: Boolean(annehmen) }));
+  const antwort = await rufe('mq_anfrage_antworten', { p_kennung: kennung, p_annehmen: Boolean(annehmen) });
+  if (antwort === true) klingeln(kennung);
+  return undNeuLaden(antwort);
 }
 
 export async function anfrageZurueckziehen(kennung) {
@@ -264,12 +351,16 @@ export async function anfrageZurueckziehen(kennung) {
 }
 
 export async function freundEntfernen(kennung) {
-  return undNeuLaden(await rufe('mq_freund_entfernen', { p_kennung: kennung }));
+  const antwort = await rufe('mq_freund_entfernen', { p_kennung: kennung });
+  if (antwort === true) klingeln(kennung);
+  return undNeuLaden(antwort);
 }
 
 /** Lädt einen Freund in die eigene 2v2-Lobby (Code) ein. */
 export async function einladungSenden(kennung, code) {
-  return rufe('mq_einladung_senden', { p_kennung: kennung, p_code: code });
+  const antwort = await rufe('mq_einladung_senden', { p_kennung: kennung, p_code: code });
+  if (antwort === 'gesendet') klingeln(kennung);
+  return antwort;
 }
 
 /**
@@ -278,7 +369,10 @@ export async function einladungSenden(kennung, code) {
  *   'abgelehnt'; null = abgelaufen oder schon beantwortet
  */
 export async function einladungAntworten(id, annehmen) {
+  const von = lage?.einladungen.find((e) => e.id === id)?.kennung;
   const antwort = await rufe('mq_einladung_antworten', { p_einladung: id, p_annehmen: Boolean(annehmen) });
+  // Dem Gastgeber gleich Bescheid geben ("angenommen" / "abgelehnt").
+  if (typeof antwort === 'string') klingeln(von);
   if (lage) lage = { ...lage, einladungen: lage.einladungen.filter((e) => e.id !== id) };
   freundeAktualisieren();
   return typeof antwort === 'string' ? antwort : null;

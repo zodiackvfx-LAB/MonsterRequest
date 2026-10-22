@@ -15756,6 +15756,7 @@ function freundeAktualisieren() {
     neuigkeitenMelden(neu);
     lage = neu;
     zustand = "bereit";
+    klingelHoeren(neu.kennung);
     return lage;
   }).catch((fehler) => {
     zustand = fehler?.status === 404 ? "fehlt" : "fehler";
@@ -15809,6 +15810,66 @@ function neuigkeitenMelden(neu) {
     }
   }));
 }
+var KLINGEL_RAUM = "mqk-";
+var KLINGEL_ABSTAND_MS = 2e3;
+var klingelRaum = null;
+var klingelKennung = null;
+var letzteKlingel = 0;
+var klingelPlan = null;
+function klingelHoeren(kennung) {
+  if (!kennung || klingelKennung === kennung || !netzArt()) return;
+  klingelRaum?.schliessen();
+  klingelKennung = kennung;
+  try {
+    klingelRaum = raumOeffnen(KLINGEL_RAUM + kennung);
+  } catch {
+    klingelRaum = null;
+    return;
+  }
+  klingelRaum.an((nachricht) => {
+    if (nachricht.typ === "klingel") geklingelt();
+  });
+}
+function geklingelt() {
+  const warten = letzteKlingel + KLINGEL_ABSTAND_MS - Date.now();
+  if (warten > 0) {
+    if (!klingelPlan) {
+      klingelPlan = setTimeout(() => {
+        klingelPlan = null;
+        geklingelt();
+      }, warten);
+    }
+    return;
+  }
+  letzteKlingel = Date.now();
+  freundeAktualisieren();
+}
+function klingeln(kennung) {
+  if (!kennung || !netzArt() || !geraetOnline()) return;
+  let raum;
+  try {
+    raum = raumOeffnen(KLINGEL_RAUM + kennung);
+  } catch {
+    return;
+  }
+  const aufgeben = setTimeout(() => raum.schliessen(), 6e3);
+  const senden2 = () => {
+    raum.senden("klingel", {});
+    setTimeout(() => {
+      clearTimeout(aufgeben);
+      raum.schliessen();
+    }, 300);
+  };
+  if (raum.status === "verbunden") {
+    senden2();
+    return;
+  }
+  const abmelden3 = raum.beobachten((status2) => {
+    if (status2 !== "verbunden") return;
+    abmelden3();
+    senden2();
+  });
+}
 async function undNeuLaden(ergebnis) {
   await freundeAktualisieren();
   return ergebnis;
@@ -15822,23 +15883,33 @@ async function freundSuchen(kennung) {
 async function anfrageSenden(kennung) {
   const sauber = kennungPruefen(kennung);
   if (!sauber) return "unbekannt";
-  return undNeuLaden(await rufe2("mq_anfrage_senden", { p_kennung: sauber }));
+  const antwort = await rufe2("mq_anfrage_senden", { p_kennung: sauber });
+  if (antwort === "gesendet") klingeln(sauber);
+  return undNeuLaden(antwort);
 }
 async function anfrageAntworten(kennung, annehmen) {
   if (annehmen) selbstAngenommen.add(kennung);
-  return undNeuLaden(await rufe2("mq_anfrage_antworten", { p_kennung: kennung, p_annehmen: Boolean(annehmen) }));
+  const antwort = await rufe2("mq_anfrage_antworten", { p_kennung: kennung, p_annehmen: Boolean(annehmen) });
+  if (antwort === true) klingeln(kennung);
+  return undNeuLaden(antwort);
 }
 async function anfrageZurueckziehen(kennung) {
   return undNeuLaden(await rufe2("mq_anfrage_zurueckziehen", { p_kennung: kennung }));
 }
 async function freundEntfernen(kennung) {
-  return undNeuLaden(await rufe2("mq_freund_entfernen", { p_kennung: kennung }));
+  const antwort = await rufe2("mq_freund_entfernen", { p_kennung: kennung });
+  if (antwort === true) klingeln(kennung);
+  return undNeuLaden(antwort);
 }
 async function einladungSenden(kennung, code) {
-  return rufe2("mq_einladung_senden", { p_kennung: kennung, p_code: code });
+  const antwort = await rufe2("mq_einladung_senden", { p_kennung: kennung, p_code: code });
+  if (antwort === "gesendet") klingeln(kennung);
+  return antwort;
 }
 async function einladungAntworten(id, annehmen) {
+  const von = lage?.einladungen.find((e) => e.id === id)?.kennung;
   const antwort = await rufe2("mq_einladung_antworten", { p_einladung: id, p_annehmen: Boolean(annehmen) });
+  if (typeof antwort === "string") klingeln(von);
   if (lage) lage = { ...lage, einladungen: lage.einladungen.filter((e) => e.id !== id) };
   freundeAktualisieren();
   return typeof antwort === "string" ? antwort : null;

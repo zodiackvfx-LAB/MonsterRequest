@@ -153,9 +153,9 @@ try {
   await anfrage(B, idB);
   pruefe('Keine Anfrage an sich selbst', (await text(B, '.freunde__meldung')).includes('eigene'));
 
-  await nachfragen(A);
-  await A.waitForSelector('.erfolg-toast', { timeout: 3000 });
-  pruefe('Hinweis: neue Freundschaftsanfrage', (await text(A, '.erfolg-toast')).includes('Freundschaftsanfrage'));
+  // Kein nachfragen(A): Die Klingel meldet die Anfrage sofort.
+  await A.waitForSelector('.erfolg-toast', { timeout: 5000 });
+  pruefe('Hinweis: neue Freundschaftsanfrage - sofort, ohne Warten', (await text(A, '.erfolg-toast')).includes('Freundschaftsanfrage'));
   pruefe('Anfrage ist noch keine Freundschaft', (await A.$$('[data-reiter="freunde"] ~ *')) && (await text(A, '[data-reiter="freunde"]')).includes('(0)'));
   await A.click('[data-reiter="anfragen"]');
   await A.click('[data-aktion="ablehnen"]');
@@ -203,9 +203,9 @@ try {
   await A.waitForSelector('.duell-freunde');
   await bild(A, 'lobby-handy');
   pruefe('6. Freund direkt zum 2v2 einladen', (await text(A, '.duell-freunde')).includes('Eingeladen'));
-  await nachfragen(B);
-  await B.waitForSelector('.overlay--einladung', { timeout: 4000 });
-  pruefe('Einladung kommt an (mit Name und Ablaufzeit)', (await text(B, '.overlay--einladung')).includes('Anna') && (await text(B, '.einladung__zeit')).includes('Gilt noch'));
+  // Kein nachfragen(B): Die Klingel meldet die Einladung sofort.
+  await B.waitForSelector('.overlay--einladung', { timeout: 5000 });
+  pruefe('Einladung kommt sofort an (mit Name und Ablaufzeit)', (await text(B, '.overlay--einladung')).includes('Anna') && (await text(B, '.einladung__zeit')).includes('Gilt noch'));
   await bild(B, 'einladung-pc');
   await B.click('.overlay--einladung [data-aktion="annehmen"]');
   await B.waitForSelector('.duell-team', { timeout: 8000 });

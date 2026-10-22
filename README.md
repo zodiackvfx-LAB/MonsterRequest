@@ -386,6 +386,12 @@ steht außerdem die Liste „👥 Freund einladen“, solange Platz 2 frei ist.
 Einladungen gelten 5 Minuten und lassen sich nur einmal annehmen. Während
 eines Kampfes erscheint keine Einladung – sie wartet bis danach.
 
+Einladungen, Anfragen und Antworten kommen **sofort** an: Jedes Spiel horcht
+auf einem eigenen kleinen „Klingel“-Kanal (Supabase Realtime, benannt nach
+der Freundes-ID). Wer etwas schickt, klingelt dort, und der Freund schaut
+gleich in der Datenbank nach. Die Klingel trägt keine Daten. Zur Sicherheit
+fragt das Spiel außerdem alle 15 Sekunden nach.
+
 Die Freundes-ID ist nur zum Suchen da: Wer sie kennt, kommt damit an
 keinen Spielstand heran. Gespeichert wird alles in der Datenbank (siehe
 `datenbank/schema.sql`, Abschnitt „Freunde“) – Freunde bleiben also auch
