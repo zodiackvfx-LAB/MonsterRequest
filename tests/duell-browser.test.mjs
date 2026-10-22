@@ -21,14 +21,15 @@ import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 let chromium;
+let webkit;
 let devices;
 try {
-  ({ chromium, devices } = await import('playwright'));
+  ({ chromium, webkit, devices } = await import('playwright'));
 } catch {
   try {
     const { execSync } = await import('node:child_process');
     const global = execSync('npm root -g', { encoding: 'utf8' }).trim();
-    ({ chromium, devices } = await import(join(global, 'playwright', 'index.mjs')));
+    ({ chromium, webkit, devices } = await import(join(global, 'playwright', 'index.mjs')));
   } catch {
     console.log('Playwright fehlt - Browser-Test übersprungen.');
     process.exit(0);
@@ -63,7 +64,8 @@ function pruefe(text, ok) {
 const SPIELSTAND = { name: 'Anna', unlockedWorld: 4, clearedLevels: ['1-1', '1-12', '2-12', '3-12'], coins: 500, gesehen: { kampf: true },
   bossPowers: ['rindenpanzer', 'inferno'], bossPower: 'inferno', characters: { timo: { level: 6, xp: 0 } }, settings: { musik: false, sound: false } };
 
-const browser = await chromium.launch();
+// MQ_BROWSER=webkit: derselbe Test mit der Safari-Engine (iPhone, iPad, Mac).
+const browser = await (process.env.MQ_BROWSER === 'webkit' ? webkit : chromium).launch();
 const seitenfehler = [];
 try {
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });

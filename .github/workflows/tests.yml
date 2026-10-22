@@ -1,0 +1,84 @@
+# Prüft MonsterQuest bei jedem Hochladen und bei jedem Pull Request.
+#
+#   regeln     - Spielregeln, 2v2 und die Spielstand-Datenbank (nur Node)
+#   datenbank  - datenbank/schema.sql in einem echten Postgres, so
+#                eingestellt wie bei Supabase, danach schema.test.sql
+#   browser    - alle Browser-Tests, einmal mit Chrome und einmal mit der
+#                Safari-Engine (WebKit) - so fallen iPhone-Fehler auf,
+#                bevor sie jemand auf dem Handy sieht
+#
+# Grün = alles bestanden. Rot = in der Ausgabe nach "FEHL" suchen.
+
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regeln:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tests/regeln.test.mjs
+      - run: node tests/duell.test.mjs
+      - run: node tests/datenbank.test.mjs
+
+  datenbank:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wie bei Supabase einrichten (Rollen, Rechte für neue Funktionen)
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "create role anon nologin; create role authenticated nologin;"
+          psql -v ON_ERROR_STOP=1 -c "grant usage on schema public to anon, authenticated;"
+          psql -v ON_ERROR_STOP=1 -c "alter default privileges in schema public grant execute on functions to anon, authenticated;"
+          psql -v ON_ERROR_STOP=1 -c "alter default privileges in schema public grant all on tables to anon, authenticated;"
+      - name: schema.sql einspielen - zweimal, wie beim Aktualisieren
+        run: |
+          psql -q -v ON_ERROR_STOP=1 -f datenbank/schema.sql
+          psql -q -v ON_ERROR_STOP=1 -f datenbank/schema.sql
+      - name: schema.test.sql
+        run: psql -q -v ON_ERROR_STOP=1 -f datenbank/schema.test.sql
+
+  browser:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    env:
+      MQ_BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright mit ${{ matrix.browser }}
+        run: |
+          npm install -g playwright@1.56.1
+          playwright install --with-deps ${{ matrix.browser }}
+      - run: node tests/fenster-browser.test.mjs
+      - run: node tests/sicherung-browser.test.mjs
+      - run: node tests/freunde-browser.test.mjs
+      - run: node tests/duell-browser.test.mjs

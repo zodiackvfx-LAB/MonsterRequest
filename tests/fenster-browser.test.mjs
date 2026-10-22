@@ -17,14 +17,15 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 let chromium;
+let webkit;
 let devices;
 try {
-  ({ chromium, devices } = await import('playwright'));
+  ({ chromium, webkit, devices } = await import('playwright'));
 } catch {
   try {
     const { execSync } = await import('node:child_process');
     const global = execSync('npm root -g', { encoding: 'utf8' }).trim();
-    ({ chromium, devices } = await import(join(global, 'playwright', 'index.mjs')));
+    ({ chromium, webkit, devices } = await import(join(global, 'playwright', 'index.mjs')));
   } catch {
     console.log('Playwright fehlt - Browser-Test übersprungen.');
     process.exit(0);
@@ -72,7 +73,8 @@ const lage = (p) => p.evaluate(() => {
   };
 });
 
-const browser = await chromium.launch();
+// MQ_BROWSER=webkit: derselbe Test mit der Safari-Engine (iPhone, iPad, Mac).
+const browser = await (process.env.MQ_BROWSER === 'webkit' ? webkit : chromium).launch();
 const seitenfehler = [];
 try {
   for (const geraet of ['iPhone SE', 'iPhone 13', 'iPhone 13 landscape']) {
