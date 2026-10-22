@@ -70,6 +70,9 @@ const lage = (p) => p.evaluate(() => {
   return {
     scrollt: box.scrollHeight > box.clientHeight + 1,
     imBild: b.top >= 0 && b.bottom <= innerHeight + 1 && k.bottom <= b.bottom + 1,
+    // Zum Nachsehen, wenn etwas schiefgeht:
+    messung: `Fenster ${Math.round(b.top)}-${Math.round(b.bottom)}, Knopf unten ${Math.round(k.bottom)}, Bild ${innerHeight}, `
+      + `scroll ${box.scrollHeight}/${box.clientHeight}, scale ${box.style.scale || '-'}, max ${box.style.maxHeight || '-'}, rand ${box.style.marginBlock || '-'}`,
   };
 });
 
@@ -103,7 +106,7 @@ try {
     }
     await p.waitForTimeout(1500);
     const echt = await lage(p);
-    pruefe('Siegesfenster: alles im Bild, kein Scrollen', !echt.scrollt && echt.imBild);
+    pruefe(`Siegesfenster: alles im Bild, kein Scrollen${!echt.scrollt && echt.imBild ? '' : ` (${echt.messung})`}`, !echt.scrollt && echt.imBild);
 
     // Der volle Fall: neue Welt, Boss-Kraft und mehrere Erfolge zusätzlich.
     await p.evaluate(() => {
@@ -116,7 +119,7 @@ try {
     });
     await p.waitForTimeout(600);
     const voll = await lage(p);
-    pruefe('Volles Siegesfenster: "Weiter" bleibt im Bild', voll.imBild);
+    pruefe(`Volles Siegesfenster: "Weiter" bleibt im Bild${voll.imBild ? '' : ` (${voll.messung})`}`, voll.imBild);
     await ctx.close();
   }
 } catch (e) {
