@@ -22,6 +22,7 @@ permissions:
 jobs:
   regeln:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,6 +34,7 @@ jobs:
 
   datenbank:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:16
@@ -63,6 +65,8 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
+    # Hängt das Herunterladen eines Browsers einmal, nicht stundenlang warten.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -75,6 +79,7 @@ jobs:
         with:
           node-version: 22
       - name: Playwright mit ${{ matrix.browser }}
+        timeout-minutes: 12
         run: |
           npm install -g playwright@1.56.1
           playwright install --with-deps ${{ matrix.browser }}
