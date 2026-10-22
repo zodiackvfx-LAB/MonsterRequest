@@ -226,6 +226,13 @@ Sieg 4 – aber höchstens ein Sieg alle 10 Sekunden. Die Rangliste zeigt das
 Kleinere aus Spielstand und Guthaben. Für ehrliche Spieler ändert sich
 nichts; der Spielstand selbst bleibt unverändert.
 
+**Namensfilter:** Spielernamen sieht jeder (Rangliste, Freunde, Einladungen,
+2v2). Schimpfwörter werden schon bei der Eingabe abgelehnt, und wer die
+Eingabe umgeht, erscheint bei anderen als „Spieler“. Erkannt werden auch
+Tricks wie „F1ck“, „Fuuuck“ oder „F-i-c-k“. Die Wortlisten stehen in
+`js/data/namensfilter.js` und – gleich – in `datenbank/schema.sql`
+(`mq_name_erlaubt`); ein Test prüft, dass beide übereinstimmen.
+
 **Spielmodi** (Knopf „Modi“ neben „Spiel starten“):
 
 | Modus | Worum es geht | Belohnung |

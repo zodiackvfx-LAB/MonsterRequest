@@ -299,6 +299,44 @@ begin
   delete from public.spielstaende where id in (v_f2, v_f3);
 
   -- ---------------------------------------------------------------- --
+  raise notice '--- Namensfilter ---';
+  -- Gleiche Faelle wie in tests/regeln.test.mjs.
+  if (select bool_and(not public.mq_name_erlaubt(n)) from unnest(array[
+        'F1ck', 'Fuuuck', 'F-i-c-k', 'Arsch', 'ARSCHLOCH', 'Hurensohn', 'Wichser', 'N4zi',
+        'Scheiße', 'SCHEISSE', 'sh1t', 'Du Opfer', 'Nutte', 'H!tler', 's3x', 'ÄRSCH']) n) then
+    v_gut := v_gut + 1; raise notice 'ok   Schimpfwoerter und Tricks werden erkannt';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Ein Schimpfwort rutscht durch';
+  end if;
+  if (select bool_and(public.mq_name_erlaubt(n)) from unnest(array[
+        'Zodi', 'Timo123', 'Barsch', 'Minute', 'Peacock', 'Lukas Exner', 'Anna', 'Rocco',
+        'Max Mustermann', 'Kampfkatze', 'Ali', 'Arschenbach', '', null]) n) then
+    v_gut := v_gut + 1; raise notice 'ok   Harmlose Namen bleiben erlaubt';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Ein harmloser Name wird blockiert';
+  end if;
+
+  perform public.mq_speichern(v_f2, '{"name":"Fuuuck 123","aktiveFigur":"timo"}'::jsonb);
+  perform public.mq_freunde(v_f2, null);
+  update public.spielstaende set rang_erlaubt = 50, daten = daten || '{"trophaeen":50}'::jsonb where id = v_f2;
+  set local role anon;
+  if public.mq_rangliste(v_f2, 100) -> 'spitze' @> '[{"name":"Spieler","ich":true}]'::jsonb
+     and public.mq_rangliste(v_f2, 100)::text not like '%uuu%'
+     and public.mq_freund_suchen(v_f2, public.mq_freunde(v_f2) ->> 'kennung') ->> 'name' = 'Spieler' then
+    v_gut := v_gut + 1; raise notice 'ok   Unpassender Name erscheint in Rangliste und Freundessuche als "Spieler"';
+  else
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL Unpassender Name wird angezeigt: %', public.mq_rangliste(v_f2, 100) -> 'spitze';
+  end if;
+  begin
+    perform public.mq_name_erlaubt('x');
+    v_schlecht := v_schlecht + 1; raise notice 'FEHL anon darf den Namensfilter direkt aufrufen';
+  exception when insufficient_privilege then
+    v_gut := v_gut + 1; raise notice 'ok   Der Namensfilter bleibt intern';
+  end;
+  reset role;
+  delete from public.spielstaende where id = v_f2;
+
+  -- ---------------------------------------------------------------- --
   raise notice '--- 2v2: Belohnung genau einmal ---';
   set local role anon;
 

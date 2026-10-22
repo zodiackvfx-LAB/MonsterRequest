@@ -2209,6 +2209,12 @@ body.no-animations *::after {
   color: var(--text-dim);
 }
 
+/* Unpassender Name: der Hinweis wird zur freundlichen Bitte. */
+.willkommen__hinweis.ist-fehler {
+  color: var(--gold-1);
+  font-weight: 700;
+}
+
 /* =========================================================================
    Extra-Effekte (Kampf und Bildschirmwechsel)
    -------------------------------------------------------------------------
@@ -14542,6 +14548,63 @@ function spielstandUebernehmenVonCode(ergebnis) {
   return spielstandUebernehmen(ergebnis.daten, false);
 }
 
+// js/data/namensfilter.js
+var VERBOTEN_TEILE = [
+  "fick",
+  "fuck",
+  "fotze",
+  "wichs",
+  "huren",
+  "arschloch",
+  "schlampe",
+  "misgeburt",
+  "spast",
+  "behindert",
+  "nazi",
+  "hitler",
+  "niga",
+  "niger",
+  "neger",
+  "schwuchtel",
+  "kanake",
+  "penis",
+  "vagina",
+  "porno",
+  "titen",
+  "pimel",
+  "scheis",
+  "kacke",
+  "bitch",
+  "shit",
+  "sex",
+  "cunt",
+  "whore",
+  "slut",
+  "retard"
+];
+var VERBOTEN_WOERTER = ["arsch", "hure", "nute", "opfer", "idiot", "dep", "trotel", "cock", "fag", "kys", "loser"];
+var ERSATZ_NAME = "Spieler";
+var ZEICHEN_VON = "äöüßÄÖÜ0134578@$!";
+var ZEICHEN_ZU = "aousaouoieastbasi";
+function vereinfachen(name) {
+  const klein = [...String(name ?? "").toLowerCase()].map((z) => {
+    const i = ZEICHEN_VON.indexOf(z);
+    return i >= 0 ? ZEICHEN_ZU[i] : z;
+  }).join("");
+  return klein.split(/[^a-z]+/).filter(Boolean).map((wort) => wort.replace(/(.)\1+/g, "$1"));
+}
+function kandidaten(woerter) {
+  const zerlegt = woerter.map((w) => w.length <= 2 ? w : " ").join("").split(" ").filter((teil) => teil.length > 2);
+  return [...woerter, ...zerlegt];
+}
+function nameErlaubt(name) {
+  const liste2 = kandidaten(vereinfachen(name));
+  return !liste2.some((w) => VERBOTEN_WOERTER.includes(w) || VERBOTEN_TEILE.some((teil) => w.includes(teil)));
+}
+function nameFiltern(name, ersatz = ERSATZ_NAME) {
+  return nameErlaubt(name) ? name : ersatz;
+}
+
 // js/ui/willkommen.js
 function zeigeWillkommen(root, onFertig) {
   const overlay = document.createElement("div");
@@ -14570,9 +14633,16 @@ function zeigeWillkommen(root, onFertig) {
     </div>
   `;
   const feld2 = overlay.querySelector(".willkommen__feld");
+  const hinweis = overlay.querySelector(".willkommen__hinweis");
   const los = overlay.querySelector("#willkommen-los");
   function fertig() {
     const name = feld2.value.trim();
+    if (!nameErlaubt(name)) {
+      hinweis.textContent = "Bitte wähle einen freundlichen Namen.";
+      hinweis.classList.add("ist-fehler");
+      feld2.focus();
+      return;
+    }
     overlay.remove();
     onFertig(name);
   }
@@ -19256,6 +19326,10 @@ function namePanel(neuZeichnen) {
   knopf.className = "btn btn--small btn--green";
   knopf.textContent = "Speichern";
   function speichern() {
+    if (!nameErlaubt(feld2.value)) {
+      row.querySelector("#name-befund").textContent = "Bitte wähle einen freundlichen Namen.";
+      return;
+    }
     setSpielername(feld2.value);
     neuZeichnen();
     setTimeout(() => {
@@ -21965,7 +22039,8 @@ function profilPruefen(roh) {
   }
   return {
     v: PROFIL_VERSION,
-    name: String(p.name ?? "").trim().slice(0, 16) || basis.name,
+    // Der Name kommt vom anderen Gerät - unpassende Namen zeigen wir nicht.
+    name: nameFiltern(String(p.name ?? "").trim().slice(0, 16) || basis.name, "Spieler"),
     figur,
     level: ganzzahl(p.level, 1, MAX_LEVEL, 1),
     upgrades: {
@@ -22255,8 +22330,8 @@ function kraftZiel(sicht, grad) {
   const spieler = feinde(sicht);
   if (sicht.kraftArt === "schild") return null;
   if (sicht.kraftArt === "frost" || sicht.kraftArt === "energieraub") {
-    const kandidaten = spieler.filter((s) => !s.gesperrt);
-    return ([...kandidaten].sort((a, b) => b.energie - a.energie)[0] ?? spieler[0])?.id ?? null;
+    const kandidaten2 = spieler.filter((s) => !s.gesperrt);
+    return ([...kandidaten2].sort((a, b) => b.energie - a.energie)[0] ?? spieler[0])?.id ?? null;
   }
   const bewertet = spieler.map((z) => ({ z, w: zielWert(sicht, z, 30, grad, "boss") }));
   bewertet.sort((a, b) => b.w - a.w);

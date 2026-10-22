@@ -200,6 +200,13 @@ weitere Sieg 4 (höchstens einer alle 10 Sekunden). Die Rangliste zeigt das
 Kleinere aus Spielstand und Guthaben. Beim Einspielen bekommen alle
 bestehenden Spieler ihren jetzigen Stand als Guthaben – niemand rutscht ab.
 
+### Namensfilter
+
+Rangliste, Freundessuche und Einladungen zeigen unpassende Namen als
+„Spieler“ (`mq_name_erlaubt`, `mq_anzeigename`). Die Wortliste steht dort
+und gleich in `js/data/namensfilter.js` – neue Wörter immer in beide
+eintragen.
+
 ### Der Wiederherstellungs-Code 🔑
 
 Ebenfalls unter *Spielstand*: ein **fester** Code aus 12 Zeichen

@@ -25,6 +25,7 @@ import { BOSS_FORMEN, FORM_NAMEN, GROESSE, NEUE_BOSS_FORMEN, NEUE_FORMEN, formen
 import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
 import { existsSync, readFileSync } from 'node:fs';
+import { VERBOTEN_TEILE, VERBOTEN_WOERTER, nameErlaubt, nameFiltern } from '../js/data/namensfilter.js';
 import { SKIN_BILDER, SKIN_POSEN } from '../js/data/timo-skins.js';
 import { HUETE, MUSTER, POSEN as OUTFIT_POSEN, kleidungAusFarbe, poseBauen } from '../js/core/outfit.js';
 import { STUDIO_GRATIS, STUDIO_PREISE, STUDIO_TEILE } from '../js/data/studio-teile.js';
@@ -1605,6 +1606,29 @@ console.log('\nSkin-Werkstatt: eigene Outfits');
     gameState.eigeneOutfits[0].rezept.muster === 'keins' && gameState.eigeneOutfits[0].rezept.hut === 'keiner');
   resetProgress();
   pruefe('Zurücksetzen leert die eigenen Outfits', eigeneSkins().length === 0);
+}
+
+console.log('\nNamensfilter');
+{
+  // Gleiche Fälle wie in datenbank/schema.test.sql.
+  const boese = ['F1ck', 'Fuuuck', 'F-i-c-k', 'Arsch', 'ARSCHLOCH', 'Hurensohn', 'Wichser', 'N4zi',
+    'Scheiße', 'SCHEISSE', 'sh1t', 'Du Opfer', 'Nutte', 'H!tler', 's3x', 'ÄRSCH'];
+  const gut = ['Zodi', 'Timo123', 'Barsch', 'Minute', 'Peacock', 'Lukas Exner', 'Anna', 'Rocco',
+    'Max Mustermann', 'Kampfkatze', 'Ali', 'Arschenbach', '', null];
+  pruefe('Schimpfwörter und Tricks werden erkannt', boese.every((n) => !nameErlaubt(n)));
+  pruefe('Harmlose Namen bleiben erlaubt', gut.every((n) => nameErlaubt(n)));
+  pruefe('Unpassender Name wird zu "Spieler"', nameFiltern('Fuuuck') === 'Spieler' && nameFiltern('Zodi') === 'Zodi');
+
+  // Die Datenbank prüft mit denselben Listen (mq_name_erlaubt).
+  const schema = readFileSync(new URL('../datenbank/schema.sql', import.meta.url), 'utf8');
+  const liste = (marke) => {
+    const block = schema.split(`-- ${marke}`)[1]?.split('];')[0] ?? '';
+    return [...block.matchAll(/'([a-z]+)'/g)].map((t) => t[1]);
+  };
+  pruefe('Spiel und Datenbank haben dieselben verbotenen Teile', JSON.stringify(liste('NAMENSFILTER-TEILE')) === JSON.stringify(VERBOTEN_TEILE));
+  pruefe('Spiel und Datenbank haben dieselben verbotenen Wörter', JSON.stringify(liste('NAMENSFILTER-WOERTER')) === JSON.stringify(VERBOTEN_WOERTER));
+  pruefe('Spiel und Datenbank vereinfachen gleich', schema.includes("'äöüßÄÖÜ0134578@$!', 'aousaouoieastbasi'")
+    && readFileSync(new URL('../js/data/namensfilter.js', import.meta.url), 'utf8').includes("ZEICHEN_VON = 'äöüßÄÖÜ0134578@$!'"));
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

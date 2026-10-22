@@ -21,6 +21,7 @@
 
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { nameFiltern } from '../js/data/namensfilter.js';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -143,7 +144,7 @@ const FUNKTIONEN = {
       .filter(([, e]) => String(e.daten?.settings?.rangliste ?? true) !== 'false')
       .map(([id, e]) => ({
         id,
-        name: (String(e.daten?.name ?? '').trim() || 'Spieler').slice(0, 16),
+        name: nameFiltern((String(e.daten?.name ?? '').trim() || 'Spieler')).slice(0, 16),
         // Nie mehr als das erspielte Guthaben (wie in schema.sql).
         trophaeen: Math.floor(Math.min(100000, Math.max(0, zahl(e.daten?.trophaeen)), e.rang?.erlaubt ?? 0)),
         gespeichert: e.gespeichert,
@@ -378,7 +379,7 @@ function profil(id) {
   const level = Number(d.characters?.[figur]?.level);
   return {
     kennung: kennungen.get(id),
-    name: (String(d.name ?? '').trim() || 'Spieler').slice(0, 16),
+    name: nameFiltern((String(d.name ?? '').trim() || 'Spieler')).slice(0, 16),
     figur,
     level: Math.min(999, Math.max(1, Number.isFinite(level) ? Math.floor(level) : 1)),
     skin: typeof d.activeSkin?.[figur] === 'string' ? d.activeSkin[figur].slice(0, 60) : null,

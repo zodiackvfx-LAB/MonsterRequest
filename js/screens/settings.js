@@ -27,6 +27,7 @@ import {
   wiederherstellungUebernehmen,
 } from '../core/cloud.js';
 import { wiederherstellungZeile } from '../ui/wiederherstellung.js';
+import { nameErlaubt } from '../data/namensfilter.js';
 import { spielstandUebernehmenVonCode } from '../core/sync.js';
 import { SCHWIERIGKEITEN } from '../data/schwierigkeit.js';
 import { LEVELS } from '../data/levels.js';
@@ -328,6 +329,11 @@ function namePanel(neuZeichnen) {
   knopf.textContent = 'Speichern';
 
   function speichern() {
+    // Den Namen sehen andere (Rangliste, Freunde, 2v2) - Schimpfwörter nicht.
+    if (!nameErlaubt(feld.value)) {
+      row.querySelector('#name-befund').textContent = 'Bitte wähle einen freundlichen Namen.';
+      return;
+    }
     setSpielername(feld.value);
     // Neu zeichnen, damit das Feld den gekürzten/getrimmten Namen zeigt.
     neuZeichnen();

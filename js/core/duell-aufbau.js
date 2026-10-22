@@ -18,6 +18,7 @@
  */
 
 import { MONSTERS, getMonster } from '../data/monsters.js';
+import { nameFiltern } from '../data/namensfilter.js';
 import { ATTACKS, ROCCO_ATTACKEN, START_ATTACKEN, stufenId } from '../data/attacks.js';
 import { BEUTE_ATTACKEN, getSkin } from '../data/items.js';
 import { BOSS_KRAEFTE, kraftFuerWelt } from '../data/kraefte.js';
@@ -95,7 +96,8 @@ export function profilPruefen(roh) {
   }
   return {
     v: PROFIL_VERSION,
-    name: String(p.name ?? '').trim().slice(0, 16) || basis.name,
+    // Der Name kommt vom anderen Gerät - unpassende Namen zeigen wir nicht.
+    name: nameFiltern(String(p.name ?? '').trim().slice(0, 16) || basis.name, 'Spieler'),
     figur,
     level: ganzzahl(p.level, 1, MAX_LEVEL, 1),
     upgrades: {

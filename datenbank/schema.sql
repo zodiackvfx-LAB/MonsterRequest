@@ -91,6 +91,80 @@ end;
 $$;
 
 
+-- --- Namensfilter ---------------------------------------------------------
+-- Spielernamen sieht jeder (Rangliste, Freunde, Einladungen). Ist ein Name
+-- unpassend, zeigen mq_rangliste und mq_profil "Spieler". Dieselben Listen
+-- und Regeln wie js/data/namensfilter.js (tests/regeln.test.mjs vergleicht
+-- beide): vereinfachen (klein, Ziffern zu Buchstaben, Umlaute weg, doppelte
+-- Buchstaben zu einem), dann suchen - "Teile" ueberall im Wort, "Woerter"
+-- nur als ganzes Wort. In Einzelbuchstaben zerlegte Woerter ("F-i-c-k")
+-- werden wieder zusammengesetzt.
+create or replace function public.mq_name_erlaubt(p_name text)
+returns boolean
+language plpgsql
+immutable
+set search_path = public, pg_temp
+as $$
+declare
+  -- NAMENSFILTER-TEILE
+  v_teile constant text[] := array[
+    'fick', 'fuck', 'fotze', 'wichs', 'huren', 'arschloch',
+    'schlampe', 'misgeburt', 'spast', 'behindert', 'nazi', 'hitler',
+    'niga', 'niger', 'neger', 'schwuchtel', 'kanake', 'penis',
+    'vagina', 'porno', 'titen', 'pimel', 'scheis', 'kacke', 'bitch',
+    'shit', 'sex', 'cunt', 'whore', 'slut', 'retard'];
+  -- NAMENSFILTER-WOERTER
+  v_verboten constant text[] := array[
+    'arsch', 'hure', 'nute', 'opfer', 'idiot', 'dep', 'trotel',
+    'cock', 'fag', 'kys', 'loser'];
+  v_woerter text[];
+  v_kandidaten text[];
+  v_kurz text := '';
+  w text;
+begin
+  v_woerter := array(
+    select regexp_replace(x.t, '(.)\1+', '\1', 'g')
+      from regexp_split_to_table(
+             translate(lower(coalesce(p_name, '')), 'äöüßÄÖÜ0134578@$!', 'aousaouoieastbasi'),
+             '[^a-z]+') with ordinality as x(t, n)
+     where x.t <> ''
+     order by x.n);
+  v_kandidaten := v_woerter;
+  foreach w in array v_woerter loop
+    if length(w) <= 2 then
+      v_kurz := v_kurz || w;
+    else
+      if length(v_kurz) > 2 then v_kandidaten := v_kandidaten || v_kurz; end if;
+      v_kurz := '';
+    end if;
+  end loop;
+  if length(v_kurz) > 2 then v_kandidaten := v_kandidaten || v_kurz; end if;
+
+  foreach w in array v_kandidaten loop
+    if w = any (v_verboten) then
+      return false;
+    end if;
+    if exists (select 1 from unnest(v_teile) t where position(t in w) > 0) then
+      return false;
+    end if;
+  end loop;
+  return true;
+end;
+$$;
+
+-- Der Name zum Anzeigen: hoechstens 16 Zeichen, leer oder unpassend wird
+-- "Spieler".
+create or replace function public.mq_anzeigename(p_name text)
+returns text
+language sql
+immutable
+set search_path = public, pg_temp
+as $$
+  select case when public.mq_name_erlaubt(p_name)
+              then left(coalesce(nullif(btrim(p_name), ''), 'Spieler'), 16)
+              else 'Spieler' end;
+$$;
+
 -- -------------------------------------------------------------------------
 -- 4. Die Funktionen, die das Spiel aufruft
 -- -------------------------------------------------------------------------
@@ -320,8 +394,8 @@ set search_path = public, pg_temp
 as $$
   with liste as (
     select s.id,
-           -- Name: hoechstens 16 Zeichen, leer wird "Spieler".
-           left(coalesce(nullif(btrim(s.daten ->> 'name'), ''), 'Spieler'), 16) as name,
+           -- Name: hoechstens 16 Zeichen, leer oder unpassend wird "Spieler".
+           public.mq_anzeigename(s.daten ->> 'name') as name,
            -- Unsinn (Text, negativ, riesig) darf die Liste nicht kippen.
            -- Nie mehr als das erspielte Guthaben (siehe mq_speichern).
            least(greatest(coalesce(public.mq_zahl(s.daten, 'trophaeen'), 0), 0), 100000,
@@ -569,7 +643,7 @@ set search_path = public, pg_temp
 as $$
   select jsonb_build_object(
            'kennung', f.kennung,
-           'name', left(coalesce(nullif(btrim(s.daten ->> 'name'), ''), 'Spieler'), 16),
+           'name', public.mq_anzeigename(s.daten ->> 'name'),
            'figur', left(coalesce(s.daten ->> 'aktiveFigur', 'timo'), 20),
            'level', least(greatest(coalesce(
                       public.mq_zahl(s.daten, 'characters', coalesce(s.daten ->> 'aktiveFigur', 'timo'), 'level'), 1), 1), 999)::int,
@@ -985,6 +1059,8 @@ $$;
 
 revoke all on function public.mq_speichern(uuid, jsonb)      from public;
 revoke all on function public.mq_level_trophaeen(text)    from public, anon, authenticated;
+revoke all on function public.mq_name_erlaubt(text)       from public, anon, authenticated;
+revoke all on function public.mq_anzeigename(text)        from public, anon, authenticated;
 revoke all on function public.mq_laden(uuid)                 from public;
 revoke all on function public.mq_code_erstellen(uuid)        from public;
 revoke all on function public.mq_code_einloesen(text)        from public;

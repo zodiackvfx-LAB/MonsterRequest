@@ -1290,6 +1290,12 @@
   color: var(--text-dim);
 }
 
+/* Unpassender Name: der Hinweis wird zur freundlichen Bitte. */
+.willkommen__hinweis.ist-fehler {
+  color: var(--gold-1);
+  font-weight: 700;
+}
+
 /* =========================================================================
    Extra-Effekte (Kampf und Bildschirmwechsel)
    -------------------------------------------------------------------------

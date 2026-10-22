@@ -108,6 +108,8 @@ console.log('\nProfile und Aufbau');
   pruefe('Deck mit Gegner-Attacke wird durch das Standarddeck ersetzt', !boese.deck.includes('w1-blattschnitt') && boese.deck.length === 8);
   pruefe('Unbekannte Boss-Kraft wird entfernt', boese.kraft === null);
   pruefe('Name höchstens 16 Zeichen', boese.name.length <= 16);
+  pruefe('Unpassender Name des Partners wird "Spieler"', aufbau.profilPruefen({ figur: 'timo', name: 'F1ck dich' }).name === 'Spieler'
+    && aufbau.profilPruefen({ figur: 'timo', name: 'Anna' }).name === 'Anna');
 
   // Test 2: verschiedene Figuren
   const setup = aufbau.duellSetup({ matchId: 'aufbau-1', welt: 3, profile: [profil('timo'), profil('rocco')] });
