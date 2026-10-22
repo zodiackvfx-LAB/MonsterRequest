@@ -4,7 +4,7 @@
 #   datenbank  - datenbank/schema.sql in einem echten Postgres, so
 #                eingestellt wie bei Supabase, danach schema.test.sql
 #   browser    - alle Browser-Tests, einmal mit Chrome und einmal mit der
-#                Safari-Engine (WebKit) - so fallen iPhone-Fehler auf,
+#                Safari-Engine (WebKit), im offiziellen Playwright-Abbild - so fallen iPhone-Fehler auf,
 #                bevor sie jemand auf dem Handy sieht
 #
 # Grün = alles bestanden. Rot = in der Ausgabe nach "FEHL" suchen.
@@ -65,8 +65,12 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
-    # Hängt das Herunterladen eines Browsers einmal, nicht stundenlang warten.
     timeout-minutes: 30
+    # Das offizielle Playwright-Abbild bringt Chrome, WebKit und alles, was
+    # sie brauchen, schon mit - nichts muss erst vom (manchmal sehr
+    # langsamen) Ubuntu-Paketserver geladen werden.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
     strategy:
       fail-fast: false
       matrix:
@@ -75,14 +79,9 @@ jobs:
       MQ_BROWSER: ${{ matrix.browser }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Playwright mit ${{ matrix.browser }}
-        timeout-minutes: 12
-        run: |
-          npm install -g playwright@1.56.1
-          playwright install --with-deps ${{ matrix.browser }}
+      - name: Playwright (Browser liegen schon im Abbild)
+        timeout-minutes: 5
+        run: npm install -g playwright@1.56.1
       - run: node tests/fenster-browser.test.mjs
       - run: node tests/sicherung-browser.test.mjs
       - run: node tests/freunde-browser.test.mjs
