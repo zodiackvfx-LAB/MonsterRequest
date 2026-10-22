@@ -4,8 +4,9 @@
 #   datenbank  - datenbank/schema.sql in einem echten Postgres, so
 #                eingestellt wie bei Supabase, danach schema.test.sql
 #   browser    - alle Browser-Tests, einmal mit Chrome und einmal mit der
-#                Safari-Engine (WebKit), im offiziellen Playwright-Abbild - so fallen iPhone-Fehler auf,
-#                bevor sie jemand auf dem Handy sieht
+#                Safari-Engine (WebKit), im offiziellen Playwright-Abbild -
+#                so fallen iPhone-Fehler auf, bevor sie jemand auf dem
+#                Handy sieht
 #
 # Grün = alles bestanden. Rot = in der Ausgabe nach "FEHL" suchen.
 

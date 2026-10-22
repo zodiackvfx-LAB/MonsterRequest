@@ -92,8 +92,15 @@ try {
       await p.waitForTimeout(300);
     }
   }
-  /** Wartet, bis fn() im Browser true ergibt - höchstens ms. */
-  const bis = (p, fn, ms) => p.waitForFunction(fn, null, { timeout: ms, polling: 250 }).then(() => true, () => false);
+  /**
+   * Wartet, bis fn() im Browser true ergibt - höchstens ms. Die Seite kommt
+   * dafür nach vorn: WebKit lässt die Spielschleife einer Seite im
+   * Hintergrund kaum laufen (auf dem Handy ist das eigene Spiel ja immer vorn).
+   */
+  const bis = async (p, fn, ms) => {
+    await p.bringToFront();
+    return p.waitForFunction(fn, null, { timeout: ms, polling: 250 }).then(() => true, () => false);
+  };
   const lp = (p) => p.$$eval('.duell-plakette [data-hp]', (els) => els.map((e) => e.textContent).join(' '));
   /**
    * Gleicher Stand auf beiden Geräten? Der Gast bekommt den Zustand 8-mal
@@ -151,6 +158,7 @@ try {
     await bis(A, () => /Verbindung verloren/.test(document.querySelector('#band')?.textContent ?? ''), 20000));
   pruefe('Nach der Frist spielt die KI für Spieler 2',
     await bis(A, () => /KI/.test(document.querySelector('.duell-team-halb.ist-partner [data-steuerung]')?.textContent ?? ''), 30000));
+  await B.bringToFront();
   await B.click('.modi-knopf');
   await B.click('.spielmodus--duell .spielmodus__spielen');
   await B.click('[data-aktion="letzte"]');
