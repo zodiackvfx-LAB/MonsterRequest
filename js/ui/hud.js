@@ -44,10 +44,20 @@ export function balkenFuellen(element, anteil) {
   element.style.setProperty('--fuellung', sicher);
 }
 
+/** Gezeichnete Symbole der Leiste - sehen auf jedem Gerät gleich aus (Emoji nicht). */
+const HUD_ICONS = {
+  freunde: `<svg viewBox="0 0 28 24" aria-hidden="true"><defs><linearGradient id="hud-blau" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe2ff"/><stop offset="1" stop-color="#6f8fd8"/></linearGradient></defs>
+    <circle cx="18.5" cy="7.5" r="4.2" fill="url(#hud-blau)" opacity="0.75"/><path d="M11 21 a7.5 6.5 0 0 1 15 0 Z" fill="url(#hud-blau)" opacity="0.75"/>
+    <circle cx="10.5" cy="8.5" r="4.8" fill="url(#hud-blau)" stroke="#1b2450" stroke-width="1"/><path d="M2 22 a8.5 7.5 0 0 1 17 0 Z" fill="url(#hud-blau)" stroke="#1b2450" stroke-width="1"/></svg>`,
+  pokal: `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="hud-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3a8"/><stop offset="0.5" stop-color="#ffc93d"/><stop offset="1" stop-color="#e08a0c"/></linearGradient></defs>
+    <path d="M6 3 h12 v5 a6 6 0 0 1 -12 0 Z" fill="url(#hud-gold)" stroke="#7a4a06" stroke-width="1.3"/><path d="M6 5 H2.8 a3.6 3.6 0 0 0 4.2 5 M18 5 h3.2 a3.6 3.6 0 0 1 -4.2 5" stroke="#e0a52a" stroke-width="1.8" fill="none"/>
+    <path d="M10.6 13.5 h2.8 l0.6 4 h-4 Z" fill="#e0a52a"/><rect x="7" y="17.5" width="10" height="3.6" rx="1.2" fill="#a8741c"/><path d="M8.5 5 v3" stroke="#fffbe0" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/></svg>`,
+};
+
 /**
  * Spielerleiste oben: Avatar, Stufe, Fortschrittsbalken, Freunde, Trophäen
- * und Münzen. Ein Tipp auf die Trophäen öffnet die Rangliste, einer auf 👥
- * die Freunde (nur, wenn es die Datenbank gibt).
+ * und Münzen. Ein Tipp auf die Trophäen öffnet die Rangliste, einer auf das
+ * Freunde-Symbol die Freunde (nur, wenn es die Datenbank gibt).
  */
 export function createHud() {
   const starter = getMonster(getAktiveFigur());
@@ -73,12 +83,12 @@ export function createHud() {
     </div>
     <div class="hud__rechts">
       ${freundeMoeglich() ? `<button class="hud__freunde" type="button" aria-label="Freunde">
-        <span aria-hidden="true">👥</span>
+        <span class="hud__freunde-icon" aria-hidden="true">${HUD_ICONS.freunde}</span>
         <span class="hud__freunde-zahl" data-freunde-zahl ${offeneAnzahl() ? '' : 'hidden'}>${offeneAnzahl() > 9 ? '9+' : offeneAnzahl()}</span>
       </button>` : ''}
       <button class="hud__trophaeen" type="button" style="--liga-farbe:${ligaVon(gameState.trophaeen).farbe}"
               aria-label="${gameState.trophaeen} Trophäen - Rangliste öffnen">
-        <span class="hud__trophaeen-icon" aria-hidden="true">🏆</span>
+        <span class="hud__trophaeen-icon" aria-hidden="true">${HUD_ICONS.pokal}</span>
         <span>${gameState.trophaeen}</span>
       </button>
       <div class="hud__coins">

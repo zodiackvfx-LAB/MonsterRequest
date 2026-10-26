@@ -15,6 +15,9 @@ import { kartenThema, mischen } from '../js/data/weltkarten.js';
 import { karteAnlegen, SCHRITT } from '../js/ui/weltkarte/layout.js';
 import { abstandZuLinie, schnittpunkte } from '../js/ui/weltkarte/geometrie.js';
 import { bodenZeichnen, defsZeichnen, hintergrundZeichnen } from '../js/ui/weltkarte/zeichnen.js';
+import { hatEigeneSzene, szeneZeichnen } from '../js/ui/weltbilder/szenen.js';
+import { hintergrundZeichnen as weltenHintergrund } from '../js/ui/weltbilder/hintergrund.js';
+import { eindeutig } from '../js/ui/weltbilder/karten.js';
 
 let bestanden = 0;
 let fehler = 0;
@@ -118,6 +121,18 @@ for (const welt of WORLDS) {
     bodenZeichnen(karte, thema.farben, thema).map((t) => t.svg).join('');
   pruefe(`Welt ${welt.id}: keine kaputten Zahlen oder Farben im Bild`, !/NaN|undefined|Infinity/.test(svg));
 }
+
+console.log('\nWeltenauswahl');
+for (const welt of WORLDS) {
+  const { bild, leben } = szeneZeichnen(welt);
+  pruefe(`Welt ${welt.id} (${welt.name}): eigene Landschaft`, hatEigeneSzene(welt.id));
+  pruefe(`Welt ${welt.id}: Landschaft ohne kaputte Zahlen`, !/NaN|undefined|Infinity/.test(bild + leben) && bild.length > 2000);
+  pruefe(`Welt ${welt.id}: es bewegt sich etwas`, /class="wb-/.test(leben));
+}
+const zweiMal = eindeutig('<g id="a"/><path fill="url(#a)"/>', 'w1-');
+pruefe('Ids der bewegten Ebene werden je Karte eindeutig', zweiMal === '<g id="w1-a"/><path fill="url(#w1-a)"/>');
+const hg = weltenHintergrund();
+pruefe('Hintergrund der Weltenauswahl: alle Ebenen ohne kaputte Zahlen', !/NaN|undefined/.test(hg.himmel + hg.land + hg.vorn + hg.leben));
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);
 process.exit(fehler > 0 ? 1 : 0);
