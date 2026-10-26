@@ -1,0 +1,724 @@
+/* =========================================================================
+   MonsterQuest · welten.css
+   Die Weltenauswahl: Hintergrund mit Schloss, Titel, Kopfleiste und die
+   Fantasy-Karten der Welten samt ihren Bewegungen.
+   Aufgebaut in js/screens/worlds.js und js/ui/weltbilder/.
+   ========================================================================= */
+
+.screen--welten {
+  --wb-gold: #d9a53a;
+  --wb-gold-hell: #ffe08a;
+  --wb-tief: #0c1433;
+  --wb-panel: linear-gradient(180deg, #24346f 0%, #152050 55%, #0d1638 100%);
+  overflow: hidden;
+  background: #0a1230;
+}
+
+.screen--welten > .wb-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* ---------- Hintergrund in drei Ebenen ---------- */
+.screen.screen--welten > .wb-hintergrund {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wb-ebene {
+  position: absolute;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.wb-ebene img,
+.wb-hintergrund__leben {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wb-ebene--himmel,
+.wb-ebene--land {
+  /* Oben und unten je 40 px Reserve für die Parallaxe (js/ui/weltbilder/karten.js). */
+  top: -40px;
+  height: calc(100% + 80px);
+}
+
+.wb-hintergrund__leben {
+  position: absolute;
+  inset: 0;
+}
+
+.wb-ebene--vorn {
+  bottom: -14px;
+  height: 120px;
+  opacity: 0.95;
+}
+
+/* ---------- Titel ---------- */
+.wb-kopf {
+  display: grid;
+  place-items: center;
+  margin-top: 2px;
+}
+
+.wb-titel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 26px 9px;
+  font-size: clamp(1.7rem, 8vw, 2.3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.wb-titel__text {
+  background: linear-gradient(180deg, #ffffff 0%, #fff4cc 45%, #ffd36a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(40, 24, 4, 0.75)) drop-shadow(0 0 10px rgba(255, 210, 110, 0.35));
+}
+
+/* Goldene Linien mit Raute oben und unten am Titel. */
+.wb-titel::before,
+.wb-titel::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--wb-gold-hell), transparent);
+}
+
+.wb-titel::before {
+  top: 0;
+}
+
+.wb-titel::after {
+  bottom: 0;
+}
+
+.wb-titel__zier {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  rotate: 45deg;
+  background: linear-gradient(135deg, #fff0b8, #c98a1c);
+  border: 1.5px solid #6b4210;
+  box-shadow: 0 0 8px rgba(255, 210, 110, 0.6);
+}
+
+/* ---------- Kopfleiste im Fantasy-Stil ---------- */
+.screen--welten .wb-hud .hud__player,
+.screen--welten .wb-hud .hud__coins,
+.screen--welten .wb-hud .hud__trophaeen,
+.screen--welten .wb-hud .hud__freunde {
+  background: var(--wb-panel);
+  border: 1.5px solid var(--wb-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 10px rgba(4, 8, 24, 0.5);
+}
+
+.screen--welten .wb-hud .hud__trophaeen {
+  border-color: var(--liga-farbe, var(--wb-gold));
+}
+
+.screen--welten .wb-hud .hud__avatar {
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--wb-tief);
+  box-shadow: 0 0 0 2.5px var(--wb-gold), 0 3px 8px rgba(0, 0, 0, 0.4);
+  background: radial-gradient(circle at 50% 35%, #ffe9a0, #ffc53d 60%, #c98a1c);
+}
+
+.screen--welten .wb-hud .hud__player {
+  padding: 4px 16px 4px 4px;
+}
+
+.screen--welten .wb-hud .hud__level-bar {
+  height: 8px;
+  border: 1px solid rgba(217, 165, 58, 0.55);
+  background: #070c22;
+}
+
+.screen--welten .wb-hud .hud__level-fill {
+  background: linear-gradient(180deg, #a8f07a, #3fae2a);
+  box-shadow: 0 0 6px rgba(140, 240, 100, 0.6);
+}
+
+/* ---------- Die Liste ---------- */
+/* In der Lobby reicht die Liste bis an die Leiste heran - dazwischen soll
+   kein Streifen Hintergrund stehen bleiben. */
+.lobby__seite > .screen--welten {
+  padding-bottom: 0;
+}
+
+.wb-liste {
+  gap: 14px;
+  /* Unten genug Platz, damit auch die letzte Karte ganz aus dem
+     Ausblendbereich herausgescrollt werden kann. */
+  padding: 10px 2px 96px;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  /* Halb sichtbare Karten laufen oben und unten weich aus, statt hart
+     abgeschnitten zu werden. */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22px, #000 calc(100% - 80px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 22px, #000 calc(100% - 80px), transparent 100%);
+}
+
+.wb-liste::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================================
+   Eine Weltkarte
+   ========================================================= */
+.wkarte {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 156px;
+  padding: 0;
+  font: inherit;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 20px;
+  background: #0e1638;
+  border: 2px solid var(--rahmen);
+  box-shadow: 0 0 0 3px rgba(8, 12, 32, 0.85), 0 0 14px 1px var(--glut), 0 10px 22px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transition: transform 0.18s ease, box-shadow 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wkarte.ist-fertig {
+  box-shadow: 0 0 0 3px rgba(8, 12, 32, 0.85), 0 0 22px 3px var(--glut), 0 10px 22px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.wkarte.ist-gesperrt {
+  cursor: default;
+  border-color: rgba(150, 160, 200, 0.45);
+  box-shadow: 0 0 0 3px rgba(8, 12, 32, 0.85), 0 10px 22px rgba(0, 0, 0, 0.45);
+}
+
+/* Einblenden, sobald eine Karte ins Bild kommt. */
+.wkarte.ist-da {
+  animation: wb-rein 0.5s var(--verz, 0s) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes wb-rein {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.wkarte:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+/* Antippen: Karte wächst, Rahmen leuchtet, Landschaft zoomt. */
+.wkarte.ist-angetippt {
+  animation: wb-tipp 0.34s ease-out both;
+}
+
+.wkarte.ist-angetippt .wkarte__buehne {
+  transform: scale(1.12);
+  transition: transform 0.34s ease-out;
+}
+
+@keyframes wb-tipp {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.035); box-shadow: 0 0 0 3px rgba(8, 12, 32, 0.85), 0 0 34px 8px var(--glut), 0 0 0 4px var(--rahmen); }
+  100% { transform: scale(1.025); box-shadow: 0 0 0 3px rgba(8, 12, 32, 0.85), 0 0 26px 5px var(--glut); }
+}
+
+/* ---------- Landschaft links ---------- */
+.wkarte__bild {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 52%;
+  overflow: hidden;
+  z-index: -2;
+}
+
+.wkarte__buehne {
+  position: absolute;
+  inset: 0;
+  transform-origin: 40% 60%;
+}
+
+.wkarte__szene,
+.wkarte__leben {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wkarte__szene {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.wkarte.ist-geladen .wkarte__szene {
+  opacity: 1;
+}
+
+/* Ganz langsames Atmen der Landschaft, solange die Karte zu sehen ist. */
+.wkarte.ist-sichtbar:not(.ist-angetippt) .wkarte__buehne {
+  animation: wb-atmen 14s ease-in-out infinite alternate;
+}
+
+@keyframes wb-atmen {
+  from { transform: scale(1); }
+  to { transform: scale(1.05) translate(-1%, -1%); }
+}
+
+.wkarte.ist-gesperrt .wkarte__bild {
+  filter: grayscale(0.6) brightness(0.42) contrast(1.05);
+}
+
+/* Weicher Übergang von der Landschaft zum dunklen Textfeld. */
+.wkarte__schleier {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, transparent 0%, transparent 24%, rgba(12, 18, 46, 0.5) 34%, rgba(12, 18, 46, 0.88) 44%, rgba(10, 15, 40, 0.97) 56%),
+    radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--rahmen) 22%, transparent), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 30%);
+}
+
+/* Nebel und Schloss über gesperrten Welten. */
+.wkarte__nebel {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 18% 75%, rgba(150, 165, 215, 0.22), transparent 55%),
+    radial-gradient(ellipse at 40% 30%, rgba(150, 165, 215, 0.14), transparent 45%);
+  animation: wb-nebel 9s ease-in-out infinite alternate;
+}
+
+@keyframes wb-nebel {
+  from { transform: translateX(-4%); opacity: 0.8; }
+  to { transform: translateX(6%); opacity: 1; }
+}
+
+.wkarte__schloss {
+  position: absolute;
+  left: 24%;
+  top: 50%;
+  width: 42px;
+  translate: -50% -50%;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+}
+
+.wkarte__schloss svg {
+  display: block;
+  width: 100%;
+}
+
+/* Kleines Ziersymbol oben rechts (Blatt, Kristall, Flamme ...). */
+.wkarte__zier {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 5px var(--glut));
+}
+
+.wkarte__zier svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wkarte.ist-gesperrt .wkarte__zier {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+/* ---------- Text rechts ---------- */
+.wkarte__inhalt {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  min-height: 156px;
+  margin-left: 37%;
+  padding: 12px 12px 12px 8px;
+}
+
+.wkarte__name {
+  padding-right: 18px;
+  font-size: clamp(0.94rem, 4.3vw, 1.28rem);
+  font-weight: 700;
+  line-height: 1.15;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.4);
+}
+
+.wkarte__text {
+  font-size: clamp(0.74rem, 3.3vw, 0.86rem);
+  line-height: 1.3;
+  color: #d8def5;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.wkarte__werte {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.wkarte__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 27px;
+  padding: 0 9px 0 5px;
+  font-size: clamp(0.7rem, 3.05vw, 0.84rem);
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(20, 28, 64, 0.95), rgba(8, 12, 32, 0.95));
+  border: 1px solid rgba(255, 224, 138, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.wkarte__chip-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.wkarte.ist-gesperrt .wkarte__name,
+.wkarte.ist-gesperrt .wkarte__chip {
+  opacity: 0.75;
+}
+
+/* "Geschafft" mit Lorbeer. */
+.wkarte__geschafft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.wkarte__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 16px 5px 12px;
+  font-size: clamp(0.84rem, 3.8vw, 1rem);
+  font-weight: 700;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8fe86a 0%, #3fae2a 50%, #24801c 100%);
+  border: 1.5px solid #d9ffb0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 0 12px rgba(120, 240, 90, 0.6), 0 2px 0 #0f4a0f;
+  text-shadow: 0 1px 0 rgba(0, 60, 0, 0.6);
+}
+
+.wkarte__badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.wkarte__lorbeer svg {
+  display: block;
+  width: 15px;
+  height: 22px;
+}
+
+.wkarte__lorbeer--r {
+  transform: scaleX(-1);
+}
+
+/* Fortschritt bei offenen Welten. */
+.wkarte__fortschritt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wkarte__balken {
+  flex: 1;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #070c22;
+  border: 1px solid rgba(255, 224, 138, 0.4);
+}
+
+.wkarte__fuellung {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--anteil, 0));
+  background: linear-gradient(180deg, #ffe9a0, #ffb32b);
+  box-shadow: 0 0 6px rgba(255, 200, 80, 0.7);
+}
+
+.wkarte__prozent {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--wb-gold-hell);
+}
+
+.wkarte__sperre {
+  font-size: 0.76rem;
+  color: #b8c0e0;
+}
+
+/* =========================================================
+   Bewegungen in den Landschaften (Klassen aus js/ui/weltbilder/)
+   ========================================================= */
+.wkarte__leben *,
+.wb-hintergrund__leben * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Bewegt wird nur, was zu sehen ist. */
+.wkarte:not(.ist-sichtbar) .wkarte__leben * {
+  animation-play-state: paused;
+}
+
+.wb-fall {
+  animation: wb-fall 1.6s linear infinite;
+}
+
+@keyframes wb-fall {
+  to { transform: translateY(40px); }
+}
+
+.wb-fliessen {
+  animation: wb-fliessen 1.6s linear infinite;
+}
+
+.wb-fliessen--langsam {
+  animation-duration: 3.2s;
+}
+
+@keyframes wb-fliessen {
+  to { stroke-dashoffset: -52; }
+}
+
+.wb-puls {
+  animation: wb-puls 1.8s ease-in-out infinite;
+}
+
+.wb-puls--lang {
+  animation-duration: 3.6s;
+}
+
+@keyframes wb-puls {
+  0%, 100% { opacity: 0.55; transform: scale(0.94); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+.wb-glanz {
+  opacity: 0;
+  animation: wb-glanz 3.6s ease-in-out infinite;
+}
+
+@keyframes wb-glanz {
+  50% { opacity: 0.75; }
+}
+
+.wb-steigen {
+  animation: wb-steigen 4s linear infinite;
+}
+
+@keyframes wb-steigen {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(var(--dx, 0), -70px); opacity: 0; }
+}
+
+.wb-fallen {
+  animation: wb-fallen 5s linear infinite;
+}
+
+@keyframes wb-fallen {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(var(--dx, 0), 90px); opacity: 0; }
+}
+
+.wb-schweben {
+  animation: wb-schweben 5s ease-in-out infinite;
+}
+
+@keyframes wb-schweben {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  50% { transform: translate(var(--dx, 10px), 18px) rotate(120deg); }
+  100% { transform: translate(calc(var(--dx, 10px) * -0.5), 40px) rotate(260deg); opacity: 0; }
+}
+
+.wb-funkeln {
+  opacity: 0;
+  animation: wb-funkeln 3s ease-in-out infinite;
+}
+
+@keyframes wb-funkeln {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+
+.wb-ziehen {
+  animation: wb-ziehen 24s ease-in-out infinite alternate;
+}
+
+@keyframes wb-ziehen {
+  from { transform: translateX(-30px); }
+  to { transform: translateX(30px); }
+}
+
+.wb-rauch {
+  animation: wb-rauch 4.8s ease-out infinite;
+}
+
+@keyframes wb-rauch {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: 0.8; }
+  100% { transform: translate(14px, -60px) scale(1.8); opacity: 0; }
+}
+
+.wb-drehen {
+  transform-box: view-box;
+  animation: wb-drehen 12s linear infinite;
+}
+
+.wb-drehen--langsam {
+  animation-duration: 20s;
+}
+
+.wb-drehen--rueck {
+  animation-direction: reverse;
+  animation-duration: 14s;
+}
+
+@keyframes wb-drehen {
+  to { transform: rotate(360deg); }
+}
+
+.wb-vogel {
+  animation: wb-vogel 9s linear infinite;
+}
+
+@keyframes wb-vogel {
+  0% { transform: translate(-60px, 10px) scaleY(1); }
+  25% { transform: translate(-20px, 4px) scaleY(0.5); }
+  50% { transform: translate(20px, 0) scaleY(1); }
+  75% { transform: translate(60px, -4px) scaleY(0.5); }
+  100% { transform: translate(100px, -8px) scaleY(1); }
+}
+
+.wb-schwimmen {
+  animation: wb-schwimmen 8s ease-in-out infinite alternate;
+}
+
+.wb-schwimmen--lang {
+  animation-duration: 11s;
+}
+
+@keyframes wb-schwimmen {
+  from { transform: translate(-30px, 0); }
+  50% { transform: translate(10px, -8px); }
+  to { transform: translate(50px, 4px); }
+}
+
+.wb-wiegen {
+  transform-origin: bottom center;
+  animation: wb-wiegen 3.4s ease-in-out infinite;
+}
+
+@keyframes wb-wiegen {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+
+.wb-strahl {
+  animation: wb-strahl 5s ease-in-out infinite;
+}
+
+@keyframes wb-strahl {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.14; }
+}
+
+.wb-irrlicht {
+  animation: wb-irrlicht 6s ease-in-out infinite;
+}
+
+@keyframes wb-irrlicht {
+  0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+  50% { transform: translate(var(--dx, 10px), -14px); opacity: 1; }
+}
+
+.wb-komet {
+  animation: wb-komet 7s ease-in infinite;
+}
+
+@keyframes wb-komet {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  40% { transform: translate(180px, 70px); opacity: 0; }
+  100% { transform: translate(180px, 70px); opacity: 0; }
+}
+
+/* Schwächere Geräte: nur jedes zweite Teilchen. */
+.wb--niedrig .wkarte__leben .wb-funkeln:nth-of-type(2n),
+.wb--niedrig .wkarte__leben .wb-fallen:nth-of-type(2n),
+.wb--niedrig .wkarte__leben .wb-steigen:nth-of-type(2n),
+.wb--niedrig .wkarte__leben .wb-schweben:nth-of-type(2n) {
+  display: none;
+}
+
+.wb--niedrig .wkarte.ist-sichtbar .wkarte__buehne {
+  animation: none;
+}
+
+/* ---------- Schmale Handys ---------- */
+@media (max-width: 370px) {
+  .wkarte__inhalt {
+    margin-left: 34%;
+    padding-right: 8px;
+  }
+
+  .wkarte__chip {
+    height: 25px;
+    padding: 0 8px 0 5px;
+  }
+
+  .wkarte__chip-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .wkarte__lorbeer {
+    display: none;
+  }
+}

@@ -452,6 +452,18 @@
   font-size: 0.95rem;
 }
 
+/* Gezeichnete Symbole (js/ui/hud.js) wachsen mit der Schrift. */
+.hud__trophaeen-icon svg,
+.hud__freunde-icon svg {
+  display: block;
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.hud__freunde-icon svg {
+  width: 1.35em;
+}
+
 /* ---------- Lebens- und Energieanzeigen ---------- */
 .bar {
   position: relative;

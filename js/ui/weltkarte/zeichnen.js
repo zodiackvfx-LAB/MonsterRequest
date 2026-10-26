@@ -151,7 +151,7 @@ export function hintergrundZeichnen(karte, f, thema) {
   return { svg, hoehe };
 }
 
-function wolkeZeichnen(x, y, s, zufall) {
+export function wolkeZeichnen(x, y, s, zufall) {
   const teile = [];
   const n = 5 + Math.floor(zufall() * 3);
   for (let i = 0; i < n; i++) {
@@ -166,7 +166,7 @@ function wolkeZeichnen(x, y, s, zufall) {
  * Eine Bergkette: Gipfel nebeneinander, jeder mit beleuchteter Flanke und
  * (wenn hoch genug) einer Schneekappe.
  */
-function bergketteZeichnen(breite, fuss, maxHoehe, abstand, zufall, fuellung, licht, schnee, schneeAnteil) {
+export function bergketteZeichnen(breite, fuss, maxHoehe, abstand, zufall, fuellung, licht, schnee, schneeAnteil) {
   let d = `M-40 ${r(fuss)}`;
   const gipfel = [];
   let x = -zwischen(zufall, 40, 120);
@@ -213,7 +213,7 @@ function bergketteZeichnen(breite, fuss, maxHoehe, abstand, zufall, fuellung, li
 }
 
 /** Sanft gewellte Hügel, oben ein Saum aus runden Baumkronen. */
-function huegelreiheZeichnen(breite, basis, wellen, zufall, farbe, waldFarbe) {
+export function huegelreiheZeichnen(breite, basis, wellen, zufall, farbe, waldFarbe) {
   let d = `M-40 ${r(basis + 300)} L-40 ${r(basis)}`;
   let wald = '';
   for (let x = -40; x < breite + 80; x += 160) {
@@ -424,7 +424,7 @@ function klippeZeichnen(fluss, f, zufall) {
   return svg;
 }
 
-function wasserfallZeichnen(fall, f) {
+export function wasserfallZeichnen(fall, f) {
   const { x, y, hoehe } = fall;
   const oben = y - hoehe;
   const b = fall.breite;
@@ -445,7 +445,7 @@ function wasserfallZeichnen(fall, f) {
   return svg;
 }
 
-function seeZeichnen(see, f, zufall) {
+export function seeZeichnen(see, f, zufall) {
   const { x, y, rx, ry } = see;
   let svg = `
     <ellipse cx="${r(x + 10)}" cy="${r(y + 8)}" rx="${r(rx + 22)}" ry="${r(ry + 16)}" fill="${f.ufer}" opacity="0.55" filter="url(#weich2)"/>
@@ -542,11 +542,11 @@ function brueckeZeichnen(b, f) {
 /* ================================================================== */
 
 /** Weicher Schatten am Boden, leicht nach rechts unten versetzt. */
-function schatten(x, y, rx, ry, staerke = 0.22) {
+export function schatten(x, y, rx, ry, staerke = 0.22) {
   return `<ellipse cx="${r(x + rx * 0.22)}" cy="${r(y + ry * 0.3)}" rx="${r(rx)}" ry="${r(ry)}" fill="#000" opacity="${staerke}" filter="url(#weich)"/>`;
 }
 
-function felsBrocken(x, y, g, f, zufall) {
+export function felsBrocken(x, y, g, f, zufall) {
   const punkte = [];
   for (let i = 0; i < 8; i++) {
     const w = (i / 8) * Math.PI * 2;
@@ -595,7 +595,8 @@ function stammZeichnen(x, y, s, hoehe, breite) {
     <path d="M${r(x - b * 0.3)} ${r(y - h * 0.15)} q${r(-b * 0.15)} ${r(-h * 0.3)} ${r(b * 0.05)} ${r(-h * 0.6)}" stroke="rgba(0,0,0,0.25)" stroke-width="${r(2.5 * s)}" fill="none"/>`;
 }
 
-const DEKO = {
+/** Die Verzierungen einzeln - die Weltbilder (js/ui/weltbilder/) nutzen sie mit. */
+export const DEKO = {
   /* ---------- Bäume je Welt ---------- */
   baum_laub(d, f, zufall) {
     const { x, y, s } = d;
@@ -841,7 +842,7 @@ const DEKO = {
   },
 };
 
-function saeule(x, y, b, h, f, gebrochen) {
+export function saeule(x, y, b, h, f, gebrochen) {
   const oben = y - h;
   let svg = `<rect x="${r(x - b)}" y="${r(oben)}" width="${r(b * 2)}" height="${r(h)}" fill="url(#fels)"/>`;
   for (let i = 1; i < 4; i++) {
@@ -858,7 +859,7 @@ function saeule(x, y, b, h, f, gebrochen) {
 }
 
 /** Ein steinerner Torbogen aus zwei Pfeilern; rechts oben abgebrochen. */
-function bogen(x, y, b, h, f, ganz) {
+export function bogen(x, y, b, h, f, ganz) {
   const p = b * 0.42; // Pfeilerbreite
   const scheitel = y - h;
   let svg = '';

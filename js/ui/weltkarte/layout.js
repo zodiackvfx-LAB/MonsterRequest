@@ -47,7 +47,7 @@ export function karteAnlegen({
   const zufall = wuerfel(seed * 7919 + anzahl);
   const ox = (Math.max(1000, breite) - 1000) / 2;
   const hoehe = Math.round(oben + (anzahl - 1) * SCHRITT + unten);
-  const horizont = Math.max(120, oben - 300);
+  const horizont = Math.max(120, oben - 180);
 
   const stationen = [];
   for (let i = 0; i < anzahl; i++) {
