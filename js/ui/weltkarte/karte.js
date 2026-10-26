@@ -51,7 +51,9 @@ export function weltkarteBauen({ scroller, welt, thema, levels, gegnerVon, zusta
   const karte = karteAnlegen({
     anzahl: levels.length,
     breite: breitePx / m,
-    oben: (obenPx + 400) / m,
+    // Ganz oben steht der Boss direkt unter der Kopfleiste - weiter nach
+    // oben lässt sich nicht scrollen. Die Berge schauen dahinter hervor.
+    oben: (obenPx + Math.max(stationPx + 50, 185)) / m,
     unten: (untenPx + stationPx * 1.05 + 16) / m,
     seed: welt.id,
     deko: thema.deko,
@@ -96,7 +98,9 @@ export function weltkarteBauen({ scroller, welt, thema, levels, gegnerVon, zusta
   const defs = defsZeichnen(karte, f);
   const teile = bodenZeichnen(karte, f, thema, { ohneWiegendes: stufe !== 'aus' && thema.leben.grasWiegen });
   const streifenU = STREIFEN_PX / m;
-  for (let y0 = karte.horizont - 60; y0 < karte.hoehe; y0 += streifenU) {
+  // Der erste Streifen beginnt ganz oben: Baumkronen und Steintore ragen
+  // über den Horizont und würden sonst waagerecht abgeschnitten.
+  for (let y0 = 0; y0 < karte.hoehe; y0 += streifenU) {
     const y1 = Math.min(karte.hoehe, y0 + streifenU);
     const inhalt = teile.filter((t) => t.y1 >= y0 - 2 && t.y0 <= y1 + 2).map((t) => t.svg).join('');
     const top = Math.round(y0 * m);

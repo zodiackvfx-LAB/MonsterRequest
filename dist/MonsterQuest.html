@@ -121,10 +121,11 @@ body {
 /* Die Spielfläche füllt immer den ganzen Bildschirm - auf dem iPhone
    genauso wie auf dem iPad. */
 .app {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
+  /* fixed + inset statt height: 100dvh: Als App vom Home-Bildschirm
+     rechnet iOS 100dvh ohne den Bereich hinter der Dynamic Island - unten
+     blieb dann ein dunkler Streifen frei. inset: 0 füllt immer alles. */
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   /* clip statt nur hidden: Die Kampfwiese ragt absichtlich weit über den
      Rand. Mit "hidden" durfte der Browser den Container trotzdem per
@@ -21230,7 +21231,7 @@ function karteAnlegen({
   const zufall2 = wuerfel2(seed * 7919 + anzahl);
   const ox = (Math.max(1e3, breite) - 1e3) / 2;
   const hoehe = Math.round(oben + (anzahl - 1) * SCHRITT + unten);
-  const horizont = Math.max(120, oben - 300);
+  const horizont = Math.max(120, oben - 180);
   const stationen = [];
   for (let i = 0; i < anzahl; i++) {
     const istBoss = i === anzahl - 1;
@@ -22696,7 +22697,9 @@ function weltkarteBauen({ scroller, welt, thema, levels, gegnerVon, zustand: zus
   const karte = karteAnlegen({
     anzahl: levels.length,
     breite: breitePx / m,
-    oben: (obenPx + 400) / m,
+    // Ganz oben steht der Boss direkt unter der Kopfleiste - weiter nach
+    // oben lässt sich nicht scrollen. Die Berge schauen dahinter hervor.
+    oben: (obenPx + Math.max(stationPx + 50, 185)) / m,
     unten: (untenPx + stationPx * 1.05 + 16) / m,
     seed: welt.id,
     deko: thema.deko,
@@ -22735,7 +22738,7 @@ function weltkarteBauen({ scroller, welt, thema, levels, gegnerVon, zustand: zus
   const defs = defsZeichnen(karte, f);
   const teile = bodenZeichnen(karte, f, thema, { ohneWiegendes: stufe !== "aus" && thema.leben.grasWiegen });
   const streifenU = STREIFEN_PX / m;
-  for (let y0 = karte.horizont - 60; y0 < karte.hoehe; y0 += streifenU) {
+  for (let y0 = 0; y0 < karte.hoehe; y0 += streifenU) {
     const y1 = Math.min(karte.hoehe, y0 + streifenU);
     const inhalt = teile.filter((t) => t.y1 >= y0 - 2 && t.y0 <= y1 + 2).map((t) => t.svg).join("");
     const top = Math.round(y0 * m);

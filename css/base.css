@@ -104,10 +104,11 @@ body {
 /* Die Spielfläche füllt immer den ganzen Bildschirm - auf dem iPhone
    genauso wie auf dem iPad. */
 .app {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
+  /* fixed + inset statt height: 100dvh: Als App vom Home-Bildschirm
+     rechnet iOS 100dvh ohne den Bereich hinter der Dynamic Island - unten
+     blieb dann ein dunkler Streifen frei. inset: 0 füllt immer alles. */
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   /* clip statt nur hidden: Die Kampfwiese ragt absichtlich weit über den
      Rand. Mit "hidden" durfte der Browser den Container trotzdem per
