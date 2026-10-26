@@ -46,8 +46,9 @@
 
 .wb-ebene--himmel,
 .wb-ebene--land {
+  /* Oben und unten je 40 px Reserve für die Parallaxe (js/ui/weltbilder/karten.js). */
   top: -40px;
-  height: calc(100% + 40px);
+  height: calc(100% + 80px);
 }
 
 .wb-hintergrund__leben {
@@ -155,14 +156,23 @@
 }
 
 /* ---------- Die Liste ---------- */
+/* In der Lobby reicht die Liste bis an die Leiste heran - dazwischen soll
+   kein Streifen Hintergrund stehen bleiben. */
+.lobby__seite > .screen--welten {
+  padding-bottom: 0;
+}
+
 .wb-liste {
   gap: 14px;
-  padding: 4px 2px 70px;
+  /* Unten genug Platz, damit auch die letzte Karte ganz aus dem
+     Ausblendbereich herausgescrollt werden kann. */
+  padding: 10px 2px 96px;
   scroll-behavior: smooth;
   scrollbar-width: none;
-  /* Oben weich ausblenden statt hart abschneiden. */
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 12px);
-  mask-image: linear-gradient(180deg, transparent 0, #000 12px);
+  /* Halb sichtbare Karten laufen oben und unten weich aus, statt hart
+     abgeschnitten zu werden. */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22px, #000 calc(100% - 80px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 22px, #000 calc(100% - 80px), transparent 100%);
 }
 
 .wb-liste::-webkit-scrollbar {
