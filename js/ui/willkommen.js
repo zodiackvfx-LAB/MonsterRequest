@@ -11,6 +11,7 @@
  */
 
 import { NAME_MAX } from '../core/state.js';
+import { nameErlaubt } from '../data/namensfilter.js';
 
 /**
  * Zeigt das Pop-up.
@@ -47,10 +48,18 @@ export function zeigeWillkommen(root, onFertig) {
   `;
 
   const feld = overlay.querySelector('.willkommen__feld');
+  const hinweis = overlay.querySelector('.willkommen__hinweis');
   const los = overlay.querySelector('#willkommen-los');
 
   function fertig() {
     const name = feld.value.trim();
+    // Den Namen sehen andere (Rangliste, Freunde, 2v2) - Schimpfwörter nicht.
+    if (!nameErlaubt(name)) {
+      hinweis.textContent = 'Bitte wähle einen freundlichen Namen.';
+      hinweis.classList.add('ist-fehler');
+      feld.focus();
+      return;
+    }
     overlay.remove();
     onFertig(name);
   }

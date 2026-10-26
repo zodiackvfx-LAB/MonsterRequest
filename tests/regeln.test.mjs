@@ -25,6 +25,7 @@ import { BOSS_FORMEN, FORM_NAMEN, GROESSE, NEUE_BOSS_FORMEN, NEUE_FORMEN, formen
 import { WORLDS, fightsInWorld, getWorld } from '../js/data/worlds.js';
 import { LOGO_MONSTER, LOGO_QUEST } from '../js/ui/logo-pfade.js';
 import { existsSync, readFileSync } from 'node:fs';
+import { VERBOTEN_TEILE, VERBOTEN_WOERTER, nameErlaubt, nameFiltern } from '../js/data/namensfilter.js';
 import { SKIN_BILDER, SKIN_POSEN } from '../js/data/timo-skins.js';
 import { HUETE, MUSTER, POSEN as OUTFIT_POSEN, kleidungAusFarbe, poseBauen } from '../js/core/outfit.js';
 import { STUDIO_GRATIS, STUDIO_PREISE, STUDIO_TEILE } from '../js/data/studio-teile.js';
@@ -75,7 +76,7 @@ import { LIGEN, ligaVon, naechsteLiga, trophaeenFuerSieg } from '../js/data/trop
 import { alleZustaende, freischaltenStarten, platzZustand, sofortPreis, truheAusPlatz, truheEinlagern } from '../js/core/truhenplaetze.js';
 import { besiegteBossWelten, modusErgebnis, modusFrei, modusGegner, modusInfo, modusLevel, modusStarten, zeitText } from '../js/core/modi.js';
 import { MODI, TAGES_KNIFFE, tagesHerausforderung } from '../js/data/modi.js';
-import { alleZeitTruhen, naechsteMitternacht, zeitTruheAbholen, zeitTruheZustand } from '../js/core/zeittruhen.js';
+import { alleZeitTruhen, naechsteMitternacht, tagVon, tagesStart, zeitTruheAbholen, zeitTruheZustand } from '../js/core/zeittruhen.js';
 import { KLAENGE, getKlang } from '../js/data/sounds.js';
 import { MUSIK, MUSTER_TAKT, getMusik } from '../js/data/musik.js';
 import {
@@ -613,7 +614,8 @@ console.log('\nTagesaufgaben');
   // Fortschritt melden und abholen
   resetProgress();
   const heutige = getTagesAufgaben();
-  pruefe('Es stehen heute Aufgaben an', heutige.length === AUFGABEN_PRO_TAG);
+  // Drei normale Aufgaben und eine 2v2-Bonusaufgabe (siehe DUELL_AUFGABEN).
+  pruefe('Es stehen heute Aufgaben an', heutige.length === AUFGABEN_PRO_TAG + 1);
   pruefe('Am Anfang ist nichts abholbar', offeneBelohnungen() === 0);
 
   const erste = heutige[0].aufgabe;
@@ -1473,38 +1475,54 @@ console.log('\nStudio-Teile: Farben gratis, Hüte und Muster freischalten');
   resetProgress();
 }
 
-console.log('\nTägliche Gratis-Truhen (Holz und Gold, je einmal am Tag)');
+console.log('\nTägliche Gratis-Truhen (Holz sofort, Gold 2 Stunden nach dem ersten Spielstart)');
 {
   resetProgress();
+  const STUNDE = 3600000;
   const morgens = new Date(2026, 9, 14, 8, 0).getTime();
   const mitternacht = new Date(2026, 9, 15, 0, 0).getTime();
-  pruefe('Neuer Spielstand: beide Gratis-Truhen sofort bereit',
-    alleZeitTruhen(morgens).map((z) => `${z.truhe.id}:${z.bereit}`).join() === 'holztruhe:true,goldtruhe:true');
+  const naechsterTag = new Date(2026, 9, 15, 15, 30).getTime();
+  const status = (jetzt) => alleZeitTruhen(jetzt).map((z) => `${z.truhe.id}:${z.bereit ? 'bereit' : z.geholt ? 'geholt' : 'wartet'}`).join();
   pruefe('Nächste Mitternacht wird richtig berechnet', naechsteMitternacht(morgens) === mitternacht);
+  pruefe('Kalendertag wird richtig berechnet', tagVon(morgens) === '2026-10-14');
+  pruefe('Erster Spielstart des Tages: Holztruhe sofort, Goldtruhe wartet',
+    status(morgens) === 'holztruhe:bereit,goldtruhe:wartet' && gameState.zeitTruhen.tag === '2026-10-14');
+  pruefe('Die Goldtruhe wartet genau 2 Stunden ab dem Spielstart',
+    zeitTruheZustand('goldtruhe', morgens).rest === 2 * STUNDE
+      && !zeitTruheZustand('goldtruhe', morgens + 2 * STUNDE - 1000).bereit && zeitTruheZustand('goldtruhe', morgens + 2 * STUNDE).bereit);
+  pruefe('Später am selben Tag startet die Uhr nicht neu', !tagesStart(morgens + STUNDE) && zeitTruheZustand('goldtruhe', morgens + STUNDE).rest === STUNDE);
+  pruefe('Goldtruhe vor der Zeit: gibt es nicht', zeitTruheAbholen('goldtruhe', morgens + STUNDE) === null);
   const holz = zeitTruheAbholen('holztruhe', morgens);
   pruefe('Abholen gibt die Holztruhe', holz?.id === 'holztruhe');
   pruefe('Am selben Tag nicht noch einmal - auch nicht nach Stunden',
-    zeitTruheAbholen('holztruhe', morgens + 1000) === null && !zeitTruheZustand('holztruhe', mitternacht - 1000).bereit);
-  pruefe('Die Goldtruhe zählt für sich', zeitTruheZustand('goldtruhe', morgens).bereit);
-  pruefe('Ab Mitternacht ist die Holztruhe wieder da', zeitTruheZustand('holztruhe', mitternacht).bereit);
-  const spaet = new Date(2026, 9, 14, 23, 59).getTime();
-  zeitTruheAbholen('goldtruhe', spaet);
-  pruefe('Kurz vor Mitternacht abgeholt: um Mitternacht schon wieder da',
-    !zeitTruheZustand('goldtruhe', spaet + 30000).bereit && zeitTruheZustand('goldtruhe', mitternacht).bereit);
-  pruefe('Es stapelt sich nichts: nach drei Tagen genau eine Truhe',
-    zeitTruheAbholen('holztruhe', mitternacht + 3 * 864e5) !== null && zeitTruheAbholen('holztruhe', mitternacht + 3 * 864e5) === null);
+    zeitTruheAbholen('holztruhe', morgens + 1000) === null && zeitTruheZustand('holztruhe', mitternacht - 1000).geholt);
+  pruefe('Nach 2 Stunden gibt es die Goldtruhe', zeitTruheAbholen('goldtruhe', morgens + 2 * STUNDE)?.id === 'goldtruhe');
+  pruefe('Danach zeigen beide "morgen wieder"', status(morgens + 3 * STUNDE) === 'holztruhe:geholt,goldtruhe:geholt');
+
+  pruefe('Nicht um Mitternacht, sondern beim ersten Spielstart am nächsten Tag geht es weiter',
+    status(naechsterTag) === 'holztruhe:bereit,goldtruhe:wartet' && zeitTruheZustand('goldtruhe', naechsterTag).rest === 2 * STUNDE);
+  pruefe('Es stapelt sich nichts: nach drei Tagen genau eine Holztruhe',
+    zeitTruheAbholen('holztruhe', naechsterTag + 3 * 864e5) !== null && zeitTruheAbholen('holztruhe', naechsterTag + 3 * 864e5) === null);
+  pruefe('Nicht abgeholte Goldtruhe verfällt nicht: am nächsten Tag gleich bereit',
+    zeitTruheZustand('goldtruhe', naechsterTag + 4 * 864e5).bereit);
   pruefe('Gratis-Truhen belegen keinen Truhenplatz', gameState.truhenPlaetze.every((p) => p === null));
   pruefe('Eine unbekannte Gratis-Truhe gibt es nicht', zeitTruheAbholen('silbertruhe', morgens) === null);
 
   const bald = Date.now() + 20 * 60000;
-  gameState.zeitTruhen = { holztruhe: bald };
+  gameState.zeitTruhen = { tag: tagVon(), holztruhe: null, goldtruhe: bald };
   saveProgress();
   loadProgress();
-  pruefe('Die Wartezeit übersteht das Neuladen', gameState.zeitTruhen.holztruhe === bald);
-  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ zeitTruhen: { holztruhe: Date.now() + 9e12, goldtruhe: 'x', quatsch: 5 } }));
+  pruefe('Tag, Wartezeit und "abgeholt" überstehen das Neuladen',
+    gameState.zeitTruhen.goldtruhe === bald && gameState.zeitTruhen.holztruhe === null && gameState.zeitTruhen.tag === tagVon());
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ zeitTruhen: { tag: tagVon(), holztruhe: Date.now() + 9e12, goldtruhe: 'x', quatsch: 5 } }));
   loadProgress();
   pruefe('Verstellte Uhr: höchstens ein Tag Wartezeit, Unsinn fliegt raus',
     gameState.zeitTruhen.holztruhe <= Date.now() + 864e5 && !('goldtruhe' in gameState.zeitTruhen) && !('quatsch' in gameState.zeitTruhen));
+  pruefe('Verstellte Uhr: angezeigt wird nie mehr als die Wartezeit', zeitTruheZustand('holztruhe').bereit);
+  localStorage.setItem('monsterquest.save.v3', JSON.stringify({ zeitTruhen: { holztruhe: Date.now() + 5 * STUNDE, goldtruhe: Date.now() - 1000 } }));
+  loadProgress();
+  pruefe('Alter Spielstand: heute geholte Holztruhe bleibt geholt, offene Goldtruhe bleibt bereit',
+    zeitTruheZustand('holztruhe').geholt && zeitTruheZustand('goldtruhe').bereit);
   resetProgress();
 }
 
@@ -1588,6 +1606,29 @@ console.log('\nSkin-Werkstatt: eigene Outfits');
     gameState.eigeneOutfits[0].rezept.muster === 'keins' && gameState.eigeneOutfits[0].rezept.hut === 'keiner');
   resetProgress();
   pruefe('Zurücksetzen leert die eigenen Outfits', eigeneSkins().length === 0);
+}
+
+console.log('\nNamensfilter');
+{
+  // Gleiche Fälle wie in datenbank/schema.test.sql.
+  const boese = ['F1ck', 'Fuuuck', 'F-i-c-k', 'Arsch', 'ARSCHLOCH', 'Hurensohn', 'Wichser', 'N4zi',
+    'Scheiße', 'SCHEISSE', 'sh1t', 'Du Opfer', 'Nutte', 'H!tler', 's3x', 'ÄRSCH'];
+  const gut = ['Zodi', 'Timo123', 'Barsch', 'Minute', 'Peacock', 'Lukas Exner', 'Anna', 'Rocco',
+    'Max Mustermann', 'Kampfkatze', 'Ali', 'Arschenbach', '', null];
+  pruefe('Schimpfwörter und Tricks werden erkannt', boese.every((n) => !nameErlaubt(n)));
+  pruefe('Harmlose Namen bleiben erlaubt', gut.every((n) => nameErlaubt(n)));
+  pruefe('Unpassender Name wird zu "Spieler"', nameFiltern('Fuuuck') === 'Spieler' && nameFiltern('Zodi') === 'Zodi');
+
+  // Die Datenbank prüft mit denselben Listen (mq_name_erlaubt).
+  const schema = readFileSync(new URL('../datenbank/schema.sql', import.meta.url), 'utf8');
+  const liste = (marke) => {
+    const block = schema.split(`-- ${marke}`)[1]?.split('];')[0] ?? '';
+    return [...block.matchAll(/'([a-z]+)'/g)].map((t) => t[1]);
+  };
+  pruefe('Spiel und Datenbank haben dieselben verbotenen Teile', JSON.stringify(liste('NAMENSFILTER-TEILE')) === JSON.stringify(VERBOTEN_TEILE));
+  pruefe('Spiel und Datenbank haben dieselben verbotenen Wörter', JSON.stringify(liste('NAMENSFILTER-WOERTER')) === JSON.stringify(VERBOTEN_WOERTER));
+  pruefe('Spiel und Datenbank vereinfachen gleich', schema.includes("'äöüßÄÖÜ0134578@$!', 'aousaouoieastbasi'")
+    && readFileSync(new URL('../js/data/namensfilter.js', import.meta.url), 'utf8').includes("ZEICHEN_VON = 'äöüßÄÖÜ0134578@$!'"));
 }
 
 console.log(`\n${bestanden} bestanden, ${fehler} fehlgeschlagen\n`);

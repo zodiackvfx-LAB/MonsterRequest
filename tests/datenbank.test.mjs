@@ -152,17 +152,48 @@ try {
   {
     const ich = cloud.spielerId();
     const fremd = (n) => `00000000-0000-4000-8000-00000000000${n}`;
-    await ruf('mq_speichern', { p_id: fremd(1), p_daten: { name: 'Ass', trophaeen: 900 } });
-    await ruf('mq_speichern', { p_id: fremd(2), p_daten: { name: 'Versteckt', trophaeen: 5000, settings: { rangliste: false } } });
+    // Die Rangliste glaubt nur erspielte Trophaeen: Die Testspieler haben
+    // dafuer ganze Welten geschafft (Welt 1-4 bringt 1170, Welt 1-2 455).
+    const welten = (bis) => Array.from({ length: bis * 12 }, (_, i) => `${Math.floor(i / 12) + 1}-${(i % 12) + 1}`);
+    await ruf('mq_speichern', { p_id: fremd(1), p_daten: { name: 'Ass', trophaeen: 900, clearedLevels: welten(4) } });
+    await ruf('mq_speichern', { p_id: fremd(2), p_daten: { name: 'Versteckt', trophaeen: 5000, clearedLevels: welten(4), settings: { rangliste: false } } });
     await ruf('mq_speichern', { p_id: fremd(3), p_daten: { name: 'Neuling', trophaeen: 0 } });
+    await ruf('mq_speichern', { p_id: fremd(4), p_daten: { name: 'Schummler', trophaeen: 99999 } });
     // Der eigene Stand geht über cloudMerken mit - cloudRangliste schickt ihn vorher los.
-    cloud.cloudMerken({ revision: 20, name: 'Ich', trophaeen: 300, settings: { rangliste: true } });
+    cloud.cloudMerken({ revision: 20, name: 'Ich', trophaeen: 300, clearedLevels: welten(2), settings: { rangliste: true } });
     const liste = await cloud.cloudRangliste(10);
     pruefe('Die Rangliste ist nach Trophaeen sortiert',
       liste.spitze.map((e) => e.name).join() === 'Ass,Ich');
     pruefe('Der eigene Platz kommt mit', liste.ich?.platz === 2 && liste.spitze[1].ich === true);
     pruefe('Ausgeblendete und Spieler ohne Trophaeen fehlen', liste.spieler === 2);
+    pruefe('Eingetragene 99999 ohne Spiel zaehlen nicht', !JSON.stringify(liste).includes('Schummler'));
     pruefe('Keine Spielernummern in der Antwort', !JSON.stringify(liste).includes(ich) && !JSON.stringify(liste).includes(fremd(1)));
+  }
+
+  console.log('\n2v2: Belohnung genau einmal');
+  {
+    pruefe('Erste Meldung eines Matches wird angenommen', (await cloud.cloudDuellBelohnung('testlobby01-abcdefgh', { ergebnis: 'sieg' })) === true);
+    pruefe('Dasselbe Match gibt es kein zweites Mal', (await cloud.cloudDuellBelohnung('testlobby01-abcdefgh')) === false);
+    pruefe('Ein anderes Match geht wieder', (await cloud.cloudDuellBelohnung('testlobby01-zweites1')) === true);
+    pruefe('Unsinnige Match-Kennung ergibt "unbekannt" statt eines Absturzes', (await cloud.cloudDuellBelohnung('DROP TABLE')) === null);
+  }
+
+  console.log('\nWiederherstellungs-Code');
+  {
+    const ich = cloud.spielerId();
+    pruefe('Noch kein Code', (await cloud.cloudWiederherstellungStatus()) === false && cloud.wiederherstellungGemerkt() === null);
+    const code = await cloud.cloudWiederherstellungErstellen();
+    pruefe('Code hat die Form XXXX-XXXX-XXXX', /^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/.test(code));
+    pruefe('Code wird gemerkt und die Datenbank kennt ihn', cloud.wiederherstellungGemerkt() === code && (await cloud.cloudWiederherstellungStatus()) === true);
+    const geholt = await cloud.cloudWiederherstellen(code.toLowerCase().replace(/-/g, ' '));
+    pruefe('Code holt den eigenen Spielstand (auch klein und mit Leerzeichen)', geholt?.id === ich && geholt.code === code);
+    pruefe('Code gilt mehrmals', (await cloud.cloudWiederherstellen(code))?.id === ich);
+    pruefe('Falscher oder halber Code holt nichts', (await cloud.cloudWiederherstellen('2222-2222-2222')) === null && (await cloud.cloudWiederherstellen('ABCD')) === null);
+    const neu = await cloud.cloudWiederherstellungErstellen();
+    pruefe('Neuer Code macht den alten ungueltig', neu !== code && (await cloud.cloudWiederherstellen(code)) === null && (await cloud.cloudWiederherstellen(neu))?.id === ich);
+    cloud.spielerIdSetzen('00000000-0000-4000-8000-000000000077');
+    pruefe('Anderer Spieler auf dem Geraet: gemerkter Code ist weg', cloud.wiederherstellungGemerkt() === null);
+    cloud.spielerIdSetzen(ich);
   }
 
   console.log('\nGrenzen');

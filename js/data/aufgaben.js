@@ -101,6 +101,68 @@ export const AUFGABEN = [
 /** Wie viele Aufgaben pro Tag gestellt werden. */
 export const AUFGABEN_PRO_TAG = 3;
 
+/**
+ * Bonus-Aufgaben für den 2v2-Modus (js/core/duell-belohnung.js meldet sie).
+ * Jeden Tag kommt GENAU EINE davon zu den drei normalen Aufgaben dazu - so
+ * bleibt die Auswahl der normalen Aufgaben unverändert, und wer nie im
+ * Team spielt, verliert nichts.
+ */
+export const DUELL_AUFGABEN = [
+  {
+    id: 'duell-sieg-1',
+    icon: '⚔️',
+    name: 'Teamwork',
+    text: 'Gewinne einen 2v2-Kampf.',
+    typ: 'duellSieg',
+    ziel: 1,
+    muenzen: 300,
+    material: 3,
+  },
+  {
+    id: 'duell-kombo-3',
+    icon: '⚡',
+    name: 'Kombo-Duo',
+    text: 'Löse im 2v2 drei Team-Kombos aus.',
+    typ: 'teamKombo',
+    ziel: 3,
+    muenzen: 250,
+    material: 2,
+  },
+  {
+    id: 'duell-makellos-1',
+    icon: '🛡️',
+    name: 'Keiner fällt',
+    text: 'Gewinne einen 2v2-Kampf, ohne dass jemand aus deinem Team fällt.',
+    typ: 'duellMakellos',
+    ziel: 1,
+    muenzen: 350,
+    material: 3,
+  },
+  {
+    id: 'duell-boss-1',
+    icon: '👑',
+    name: 'Boss im Doppel',
+    text: 'Gewinne ein Boss-Duell im 2v2.',
+    typ: 'duellBoss',
+    ziel: 1,
+    muenzen: 450,
+    material: 4,
+  },
+  {
+    id: 'duell-heilen-60',
+    icon: '💚',
+    name: 'Sanitäter',
+    text: 'Heile im 2v2 deinen Teamkameraden um 60 LP.',
+    typ: 'teamHeilung',
+    ziel: 60,
+    muenzen: 250,
+    material: 2,
+  },
+];
+
+/** Wie viele 2v2-Aufgaben pro Tag dazukommen. */
+export const DUELL_AUFGABEN_PRO_TAG = 1;
+
 export function getAufgabe(id) {
-  return AUFGABEN.find((aufgabe) => aufgabe.id === id) ?? null;
+  return AUFGABEN.find((aufgabe) => aufgabe.id === id) ?? DUELL_AUFGABEN.find((aufgabe) => aufgabe.id === id) ?? null;
 }

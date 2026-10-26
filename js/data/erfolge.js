@@ -134,6 +134,22 @@ export const ERFOLGE = [
     ziel: 10,
     wert: () => gameState.statistik.arenaBest,
   },
+  {
+    id: 'teamgeist',
+    name: 'Teamgeist',
+    icon: '🤝',
+    text: 'Gewinne einen Kampf im 2v2 Monster-Duell.',
+    ziel: 1,
+    wert: () => gameState.duell?.statistik?.siege ?? 0,
+  },
+  {
+    id: 'kombo-meister',
+    name: 'Kombo-Meister',
+    icon: '⚡',
+    text: 'Löse im 2v2 insgesamt 25 Team-Kombos aus.',
+    ziel: 25,
+    wert: () => gameState.duell?.statistik?.kombos ?? 0,
+  },
 ];
 
 /** Holt einen Erfolg per id. */

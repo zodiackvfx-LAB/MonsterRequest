@@ -1,0 +1,1258 @@
+/* =========================================================================
+   MonsterQuest · duell.css
+   Der 2v2-Modus: Karte im Modi-Menü, Lobby und Arena.
+   Baut auf ui.css, screens.css und erlebnis.css auf (Panels, Knöpfe,
+   Balken, Karten) und ergänzt nur, was es im 2v2 zusätzlich braucht.
+
+   Farben der Teams: Blau = ihr, Rot = die Monster. Gold bleibt Akzent
+   (Ziel, aktiv, bereit) - wie überall im Spiel.
+   ========================================================================= */
+
+:root {
+  --team-blau: #49c7ff;
+  --team-blau-tief: #1f6fb3;
+  --team-rot: #ff5f6d;
+  --team-rot-tief: #b32330;
+  --freund: #7ee06a;
+}
+
+/* =========================================================================
+   1. Karte im Modi-Menü
+   ========================================================================= */
+
+/* Das Fenster darf scrollen, falls der Bildschirm niedrig ist. */
+.spielmodi {
+  max-height: calc(100% - 8px);
+  overflow-y: auto;
+}
+
+.spielmodus--duell {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  cursor: pointer;
+  border-color: var(--fantasy-gold, #ffc53d);
+  background: linear-gradient(115deg, #1f4f9e 0%, #2c2066 48%, #6b1f3d 100%);
+  box-shadow: 0 4px 0 #1c1440, 0 0 16px rgba(255, 197, 61, 0.25);
+}
+
+.spielmodus--duell .spielmodus__body {
+  text-align: left;
+}
+
+.spielmodus__spielen {
+  width: 100%;
+}
+
+.duell-vorschau {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 4px;
+  height: 64px;
+}
+
+.duell-vorschau__team {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+}
+
+.duell-vorschau__team .pixel-sprite {
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 4px 4px rgba(8, 14, 40, 0.5));
+}
+
+.duell-vorschau__team .pixel-sprite--hoch {
+  height: 62px;
+}
+
+.duell-vorschau__team--blau .pixel-sprite + .pixel-sprite {
+  margin-left: -10px;
+  transform: scale(0.88);
+  transform-origin: bottom;
+}
+
+/* Gegner schauen nach links - zu den Spielern. */
+.duell-vorschau__team--rot .pixel-sprite {
+  transform: scaleX(-1);
+}
+
+.duell-vorschau__team--rot .pixel-sprite + .pixel-sprite {
+  margin-left: -8px;
+}
+
+.duell-vorschau__vs {
+  align-self: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--gold-1);
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8), 0 0 10px rgba(255, 197, 61, 0.6);
+}
+
+/* =========================================================================
+   2. Lobby
+   ========================================================================= */
+
+/* Eine Spalte, die nie breiter als der Bildschirm wird. */
+.duell-lobby {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* "hidden" gilt auch für Knöpfe, die sonst display: flex haben. */
+.screen--duell [hidden],
+.screen--duell-lobby [hidden] {
+  display: none !important;
+}
+
+.duell-klein {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.duell-hinweis {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gold-1);
+}
+
+.duell-hinweis--band {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 179, 43, 0.16);
+  border: 1px solid rgba(255, 197, 61, 0.45);
+}
+
+.duell-intro {
+  display: grid;
+  gap: 8px;
+}
+
+.duell-intro__bild {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  height: 84px;
+}
+
+.duell-intro__bild .pixel-sprite {
+  width: 64px;
+  height: 64px;
+}
+
+.duell-intro__bild .pixel-sprite--hoch {
+  height: 84px;
+}
+
+.duell-intro__bild .pixel-sprite:nth-child(n + 2) {
+  transform: scaleX(-1);
+}
+
+.duell-code {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.duell-code__feld {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--text);
+  border-radius: 999px;
+  border: 2px solid var(--panel-border);
+  background: #0f1738;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.duell-code__feld:focus {
+  outline: none;
+  border-color: var(--gold-2);
+}
+
+.duell-letzte {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.duell-warten {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 26px 16px;
+  text-align: center;
+}
+
+.duell-warten__kreis {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--gold-2);
+  animation: duell-drehen 0.9s linear infinite;
+}
+
+@keyframes duell-drehen {
+  to { transform: rotate(360deg); }
+}
+
+.duell-einladung {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.duell-einladung__text {
+  display: grid;
+}
+
+.duell-einladung__label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.duell-einladung__code {
+  font-size: 1.7rem;
+  letter-spacing: 0.2em;
+  color: var(--gold-1);
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8);
+  user-select: all;
+}
+
+.duell-einladung__knoepfe {
+  display: flex;
+  gap: 8px;
+}
+
+.duell-verbindung {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.duell-verbindung.ist-online {
+  color: var(--freund);
+}
+
+.duell-team__reihe {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.duell-spieler {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+  padding: 10px 6px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(31, 111, 179, 0.35), rgba(15, 23, 56, 0.6));
+  border: 2px solid rgba(73, 199, 255, 0.35);
+  min-width: 0;
+}
+
+.duell-spieler.ist-ich {
+  border-color: rgba(73, 199, 255, 0.75);
+}
+
+.duell-spieler.ist-bereit {
+  border-color: var(--green-1);
+  box-shadow: 0 0 12px rgba(126, 224, 106, 0.35);
+}
+
+.duell-spieler.ist-offline {
+  filter: grayscale(0.8) brightness(0.8);
+}
+
+.duell-spieler--leer {
+  border-style: dashed;
+  justify-content: center;
+}
+
+.duell-spieler__bild {
+  height: 88px;
+  width: 72px;
+  display: grid;
+  place-items: end center;
+}
+
+.duell-spieler__bild .pixel-sprite {
+  width: 64px;
+  height: 64px;
+}
+
+.duell-spieler__bild .pixel-sprite--hoch {
+  height: 88px;
+}
+
+.duell-spieler__bild--leer {
+  font-size: 2.4rem;
+  color: var(--text-dim);
+  place-items: center;
+}
+
+.duell-spieler__name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duell-spieler__name small {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.duell-spieler__kraft {
+  color: var(--gold-1);
+}
+
+.duell-spieler__status {
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.duell-deck {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+
+.duell-deck__karte {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(12, 18, 48, 0.55);
+}
+
+.duell-wahl-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.duell-unter {
+  margin: 4px 0 0;
+}
+
+.duell-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.duell-chips--welten {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Große Touch-Flächen: mindestens 40 px hoch. */
+.duell-chip {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  border-radius: 999px;
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, #33457f, #1b2450);
+  box-shadow: 0 3px 0 #101838;
+  cursor: pointer;
+}
+
+.duell-chip:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #101838;
+}
+
+.duell-chip.is-aktiv {
+  border-color: var(--gold-2);
+  background: linear-gradient(180deg, #3d4f97, #2a3678);
+  box-shadow: 0 3px 0 #101838, 0 0 10px rgba(255, 197, 61, 0.35);
+}
+
+.duell-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.duell-chip.is-aktiv:disabled {
+  opacity: 1;
+}
+
+.duell-chip--boss.is-aktiv {
+  border-color: var(--team-rot);
+  box-shadow: 0 3px 0 #101838, 0 0 12px rgba(255, 95, 109, 0.5);
+}
+
+.duell-chip--deck {
+  border-style: dashed;
+}
+
+.duell-klein.duell-klein {
+  margin: 0;
+}
+
+.duell-gegner {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.duell-gegner__eintrag {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.duell-gegner__bild {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: end center;
+}
+
+.duell-gegner__bild .pixel-sprite {
+  transform: scaleX(-1);
+}
+
+.duell-gegner__name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.duell-gegner__rolle {
+  font-size: 0.72rem;
+  color: #ffb3b9;
+}
+
+.duell-gegner__vs {
+  align-self: center;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.duell-gegner__text {
+  text-align: center;
+}
+
+.duell-teamlevel strong {
+  color: var(--text);
+}
+
+.duell-start {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 8px;
+}
+
+.duell-start__text {
+  text-align: center;
+}
+
+.duell-countdown {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--gold-1);
+  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.8);
+  animation: pop-in 0.35s ease-out;
+}
+
+/* "Zurück zur 2v2-Lobby" - schwebt über der Menüleiste. */
+.duell-rueckkehr {
+  position: fixed;
+  left: 50%;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  z-index: 50;
+  transform: translateX(-50%);
+  min-height: 44px;
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  border-radius: 999px;
+  border: 2px solid rgba(12, 18, 48, 0.45);
+  background: linear-gradient(180deg, #ffe9a8, var(--gold-2));
+  box-shadow: 0 4px 0 var(--gold-3), 0 8px 18px rgba(10, 16, 44, 0.45);
+  cursor: pointer;
+  animation: pop-in 0.25s ease-out;
+}
+
+/* =========================================================================
+   3. Arena
+   ========================================================================= */
+
+.screen--duell {
+  gap: 6px;
+}
+
+.screen--duell .topbar,
+.duell-gegnerleiste,
+.duell-teamleiste {
+  z-index: 2;
+}
+
+.duell-kopf-rechts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.duell-signal-knopf,
+.screen--duell .pause-knopf {
+  min-width: 44px;
+  padding: 8px 10px;
+}
+
+.duell-netz {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(12, 18, 48, 0.8);
+  background: var(--green-1);
+  box-shadow: 0 0 8px rgba(126, 224, 106, 0.6);
+}
+
+.duell-netz--wackelt {
+  background: var(--gold-2);
+  box-shadow: 0 0 8px rgba(255, 179, 43, 0.7);
+  animation: bar-warnung 0.9s ease-in-out infinite;
+}
+
+.duell-netz--weg {
+  background: var(--danger);
+  box-shadow: 0 0 8px rgba(255, 95, 109, 0.8);
+  animation: bar-warnung 0.6s ease-in-out infinite;
+}
+
+.duell-band {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 5px 10px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: linear-gradient(180deg, #ffe9a8, var(--gold-2));
+  z-index: 3;
+}
+
+/* ---------- Tafeln: Gegner oben, Team unten ---------- */
+.duell-gegnerleiste,
+.duell-teamleiste {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.duell-plakette,
+.duell-team-halb {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(42, 58, 114, 0.94), rgba(17, 24, 58, 0.94));
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, filter 0.2s ease;
+}
+
+.duell-plakette {
+  border-color: rgba(255, 95, 109, 0.55);
+}
+
+.duell-team-halb {
+  border-color: rgba(73, 199, 255, 0.5);
+}
+
+.duell-plakette__kopf,
+.duell-team-halb__kopf {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+
+.duell-plakette__name,
+.duell-team-halb__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.duell-plakette__hp,
+.duell-team-halb__hp {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.duell-plakette .bar,
+.duell-team-halb .bar {
+  height: 11px;
+}
+
+.duell-team-halb .bar__fill {
+  background: linear-gradient(180deg, #8fdcff, #2b8fd0);
+}
+
+.duell-plakette__fuss,
+.duell-team-halb__fuss {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 12px;
+}
+
+.duell-plakette__fuss .pips {
+  flex: 1;
+  min-width: 0;
+}
+
+.duell-plakette__schild {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #8fe3ff;
+  white-space: nowrap;
+}
+
+.duell-plakette__status {
+  font-size: 0.78rem;
+  line-height: 1;
+  min-height: 0;
+}
+
+.duell-team-halb__kraft,
+.duell-team-halb__steuerung {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.duell-team-halb__steuerung {
+  margin-left: auto;
+  color: var(--text-dim);
+}
+
+/* Ankündigung eines Spezialangriffs: rote Leiste, die sich füllt. */
+.duell-plakette__ansage {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: #fff;
+  background: rgba(179, 35, 48, 0.55);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.duell-plakette__ansage-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  transform: scaleX(var(--fuellung, 0));
+  background: rgba(255, 95, 109, 0.6);
+  z-index: -1;
+}
+
+.duell-plakette.kuendigt-an {
+  border-color: var(--team-rot);
+  animation: kuendigt-an 0.7s ease-in-out infinite;
+}
+
+.duell-plakette.kuendigt-an .duell-plakette__ansage {
+  display: block;
+  z-index: 0;
+}
+
+@keyframes kuendigt-an {
+  0%, 100% { box-shadow: var(--shadow-panel), 0 0 0 rgba(255, 95, 109, 0); }
+  50% { box-shadow: var(--shadow-panel), 0 0 14px rgba(255, 95, 109, 0.85); }
+}
+
+/* Gewähltes Ziel: goldener Rand und das Zeichen in der Ecke. */
+.duell-plakette__ziel {
+  position: absolute;
+  top: -9px;
+  right: -6px;
+  font-size: 1rem;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  filter: drop-shadow(0 2px 2px rgba(8, 14, 40, 0.7));
+}
+
+.duell-plakette.ist-ziel,
+.duell-team-halb.ist-ziel {
+  border-color: var(--gold-2);
+}
+
+.duell-plakette.ist-ziel {
+  box-shadow: var(--shadow-panel), 0 0 12px rgba(255, 197, 61, 0.55);
+}
+
+.duell-team-halb.ist-ziel {
+  box-shadow: var(--shadow-panel), 0 0 10px rgba(126, 224, 106, 0.45);
+  border-color: var(--freund);
+}
+
+.ist-ziel > .duell-plakette__ziel {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.duell-plakette.ist-ko,
+.duell-team-halb.ist-ko {
+  filter: grayscale(1) brightness(0.65);
+}
+
+
+/* ---------- Die Arena mit vier Plätzen ---------- */
+.duell-arena {
+  --sprite: clamp(56px, 19vw, 104px);
+}
+
+.duell-platz {
+  cursor: pointer;
+  transition: filter 0.3s ease;
+}
+
+/* Die eigene Figur vorne links, der Teamkamerad dahinter. Gegner 1 hinten
+   rechts, Gegner 2 vorne rechts. Wer vorne steht, verdeckt nie die
+   Lebensanzeige dessen, der hinten steht (die Tafel steht über der Figur). */
+.duell-platz--blau-vorne { left: 16%; bottom: 2%; right: auto; z-index: 3; }
+.duell-platz--blau-hinten { left: 1%; bottom: 33%; right: auto; z-index: 2; }
+.duell-platz--rot-hinten { right: 18%; bottom: 35%; left: auto; z-index: 2; }
+.duell-platz--rot-vorne { right: 1%; bottom: 4%; left: auto; z-index: 3; }
+
+.duell-platz--blau-hinten .sprite,
+.duell-platz--rot-hinten .sprite {
+  transform: scale(0.88);
+  transform-origin: bottom center;
+}
+
+.duell-platz .platform {
+  width: calc(var(--sprite) * 1.05);
+  height: 18px;
+}
+
+/* Kleine Lebensanzeige direkt über jeder Figur. */
+.duell-mini {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  width: calc(var(--sprite) * 0.95);
+  margin-bottom: 2px;
+  pointer-events: none;
+}
+
+.duell-mini__name {
+  max-width: 100%;
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(12, 18, 48, 0.95);
+}
+
+.duell-mini .bar {
+  width: 100%;
+  height: 6px;
+  border-width: 1px;
+}
+
+.stage--player .duell-mini .bar__fill {
+  background: linear-gradient(180deg, #8fdcff, #2b8fd0);
+}
+
+.stage--enemy .duell-mini .bar__fill {
+  background: linear-gradient(180deg, #ff9aa2, var(--danger));
+}
+
+/* Zielmarkierung: ein Ring auf dem Boden unter der Figur. */
+.duell-marker {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: calc(var(--sprite) * 1.15);
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 3px solid transparent;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.duell-platz.ist-ziel .duell-marker {
+  border-color: var(--gold-2);
+  box-shadow: 0 0 12px rgba(255, 197, 61, 0.8);
+  animation: ziel-puls 1.4s ease-in-out infinite;
+}
+
+.duell-platz.ist-ziel--freund .duell-marker {
+  border-color: var(--freund);
+  box-shadow: 0 0 10px rgba(126, 224, 106, 0.7);
+}
+
+@keyframes ziel-puls {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.08); }
+}
+
+/* Ein Gegner hat diese Figur für seinen Spezialangriff ausgewählt. */
+.duell-platz[class*='bedroht--'] .platform {
+  box-shadow: 0 0 0 3px var(--team-rot), 0 0 18px rgba(255, 95, 109, 0.9);
+  animation: bar-warnung 0.6s ease-in-out infinite;
+}
+
+.duell-platz.ist-signal .duell-marker {
+  border-color: var(--team-blau);
+  box-shadow: 0 0 14px rgba(73, 199, 255, 0.9);
+}
+
+.duell-platz.ist-verstaerkt .sprite {
+  filter: drop-shadow(0 0 8px rgba(255, 140, 60, 0.85)) drop-shadow(0 8px 8px rgba(10, 20, 40, 0.4));
+}
+
+/* Kampfunfähig: Spieler kippen grau zur Seite, Gegner verblassen. */
+.duell-platz .sprite {
+  transition: transform 0.45s ease, filter 0.45s ease, opacity 0.45s ease;
+}
+
+.stage--player.ist-ko .sprite {
+  filter: grayscale(1) brightness(0.7);
+  transform: rotate(-78deg) translate(-14px, 8px);
+  opacity: 0.75;
+  animation: none;
+}
+
+.stage--enemy.ist-ko .sprite {
+  filter: grayscale(1) brightness(1.6);
+  transform: scale(0.75) translateY(10px);
+  opacity: 0.25;
+}
+
+.duell-platz.ist-ko .duell-mini {
+  opacity: 0.5;
+}
+
+/* Sieg und Niederlage. */
+.duell-platz.jubelt .sprite {
+  animation: duell-jubel 0.6s ease-in-out 3;
+}
+
+@keyframes duell-jubel {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+.duell-platz.traurig:not(.ist-ko) .sprite {
+  filter: grayscale(0.6) brightness(0.8);
+  transform: translateY(6px);
+}
+
+/* Angriffslinie: zeigt, wer wen trifft. */
+.duell-linie {
+  position: absolute;
+  height: 3px;
+  transform-origin: 0 50%;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 4;
+  animation: duell-linie 0.4s ease-out forwards;
+}
+
+.duell-linie--blau {
+  background: linear-gradient(90deg, rgba(73, 199, 255, 0), #8fe3ff 70%, #fff);
+  box-shadow: 0 0 8px rgba(73, 199, 255, 0.8);
+}
+
+.duell-linie--rot {
+  background: linear-gradient(90deg, rgba(255, 95, 109, 0), #ff8a5a 70%, #fff);
+  box-shadow: 0 0 8px rgba(255, 95, 109, 0.8);
+}
+
+@keyframes duell-linie {
+  0% { clip-path: inset(0 100% 0 0); opacity: 1; }
+  45% { clip-path: inset(0 0 0 0); opacity: 1; }
+  100% { clip-path: inset(0 0 0 60%); opacity: 0; }
+}
+
+/* Großer Schriftzug (Team-Kombo, Phase 2, Start) - auffällig, aber nur
+   kurz, mittig und ohne Tipps abzufangen. */
+.duell-banner {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  z-index: 6;
+  transform: translate(-50%, -50%);
+  padding: 4px 14px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 3px 0 rgba(12, 18, 48, 0.85);
+  animation: duell-banner 1.5s cubic-bezier(0.2, 1.3, 0.4, 1) forwards;
+}
+
+.duell-banner--kombo.duell-banner--blau {
+  color: #fff3b0;
+  text-shadow: 0 3px 0 rgba(12, 18, 48, 0.85), 0 0 18px rgba(73, 199, 255, 0.95), 0 0 30px rgba(255, 197, 61, 0.8);
+}
+
+.duell-banner--kombo.duell-banner--rot {
+  font-size: 1.2rem;
+  color: #ffd1d6;
+  text-shadow: 0 3px 0 rgba(12, 18, 48, 0.85), 0 0 16px rgba(255, 95, 109, 0.95);
+}
+
+.duell-banner--phase {
+  font-size: 2rem;
+  color: #ffb3b9;
+  text-shadow: 0 3px 0 rgba(12, 18, 48, 0.9), 0 0 24px rgba(255, 60, 80, 0.95);
+}
+
+.duell-banner--start {
+  color: var(--gold-1);
+}
+
+@keyframes duell-banner {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  18% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
+  30% { transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { transform: translate(-50%, -80%) scale(1); opacity: 0; }
+}
+
+/* Sprechblasen über einer Figur (Signale, Status, "Unterbrochen!"). */
+.duell-blase {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  z-index: 5;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 10px;
+  color: var(--text-dark);
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(8, 14, 40, 0.5);
+  pointer-events: none;
+  animation: duell-blase 2.3s ease-out forwards;
+}
+
+.duell-blase--signal {
+  background: linear-gradient(180deg, #d6f3ff, #8fdcff);
+}
+
+.duell-blase--status {
+  background: linear-gradient(180deg, #ffe9e9, #ffc0c6);
+}
+
+.duell-blase--gut {
+  background: linear-gradient(180deg, #fff6c8, var(--gold-1));
+}
+
+@keyframes duell-blase {
+  0% { transform: translate(-50%, 6px) scale(0.6); opacity: 0; }
+  10% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(-50%, -10px); opacity: 0; }
+}
+
+/* Die Signal-Auswahl: eine kleine Reihe oben in der Arena. */
+.duell-signale {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 6;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(12, 18, 48, 0.85);
+  border: 2px solid var(--panel-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.duell-signale[hidden] {
+  display: none;
+}
+
+.duell-signale__knopf {
+  width: 44px;
+  height: 44px;
+  font-size: 1.3rem;
+  border-radius: 50%;
+  border: 2px solid var(--panel-border);
+  background: linear-gradient(180deg, #33457f, #1b2450);
+  cursor: pointer;
+}
+
+.duell-signale__knopf:active {
+  transform: scale(0.92);
+}
+
+/* Karten: kleines Zeichen, worauf sie wirken. */
+.card__ziel {
+  position: absolute;
+  top: -9px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  border-radius: 50%;
+  background: #0d1430;
+  border: 2px solid var(--panel-border);
+  box-shadow: 0 2px 4px rgba(8, 14, 40, 0.5);
+}
+
+.card.ist-unterwegs {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ---------- Ergebnis ---------- */
+.duell-ergebnis {
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.duell-statistik {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.duell-statistik th,
+.duell-statistik td {
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.duell-statistik tbody th {
+  text-align: left;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duell-statistik tbody tr {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.duell-statistik tr.ist-ich {
+  color: var(--gold-1);
+}
+
+/* =========================================================================
+   4. Bildschirmgrößen
+   ========================================================================= */
+
+/* Niedrige Displays (iPhone SE): alles kompakter. */
+@media (max-height: 700px) {
+  .screen--duell {
+    gap: 4px;
+  }
+
+  .duell-plakette,
+  .duell-team-halb {
+    padding: 4px 7px;
+    gap: 2px;
+  }
+
+  .duell-plakette .bar,
+  .duell-team-halb .bar {
+    height: 9px;
+  }
+
+  .duell-arena {
+    --sprite: clamp(48px, 15vw, 70px);
+  }
+
+  .screen--duell .card {
+    min-height: 74px;
+    padding: 8px 4px 6px;
+  }
+
+  .screen--duell .card__icon {
+    font-size: 1.3rem;
+  }
+}
+
+/* Tablets und PC: mehr Platz für die Figuren, Leisten mittig. */
+@media (min-width: 700px) {
+  .duell-arena {
+    --sprite: 118px;
+  }
+
+  .duell-gegnerleiste,
+  .duell-teamleiste,
+  .screen--duell .wert-leiste,
+  .screen--duell .hand,
+  .duell-band {
+    width: 100%;
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Handy quer: zwei Spalten - links Gegner und Arena, rechts Team, Energie
+   und Karten. Untereinander passte das nicht in rund 390 Pixel Höhe. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .screen--duell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+      'kopf kopf'
+      'gegner team'
+      'feld energie'
+      'feld hand';
+    column-gap: 10px;
+    row-gap: 4px;
+  }
+
+  .screen--duell > .topbar { grid-area: kopf; }
+  .screen--duell > .duell-gegnerleiste { grid-area: gegner; }
+  .screen--duell > .battlefield { grid-area: feld; min-height: 0; }
+  .screen--duell > .duell-teamleiste { grid-area: team; }
+  .screen--duell > .wert-leiste { grid-area: energie; }
+  .screen--duell > .hand { grid-area: hand; align-self: start; grid-template-columns: repeat(4, 1fr); }
+
+  /* Der Hinweis schwebt oben über der Arena statt eine eigene Zeile zu belegen. */
+  .screen--duell > .duell-band {
+    position: absolute;
+    top: calc(52px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+  }
+
+  .screen--duell .wert-leiste__kopf {
+    display: none;
+  }
+
+  .screen--duell .kraft-knopf {
+    width: 40px;
+    height: 40px;
+  }
+
+  .duell-team-halb__fuss {
+    display: none;
+  }
+
+
+  .duell-arena {
+    --sprite: 50px;
+    max-height: none;
+  }
+
+  .duell-mini__name {
+    display: none;
+  }
+
+  .duell-plakette__status,
+  .duell-plakette__fuss {
+    display: none;
+  }
+
+  .duell-plakette.kuendigt-an .duell-plakette__ansage {
+    display: block;
+  }
+
+  .duell-banner {
+    font-size: 1.2rem;
+  }
+}
+
+/* ---------- Freund in die eigene Lobby einladen ---------- */
+.duell-freunde__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.duell-freunde__eintrag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.duell-freunde__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.duell-freunde__name small {
+  color: var(--text-dim);
+  font-weight: 400;
+}

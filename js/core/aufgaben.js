@@ -15,7 +15,7 @@
  * (js/screens/daily.js) zeigt das Ergebnis an.
  */
 
-import { AUFGABEN, AUFGABEN_PRO_TAG, getAufgabe } from '../data/aufgaben.js';
+import { AUFGABEN, AUFGABEN_PRO_TAG, DUELL_AUFGABEN, DUELL_AUFGABEN_PRO_TAG, getAufgabe } from '../data/aufgaben.js';
 import { gameState, saveProgress } from './state.js';
 
 /** Das heutige Datum als "JJJJ-MM-TT" in der Zeitzone des Geräts. */
@@ -56,6 +56,20 @@ export function aufgabenFuerTag(datum) {
 }
 
 /**
+ * Die 2v2-Bonusaufgabe(n) eines Tages - ebenfalls nur aus dem Datum. Sie
+ * kommen zusätzlich zu den normalen Aufgaben (siehe DUELL_AUFGABEN).
+ */
+export function duellAufgabenFuerTag(datum) {
+  const offen = DUELL_AUFGABEN.map((aufgabe) => aufgabe.id);
+  const gewaehlt = [];
+  for (let i = 0; i < DUELL_AUFGABEN_PRO_TAG && offen.length > 0; i++) {
+    const index = streuwert(`${datum}#2v2#${i}`) % offen.length;
+    gewaehlt.push(offen.splice(index, 1)[0]);
+  }
+  return gewaehlt;
+}
+
+/**
  * Sorgt dafür, dass der Aufgabenstand zum heutigen Tag passt.
  * Ist ein neuer Tag angebrochen, werden Fortschritt und Belohnungen geleert.
  */
@@ -64,13 +78,17 @@ function tagPruefen(datum = heute()) {
 
   if (stand.datum !== datum) {
     stand.datum = datum;
-    stand.aufgaben = aufgabenFuerTag(datum);
+    stand.aufgaben = [...aufgabenFuerTag(datum), ...duellAufgabenFuerTag(datum)];
     stand.fortschritt = {};
     stand.abgeholt = [];
     saveProgress();
   } else if (!Array.isArray(stand.aufgaben) || stand.aufgaben.length === 0) {
     // Kann bei einem alten Spielstand vorkommen.
-    stand.aufgaben = aufgabenFuerTag(datum);
+    stand.aufgaben = [...aufgabenFuerTag(datum), ...duellAufgabenFuerTag(datum)];
+    saveProgress();
+  } else if (!stand.aufgaben.some((id) => DUELL_AUFGABEN.some((a) => a.id === id))) {
+    // Stand von heute, aber noch ohne 2v2-Bonusaufgabe (vor dem Update gespeichert).
+    stand.aufgaben = [...stand.aufgaben, ...duellAufgabenFuerTag(datum)];
     saveProgress();
   }
 

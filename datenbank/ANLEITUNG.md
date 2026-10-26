@@ -104,6 +104,32 @@ wurde.
 > neu aus (SQL-Editor → einfügen → Run) – das ist gefahrlos, es überschreibt
 > nur die Ansicht und lässt alle Spielstände unangetastet.
 
+> **Für das 2v2 Monster-Duell:** Führe `schema.sql` einmal neu aus
+> (SQL-Editor → einfügen → Run). Das legt die Tabelle `duell_belohnungen` und
+> die Funktion `mq_duell_belohnung` an - damit gibt es die Belohnung eines
+> 2v2-Matches pro Spieler garantiert nur einmal, auch über mehrere Geräte.
+> Gefahrlos: Bestehende Spielstände bleiben unangetastet. Ohne diesen
+> Schritt funktioniert das 2v2 trotzdem - dann schützt nur die Liste im
+> Browser vor doppelten Belohnungen.
+>
+> **Für die Freundesliste (👥 Freunde):** Führe `schema.sql` einmal neu
+> aus (SQL-Editor → einfügen → Run). Das legt die Tabellen für
+> Freundes-IDs, Freundschaften, Anfragen, 2v2-Einladungen und den
+> Onlinestatus an – samt der Funktionen `mq_freunde`, `mq_freund_suchen`,
+> `mq_anfrage_senden`, `mq_anfrage_antworten`, `mq_anfrage_zurueckziehen`,
+> `mq_freund_entfernen`, `mq_einladung_senden` und `mq_einladung_antworten`.
+> Gefahrlos: Bestehende Spielstände bleiben unangetastet. Auch diese
+> Tabellen sind von außen gesperrt; jede Funktion verlangt die eigene
+> Spielernummer und ändert nur, woran dieser Spieler selbst beteiligt ist.
+> Danach `schema.test.sql` ausführen – unter *Messages* muss
+> „… bestanden, 0 fehlgeschlagen“ stehen. Ohne diesen Schritt zeigt der
+> Freunde-Bildschirm nur einen Hinweis; der Rest des Spiels läuft normal.
+>
+> Der Online-Koop selbst braucht **keine** Einrichtung: Er nutzt *Realtime
+> Broadcast* von Supabase, das in jedem Projekt eingeschaltet ist (unter
+> *Project Settings → Realtime* darf „Allow public access“ nicht
+> ausgeschaltet sein). Dabei wird nichts in der Datenbank gespeichert.
+
 ---
 
 ## Wie es funktioniert
@@ -125,7 +151,7 @@ er die Tabellen **nicht** direkt lesen. Genau das stellt `schema.sql` ein:
 
 * Beide Tabellen haben *Row Level Security* an und **keine** Regel. Damit ist
   von außen nichts zu holen – auch nicht mit dem Schlüssel.
-* Nach außen gibt es nur vier Funktionen. Jede verlangt entweder die
+* Nach außen gibt es nur wenige Funktionen. Jede verlangt entweder die
   Spielernummer oder einen gültigen Code.
 
 `datenbank/schema.test.sql` prüft genau das nach.
@@ -163,6 +189,39 @@ Die Zeichen `I`, `O`, `0` und `1` kommen nicht vor, die verwechselt man sonst.
 
 Achtung: Der geholte Spielstand **ersetzt** den Stand auf dem Gerät, auf dem
 man den Code eingibt.
+
+### Schutz der Rangliste
+
+Trophäen rechnet das Gerät aus. Damit niemand sich einfach 99999 einträgt
+und auf Platz 1 steht, führt `mq_speichern` je Spieler ein
+**Trophäen-Guthaben** (Spalten `rang_erlaubt`, `rang_siege`, `rang_levels`,
+`rang_am` in `spielstaende`): Neue Level bringen genau ihre Trophäen, jeder
+weitere Sieg 4 (höchstens einer alle 10 Sekunden). Die Rangliste zeigt das
+Kleinere aus Spielstand und Guthaben. Beim Einspielen bekommen alle
+bestehenden Spieler ihren jetzigen Stand als Guthaben – niemand rutscht ab.
+
+### Namensfilter
+
+Rangliste, Freundessuche und Einladungen zeigen unpassende Namen als
+„Spieler“ (`mq_name_erlaubt`, `mq_anzeigename`). Die Wortliste steht dort
+und gleich in `js/data/namensfilter.js` – neue Wörter immer in beide
+eintragen.
+
+### Der Wiederherstellungs-Code 🔑
+
+Ebenfalls unter *Spielstand*: ein **fester** Code aus 12 Zeichen
+(z. B. `K7QM-X2PA-9RTD`), der **nie abläuft** und beliebig oft gilt. Er
+holt den Spielstand auch dann zurück, wenn der Browser alles gelöscht hat –
+eingegeben wird er im selben Feld wie der Übertragungscode. Ein neuer Code
+macht den alten ungültig. Wer schon ein paar Kämpfe geschafft und noch
+keinen Code hat, wird höchstens einmal pro Woche daran erinnert.
+
+In der Datenbank steht er **nicht im Klartext**, sondern nur sein
+Fingerabdruck (SHA-256, Tabelle `wiederherstellungscodes`). 12 Zeichen aus
+32 sind 60 Bit Zufall – durchprobieren ist aussichtslos.
+
+> **Einrichten:** `schema.sql` einmal neu ausführen (SQL-Editor → einfügen →
+> Run). Gefahrlos, bestehende Spielstände bleiben unangetastet.
 
 ---
 

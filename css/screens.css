@@ -2277,3 +2277,150 @@
 .fighter-bar__variante {
   margin-left: 6px;
 }
+
+/* ---------- 👥 Freunde ---------- */
+.freunde-ich {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.freunde-ich__text {
+  display: grid;
+}
+
+.freunde-ich__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.freunde-ich__id {
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  color: var(--gold-1);
+}
+
+.freunde__tabs {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.freunde__zahl {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  color: #fff;
+  background: var(--danger);
+}
+
+.freunde__unter {
+  margin-top: 14px;
+}
+
+.freunde__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.freund {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+}
+
+.freund--online {
+  border-color: rgba(126, 224, 106, 0.45);
+}
+
+.freund--kampf {
+  border-color: rgba(255, 197, 61, 0.45);
+}
+
+.freund--offline {
+  opacity: 0.85;
+}
+
+.freund__bild {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+}
+
+.freund__bild img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.freund__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.freund__name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.freund__info,
+.freund__status {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.freund__knoepfe {
+  display: grid;
+  gap: 6px;
+  justify-items: stretch;
+}
+
+.freund__knoepfe .btn {
+  white-space: nowrap;
+}
+
+.freund--gefunden {
+  grid-template-columns: 52px minmax(0, 1fr);
+  margin: 10px 0;
+}
+
+.freunde__meldung {
+  margin-top: 8px;
+}
+
+/* Schmale Handys: Knöpfe unter den Namen statt daneben. */
+@media (max-width: 420px) {
+  .freund {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .freund__knoepfe {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .freund__knoepfe .btn:only-child {
+    grid-column: 1 / -1;
+  }
+}

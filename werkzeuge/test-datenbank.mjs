@@ -6,7 +6,7 @@
  *
  * Er tut zwei Dinge gleichzeitig:
  *   1. Er liefert das Spiel aus (wie python3 -m http.server).
- *   2. Er spielt die Datenbank nach - dieselben fuenf Funktionen wie
+ *   2. Er spielt die Datenbank nach - dieselben Funktionen wie
  *      datenbank/schema.sql, nur im Arbeitsspeicher statt in Postgres.
  *
  * Die Datei js/data/cloud-config.js wird dabei unterwegs ausgetauscht, damit
@@ -20,6 +20,8 @@
  */
 
 import { createServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
+import { nameFiltern } from '../js/data/namensfilter.js';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +34,22 @@ const SCHLUESSEL = 'test-schluessel';
 const spielstaende = new Map();
 /** code -> { id, gueltigBis } */
 const codes = new Map();
+// 2v2: welche Belohnungen schon geholt wurden ("match|spieler").
+const duellBelohnungen = new Set();
+// Freunde - gleiche Regeln wie im Abschnitt "Freunde" von schema.sql.
+/** id -> Freundes-ID und zurueck */
+const kennungen = new Map();
+const kennungZuId = new Map();
+/** "a|b" mit a < b */
+const freundschaften = new Set();
+/** "von|an" -> Zeitpunkt */
+const anfragen = new Map();
+/** id -> { von, an, code, gueltigBis, antwort, gemeldet, erstellt } */
+const einladungen = new Map();
+/** id -> { zustand, zuletzt } */
+const anwesenheit = new Map();
+/** Wiederherstellungs-Code (ohne Striche) -> id; je Spieler hoechstens einer. */
+const wiederherstellung = new Map();
 
 const TYPEN = {
   '.html': 'text/html; charset=utf-8',
@@ -69,7 +87,7 @@ function json(antwort, status, wert) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Die vier Funktionen - gleiche Regeln wie in schema.sql             */
+/*  Die Funktionen - gleiche Regeln wie in schema.sql                  */
 /* ------------------------------------------------------------------ */
 
 const FUNKTIONEN = {
@@ -89,6 +107,7 @@ const FUNKTIONEN = {
       erstellt: alt?.erstellt ?? jetzt,
       gespeichert: jetzt,
       speicherungen: (alt?.speicherungen ?? 0) + 1,
+      rang: rangNachfuehren(alt?.rang, p_daten),
     });
     return jetzt;
   },
@@ -125,8 +144,9 @@ const FUNKTIONEN = {
       .filter(([, e]) => String(e.daten?.settings?.rangliste ?? true) !== 'false')
       .map(([id, e]) => ({
         id,
-        name: (String(e.daten?.name ?? '').trim() || 'Spieler').slice(0, 16),
-        trophaeen: Math.floor(Math.min(100000, Math.max(0, zahl(e.daten?.trophaeen)))),
+        name: nameFiltern((String(e.daten?.name ?? '').trim() || 'Spieler')).slice(0, 16),
+        // Nie mehr als das erspielte Guthaben (wie in schema.sql).
+        trophaeen: Math.floor(Math.min(100000, Math.max(0, zahl(e.daten?.trophaeen)), e.rang?.erlaubt ?? 0)),
         gespeichert: e.gespeichert,
       }))
       .filter((e) => e.trophaeen > 0)
@@ -142,7 +162,229 @@ const FUNKTIONEN = {
       spieler: liste.length,
     };
   },
+
+  // Gleiche Regeln wie mq_duell_belohnung in schema.sql: jedes Paar aus
+  // Match und Spieler genau einmal.
+  mq_duell_belohnung({ p_id, p_match, p_daten }) {
+    if (!p_id) throw new Error('Keine Spielernummer angegeben');
+    if (typeof p_match !== 'string' || !/^[a-z0-9-]{8,80}$/.test(p_match)) throw new Error('Ungueltige Match-Kennung');
+    if (p_daten != null && (typeof p_daten !== 'object' || Array.isArray(p_daten))) throw new Error('Ungueltige Match-Daten');
+    const schluessel = `${p_match}|${p_id}`;
+    if (duellBelohnungen.has(schluessel)) return false;
+    duellBelohnungen.add(schluessel);
+    return true;
+  },
+
+  // Gleiche Regeln wie im Abschnitt "Wiederherstellungs-Code" von
+  // schema.sql (dort nur als Fingerabdruck gespeichert).
+  mq_wiederherstellung_erstellen({ p_id }) {
+    spielerPruefen(p_id);
+    for (const [code, id] of wiederherstellung) if (id === p_id) wiederherstellung.delete(code);
+    let code;
+    do {
+      code = '';
+      for (let i = 0; i < 12; i++) code += CODE_ZEICHEN[Math.floor(Math.random() * CODE_ZEICHEN.length)];
+    } while (wiederherstellung.has(code));
+    wiederherstellung.set(code, p_id);
+    return `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8)}`;
+  },
+
+  mq_wiederherstellung_status({ p_id }) {
+    return [...wiederherstellung.values()].includes(p_id);
+  },
+
+  mq_wiederherstellen({ p_code }) {
+    const code = String(p_code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const id = code.length === 12 ? wiederherstellung.get(code) : null;
+    if (!id || !spielstaende.has(id)) return null;
+    return { id, daten: spielstaende.get(id).daten };
+  },
+
+  mq_freunde({ p_id, p_zustand }) {
+    spielerPruefen(p_id);
+    kennungVon(p_id);
+    if (p_zustand === 'online' || p_zustand === 'kampf') anwesenheit.set(p_id, { zustand: p_zustand, zuletzt: Date.now() });
+    const jetzt = Date.now();
+    const antworten = [];
+    for (const e of einladungen.values()) {
+      if (e.von === p_id && e.antwort !== 'offen' && !e.gemeldet) {
+        e.gemeldet = true;
+        antworten.push({ ...profil(e.an), angenommen: e.antwort === 'angenommen' });
+      }
+    }
+    const freunde = [...freundschaften]
+      .map((paar) => paar.split('|'))
+      .filter((paar) => paar.includes(p_id))
+      .map((paar) => (paar[0] === p_id ? paar[1] : paar[0]))
+      .map((id) => {
+        const a = anwesenheit.get(id);
+        const status = !a || a.zuletzt < jetzt - 90000 ? 'offline' : a.zustand === 'kampf' ? 'kampf' : 'online';
+        return { ...profil(id), status };
+      });
+    const anfragenListe = [...anfragen.entries()].sort((x, y) => y[1] - x[1]).map(([k]) => k.split('|'));
+    return {
+      kennung: kennungVon(p_id),
+      freunde,
+      erhalten: anfragenListe.filter(([, an]) => an === p_id).map(([von]) => profil(von)),
+      gesendet: anfragenListe.filter(([von]) => von === p_id).map(([, an]) => profil(an)),
+      einladungen: [...einladungen.entries()]
+        .filter(([, e]) => e.an === p_id && e.antwort === 'offen' && e.gueltigBis > jetzt && befreundet(e.von, p_id))
+        .map(([id, e]) => ({ ...profil(e.von), id, code: e.code, sekunden: Math.floor((e.gueltigBis - jetzt) / 1000) })),
+      antworten,
+    };
+  },
+
+  mq_freund_suchen({ p_id, p_kennung }) {
+    spielerPruefen(p_id);
+    const freund = idVon(p_kennung);
+    if (!freund) return null;
+    return {
+      ...profil(freund),
+      ich: freund === p_id,
+      freund: befreundet(p_id, freund),
+      gesendet: anfragen.has(`${p_id}|${freund}`),
+      erhalten: anfragen.has(`${freund}|${p_id}`),
+    };
+  },
+
+  mq_anfrage_senden({ p_id, p_kennung }) {
+    spielerPruefen(p_id);
+    kennungVon(p_id);
+    const freund = idVon(p_kennung);
+    if (!freund) return 'unbekannt';
+    if (freund === p_id) return 'selbst';
+    if (befreundet(p_id, freund)) return 'schon_freunde';
+    if (anfragen.has(`${freund}|${p_id}`)) return 'gegenanfrage';
+    if (anfragen.has(`${p_id}|${freund}`)) return 'schon_gesendet';
+    anfragen.set(`${p_id}|${freund}`, Date.now());
+    return 'gesendet';
+  },
+
+  mq_anfrage_antworten({ p_id, p_kennung, p_annehmen }) {
+    spielerPruefen(p_id);
+    const freund = idVon(p_kennung);
+    if (!freund || !anfragen.delete(`${freund}|${p_id}`)) return false;
+    if (p_annehmen) {
+      freundschaften.add(paar(p_id, freund));
+      anfragen.delete(`${p_id}|${freund}`);
+    }
+    return true;
+  },
+
+  mq_anfrage_zurueckziehen({ p_id, p_kennung }) {
+    spielerPruefen(p_id);
+    return anfragen.delete(`${p_id}|${idVon(p_kennung)}`);
+  },
+
+  mq_freund_entfernen({ p_id, p_kennung }) {
+    spielerPruefen(p_id);
+    const freund = idVon(p_kennung);
+    if (!freund) return false;
+    for (const [id, e] of einladungen) {
+      if (e.antwort === 'offen' && [e.von, e.an].includes(p_id) && [e.von, e.an].includes(freund)) einladungen.delete(id);
+    }
+    return freundschaften.delete(paar(p_id, freund));
+  },
+
+  mq_einladung_senden({ p_id, p_kennung, p_code }) {
+    spielerPruefen(p_id);
+    if (typeof p_code !== 'string' || !/^[A-Z0-9]{6}$/.test(p_code)) throw new Error('Ungueltiger Lobby-Code');
+    const freund = idVon(p_kennung);
+    if (!freund || !befreundet(p_id, freund)) return 'kein_freund';
+    for (const [id, e] of einladungen) {
+      if (e.von === p_id && e.antwort === 'offen' && (e.an === freund || e.code !== p_code)) einladungen.delete(id);
+    }
+    einladungen.set(randomUUID(), { von: p_id, an: freund, code: p_code, gueltigBis: Date.now() + 5 * 60 * 1000, antwort: 'offen', gemeldet: false });
+    return 'gesendet';
+  },
+
+  mq_einladung_antworten({ p_id, p_einladung, p_annehmen }) {
+    spielerPruefen(p_id);
+    const e = einladungen.get(p_einladung);
+    if (!e || e.an !== p_id || e.antwort !== 'offen' || e.gueltigBis <= Date.now() || !befreundet(e.von, p_id)) return null;
+    e.antwort = p_annehmen ? 'angenommen' : 'abgelehnt';
+    if (!p_annehmen) return 'abgelehnt';
+    for (const [id, andere] of einladungen) {
+      if (andere.an === p_id && andere.antwort === 'offen' && id !== p_einladung) andere.antwort = 'abgelehnt';
+    }
+    return e.code;
+  },
 };
+
+/* --- Trophaeen-Guthaben fuer die Rangliste (wie mq_speichern) -------- */
+
+/** Trophaeen fuer den ersten Sieg in einem Level - wie mq_level_trophaeen. */
+function levelTrophaeen(id) {
+  const teile = /^(\d{1,2})-(\d{1,2})$/.exec(String(id));
+  if (!teile) return 0;
+  const welt = Number(teile[1]);
+  const kampf = Number(teile[2]);
+  if (welt < 1 || welt > 50 || kampf < 1 || kampf > 20) return 0;
+  return (10 + 5 * welt) * (kampf >= 12 ? 2 : 1);
+}
+
+/** Neue Level bringen ihre Trophaeen, weitere Siege je 4 (hoechstens einer je 10 s). */
+function rangNachfuehren(alt, daten) {
+  const levels = [...new Set(Array.isArray(daten.clearedLevels) ? daten.clearedLevels : [])].filter((x) => levelTrophaeen(x) > 0);
+  const siegeWert = Number(daten.statistik?.siege);
+  const siege = Number.isFinite(siegeWert) ? Math.max(0, Math.floor(siegeWert)) : 0;
+  const summe = (liste) => liste.reduce((s, x) => s + levelTrophaeen(x), 0);
+  const jetzt = Date.now();
+  if (!alt) {
+    return { erlaubt: summe(levels) + 4 * Math.min(Math.max(siege - levels.length, 0), 250), siege, levels, am: jetzt };
+  }
+  const neue = levels.filter((x) => !alt.levels.includes(x));
+  const siegePlus = Math.min(Math.max(siege - alt.siege - neue.length, 0), Math.floor((jetzt - alt.am) / 10000) + 1);
+  return {
+    erlaubt: Math.min(alt.erlaubt + summe(neue) + 4 * siegePlus, 100000),
+    siege: Math.max(alt.siege, siege),
+    levels: [...alt.levels, ...neue],
+    am: jetzt,
+  };
+}
+
+/* --- Helfer fuer die Freunde ---------------------------------------- */
+
+function spielerPruefen(id) {
+  if (!id || !spielstaende.has(id)) throw new Error('kein_spielstand');
+}
+
+function kennungVon(id) {
+  if (!kennungen.has(id)) {
+    let kennung;
+    do kennung = `MQ-${10000 + Math.floor(Math.random() * 90000)}`;
+    while (kennungZuId.has(kennung));
+    kennungen.set(id, kennung);
+    kennungZuId.set(kennung, id);
+  }
+  return kennungen.get(id);
+}
+
+function idVon(kennung) {
+  return kennungZuId.get(String(kennung ?? '').replace(/\s/g, '').toUpperCase()) ?? null;
+}
+
+function paar(a, b) {
+  return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
+function befreundet(a, b) {
+  return freundschaften.has(paar(a, b));
+}
+
+/** Was andere ueber einen Spieler sehen - wie mq_profil. */
+function profil(id) {
+  const d = spielstaende.get(id)?.daten ?? {};
+  const figur = String(d.aktiveFigur ?? 'timo').slice(0, 20);
+  const level = Number(d.characters?.[figur]?.level);
+  return {
+    kennung: kennungen.get(id),
+    name: nameFiltern((String(d.name ?? '').trim() || 'Spieler')).slice(0, 16),
+    figur,
+    level: Math.min(999, Math.max(1, Number.isFinite(level) ? Math.floor(level) : 1)),
+    skin: typeof d.activeSkin?.[figur] === 'string' ? d.activeSkin[figur].slice(0, 60) : null,
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /*  Uebersichtsseite                                                   */

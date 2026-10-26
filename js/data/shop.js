@@ -107,13 +107,18 @@ export const SOFORT_MINDESTPREIS = 5;
 
 /**
  * Tägliche Gratis-Truhen: gibt es einfach so, ohne Kampf - jede EINMAL AM
- * TAG. Um Mitternacht (Uhrzeit des Geräts) liegt die nächste bereit.
+ * TAG. Die Uhr startet, wenn man an einem Tag zum ersten Mal ins Spiel
+ * kommt: Die Holztruhe ist dann sofort da, die Goldtruhe nach "warten"
+ * (2 Stunden).
  *
  * Sie belegen keinen Truhenplatz und werden direkt geöffnet. Holt man eine
  * an einem Tag nicht ab, verfällt sie nicht - es stapeln sich aber auch
  * keine weiteren (js/core/zeittruhen.js).
  */
-export const ZEIT_TRUHEN = [{ id: 'holztruhe' }, { id: 'goldtruhe' }];
+export const ZEIT_TRUHEN = [
+  { id: 'holztruhe', warten: 0 },
+  { id: 'goldtruhe', warten: 2 * 60 * 60 * 1000 },
+];
 
 export function getTruhe(id) {
   return TRUHEN.find((truhe) => truhe.id === id);

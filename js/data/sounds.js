@@ -139,6 +139,38 @@ export const KLAENGE = {
   /* ---------- Ergebnis ---------- */
 
   // Sieg: C - E - G - C aufwärts.
+  /* ---------- 2v2 Monster-Duell ---------- */
+
+  // Team-Kombo: zwei schnelle Schläge, dann ein heller, gemeinsamer Akkord.
+  teamKombo: [
+    ton('sine', 220, 90, 0.12, 0.38, { anstieg: 0.001 }),
+    ton('sine', 260, 100, 0.12, 0.34, { start: 0.07, anstieg: 0.001 }),
+    ton('triangle', 784, 784, 0.22, 0.2, { start: 0.12 }),
+    ton('triangle', 988, 988, 0.22, 0.18, { start: 0.12 }),
+    ton('triangle', 1175, 1568, 0.3, 0.16, { start: 0.16 }),
+  ],
+
+  // Team-Signal: kurzes, freundliches Ploppen.
+  signal: [ton('sine', 880, 1320, 0.08, 0.2), ton('sine', 1320, 1320, 0.06, 0.12, { start: 0.07 })],
+
+  // Ein Gegner kündigt etwas an: tiefes, warnendes Anschwellen.
+  ansage: [
+    ton('sawtooth', 110, 165, 0.5, 0.12, { anstieg: 0.2, filter: { typ: 'lowpass', von: 500, bis: 1400 } }),
+    ton('square', 220, 220, 0.08, 0.08, { start: 0.42 }),
+  ],
+
+  // Eine Ankündigung wurde unterbrochen: dumpfes "Plock".
+  unterbrochen: [
+    ton('square', 300, 90, 0.16, 0.18, { filter: { typ: 'lowpass', von: 1200, bis: 300 } }),
+    ton('rauschen', 0, 0, 0.1, 0.18, { filter: { typ: 'lowpass', von: 1800, bis: 400 } }),
+  ],
+
+  // Boss-Phase 2: grollender Absturz.
+  bossPhase: [
+    ton('sawtooth', 160, 55, 0.9, 0.22, { anstieg: 0.02, filter: { typ: 'lowpass', von: 900, bis: 200 } }),
+    ton('rauschen', 0, 0, 0.7, 0.16, { start: 0.1, filter: { typ: 'lowpass', von: 700, bis: 120 } }),
+  ],
+
   sieg: [
     ton('triangle', 523, 523, 0.13, 0.26),
     ton('triangle', 659, 659, 0.13, 0.26, { start: 0.12 }),

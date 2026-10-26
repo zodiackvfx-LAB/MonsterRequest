@@ -17,6 +17,12 @@ const screens = new Map();
 
 let rootElement = null;
 let currentScreen = null;
+let currentName = null;
+
+/** Name des gerade gezeigten Screens (Seiten der Lobby heißen 'lobby'). */
+export function aktuellerScreenName() {
+  return currentName;
+}
 
 /** Legt fest, in welches Element die Screens gerendert werden. */
 export function initScreens(element) {
@@ -69,6 +75,7 @@ export function showScreen(name, params = {}) {
 
   rootElement.innerHTML = '';
   currentScreen = screen;
+  currentName = name;
   screen.mount(rootElement, params);
 
   // Während der neue Bildschirm hereingleitet, nimmt er kurz keine Tipps an.

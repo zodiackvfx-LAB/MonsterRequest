@@ -15,10 +15,10 @@ export const HAND_SIZE = 4;
 export const DECK_SIZE = 8;
 
 /** Mischt eine Kopie des Arrays (Fisher-Yates). */
-function shuffle(items) {
+function shuffle(items, zufall = Math.random) {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(zufall() * (i + 1));
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
@@ -27,8 +27,10 @@ function shuffle(items) {
 /**
  * Erzeugt ein Deck aus einer Liste von Attacken-ids.
  * @param {string[]} cardIds - die 8 Attacken des Charakters
+ * @param {number} [handSize]
+ * @param {function} [zufall] - Zufallsquelle fürs Mischen (Standard Math.random)
  */
-export function createDeck(cardIds, handSize = HAND_SIZE) {
+export function createDeck(cardIds, handSize = HAND_SIZE, zufall = Math.random) {
   if (cardIds.length !== DECK_SIZE) {
     console.warn(
       `Deck hat ${cardIds.length} Karten statt ${DECK_SIZE}. Das Spiel läuft trotzdem, ` +
@@ -36,7 +38,7 @@ export function createDeck(cardIds, handSize = HAND_SIZE) {
     );
   }
 
-  let drawPile = shuffle(cardIds);
+  let drawPile = shuffle(cardIds, zufall);
   let discardPile = [];
   const hand = [];
 
@@ -47,7 +49,7 @@ export function createDeck(cardIds, handSize = HAND_SIZE) {
   function drawOne(platz = hand.length) {
     if (drawPile.length === 0) {
       if (discardPile.length === 0) return false; // gar keine Karten mehr übrig
-      drawPile = shuffle(discardPile);
+      drawPile = shuffle(discardPile, zufall);
       discardPile = [];
     }
     hand.splice(platz, 0, drawPile.pop());

@@ -23,7 +23,11 @@ import {
   cloudBeobachten,
   cloudCodeEinloesen,
   cloudCodeErstellen,
+  cloudWiederherstellen,
+  wiederherstellungUebernehmen,
 } from '../core/cloud.js';
+import { wiederherstellungZeile } from '../ui/wiederherstellung.js';
+import { nameErlaubt } from '../data/namensfilter.js';
 import { spielstandUebernehmenVonCode } from '../core/sync.js';
 import { SCHWIERIGKEITEN } from '../data/schwierigkeit.js';
 import { LEVELS } from '../data/levels.js';
@@ -325,6 +329,11 @@ function namePanel(neuZeichnen) {
   knopf.textContent = 'Speichern';
 
   function speichern() {
+    // Den Namen sehen andere (Rangliste, Freunde, 2v2) - Schimpfwörter nicht.
+    if (!nameErlaubt(feld.value)) {
+      row.querySelector('#name-befund').textContent = 'Bitte wähle einen freundlichen Namen.';
+      return;
+    }
     setSpielername(feld.value);
     // Neu zeichnen, damit das Feld den gekürzten/getrimmten Namen zeigt.
     neuZeichnen();
@@ -437,6 +446,9 @@ function spielstandBlock() {
   raus.appendChild(codeKnopf);
   block.appendChild(raus);
 
+  /* --- Fester Code, der den Spielstand immer zurueckholt --- */
+  block.appendChild(wiederherstellungZeile());
+
   /* --- Von einem anderen Geraet holen --- */
   const rein = document.createElement('div');
   // --breit: Feld und Knopf kommen unter die Beschriftung. Nebeneinander
@@ -445,18 +457,19 @@ function spielstandBlock() {
   rein.innerHTML = `
     <span class="setting-row__label">
       <span class="setting-row__name">Von einem anderen Gerät</span>
-      <span class="setting-row__hint" id="hol-befund">Code vom anderen Gerät eintippen.</span>
+      <span class="setting-row__hint" id="hol-befund">Übertragungscode oder 🔑 Wiederherstellungs-Code eintippen.</span>
     </span>
   `;
   const feld = document.createElement('input');
   feld.type = 'text';
   feld.className = 'eingabe eingabe--code';
-  feld.maxLength = 8;
-  feld.placeholder = 'ABCD2345';
+  // 8 Zeichen: Übertragungscode; 12 (mit Strichen 14): Wiederherstellungs-Code.
+  feld.maxLength = 14;
+  feld.placeholder = 'Code';
   feld.autocapitalize = 'characters';
   feld.autocomplete = 'off';
   feld.spellcheck = false;
-  feld.setAttribute('aria-label', 'Übertragungscode');
+  feld.setAttribute('aria-label', 'Übertragungscode oder Wiederherstellungs-Code');
 
   const holKnopf = document.createElement('button');
   holKnopf.type = 'button';
@@ -465,19 +478,22 @@ function spielstandBlock() {
   holKnopf.addEventListener('click', async () => {
     const befund = rein.querySelector('#hol-befund');
     const code = feld.value.trim().toUpperCase();
-    if (code.length !== 8) {
-      befund.textContent = 'Der Code hat genau 8 Zeichen.';
+    const zeichen = code.replace(/[^A-Z0-9]/g, '').length;
+    if (zeichen !== 8 && zeichen !== 12) {
+      befund.textContent = 'Der Übertragungscode hat 8 Zeichen, der Wiederherstellungs-Code 12.';
       return;
     }
     holKnopf.disabled = true;
     befund.textContent = 'Wird geholt …';
     try {
-      const ergebnis = await cloudCodeEinloesen(code);
+      const ergebnis = zeichen === 12 ? await cloudWiederherstellen(code) : await cloudCodeEinloesen(code);
       if (!ergebnis) {
-        befund.textContent = 'Der Code stimmt nicht oder ist abgelaufen.';
+        befund.textContent = zeichen === 12 ? 'Diesen Wiederherstellungs-Code gibt es nicht.' : 'Der Code stimmt nicht oder ist abgelaufen.';
         return;
       }
       spielstandUebernehmenVonCode(ergebnis);
+      // Der Wiederherstellungs-Code gilt weiter - hier gleich anzeigen.
+      if (ergebnis.code) wiederherstellungUebernehmen(ergebnis.code);
       showScreen('start');
     } catch (fehler) {
       console.warn('Spielstand konnte nicht geholt werden:', fehler);

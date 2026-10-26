@@ -130,9 +130,15 @@ export function wertAufwerten(monsterId, wert) {
  */
 export function charakterWerte(monster) {
   const charakter = getCharakter(monster.id);
-  const level = charakter.level;
-  const up = charakter.upgrades;
+  return werteBerechnen(monster, charakter.level, charakter.upgrades);
+}
 
+/**
+ * Dieselbe Rechnung für ein beliebiges Level und beliebige Aufwertungen -
+ * ohne den eigenen Spielstand. Der 2v2-Modus rechnet damit die Werte des
+ * Teamkameraden aus (js/core/duell-aufbau.js).
+ */
+export function werteBerechnen(monster, level, up) {
   // Grundwerte je Figur. Timo lässt sie weg (Standard), eine andere Figur wie
   // Rocco verschiebt damit Angriff, Verteidigung und Tempo (siehe monsters.js).
   const angriffBasis = monster.damageBasis ?? 1;
@@ -229,7 +235,16 @@ export function attackeAufwerten(attackId) {
  * würde eine aufgewertete Attacke im Kampf langsamer statt stärker.
  */
 export function attackeMitLevel(attacke) {
-  const level = getAttackenLevel(attacke.id);
+  return attackeAufLevel(attacke, getAttackenLevel(attacke.id));
+}
+
+/**
+ * Dieselbe Rechnung für ein vorgegebenes Level - ohne den eigenen
+ * Spielstand zu lesen. Das braucht der 2v2-Modus: Dort kämpft auch die
+ * Figur des Teamkameraden mit SEINEN Karten-Leveln (js/core/duell.js).
+ */
+export function attackeAufLevel(attacke, level) {
+  level = Math.max(1, Math.min(MAX_ATTACKEN_LEVEL, Math.floor(Number(level) || 1)));
   if (level === 1) return attacke;
 
   const faktor = levelFaktor(level);
