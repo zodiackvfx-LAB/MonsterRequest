@@ -2466,241 +2466,9 @@ body.no-animations *::after {
 }
 
 /* =========================================================
-   Weltkarte
+   Weltkarte - siehe css/weltkarte.css. Diese kleine Textklasse nutzen
+   auch andere Bildschirme.
    ========================================================= */
-.screen--map {
-  gap: 10px;
-}
-
-.map {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: var(--radius);
-  /* Oben und unten laufen die Stationen weich aus, statt hart abgeschnitten
-     zu werden. Ein halb sichtbarer Levelpunkt sieht dadurch gewollt aus. */
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0,
-    #000 54px,
-    #000 calc(100% - 26px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    180deg,
-    transparent 0,
-    #000 54px,
-    #000 calc(100% - 26px),
-    transparent 100%
-  );
-  /* Beim Loslassen rastet die Karte sanft auf einer Station ein. */
-  scroll-snap-type: y proximity;
-}
-
-.map .node {
-  scroll-snap-align: center;
-}
-
-/* Die Flaeche, auf der die Levelpunkte liegen. Waechst automatisch mit,
-   wenn in js/data/levels.js weitere Level dazukommen. */
-.map__canvas {
-  position: relative;
-  width: 100%;
-  /* --levels wird in js/screens/map.js gesetzt: je mehr Kämpfe, desto höher
-     die Karte. Ab etwa acht Kämpfen wird sie scrollbar. */
-  min-height: max(100%, calc(var(--levels, 3) * 92px));
-}
-
-/* Der Weg zwischen den Levelpunkten */
-.map__path {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.map__path-line {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.55);
-  stroke-width: 7;
-  stroke-linecap: round;
-  stroke-dasharray: 2 18;
-}
-
-/* Ein Levelpunkt */
-.node {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  font: inherit;
-  color: var(--text);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-
-.node__circle {
-  position: relative;
-  width: 62px;
-  height: 62px;
-  display: grid;
-  place-items: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  border-radius: 50%;
-  /* Goldener Ring statt weissem - das Abzeichen wirkt dadurch wertiger. */
-  border: 3px solid var(--gold-1);
-  background: linear-gradient(180deg, #9db1e0 0%, #6a7cb8 45%, #3f4c80 100%);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -3px 0 rgba(8, 14, 40, 0.4),
-    0 5px 0 rgba(12, 18, 48, 0.55), 0 10px 16px rgba(10, 16, 44, 0.45);
-  transition: transform 0.1s ease;
-}
-
-/* Glanzlicht oben auf dem Abzeichen. */
-.node__circle::after {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: 16%;
-  width: 68%;
-  height: 34%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent);
-  pointer-events: none;
-}
-
-.node.is-unlocked .node__circle {
-  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
-  color: var(--text-dark);
-}
-
-.node.is-cleared .node__circle {
-  background: linear-gradient(180deg, #bdf58a 0%, var(--green-1) 40%, var(--green-2) 100%);
-  color: #0f2a08;
-}
-
-.node.is-boss .node__circle {
-  width: 74px;
-  height: 74px;
-  font-size: 1.1rem;
-  background: linear-gradient(180deg, #b06bd8, #6b2f9e);
-  color: #fff;
-}
-
-.node:not(:disabled):active .node__circle {
-  transform: translateY(4px);
-}
-
-.node:disabled {
-  cursor: not-allowed;
-}
-
-/* Der naechste Kampf wippt und traegt einen goldenen Schein - so findet
-   man ihn sofort, auch wenn die Karte lang ist. */
-.node.is-current .node__circle {
-  animation: bob 1.8s ease-in-out infinite, node-leuchten 2.2s ease-in-out infinite;
-}
-
-@keyframes node-leuchten {
-  0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.4),
-                         0 5px 0 rgba(12,18,48,0.55), 0 0 12px rgba(255, 197, 61, 0.35); }
-  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -3px 0 rgba(8,14,40,0.4),
-                         0 5px 0 rgba(12,18,48,0.55), 0 0 24px rgba(255, 197, 61, 0.7); }
-}
-
-.node__label {
-  font-size: 0.68rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(12, 18, 48, 0.65);
-  white-space: nowrap;
-}
-
-.node .stars {
-  font-size: 0.72rem;
-}
-
-/* Kopfzeile der Welt über der Karte */
-.map__header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.map__world {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-shadow: 0 2px 0 rgba(12, 18, 48, 0.7);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.map__chip {
-  flex: 0 0 auto;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  background: linear-gradient(180deg, #2f3f7d, #16204a);
-  border: 2px solid var(--gold-2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(8, 14, 40, 0.4);
-}
-
-/* Der gerade ausgewählte Kampf */
-.node.is-selected .node__circle {
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85), 0 5px 0 rgba(12, 18, 48, 0.5);
-}
-
-/* Infoleiste unten auf der Karte */
-.map__footer {
-  flex: 0 0 auto;
-  display: grid;
-  gap: 8px;
-  width: 100%;
-  max-width: 620px;
-  margin: 0 auto;
-}
-
-.map__buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.map__buttons .btn--big {
-  flex: 1;
-}
-
-.map__info {
-  display: grid;
-  gap: 2px;
-  text-align: center;
-  justify-items: center;
-}
-
-/* Vorschau des Gegners in der Infoleiste */
-.map__info-sprite {
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
-}
-
-.map__info-title {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
 .map__info-text {
   font-size: 0.8rem;
   color: var(--text-dim);
@@ -3420,16 +3188,6 @@ body.no-animations *::after {
     min-height: 70px;
   }
 
-  .node__circle {
-    width: 78px;
-    height: 78px;
-  }
-
-  .node.is-boss .node__circle {
-    width: 92px;
-    height: 92px;
-  }
-
   .platform {
     width: 150px;
     height: 28px;
@@ -3540,11 +3298,6 @@ body.no-animations *::after {
     width: 48px;
     height: 48px;
     font-size: 1.3rem;
-  }
-
-  .node__circle {
-    width: 54px;
-    height: 54px;
   }
 }
 
@@ -6296,28 +6049,6 @@ body.no-animations *::after {
   filter: none;
 }
 
-/* ---------- Weltkarte: Ring in der Weltfarbe ---------- */
-.screen--map .node__circle::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  border: 3px solid var(--welt-farbe, transparent);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.screen--map .node.is-locked .node__circle::before {
-  opacity: 0.18;
-  border-style: dashed;
-}
-
-.screen--map .node.is-selected .node__circle::before {
-  opacity: 1;
-  inset: -10px;
-  box-shadow: 0 0 14px var(--welt-farbe, transparent);
-}
-
 /* ---------- Teilchen beim Betreten einer Welt ---------- */
 .welt-teilchen {
   position: absolute !important;
@@ -7955,6 +7686,1327 @@ body.no-animations *::after {
   padding: 4px 10px;
   font-size: 0.8rem;
   margin-top: 2px;
+}
+
+/* ===== css/weltkarte.css ===== */
+/* =========================================================================
+   MonsterQuest · weltkarte.css
+   Die Weltkarte: Landschaft, Kampfstationen, Lichtpfad, Kopfleiste,
+   Kampfkarte und alle Bewegungen darauf. Aufgebaut in js/ui/weltkarte/.
+   ========================================================================= */
+
+.screen--map.wk {
+  --wk-gold: #d9a53a;
+  --wk-gold-hell: #ffe08a;
+  --wk-tief: #0f1736;
+  --wk-panel: linear-gradient(180deg, #26377a 0%, #172352 55%, #0f1838 100%);
+  justify-content: space-between;
+  gap: 0;
+  overflow: hidden;
+  background: #6fc04a;
+}
+
+/* Die Karte füllt den ganzen Bildschirm - auch hinter Notch und Leisten.
+   (Die doppelte Klasse schlägt die allgemeine Regel aus base.css, die alle
+   Kinder eines Bildschirms in den Fluss zurückholt.) */
+.screen.wk > .wk-scroll {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  background: var(--s-sky-top);
+}
+
+.wk-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.screen.wk > .wk-teilchen-ebene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.screen.wk > .wk-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.screen.wk > .wk-kopf,
+.screen.wk > .wk-fuss {
+  z-index: 2;
+}
+
+/* ---------- Ebenen der Karte ---------- */
+.wk-flaeche {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--wiese);
+  /* Lange Tipps auf der Karte sollen nichts markieren. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.wk-fern {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  will-change: transform;
+}
+
+/* Himmel über dem oberen Rand - sichtbar, wenn iOS die Karte beim
+   Hochziehen nachfedern lässt. */
+.wk-fern::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 900px;
+  background: var(--himmel);
+}
+
+.wk-fern img,
+.wk-streifen {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.wk-fern img {
+  height: 100%;
+}
+
+.wk-landschaft,
+.wk-leben,
+.wk-pfad,
+.wk-vorn {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wk-streifen {
+  position: absolute;
+  left: 0;
+}
+
+.wk-pfad svg,
+.wk-wasser {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+
+.wk-vorn {
+  z-index: 3;
+  will-change: transform;
+}
+
+/* ---------- Wasser ---------- */
+.wk-fliessen {
+  animation: wk-fliessen 2.4s linear infinite;
+}
+
+.wk-fliessen--langsam {
+  animation-name: wk-fliessen-langsam;
+  animation-duration: 4.2s;
+}
+
+@keyframes wk-fliessen {
+  to { stroke-dashoffset: -94; }
+}
+
+@keyframes wk-fliessen-langsam {
+  to { stroke-dashoffset: -130; }
+}
+
+.wk-fall-faeden {
+  animation: wk-fallen 2.6s linear infinite;
+}
+
+@keyframes wk-fallen {
+  to { transform: translateY(420px); }
+}
+
+.wk-gischt {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wk-gischt 1.6s ease-in-out infinite;
+}
+
+@keyframes wk-gischt {
+  50% { transform: scale(1.3); opacity: 0.45; }
+}
+
+.wk-glanz {
+  opacity: 0;
+  animation: wk-glanz 4.2s ease-in-out infinite;
+}
+
+@keyframes wk-glanz {
+  50% { opacity: 0.75; }
+}
+
+/* ---------- Wolken und ihre Schatten ---------- */
+.wk-wolke,
+.wk-wolkenschatten {
+  position: absolute;
+  left: 0;
+  animation: wk-ziehen linear infinite;
+  will-change: transform;
+}
+
+.wk-wolke {
+  opacity: 0.92;
+  filter: drop-shadow(0 6px 6px rgba(40, 80, 140, 0.18));
+}
+
+.wk-wolke svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wk-wolkenschatten {
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(12, 40, 20, 0.2), rgba(12, 40, 20, 0.08) 60%, rgba(12, 40, 20, 0));
+}
+
+@keyframes wk-ziehen {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(var(--breite, 400px)); }
+}
+
+/* ---------- Gras, Laternen, Fahne, Glitzer ---------- */
+.wk-halm {
+  position: absolute;
+  translate: -50% -100%;
+  transform-origin: 50% 100%;
+  animation: wk-wiegen 3.2s ease-in-out infinite;
+}
+
+.wk-halm svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes wk-wiegen {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(6deg); }
+}
+
+.wk-lichtschein {
+  position: absolute;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 232, 150, 0.75), rgba(255, 196, 90, 0.25) 55%, rgba(255, 190, 80, 0));
+  animation: wk-flackern 2.8s ease-in-out infinite;
+}
+
+@keyframes wk-flackern {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  30% { opacity: 0.6; transform: scale(0.94); }
+  55% { opacity: 1; transform: scale(1.05); }
+  70% { opacity: 0.75; }
+}
+
+.wk-fahne {
+  position: absolute;
+  transform-origin: 0 20%;
+  animation: wk-wehen 2.6s ease-in-out infinite;
+  filter: drop-shadow(3px 4px 3px rgba(0, 0, 0, 0.3));
+}
+
+.wk-fahne svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes wk-wehen {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50% { transform: skewY(6deg) scaleX(0.9); }
+}
+
+.wk-glitzer {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  translate: -50% -50%;
+  opacity: 0;
+  background: radial-gradient(circle, #fff 0 18%, rgba(255, 243, 176, 0.9) 30%, rgba(255, 243, 176, 0) 62%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  animation: wk-glitzern 3.4s ease-in-out infinite;
+}
+
+@keyframes wk-glitzern {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  50% { opacity: 1; transform: scale(var(--g, 1)) rotate(45deg); }
+}
+
+/* ---------- Schmetterlinge ---------- */
+.wk-falter {
+  position: absolute;
+  width: 18px;
+  height: 13px;
+  animation: wk-falter-weg 12s ease-in-out infinite alternate;
+}
+
+.wk-falter::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 15%;
+  width: 2px;
+  height: 75%;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: #3a2a1a;
+}
+
+.wk-falter__fluegel {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 40%, #fff 0 12%, var(--farbe) 30%);
+  border: 1px solid rgba(60, 30, 40, 0.5);
+  animation: wk-schlag 0.22s ease-in-out infinite alternate;
+}
+
+.wk-falter__fluegel--l {
+  right: 50%;
+  border-radius: 70% 20% 40% 60%;
+  transform-origin: right center;
+}
+
+.wk-falter__fluegel--r {
+  left: 50%;
+  border-radius: 20% 70% 60% 40%;
+  transform-origin: left center;
+}
+
+@keyframes wk-schlag {
+  to { transform: scaleX(0.2); }
+}
+
+@keyframes wk-falter-weg {
+  0% { transform: translate(0, 0) rotate(-8deg); }
+  25% { transform: translate(var(--weg-x), calc(var(--weg-y) * -1)) rotate(10deg); }
+  50% { transform: translate(calc(var(--weg-x) * 1.6), calc(var(--weg-y) * 0.4)) rotate(-6deg); }
+  75% { transform: translate(calc(var(--weg-x) * 0.6), calc(var(--weg-y) * 1.1)) rotate(12deg); }
+  100% { transform: translate(calc(var(--weg-x) * -0.4), calc(var(--weg-y) * -0.6)) rotate(-10deg); }
+}
+
+/* ---------- Vordergrund-Zweige ---------- */
+.wk-zweig {
+  position: absolute;
+  width: calc(112px * var(--g, 1));
+  height: calc(129px * var(--g, 1));
+  filter: blur(1.6px) drop-shadow(0 10px 10px rgba(0, 0, 0, 0.25));
+}
+
+.wk-zweig svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wk-zweig--links {
+  left: -50px;
+}
+
+.wk-zweig--rechts {
+  right: -50px;
+  transform: scaleX(-1);
+}
+
+/* ---------- Fallende Blüten über dem Bildschirm ---------- */
+.wk-teilchen {
+  position: absolute;
+  top: -4%;
+  width: 11px;
+  height: 8px;
+  border-radius: 80% 0 80% 0;
+  background: var(--farbe);
+  box-shadow: inset -2px -1px 0 rgba(0, 0, 0, 0.12);
+  opacity: 0.9;
+  animation: wk-blatt-faellt linear infinite;
+}
+
+.wk-teilchen--flocke,
+.wk-teilchen--funke,
+.wk-teilchen--glut,
+.wk-teilchen--stern {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--farbe);
+}
+
+@keyframes wk-blatt-faellt {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(var(--g, 1)); }
+  50% { transform: translate3d(var(--drift), 55vh, 0) rotate(220deg) scale(var(--g, 1)); }
+  100% { transform: translate3d(calc(var(--drift) * -0.4), 112vh, 0) rotate(440deg) scale(var(--g, 1)); }
+}
+
+/* ---------- Lichtpfad ---------- */
+.wk-lichtpunkt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 20%, rgba(255, 233, 160, 0.95) 38%, rgba(255, 196, 70, 0) 70%);
+  offset-rotate: 0deg;
+  offset-anchor: center;
+  opacity: 0;
+  animation: wk-wandern linear infinite;
+}
+
+@keyframes wk-wandern {
+  0% { offset-distance: 0%; opacity: 0; }
+  6% { opacity: 1; }
+  94% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* =========================================================
+   Kampfstationen
+   ========================================================= */
+.station {
+  position: absolute;
+  z-index: 2;
+  width: var(--station);
+  translate: -50% -50%;
+  display: grid;
+  justify-items: center;
+  padding: 0;
+  font: inherit;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.station:disabled {
+  cursor: default;
+}
+
+.station.ist-boss {
+  --station-b: calc(var(--station) * 1.32);
+  width: var(--station-b);
+}
+
+.station__koerper {
+  position: relative;
+  display: block;
+  width: var(--station);
+  aspect-ratio: 140 / 124;
+}
+
+.station.ist-boss .station__koerper {
+  width: var(--station-b);
+}
+
+.station__sockel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Lichtschein auf dem Boden rund um die Plattform. */
+.station__schein {
+  position: absolute;
+  left: 50%;
+  top: 72%;
+  width: 150%;
+  aspect-ratio: 2.3;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 220, 110, 0.6), rgba(255, 220, 110, 0.18) 60%, rgba(255, 220, 110, 0));
+  opacity: 0;
+}
+
+.station--gruen .station__schein {
+  background: radial-gradient(closest-side, rgba(150, 255, 110, 0.4), rgba(150, 255, 110, 0));
+  opacity: 0.55;
+}
+
+.station.ist-aktuell .station__schein {
+  opacity: 1;
+  animation: wk-schein 2.4s ease-in-out infinite;
+}
+
+.station.ist-boss.ist-offen .station__schein {
+  background: radial-gradient(closest-side, rgba(255, 90, 140, 0.5), rgba(255, 90, 140, 0));
+  opacity: 0.9;
+}
+
+@keyframes wk-schein {
+  50% { opacity: 0.55; transform: scale(0.92); }
+}
+
+/* Leuchtender Ring auf der Oberseite. */
+.station__ring {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 66%;
+  aspect-ratio: 2.85;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 236, 150, 0.95);
+  box-shadow: 0 0 10px 3px rgba(255, 205, 80, 0.75), inset 0 0 8px 2px rgba(255, 220, 120, 0.6);
+  opacity: 0;
+}
+
+.station--gruen .station__ring {
+  border-color: rgba(200, 255, 160, 0.9);
+  box-shadow: 0 0 8px 2px rgba(110, 230, 80, 0.7), inset 0 0 6px 1px rgba(160, 255, 120, 0.5);
+  opacity: 0.85;
+}
+
+.station--gold .station__ring {
+  opacity: 1;
+  animation: wk-ring 2.2s ease-in-out infinite;
+}
+
+.station--boss .station__ring {
+  border-color: rgba(255, 190, 210, 0.95);
+  box-shadow: 0 0 12px 3px rgba(255, 70, 130, 0.7), inset 0 0 8px 2px rgba(255, 120, 160, 0.6);
+  opacity: 1;
+  animation: wk-ring 2.6s ease-in-out infinite;
+}
+
+@keyframes wk-ring {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.55; }
+}
+
+.station.ist-gewaehlt .station__ring {
+  opacity: 1;
+  border-color: #fff;
+}
+
+/* Das Emblem schwebt knapp über der Oberseite. */
+.station__emblem {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: 50%;
+  translate: -50% 0;
+  overflow: visible;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35));
+}
+
+.station.ist-aktuell .station__emblem {
+  animation: wk-schweben 2s ease-in-out infinite;
+}
+
+@keyframes wk-schweben {
+  50% { transform: translateY(-6%); }
+}
+
+.station--gold .station__emblem {
+  filter: drop-shadow(0 0 6px rgba(255, 210, 80, 0.85)) drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35));
+}
+
+.station--gruen .station__emblem {
+  filter: drop-shadow(0 0 5px rgba(120, 255, 90, 0.7)) drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* Boss: Er steht selbst auf dem Sockel, das Emblem sitzt vorn als Plakette. */
+.station__boss {
+  position: absolute;
+  left: 50%;
+  bottom: 44%;
+  width: 62%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  display: grid;
+  place-items: end center;
+  transform-origin: 50% 100%;
+  animation: wk-boss-atmen 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));
+}
+
+.station__boss .pixel-sprite {
+  width: 100%;
+  height: 100%;
+}
+
+.station.ist-gesperrt .station__boss {
+  filter: brightness(0.1) drop-shadow(0 0 5px rgba(190, 130, 255, 0.8));
+  opacity: 0.85;
+  animation: none;
+}
+
+@keyframes wk-boss-atmen {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.03, 0.96) translateY(1%); }
+}
+
+.station.ist-boss .station__emblem {
+  top: 58%;
+  width: 30%;
+}
+
+.station__sterne {
+  position: relative;
+  z-index: 1;
+  width: 62%;
+  /* Die Sterne sitzen vorn auf dem Sockel, zwischen Plattform und Schild. */
+  margin-top: calc(var(--station) * -0.3);
+  overflow: visible;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.5));
+}
+
+.station__stern {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.station__name {
+  /* Die Plattform füllt ihren Kasten nach unten nicht ganz (Schatten) -
+     das Schild rückt deshalb etwas hinauf. */
+  margin-top: calc(var(--station) * -0.1);
+  position: relative;
+  z-index: 1;
+  padding: 2px 11px 3px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: rgba(14, 20, 46, 0.8);
+  border: 1px solid rgba(255, 215, 106, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.station__sterne + .station__name {
+  margin-top: 1px;
+}
+
+.station.ist-gesperrt .station__name {
+  color: #c4c8de;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.station.ist-boss .station__name {
+  padding: 2px 14px 3px;
+  letter-spacing: 0.08em;
+  color: #fff3c4;
+  background: linear-gradient(180deg, #7a1f45, #3e0c26);
+  border-color: rgba(255, 215, 106, 0.8);
+}
+
+.station.ist-gewaehlt .station__name {
+  color: var(--wk-tief);
+  background: linear-gradient(180deg, #fff0b0, #ffc53d);
+  border-color: #fff6d0;
+  text-shadow: none;
+}
+
+/* Antippen: Plattform hüpft, eine Lichtwelle läuft nach außen. */
+.station__koerper::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 70%;
+  aspect-ratio: 2.85;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 245, 200, 0.95);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.station.ist-angetippt .station__koerper {
+  animation: wk-huepfen 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.station.ist-angetippt .station__koerper::after {
+  animation: wk-welle 0.6s ease-out;
+}
+
+@keyframes wk-huepfen {
+  0% { transform: scale(1); }
+  35% { transform: translateY(-8%) scale(1.07); }
+  70% { transform: translateY(1%) scale(0.98); }
+  100% { transform: none; }
+}
+
+@keyframes wk-welle {
+  0% { opacity: 1; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(2); }
+}
+
+.station:not(:disabled):active .station__koerper {
+  transform: translateY(3%) scale(0.97);
+}
+
+/* Schwebende Lichtfunken über offenen Plattformen. */
+.station.ist-aktuell .station__koerper::before,
+.station.ist-gewaehlt .station__koerper::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 70%;
+  height: 50%;
+  translate: -50% -50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, #fff6c8 0 1.5px, transparent 2.5px) 12% 80% / 8px 8px no-repeat,
+    radial-gradient(circle, #fff6c8 0 1.5px, transparent 2.5px) 82% 70% / 8px 8px no-repeat,
+    radial-gradient(circle, #fff 0 1.2px, transparent 2px) 50% 95% / 6px 6px no-repeat,
+    radial-gradient(circle, #ffe9a0 0 1.4px, transparent 2.4px) 30% 60% / 8px 8px no-repeat;
+  animation: wk-funken-steigen 2.4s linear infinite;
+}
+
+@keyframes wk-funken-steigen {
+  0% { transform: translateY(20%); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-70%); opacity: 0; }
+}
+
+/* Neu freigeschaltet: kurzer Funkenregen und ein Aufploppen. */
+.station.ist-neu-frei .station__emblem {
+  animation: wk-plopp 0.7s 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) both;
+}
+
+.station.ist-neu-frei .station__schein {
+  animation: wk-blitz 1.2s 0.4s ease-out both;
+}
+
+@keyframes wk-plopp {
+  0% { transform: scale(0.2); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes wk-blitz {
+  0% { opacity: 0; transform: scale(0.4); }
+  30% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.station__stern.ist-neu {
+  animation: wk-stern-plopp 0.6s calc(0.5s + var(--i) * 0.25s) cubic-bezier(0.3, 1.8, 0.5, 1) both;
+}
+
+@keyframes wk-stern-plopp {
+  0% { transform: scale(0) rotate(-90deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* =========================================================
+   Kopfleiste
+   ========================================================= */
+.wk-kopf {
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.wk-kopf > * > * {
+  pointer-events: auto;
+}
+
+.wk-kopf__zeile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.wk-kopf__zeile--welt {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.wk-kopf__zeile--welt .wk-knopf-welten {
+  justify-self: start;
+}
+
+.wk-avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+}
+
+.wk-avatar__rahmen {
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, #a8741c, #ffe9a0, #ffc53d, #9c6512, #ffe08a, #a8741c);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+.wk-avatar__bild.hud__avatar {
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--wk-tief);
+  background: radial-gradient(circle at 50% 35%, #bfe4ff, #5a86d6 70%, #2e4a96);
+}
+
+.wk-avatar__level {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  translate: -50% 0;
+  padding: 1px 9px 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 8px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.wk-kopf__werte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.wk-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 11px 0 5px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.wk-chip__icon svg {
+  display: block;
+  width: 23px;
+  height: 23px;
+}
+
+.wk-chip--knopf {
+  cursor: pointer;
+  border-color: var(--liga, var(--wk-gold));
+}
+
+.wk-chip--knopf:active,
+.wk-chip__plus:active,
+.wk-knopf-welten:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.wk-chip--muenzen {
+  padding-right: 3px;
+}
+
+.wk-chip__plus {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 3px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: linear-gradient(180deg, #7ee06a, #2a9a24);
+  border: 1.5px solid #c9ffb0;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.wk-chip__plus svg {
+  width: 15px;
+  height: 15px;
+}
+
+.wk-knopf-welten {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px 0 9px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 14px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.wk-knopf-welten__icon svg {
+  display: block;
+  width: 27px;
+  height: 23px;
+}
+
+/* Weltname auf einem Banner mit goldenen Spitzen links und rechts. */
+.wk-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 10px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 3px rgba(15, 23, 54, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.wk-banner::before,
+.wk-banner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  translate: 0 -50%;
+  rotate: 45deg;
+  background: linear-gradient(135deg, #ffe9a0, #c98a1c);
+  border: 1.5px solid #6b4210;
+}
+
+.wk-banner::before {
+  left: -7px;
+}
+
+.wk-banner::after {
+  right: -7px;
+}
+
+.wk-banner__icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.wk-banner__emoji {
+  font-size: 1.15rem;
+}
+
+/* =========================================================
+   Kampfkarte und Knöpfe unten
+   ========================================================= */
+.wk-fuss {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.wk-karte {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 16px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60 L0 40 L14 22 L28 40 L36 30 L50 12 L64 32 L72 26 L84 40 L92 34 L100 60 Z M300 60 L304 38 L318 18 L332 38 L344 26 L358 8 L372 30 L384 22 L400 36 L400 60 Z' fill='%23ffffff' opacity='0.05'/%3E%3C/svg%3E") bottom / 100% 60% no-repeat,
+    linear-gradient(180deg, rgba(34, 46, 98, 0.97) 0%, rgba(16, 24, 56, 0.98) 60%, rgba(10, 16, 40, 0.98) 100%);
+  border: 2px solid var(--wk-gold);
+  box-shadow: 0 0 0 3px rgba(12, 18, 44, 0.85), 0 0 0 4.5px rgba(217, 165, 58, 0.45), 0 14px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.wk-karte__ecke {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  rotate: 45deg;
+  background: linear-gradient(135deg, #ffe9a0, #c98a1c);
+  border: 1.5px solid #6b4210;
+}
+
+.wk-karte__ecke--lo { left: 50%; top: -7px; translate: -50% 0; }
+.wk-karte__ecke--ro { display: none; }
+.wk-karte__ecke--lu { left: -7px; top: 50%; translate: 0 -50%; }
+.wk-karte__ecke--ru { right: -7px; top: 50%; translate: 0 -50%; }
+
+.wk-karte__buehne {
+  position: relative;
+  width: 84px;
+  height: 80px;
+  display: grid;
+  place-items: end center;
+}
+
+.wk-karte__podest {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 78px;
+  height: 18px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(130, 205, 255, 0.55), rgba(80, 140, 255, 0));
+  border: 2px solid rgba(150, 215, 255, 0.75);
+  box-shadow: 0 0 14px rgba(120, 200, 255, 0.6);
+}
+
+.wk-karte.ist-boss .wk-karte__podest {
+  background: radial-gradient(closest-side, rgba(255, 110, 160, 0.55), rgba(255, 60, 120, 0));
+  border-color: rgba(255, 170, 200, 0.8);
+  box-shadow: 0 0 16px rgba(255, 80, 140, 0.6);
+}
+
+.wk-karte__figur {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 8px;
+  display: grid;
+  place-items: end center;
+  transform-origin: 50% 100%;
+  animation: wk-atmen 2.8s ease-in-out infinite;
+}
+
+.wk-karte__figur .pixel-sprite {
+  width: 100%;
+  height: 100%;
+}
+
+.wk-karte.ist-neu .wk-karte__figur .pixel-sprite {
+  animation: wk-aufleuchten 0.6s ease-out;
+}
+
+@keyframes wk-atmen {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-4px) scale(1.03, 0.97); }
+}
+
+@keyframes wk-aufleuchten {
+  0% { filter: brightness(2.4) drop-shadow(0 0 10px #fff); }
+  100% { filter: none; }
+}
+
+.wk-karte__funke {
+  position: absolute;
+  bottom: 14px;
+  left: calc(22% + var(--i) * 26%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff6c8;
+  box-shadow: 0 0 6px #ffe08a;
+  opacity: 0;
+  animation: wk-funke 2.4s calc(var(--i) * 0.8s) ease-out infinite;
+}
+
+.wk-karte.ist-boss .wk-karte__funke {
+  background: #ffd0e0;
+  box-shadow: 0 0 6px #ff5c8a;
+}
+
+@keyframes wk-funke {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-58px); opacity: 0; }
+}
+
+.wk-karte__trenner {
+  width: 2px;
+  align-self: stretch;
+  margin: 6px 0;
+  background: linear-gradient(180deg, transparent, var(--wk-gold), transparent);
+}
+
+.wk-karte__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wk-karte__titel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 1.14rem;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.wk-karte__krone svg {
+  display: block;
+  width: 28px;
+  height: 23px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+.wk-karte__zeile {
+  font-size: 0.9rem;
+  color: #d4dcfa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wk-karte__zeile strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.wk-karte__punkt {
+  margin: 0 3px;
+  color: var(--wk-gold);
+}
+
+.wk-karte__muenze svg {
+  display: inline-block;
+  width: 19px;
+  height: 19px;
+  vertical-align: -4px;
+}
+
+.wk-knoepfe {
+  display: flex;
+  gap: 10px;
+}
+
+.wk-zurueck {
+  flex: 0 0 auto;
+  width: 64px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border-radius: 18px;
+  background: var(--wk-panel);
+  border: 2px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 0 rgba(6, 10, 30, 0.7), 0 8px 14px rgba(0, 0, 0, 0.35);
+}
+
+.wk-zurueck svg {
+  width: 26px;
+  height: 26px;
+}
+
+.wk-zurueck:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 0 rgba(6, 10, 30, 0.7);
+}
+
+.wk-start {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: clamp(1.02rem, 5.2vw, 1.42rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  cursor: pointer;
+  text-shadow: 0 2px 0 rgba(0, 70, 0, 0.65);
+  border-radius: 22px;
+  border: 3px solid #f2c45a;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(180deg, #8fe86a 0%, #4cc23a 46%, #2f9e26 54%, #1f7a1c 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55), inset 0 -4px 0 rgba(0, 60, 0, 0.35),
+    0 0 0 2px rgba(90, 56, 10, 0.65), 0 5px 0 #145214, 0 0 22px rgba(130, 255, 100, 0.45);
+  animation: wk-knopf-glimmen 2.6s ease-in-out infinite;
+  transition: transform 0.08s ease;
+}
+
+.wk-start.ist-boss {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(180deg, #8fe86a 0%, #4cc23a 46%, #2f9e26 54%, #1f7a1c 100%);
+}
+
+.wk-start:active {
+  transform: translateY(4px) scale(0.985);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 0 rgba(0, 60, 0, 0.35),
+    0 0 0 2px rgba(90, 56, 10, 0.65), 0 1px 0 #145214, 0 0 30px rgba(170, 255, 140, 0.75);
+}
+
+.wk-start:disabled {
+  filter: grayscale(0.8) brightness(0.8);
+  animation: none;
+  cursor: default;
+}
+
+@keyframes wk-knopf-glimmen {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.1); }
+}
+
+.wk-start__text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.wk-start__play svg {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+  filter: drop-shadow(0 2px 0 rgba(0, 70, 0, 0.6));
+}
+
+.wk-start__lorbeer svg {
+  display: block;
+  width: 20px;
+  height: 28px;
+  filter: drop-shadow(0 1px 0 rgba(0, 60, 0, 0.6));
+}
+
+.wk-start__lorbeer--r {
+  transform: scaleX(-1);
+}
+
+/* ---------- Schmale Handys ---------- */
+@media (max-width: 370px) {
+  .wk-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .wk-chip {
+    height: 31px;
+    padding: 0 8px 0 4px;
+    font-size: 0.78rem;
+  }
+
+  .wk-chip__icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .wk-chip__plus {
+    width: 22px;
+    height: 22px;
+  }
+
+  .wk-banner {
+    padding: 0 12px;
+    font-size: 0.95rem;
+  }
+
+  .wk-knopf-welten {
+    padding: 0 10px 0 7px;
+    font-size: 0.84rem;
+  }
+
+  .wk-start__lorbeer {
+    display: none;
+  }
+
+  .wk-karte__buehne {
+    width: 70px;
+  }
+}
+
+/* Niedrige Bildschirme (kleine Handys, Querformat): Kopfleiste und
+   Kampfkarte rücken zusammen, damit genug Karte sichtbar bleibt. */
+@media (max-height: 700px) {
+  .wk-kopf {
+    gap: 6px;
+  }
+
+  .wk-fuss {
+    gap: 8px;
+  }
+
+  .wk-karte {
+    gap: 10px;
+    padding: 6px 12px 6px 8px;
+  }
+
+  .wk-karte__buehne {
+    width: 62px;
+    height: 58px;
+  }
+
+  .wk-karte__figur {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 6px;
+  }
+
+  .wk-karte__podest {
+    width: 58px;
+    height: 14px;
+  }
+
+  .wk-karte__titel {
+    font-size: 1rem;
+  }
+
+  .wk-karte__zeile {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .wk-start {
+    min-height: 54px;
+  }
+}
+
+.wk-karte.ist-leer .wk-karte__buehne,
+.wk-karte.ist-leer .wk-karte__trenner {
+  display: none;
+}
+
+/* ---------- Sparsamer Modus ---------- */
+.wk--niedrig .wk-zweig {
+  filter: none;
+}
+
+.wk--niedrig .wk-wolke {
+  filter: none;
 }
 
   </style>
@@ -10770,14 +11822,6 @@ function enemyIdFor(world, fightIndex) {
 }
 
 // js/data/levels.js
-function positionFor(index, total) {
-  const muster = [26, 50, 74, 50];
-  const abstand = total > 1 ? 80 / (total - 1) : 0;
-  return {
-    x: muster[index % muster.length],
-    y: Number((88 - index * abstand).toFixed(2))
-  };
-}
 function buildLevels() {
   const levels = [];
   for (const world of WORLDS) {
@@ -10785,7 +11829,6 @@ function buildLevels() {
     for (let index = 0; index < total; index++) {
       const isBoss = index === total - 1;
       const enemy = getEnemy(enemyIdFor(world, index));
-      const { x, y } = positionFor(index, total);
       levels.push({
         id: `${world.id}-${index + 1}`,
         worldId: world.id,
@@ -10799,9 +11842,7 @@ function buildLevels() {
         // Spätere Kämpfe geben mehr, der Boss deutlich mehr.
         reward: Math.round(world.reward * (1 + index * 0.12) * (isBoss ? 4 : 1)),
         // Erfahrung richtet sich nach der Stärke des Gegners.
-        xp: Math.round(enemy.maxHp * 0.8 * (isBoss ? 2.5 : 1)),
-        x,
-        y
+        xp: Math.round(enemy.maxHp * 0.8 * (isBoss ? 2.5 : 1))
       });
     }
   }
@@ -11115,20 +12156,20 @@ var POSEN = [
 ];
 var KOPF_WIE = { "schlag-3": "schlag-2", "strahl-3": "strahl-2", "strahl-4": "strahl-2" };
 var KONTUR = [18, 14, 20, 255];
-function rgbZuHls(r, g, b) {
-  r /= 255;
+function rgbZuHls(r2, g, b) {
+  r2 /= 255;
   g /= 255;
   b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
+  const max = Math.max(r2, g, b);
+  const min = Math.min(r2, g, b);
   const l = (max + min) / 2;
   if (max === min) return [0, l, 0];
   const d = max - min;
   const s = l <= 0.5 ? d / (max + min) : d / (2 - max - min);
   let h;
-  if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
-  else if (max === g) h = (b - r) / d + 2;
-  else h = (r - g) / d + 4;
+  if (max === r2) h = (g - b) / d + (g < b ? 6 : 0);
+  else if (max === g) h = (b - r2) / d + 2;
+  else h = (r2 - g) / d + 4;
   return [h / 6, l, s];
 }
 function hlsZuRgb(h, l, s) {
@@ -11163,16 +12204,16 @@ function kleidungAusFarbe(hex, helligkeit = 0) {
     dunkel: Math.max(0.03, mitte - 0.25)
   };
 }
-function istKleidung(r, g, b) {
-  const [, l, s] = rgbZuHls(r, g, b);
+function istKleidung(r2, g, b) {
+  const [, l, s] = rgbZuHls(r2, g, b);
   return l >= 0.07 && l <= 0.42 && s < 0.26;
 }
-function istWarm(r, g, b) {
-  const [h, l, s] = rgbZuHls(r, g, b);
+function istWarm(r2, g, b) {
+  const [h, l, s] = rgbZuHls(r2, g, b);
   return l >= 0.12 && l <= 0.82 && s >= 0.28 && (h * 360 <= 45 || h * 360 >= 345);
 }
-function istEffekt(r, g, b) {
-  const [h, , s] = rgbZuHls(r, g, b);
+function istEffekt(r2, g, b) {
+  const [h, , s] = rgbZuHls(r2, g, b);
   return h * 360 >= 170 && h * 360 <= 250 && s > 0.35;
 }
 function kopfFinden(bild) {
@@ -11184,11 +12225,11 @@ function kopfFinden(bild) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       if (!data[i + 3]) continue;
-      const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-      if (istEffekt(r, g, b)) continue;
+      const [r2, g, b] = [data[i], data[i + 1], data[i + 2]];
+      if (istEffekt(r2, g, b)) continue;
       oben = Math.min(oben, y);
       unten = Math.max(unten, y);
-      if (istWarm(r, g, b)) warm.push([x, y]);
+      if (istWarm(r2, g, b)) warm.push([x, y]);
     }
   }
   const figur = unten - oben;
@@ -11275,10 +12316,10 @@ function linie(l, x0, y0, x1, y1, f) {
     setze(l, x0 + (x1 - x0) * i / schritte, y0 + (y1 - y0) * i / schritte, f);
   }
 }
-function stern(l, x, y, r, f) {
-  r = Math.max(1, Math.round(r));
-  linie(l, x - r, y, x + r, y, f);
-  linie(l, x, y - r, x, y + r, f);
+function stern(l, x, y, r2, f) {
+  r2 = Math.max(1, Math.round(r2));
+  linie(l, x - r2, y, x + r2, y, f);
+  linie(l, x, y - r2, x, y + r2, f);
 }
 var HUETE = {
   keiner: { name: "Kein Hut", icon: "🚫", farbe: null, malen: () => {
@@ -11560,8 +12601,8 @@ function kleidungsKarte(original, kopf) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       if (data[i + 3] < 128) continue;
-      const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-      if (istKleidung(r, g, b) && !imKopf(kopf, x, y)) karte[y * w + x] = rgbZuHls(r, g, b)[1];
+      const [r2, g, b] = [data[i], data[i + 1], data[i + 2]];
+      if (istKleidung(r2, g, b) && !imKopf(kopf, x, y)) karte[y * w + x] = rgbZuHls(r2, g, b)[1];
     }
   }
   KLEIDUNG_CACHE.set(original, karte);
@@ -11577,14 +12618,14 @@ function poseBauen(original, kopf, rezept) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       if (original.data[i + 3] < 128) continue;
-      let [r, g, b] = [original.data[i], original.data[i + 1], original.data[i + 2]];
+      let [r2, g, b] = [original.data[i], original.data[i + 1], original.data[i + 2]];
       const l = karte[y * w + x];
       if (l >= 0) {
         const neu = kleidungsFarbe(rezept, x, y, l, s, h);
-        if (neu) [r, g, b] = neu;
+        if (neu) [r2, g, b] = neu;
       }
       const o = ((y + raum) * w + x) * 4;
-      bild.data[o] = r;
+      bild.data[o] = r2;
       bild.data[o + 1] = g;
       bild.data[o + 2] = b;
       bild.data[o + 3] = 255;
@@ -13726,7 +14767,7 @@ function truheSvg(design, { offen: offen2 = false, className = "" } = {}) {
   const schloss = d.stein ? `<circle cx="60" cy="55" r="6.5" fill="url(#${id("stein")})" stroke="${KONTUR2}" stroke-width="2" />
        <circle cx="58" cy="53" r="2" fill="#ffffff" opacity="0.85" />` : `<circle cx="60" cy="53" r="3" fill="${KONTUR2}" />
        <path d="M58.5 54 L61.5 54 L62 60 L58 60 Z" fill="${KONTUR2}" />`;
-  const krone = d.krone ? `<path d="M46 26 L50 16 L55 23 L60 12 L65 23 L70 16 L74 26 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" stroke-linejoin="round" />
+  const krone2 = d.krone ? `<path d="M46 26 L50 16 L55 23 L60 12 L65 23 L70 16 L74 26 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" stroke-linejoin="round" />
        <circle cx="60" cy="12" r="2.4" fill="${d.stein}" stroke="${KONTUR2}" stroke-width="1.2" />` : "";
   const funkeln = design === "gold" || design === "boss" ? `<path class="truhe__funkeln" d="M100 10 L102 16 L108 18 L102 20 L100 26 L98 20 L92 18 L98 16 Z" fill="#fff6c9" />
        <path class="truhe__funkeln truhe__funkeln--2" d="M18 34 L19.5 38 L23 39.5 L19.5 41 L18 45 L16.5 41 L13 39.5 L16.5 38 Z" fill="#fff6c9" />` : "";
@@ -13766,7 +14807,7 @@ function truheSvg(design, { offen: offen2 = false, className = "" } = {}) {
         <path d="M24 48 V20 Q29 17 35 16 V48 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
         <path d="M85 48 V16 Q91 17 96 20 V48 Z" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
         <rect x="10" y="42" width="100" height="8" rx="3" fill="url(#${id("band")})" stroke="${KONTUR2}" stroke-width="2" />
-        ${krone}
+        ${krone2}
       </g>
       <!-- Körper - nach dem Deckel gezeichnet, damit das Schloss über
            dessen Rand hängt -->
@@ -15081,7 +16122,7 @@ var shopScreen = {
       { id: "studio", label: "Studio", bauen: baueStudio },
       { id: "besitz", label: "Besitz", bauen: baueBesitz }
     ];
-    let aktiv = REITER3.some((r) => r.id === params.tab) ? params.tab : "truhen";
+    let aktiv = REITER3.some((r2) => r2.id === params.tab) ? params.tab : "truhen";
     function zeichne() {
       reiterLeiste.innerHTML = "";
       REITER3.forEach((reiter) => {
@@ -15269,7 +16310,7 @@ var monsterScreen = {
       { id: "aussehen", label: "Aussehen", bauen: baueAussehen },
       { id: "kraefte", label: "Kräfte", bauen: baueKraefte2 }
     ];
-    let aktiv = REITER3.some((r) => r.id === params.tab) ? params.tab : "werte";
+    let aktiv = REITER3.some((r2) => r2.id === params.tab) ? params.tab : "werte";
     function zeichne() {
       reiterLeiste.innerHTML = "";
       REITER3.forEach((reiter) => {
@@ -15819,7 +16860,7 @@ var REITER = [
 ];
 var collectionScreen = {
   mount(root, params = {}) {
-    let aktiv = REITER.some((r) => r.id === params.tab) ? params.tab : "monster";
+    let aktiv = REITER.some((r2) => r2.id === params.tab) ? params.tab : "monster";
     const screen = document.createElement("div");
     screen.className = "screen screen--page";
     screen.appendChild(createScenery({ dimmed: true }));
@@ -16168,7 +17209,7 @@ var settingsScreen = {
     const content = document.createElement("div");
     content.className = "page__content";
     screen.appendChild(content);
-    let aktiv = REITER2.some((r) => r.id === params.tab) ? params.tab : "spiel";
+    let aktiv = REITER2.some((r2) => r2.id === params.tab) ? params.tab : "spiel";
     function zeichne() {
       melderAbmelden();
       reiterLeiste.innerHTML = "";
@@ -16737,6 +17778,166 @@ var lobbyScreen = {
   }
 };
 
+// js/data/weltkarten.js
+var FARBEN_GRUENES_TAL = {
+  himmelOben: "#3f9fe6",
+  himmelUnten: "#d4f0ff",
+  sonne: "#fff6d0",
+  bergFern: "#9fb3e0",
+  bergFernHell: "#c9d6f2",
+  bergNah: "#7593c4",
+  bergNahHell: "#a9bde6",
+  schnee: "#f6faff",
+  huegelFern: "#5f9f6a",
+  wald: "#3f7f4a",
+  wiese: "#6fc04a",
+  wieseHell: "#a6dc6a",
+  wieseDunkel: "#3f8f34",
+  weg: "#e6d29c",
+  wegRand: "#b99a5e",
+  wasser: "#3fa6e0",
+  wasserHell: "#a6e4ff",
+  wasserTief: "#1f6fae",
+  ufer: "#8a7550",
+  fels: "#a39d90",
+  felsHell: "#d2cbbb",
+  felsDunkel: "#6a645a",
+  moos: "#6eae36",
+  holz: "#8d5a30",
+  holzDunkel: "#5a3a1c",
+  laub: "#4f9c36",
+  laubHell: "#a4dc5a",
+  laubDunkel: "#2a6526",
+  stamm: "#7a5232",
+  bluete: "#ffb6d3",
+  blueteHell: "#ffe2ef",
+  blueteDunkel: "#e0709f",
+  blumen: ["#b47cf0", "#ffd34d", "#ffffff", "#ff8fbd", "#7fb8ff"],
+  glitzer: "#fff3b0"
+};
+var KARTEN = {
+  1: {
+    farben: FARBEN_GRUENES_TAL,
+    baum: "laub",
+    deko: {
+      baeume: 6,
+      bluetenbaeume: 2,
+      felsen: 5,
+      buesche: 6,
+      pilze: 3,
+      blumen: 9,
+      gras: 30,
+      fluss: true,
+      wasserfall: true,
+      see: true,
+      ruinen: true,
+      fahne: true,
+      laternen: true,
+      zaeune: true,
+      vordergrund: true
+    },
+    leben: {
+      schmetterlinge: true,
+      blaetter: true,
+      glitzer: true,
+      wolken: true,
+      wolkenschatten: true,
+      grasWiegen: true
+    },
+    teilchen: "bluete"
+  }
+};
+var VORLAGEN = {
+  wald: { baum: "laub", wasser: ["#3fa6e0", "#a6e4ff", "#1f6fae"], teilchen: "blatt", deko: { fluss: true, wasserfall: true, see: true } },
+  kristall: { baum: "kristall", wasser: ["#7a6bf0", "#cbbfff", "#3d2f9e"], teilchen: "funke", deko: { see: true, pilze: 4 } },
+  vulkan: { baum: "felsnadel", wasser: ["#ff7a1f", "#ffd36b", "#b8320f"], teilchen: "glut", deko: { fluss: true, wasserfall: true, blumen: 0 } },
+  eis: { baum: "tanne", wasser: ["#9fdcf5", "#effaff", "#5aa7d6"], teilchen: "flocke", deko: { see: true } },
+  schatten: { baum: "kahl", wasser: ["#4a3a78", "#8f7ad0", "#22183f"], teilchen: "funke", deko: { see: true, pilze: 5, blumen: 2 } },
+  wueste: { baum: "kaktus", wasser: ["#3fb6d0", "#b6f0ff", "#1f7f9e"], teilchen: "funke", deko: { see: true, blumen: 1, buesche: 2 } },
+  riff: { baum: "koralle", wasser: ["#2f9fd8", "#a6e8ff", "#145f9a"], teilchen: "funke", deko: { see: true } },
+  moor: { baum: "kahl", wasser: ["#4f6b3c", "#8fa86a", "#2b3a22"], teilchen: "funke", deko: { see: true, pilze: 6 } },
+  uhrwerk: { baum: "felsnadel", wasser: ["#5f8fa8", "#b6d8e8", "#2f5f78"], teilchen: "funke", deko: { fluss: true } },
+  zucker: { baum: "lolli", wasser: ["#ff8fc8", "#ffd6ee", "#d0508f"], teilchen: "bluete", deko: { fluss: true, see: true } },
+  sterne: { baum: "kristall", wasser: ["#3f3a9f", "#9f9aff", "#1a165f"], teilchen: "stern", deko: { see: true } }
+};
+var GRUND_DEKO = {
+  baeume: 5,
+  bluetenbaeume: 0,
+  felsen: 6,
+  buesche: 4,
+  pilze: 2,
+  blumen: 5,
+  gras: 22,
+  fluss: false,
+  wasserfall: false,
+  see: false,
+  ruinen: true,
+  fahne: true,
+  laternen: true,
+  zaeune: false,
+  vordergrund: true
+};
+function kartenThema(welt) {
+  const eigene = KARTEN[welt.id];
+  const vorlage = VORLAGEN[welt.scenery] ?? VORLAGEN.wald;
+  const farben = { ...farbenAusWelt(welt, vorlage), ...eigene?.farben ?? {} };
+  return {
+    id: welt.id,
+    farben,
+    baum: eigene?.baum ?? vorlage.baum,
+    deko: { ...GRUND_DEKO, ...vorlage.deko, ...eigene?.deko ?? {} },
+    leben: {
+      schmetterlinge: false,
+      blaetter: true,
+      glitzer: true,
+      wolken: true,
+      wolkenschatten: true,
+      grasWiegen: true,
+      ...eigene?.leben ?? {}
+    },
+    teilchen: eigene?.teilchen ?? vorlage.teilchen,
+    ausgearbeitet: Boolean(eigene)
+  };
+}
+function farbenAusWelt(welt, vorlage) {
+  const f = welt.farben ?? {};
+  const [wasser, wasserHell, wasserTief] = vorlage.wasser;
+  return {
+    ...FARBEN_GRUENES_TAL,
+    himmelOben: f.himmelOben ?? FARBEN_GRUENES_TAL.himmelOben,
+    himmelUnten: f.himmelUnten ?? FARBEN_GRUENES_TAL.himmelUnten,
+    bergFern: mischen2(f.fels ?? "#7c8fb5", f.himmelUnten ?? "#ffffff", 0.45),
+    bergFernHell: mischen2(f.fels ?? "#7c8fb5", "#ffffff", 0.55),
+    bergNah: f.fels ?? FARBEN_GRUENES_TAL.bergNah,
+    bergNahHell: mischen2(f.fels ?? "#7c8fb5", "#ffffff", 0.3),
+    schnee: f.schnee ?? FARBEN_GRUENES_TAL.schnee,
+    huegelFern: mischen2(f.wieseDunkel ?? "#3f8f2c", f.himmelUnten ?? "#ffffff", 0.25),
+    wald: f.wieseDunkel ?? FARBEN_GRUENES_TAL.wald,
+    wiese: f.wiese ?? FARBEN_GRUENES_TAL.wiese,
+    wieseHell: f.wieseHell ?? FARBEN_GRUENES_TAL.wieseHell,
+    wieseDunkel: f.wieseDunkel ?? FARBEN_GRUENES_TAL.wieseDunkel,
+    weg: mischen2(f.wieseHell ?? "#e6d29c", "#f2e2b0", 0.6),
+    wegRand: mischen2(f.wieseDunkel ?? "#b99a5e", "#8a6a3a", 0.5),
+    wasser,
+    wasserHell,
+    wasserTief,
+    fels: f.fels ?? FARBEN_GRUENES_TAL.fels,
+    felsHell: mischen2(f.fels ?? "#a39d90", "#ffffff", 0.4),
+    felsDunkel: f.felsDunkel ?? FARBEN_GRUENES_TAL.felsDunkel,
+    moos: f.wieseHell ?? FARBEN_GRUENES_TAL.moos,
+    laub: f.baum ?? FARBEN_GRUENES_TAL.laub,
+    laubHell: mischen2(f.baum ?? "#4f9c36", "#ffffff", 0.4),
+    laubDunkel: f.baumDunkel ?? FARBEN_GRUENES_TAL.laubDunkel,
+    stamm: mischen2(f.baumDunkel ?? "#7a5232", "#5a3a1c", 0.5)
+  };
+}
+function mischen2(a, b, anteil) {
+  const lang = (hex) => hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
+  const zahl = (hex) => [1, 3, 5].map((i) => parseInt(lang(hex).slice(i, i + 2), 16));
+  const [x, y] = [zahl(a), zahl(b)];
+  return `#${x.map((wert, i) => Math.round(wert + (y[i] - wert) * anteil).toString(16).padStart(2, "0")).join("")}`;
+}
+
 // js/ui/effekte.js
 function animationenAn2() {
   if (document.body.classList.contains("no-animations")) return false;
@@ -16785,16 +17986,16 @@ function trefferFunke(sprite, farbe2 = "#ffd76a", splitter = 7) {
 }
 function karteWeg(karte) {
   if (!karte || !animationenAn2()) return;
-  const r = karte.getBoundingClientRect();
+  const r2 = karte.getBoundingClientRect();
   const klon = karte.cloneNode(true);
   klon.classList.add("karte-flieg");
   klon.classList.remove("is-ready", "is-disabled");
   Object.assign(klon.style, {
     position: "fixed",
-    left: `${r.left}px`,
-    top: `${r.top}px`,
-    width: `${r.width}px`,
-    height: `${r.height}px`,
+    left: `${r2.left}px`,
+    top: `${r2.top}px`,
+    width: `${r2.width}px`,
+    height: `${r2.height}px`,
     margin: "0",
     zIndex: "20",
     pointerEvents: "none"
@@ -16878,11 +18079,1861 @@ function weltTeilchen(screen, weltId) {
   setTimeout(() => ebene.remove(), 2e3);
 }
 
-// js/screens/map.js
-function nodeLabel(level, unlocked) {
-  if (level.isBoss) return unlocked ? `BOSS · ${getEnemy(level.enemyId).name}` : "BOSS";
-  return `Kampf ${level.number}`;
+// js/ui/weltkarte/geometrie.js
+function wuerfel2(seed) {
+  let a = seed >>> 0;
+  return function() {
+    a = a + 1831565813 >>> 0;
+    let t = a;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
 }
+function zwischen3(zufall2, von, bis) {
+  return von + (bis - von) * zufall2();
+}
+function r(zahl) {
+  return Math.round(zahl * 10) / 10;
+}
+function kurve(punkte, schritt = 8) {
+  if (punkte.length < 2) {
+    const p = punkte[0] ?? { x: 0, y: 0 };
+    return { d: `M${r(p.x)} ${r(p.y)}`, proben: [p] };
+  }
+  let d = `M${r(punkte[0].x)} ${r(punkte[0].y)}`;
+  const proben = [punkte[0]];
+  for (let i = 0; i < punkte.length - 1; i++) {
+    const p0 = punkte[i - 1] ?? punkte[i];
+    const p1 = punkte[i];
+    const p2 = punkte[i + 1];
+    const p3 = punkte[i + 2] ?? p2;
+    const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
+    const c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+    d += ` C${r(c1.x)} ${r(c1.y)} ${r(c2.x)} ${r(c2.y)} ${r(p2.x)} ${r(p2.y)}`;
+    const laenge = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const stuecke = Math.max(2, Math.ceil(laenge / schritt));
+    for (let s = 1; s <= stuecke; s++) {
+      proben.push(bezierPunkt(p1, c1, c2, p2, s / stuecke));
+    }
+  }
+  return { d, proben };
+}
+function bezierPunkt(a, b, c, d, t) {
+  const u = 1 - t;
+  return {
+    x: u * u * u * a.x + 3 * u * u * t * b.x + 3 * u * t * t * c.x + t * t * t * d.x,
+    y: u * u * u * a.y + 3 * u * u * t * b.y + 3 * u * t * t * c.y + t * t * t * d.y
+  };
+}
+function abstandZuLinie(p, proben) {
+  let best = Infinity;
+  for (let i = 0; i < proben.length - 1; i++) {
+    best = Math.min(best, abstandZuStrecke(p, proben[i], proben[i + 1]));
+  }
+  if (proben.length === 1) best = Math.hypot(p.x - proben[0].x, p.y - proben[0].y);
+  return best;
+}
+function abstandZuStrecke(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const l2 = dx * dx + dy * dy;
+  const t = l2 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+function schnittpunkte(a, b) {
+  const treffer = [];
+  for (let i = 0; i < a.length - 1; i++) {
+    for (let j = 0; j < b.length - 1; j++) {
+      const p = streckenSchnitt(a[i], a[i + 1], b[j], b[j + 1]);
+      if (p) treffer.push(p);
+    }
+  }
+  return treffer;
+}
+function streckenSchnitt(p1, p2, p3, p4) {
+  const d = (p2.x - p1.x) * (p4.y - p3.y) - (p2.y - p1.y) * (p4.x - p3.x);
+  if (d === 0) return null;
+  const t = ((p3.x - p1.x) * (p4.y - p3.y) - (p3.y - p1.y) * (p4.x - p3.x)) / d;
+  const u = ((p3.x - p1.x) * (p2.y - p1.y) - (p3.y - p1.y) * (p2.x - p1.x)) / d;
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+  return { x: p1.x + t * (p2.x - p1.x), y: p1.y + t * (p2.y - p1.y) };
+}
+function pfadInPixeln(proben, massstab) {
+  return proben.map((p, i) => `${i ? "L" : "M"}${r(p.x * massstab)} ${r(p.y * massstab)}`).join(" ");
+}
+
+// js/ui/weltkarte/layout.js
+var MUSTER4 = [330, 560, 760, 610, 300, 220, 470, 720, 790, 560, 300, 460, 700, 560, 380];
+var SCHRITT = 360;
+function karteAnlegen({
+  anzahl,
+  breite = 1e3,
+  oben,
+  unten,
+  seed = 1,
+  deko = {},
+  frei = { x: 140, oben: 120, unten: 170 }
+}) {
+  const zufall2 = wuerfel2(seed * 7919 + anzahl);
+  const ox = (Math.max(1e3, breite) - 1e3) / 2;
+  const hoehe = Math.round(oben + (anzahl - 1) * SCHRITT + unten);
+  const horizont = Math.max(120, oben - 300);
+  const stationen = [];
+  for (let i = 0; i < anzahl; i++) {
+    const istBoss = i === anzahl - 1;
+    stationen.push({
+      x: ox + (istBoss ? 500 : MUSTER4[i % MUSTER4.length]),
+      y: hoehe - unten - i * SCHRITT
+    });
+  }
+  const karte = {
+    breite: Math.max(1e3, breite),
+    hoehe,
+    ox,
+    horizont,
+    stationen,
+    fluesse: [],
+    see: null,
+    deko: [],
+    vordergrund: [],
+    frei
+  };
+  const bruecken = deko.fluss ? fluesseSuchen(karte, deko) : [];
+  karte.weg = wegBauen(karte, bruecken);
+  karte.fluesse = karte.fluesse.filter((fluss) => flussPasst(karte, fluss, karte.weg.proben));
+  if (deko.see) karte.see = seeSuchen(karte, zufall2);
+  dekoVerteilen(karte, zufall2, deko);
+  vordergrundVerteilen(karte, zufall2, deko);
+  karte.deko.sort((a, b) => a.y - b.y);
+  return karte;
+}
+function wegBauen(karte, bruecken) {
+  const { stationen, hoehe } = karte;
+  const punkte = [{ x: stationen[0].x - 70, y: hoehe + 60 }];
+  stationen.forEach((station, i) => {
+    punkte.push(station);
+    const bruecke = bruecken.find((b) => b.nach === i);
+    if (bruecke) punkte.push(bruecke.a, bruecke.b);
+  });
+  const weg = kurve(punkte, 6);
+  weg.abschnitte = [];
+  for (let i = 0; i < stationen.length - 1; i++) {
+    const teil = [stationen[i]];
+    const bruecke = bruecken.find((b) => b.nach === i);
+    if (bruecke) teil.push(bruecke.a, bruecke.b);
+    teil.push(stationen[i + 1]);
+    const vor = i === 0 ? punkte[0] : stationen[i - 1];
+    const nach = stationen[i + 2] ?? stationen[i + 1];
+    const voll = kurve([vor, ...teil, nach], 6);
+    weg.abschnitte.push(ausschneiden(voll.proben, teil[0], teil[teil.length - 1]));
+  }
+  weg.bruecken = bruecken;
+  return weg;
+}
+function ausschneiden(proben, von, bis) {
+  const naechster = (p) => proben.reduce((best, q, i) => Math.hypot(q.x - p.x, q.y - p.y) < best.d ? { d: Math.hypot(q.x - p.x, q.y - p.y), i } : best, { d: Infinity, i: 0 }).i;
+  const a = naechster(von);
+  const b = naechster(bis);
+  return proben.slice(Math.min(a, b), Math.max(a, b) + 1);
+}
+function fluesseSuchen(karte, deko) {
+  const { stationen } = karte;
+  const n = stationen.length;
+  const wunschZahl = n >= 9 ? 2 : 1;
+  const bruecken = [];
+  const kandidaten = [];
+  for (let i = 1; i < n - 2; i++) {
+    const dx = stationen[i + 1].x - stationen[i].x;
+    if (Math.abs(dx) >= 200) kandidaten.push(i);
+  }
+  const ziele = [n * 0.3, n * 0.72];
+  for (const ziel of ziele.slice(0, wunschZahl)) {
+    const sortiert = [...kandidaten].sort((a, b) => Math.abs(a - ziel) - Math.abs(b - ziel));
+    for (const i of sortiert) {
+      if (bruecken.some((b) => Math.abs(b.nach - i) < 3)) continue;
+      const versuch = flussVersuchen(karte, i, bruecken, deko);
+      if (versuch) {
+        bruecken.push(versuch.bruecke);
+        karte.fluesse.push(versuch.fluss);
+        break;
+      }
+    }
+  }
+  return bruecken;
+}
+function flussVersuchen(karte, i, bisher, deko) {
+  const { stationen, breite, ox } = karte;
+  const unten = stationen[i];
+  const oben = stationen[i + 1];
+  const seite = Math.sign(oben.x - unten.x);
+  const c = { x: (unten.x + oben.x) / 2, y: (unten.y + oben.y) / 2 };
+  const bruecke = {
+    nach: i,
+    x: c.x,
+    y: c.y,
+    a: { x: c.x - seite * 78, y: c.y + 8 },
+    b: { x: c.x + seite * 78, y: c.y - 8 }
+  };
+  for (const a1 of [330, 270, 210]) {
+    for (const h1 of [520, 440, 380]) {
+      for (const a2 of [320, 240]) {
+        const fall = { x: clamp(c.x - seite * a1, ox + 70, ox + 930), y: c.y - h1 };
+        const punkte = [
+          fall,
+          { x: c.x - seite * 50, y: c.y - 150 },
+          { x: c.x - seite * 8, y: c.y - 40 },
+          { x: c.x + seite * 8, y: c.y + 40 },
+          { x: c.x + seite * 60, y: c.y + 150 },
+          { x: c.x + seite * a2, y: c.y + 330 },
+          { x: seite > 0 ? breite + 120 : -120, y: c.y + 470 }
+        ];
+        const fluss = {
+          ...kurve(punkte, 8),
+          punkte,
+          seite,
+          bruecke,
+          wasserfall: deko.wasserfall ? { x: fall.x, y: fall.y, hoehe: 210, breite: 84 } : null
+        };
+        if (fluss.wasserfall) {
+          const kante = fall.y - fluss.wasserfall.hoehe;
+          fluss.quelle = kurve(
+            [
+              { x: seite > 0 ? -120 : breite + 120, y: kante - 160 },
+              { x: fall.x - seite * 110, y: kante - 40 },
+              { x: fall.x, y: kante + 4 }
+            ],
+            8
+          );
+          fluss.klippe = {
+            x1: Math.min(fall.x - 170, seite > 0 ? -40 : fall.x - 170),
+            x2: Math.max(fall.x + 170, seite > 0 ? fall.x + 170 : breite + 40),
+            y1: kante - 20,
+            y2: fall.y + 10
+          };
+        }
+        if (bisher.some((b) => Math.abs(b.y - c.y) < 700)) return null;
+        const probeWeg = wegBauen(karte, [...bisher, bruecke]);
+        if (flussPasst(karte, fluss, probeWeg.proben)) return { fluss, bruecke };
+      }
+    }
+  }
+  return null;
+}
+function flussPasst(karte, fluss, wegProben) {
+  const { stationen } = karte;
+  const kreuzungen = zusammenfassen(schnittpunkte(fluss.proben, wegProben));
+  if (kreuzungen.length !== 1) return false;
+  const k = kreuzungen[0];
+  if (Math.hypot(k.x - fluss.bruecke.x, k.y - fluss.bruecke.y) > 60) return false;
+  for (const s of stationen) {
+    if (abstandZuLinie(s, fluss.proben) < 175) return false;
+    if (fluss.quelle && abstandZuLinie(s, fluss.quelle.proben) < 175) return false;
+  }
+  for (const p of wegProben) {
+    if (Math.hypot(p.x - fluss.bruecke.x, p.y - fluss.bruecke.y) < 170) continue;
+    if (abstandZuLinie(p, fluss.proben) < 75) return false;
+    if (fluss.quelle && abstandZuLinie(p, fluss.quelle.proben) < 75) return false;
+  }
+  if (fluss.klippe) {
+    const { x1, x2, y1, y2 } = fluss.klippe;
+    const imKasten = (p, rand) => p.x > x1 - rand && p.x < x2 + rand && p.y > y1 - rand && p.y < y2 + rand;
+    if (wegProben.some((p) => imKasten(p, 40))) return false;
+    if (stationen.some((s) => imKasten(s, 120))) return false;
+    if (y1 < karte.horizont + 60) return false;
+  }
+  return true;
+}
+function zusammenfassen(punkte) {
+  const ergebnis = [];
+  for (const p of punkte) {
+    if (!ergebnis.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 30)) ergebnis.push(p);
+  }
+  return ergebnis;
+}
+function seeSuchen(karte, zufall2) {
+  let best = null;
+  for (let v = 0; v < 260; v++) {
+    const rx = zwischen3(zufall2, 130, 175);
+    const ry = rx * 0.5;
+    const p = {
+      x: zwischen3(zufall2, karte.ox + 40, karte.ox + 960),
+      y: zwischen3(zufall2, karte.horizont + 500, karte.hoehe - 260)
+    };
+    const wert = freiheit(karte, p, rx + 60);
+    if (wert < 0) continue;
+    const randNaehe = Math.abs(p.x - karte.breite / 2);
+    const punkte = wert + randNaehe * 0.2;
+    if (!best || punkte > best.punkte) best = { x: p.x, y: p.y, rx, ry, punkte };
+  }
+  return best && { x: best.x, y: best.y, rx: best.rx, ry: best.ry };
+}
+function freiheit(karte, p, radius, wegRand = radius, { ohneStationen = false } = {}) {
+  const { frei } = karte;
+  for (const s of ohneStationen ? [] : karte.stationen) {
+    const dx = Math.abs(p.x - s.x);
+    const dy = p.y - s.y;
+    if (dx < frei.x + radius * 0.8 && dy > -frei.oben - radius && dy < frei.unten + radius * 0.4) return -1;
+  }
+  const wegAbstand = abstandZuLinie(p, karte.weg.proben);
+  if (wegAbstand < wegRand) return -1;
+  for (const fluss of karte.fluesse) {
+    if (abstandZuLinie(p, fluss.proben) < radius * 0.7 + 45) return -1;
+    if (fluss.quelle && abstandZuLinie(p, fluss.quelle.proben) < radius * 0.7 + 40) return -1;
+    if (fluss.klippe) {
+      const { x1, x2, y1, y2 } = fluss.klippe;
+      if (p.x > x1 - radius * 0.6 && p.x < x2 + radius * 0.6 && p.y > y1 - radius * 0.3 && p.y < y2 + radius * 0.9) return -1;
+    }
+    const b = fluss.bruecke;
+    if (Math.hypot(p.x - b.x, p.y - b.y) < radius + 110) return -1;
+  }
+  if (karte.see) {
+    const { x, y, rx, ry } = karte.see;
+    const nx = (p.x - x) / (rx + radius * 0.8);
+    const ny = (p.y - y) / (ry + radius * 0.5);
+    if (nx * nx + ny * ny < 1) return -1;
+  }
+  return wegAbstand;
+}
+var ARTEN = {
+  baum: { radius: 110, weg: 150, rand: 0.75, abstand: 150 },
+  bluetenbaum: { radius: 100, weg: 140, rand: 0.6, abstand: 150 },
+  busch: { radius: 50, weg: 75, rand: 0.3, abstand: 70 },
+  fels: { radius: 50, weg: 70, rand: 0.3, abstand: 80 },
+  blumen: { radius: 60, weg: 42, rand: 0, abstand: 60 },
+  gras: { radius: 18, weg: 34, rand: 0, abstand: 26 },
+  pilze: { radius: 26, weg: 40, rand: 0.2, abstand: 50 },
+  ruine: { radius: 95, weg: 135, rand: 0.5, abstand: 220 }
+};
+function dekoVerteilen(karte, zufall2, deko) {
+  const flaeche = karte.breite * (karte.hoehe - karte.horizont) / 1e6;
+  const belegt = [];
+  const platzFrei = (p, radius, abstand) => belegt.every((b) => Math.hypot(b.x - p.x, (b.y - p.y) * 1.4) >= Math.max(abstand, b.abstand) * 0.5 + (radius + b.radius) * 0.5);
+  if (deko.ruinen) {
+    const boss = karte.stationen[karte.stationen.length - 1];
+    const seite = boss.x > karte.breite / 2 ? -1 : 1;
+    const p = { x: boss.x + seite * 300, y: karte.horizont + 150 };
+    if (freiheit(karte, p, 80, 130) >= 0) {
+      karte.deko.push({ art: "tor", x: p.x, y: p.y, s: 1.15, v: 0 });
+      belegt.push({ ...p, radius: 150, abstand: 200 });
+    }
+  }
+  if (deko.fahne) {
+    const boss = karte.stationen[karte.stationen.length - 1];
+    for (const seite of [1, -1]) {
+      const p = { x: boss.x + seite * 205, y: boss.y + 60 };
+      if (abstandZuLinie(p, karte.weg.proben) > 60) {
+        karte.deko.push({ art: "fahne", x: p.x, y: p.y, s: 1, v: seite });
+        belegt.push({ ...p, radius: 30, abstand: 60 });
+        break;
+      }
+    }
+  }
+  if (deko.laternen) {
+    karte.stationen.forEach((s, i) => {
+      if (i === karte.stationen.length - 1 || i % 4 !== 0) return;
+      for (const seite of [-1, 1]) {
+        const p = { x: s.x + seite * 172, y: s.y + 60 };
+        if (freiheit(karte, p, 20, 55, { ohneStationen: true }) < 0) continue;
+        karte.deko.push({ art: "laterne", x: p.x, y: p.y, s: 1, v: 0 });
+        belegt.push({ ...p, radius: 30, abstand: 60 });
+        break;
+      }
+    });
+  }
+  if (deko.zaeune) zaeuneSetzen(karte, zufall2, belegt);
+  const plan = [
+    ["ruine", deko.ruinen ? 0.35 : 0],
+    ["baum", deko.baeume ?? 0],
+    ["bluetenbaum", deko.bluetenbaeume ?? 0],
+    ["fels", deko.felsen ?? 0],
+    ["busch", deko.buesche ?? 0],
+    ["pilze", deko.pilze ?? 0],
+    ["blumen", deko.blumen ?? 0],
+    ["gras", deko.gras ?? 0]
+  ];
+  for (const [art, dichte] of plan) {
+    const regel = ARTEN[art];
+    const ziel = Math.round(dichte * flaeche);
+    let gesetzt = 0;
+    for (let v = 0; v < ziel * 30 && gesetzt < ziel; v++) {
+      const amRand = zufall2() < regel.rand;
+      let x;
+      if (amRand) {
+        const links = zufall2() < 0.5;
+        x = links ? zwischen3(zufall2, -40, karte.ox + 170) : zwischen3(zufall2, karte.ox + 830, karte.breite + 40);
+      } else {
+        x = zwischen3(zufall2, -20, karte.breite + 20);
+      }
+      const y = zwischen3(zufall2, karte.horizont + 90, karte.hoehe + 40);
+      const s = zwischen3(zufall2, 0.8, 1.2);
+      const radius = regel.radius * s;
+      const p = { x, y };
+      if (freiheit(karte, p, radius, regel.weg * (0.85 + s * 0.15)) < 0) continue;
+      if (!platzFrei(p, radius, regel.abstand)) continue;
+      const stueck2 = { art, x: Math.round(x), y: Math.round(y), s: Math.round(s * 100) / 100, v: Math.floor(zufall2() * 1e3) };
+      if (art === "gras" && gesetzt % 3 === 0) stueck2.wiegt = true;
+      karte.deko.push(stueck2);
+      belegt.push({ x, y, radius, abstand: regel.abstand });
+      gesetzt++;
+    }
+  }
+  karte.schmetterlinge = karte.deko.filter((d) => d.art === "blumen").filter((_, i) => i % 3 === 0).map((d) => ({ x: d.x, y: d.y - 40 }));
+}
+function zaeuneSetzen(karte, zufall2, belegt) {
+  const proben = karte.weg.proben;
+  const zahl = Math.max(2, Math.round(karte.stationen.length / 4));
+  for (let z = 0; z < zahl; z++) {
+    for (let versuch = 0; versuch < 40; versuch++) {
+      const i = Math.floor(zwischen3(zufall2, 0.08, 0.92) * (proben.length - 12));
+      const a = proben[i];
+      const b = proben[i + 10];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const l = Math.hypot(dx, dy) || 1;
+      const seite = zufall2() < 0.5 ? 1 : -1;
+      const nx = -dy / l * seite * 62;
+      const ny = dx / l * seite * 62;
+      const p = { x: a.x + nx, y: a.y + ny };
+      if (freiheit(karte, p, 40, 50) < 0) continue;
+      if (belegt.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 160)) continue;
+      const winkel = Math.atan2(dy, dx) * 180 / Math.PI;
+      const flach = (winkel + 360) % 180;
+      if (flach > 50 && flach < 130) continue;
+      karte.deko.push({ art: "zaun", x: Math.round(p.x), y: Math.round(p.y), s: 1, v: Math.round(winkel > 90 || winkel < -90 ? winkel + 180 : winkel) });
+      belegt.push({ ...p, radius: 60, abstand: 120 });
+      break;
+    }
+  }
+}
+function vordergrundVerteilen(karte, zufall2, deko) {
+  if (!deko.vordergrund) return;
+  let y = karte.horizont + 600;
+  let links = zufall2() < 0.5;
+  while (y < karte.hoehe) {
+    karte.vordergrund.push({
+      x: links ? 0 : karte.breite,
+      y: Math.round(y),
+      s: Math.round(zwischen3(zufall2, 0.85, 1.25) * 100) / 100,
+      v: Math.floor(zufall2() * 1e3),
+      seite: links ? -1 : 1
+    });
+    y += zwischen3(zufall2, 650, 950);
+    links = !links;
+  }
+}
+function clamp(wert, min, max) {
+  return Math.max(min, Math.min(max, wert));
+}
+
+// js/ui/weltkarte/zeichnen.js
+function defsZeichnen(karte, f) {
+  return `
+  <defs>
+    <filter id="weich" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="weich2" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    <filter id="dunst" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="16"/></filter>
+    <linearGradient id="boden" gradientUnits="userSpaceOnUse" x1="0" y1="${karte.horizont}" x2="0" y2="${karte.hoehe}">
+      <stop offset="0" stop-color="${mischen2(f.wieseHell, f.himmelUnten, 0.18)}"/>
+      <stop offset="0.06" stop-color="${f.wieseHell}"/>
+      <stop offset="0.35" stop-color="${f.wiese}"/>
+      <stop offset="1" stop-color="${mischen2(f.wiese, f.wieseDunkel, 0.35)}"/>
+    </linearGradient>
+    <radialGradient id="fleckHell"><stop offset="0" stop-color="${f.wieseHell}" stop-opacity="0.75"/><stop offset="1" stop-color="${f.wieseHell}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="fleckDunkel"><stop offset="0" stop-color="${f.wieseDunkel}" stop-opacity="0.5"/><stop offset="1" stop-color="${f.wieseDunkel}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="fleckGelb"><stop offset="0" stop-color="${mischen2(f.wieseHell, "#fff3a0", 0.5)}" stop-opacity="0.55"/><stop offset="1" stop-color="#fff3a0" stop-opacity="0"/></radialGradient>
+    <pattern id="halme" width="46" height="38" patternUnits="userSpaceOnUse">
+      <path d="M6 30 q2 -9 5 -12 M9 31 q0 -8 -3 -12 M30 14 q2 -8 5 -10 M33 15 q-1 -7 -4 -10" stroke="${f.wieseDunkel}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.32"/>
+      <path d="M22 34 q1 -6 4 -9 M40 30 q1 -5 3 -7" stroke="${f.wieseHell}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.45"/>
+    </pattern>
+    <radialGradient id="laubKugel" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="${f.laubHell}"/><stop offset="0.5" stop-color="${f.laub}"/><stop offset="1" stop-color="${f.laubDunkel}"/>
+    </radialGradient>
+    <radialGradient id="blueteKugel" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="${f.blueteHell}"/><stop offset="0.5" stop-color="${f.bluete}"/><stop offset="1" stop-color="${f.blueteDunkel}"/>
+    </radialGradient>
+    <linearGradient id="stamm" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${mischen2(f.stamm, "#ffffff", 0.2)}"/><stop offset="0.55" stop-color="${f.stamm}"/><stop offset="1" stop-color="${mischen2(f.stamm, "#000000", 0.4)}"/>
+    </linearGradient>
+    <linearGradient id="fels" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="${f.felsHell}"/><stop offset="0.45" stop-color="${f.fels}"/><stop offset="1" stop-color="${f.felsDunkel}"/>
+    </linearGradient>
+    <linearGradient id="klippe" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="${mischen2(f.fels, "#ffffff", 0.15)}"/><stop offset="0.5" stop-color="${mischen2(f.fels, f.felsDunkel, 0.4)}"/><stop offset="1" stop-color="${mischen2(f.felsDunkel, "#000", 0.2)}"/>
+    </linearGradient>
+    <linearGradient id="moos" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${mischen2(f.moos, "#ffffff", 0.25)}"/><stop offset="1" stop-color="${mischen2(f.moos, "#000000", 0.25)}"/>
+    </linearGradient>
+    <linearGradient id="holz" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${mischen2(f.holz, "#ffffff", 0.2)}"/><stop offset="1" stop-color="${f.holzDunkel}"/>
+    </linearGradient>
+    <radialGradient id="seeWasser" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="${f.wasserHell}"/><stop offset="0.45" stop-color="${f.wasser}"/><stop offset="1" stop-color="${f.wasserTief}"/>
+    </radialGradient>
+    <linearGradient id="fall" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${mischen2(f.wasserHell, "#ffffff", 0.3)}"/>
+      <stop offset="0.35" stop-color="#ffffff"/>
+      <stop offset="0.7" stop-color="${f.wasserHell}"/>
+      <stop offset="1" stop-color="${f.wasser}"/>
+    </linearGradient>
+    <radialGradient id="lampe"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.9"/><stop offset="1" stop-color="#ffb93d" stop-opacity="0"/></radialGradient>
+    <linearGradient id="dunstOben" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${f.himmelUnten}" stop-opacity="0.85"/><stop offset="1" stop-color="${f.himmelUnten}" stop-opacity="0"/>
+    </linearGradient>
+  </defs>`;
+}
+function hintergrundZeichnen(karte, f, thema) {
+  const { breite, horizont } = karte;
+  const hoehe = horizont + 320;
+  const zufall2 = wuerfel2(thema.id * 131 + 7);
+  const sonne = { x: breite * 0.24, y: horizont * 0.22 };
+  let svg = `
+  <defs>
+    <linearGradient id="himmel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${f.himmelOben}"/>
+      <stop offset="0.75" stop-color="${mischen2(f.himmelOben, f.himmelUnten, 0.75)}"/>
+      <stop offset="1" stop-color="${f.himmelUnten}"/>
+    </linearGradient>
+    <radialGradient id="sonne"><stop offset="0" stop-color="${f.sonne}" stop-opacity="0.95"/><stop offset="0.25" stop-color="${f.sonne}" stop-opacity="0.45"/><stop offset="1" stop-color="${f.sonne}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="bergFern" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${f.bergFernHell}"/><stop offset="1" stop-color="${f.bergFern}"/></linearGradient>
+    <linearGradient id="bergNah" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${f.bergNahHell}"/><stop offset="0.7" stop-color="${f.bergNah}"/><stop offset="1" stop-color="${mischen2(f.bergNah, f.huegelFern, 0.5)}"/></linearGradient>
+    <linearGradient id="dunst" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${f.himmelUnten}" stop-opacity="0"/><stop offset="1" stop-color="${f.himmelUnten}" stop-opacity="0.9"/></linearGradient>
+    <linearGradient id="wolke" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#ffffff"/><stop offset="1" stop-color="${mischen2(f.himmelUnten, f.himmelOben, 0.35)}"/></linearGradient>
+    <filter id="w" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="d" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+  <rect x="0" y="0" width="${breite}" height="${hoehe}" fill="url(#himmel)"/>
+  <circle cx="${r(sonne.x)}" cy="${r(sonne.y)}" r="${r(horizont * 0.9)}" fill="url(#sonne)"/>
+  <circle cx="${r(sonne.x)}" cy="${r(sonne.y)}" r="34" fill="#fffbe8" opacity="0.95"/>`;
+  for (let i = 0; i < 6; i++) {
+    const winkel = 0.35 + i * 0.32 + zwischen3(zufall2, -0.08, 0.08);
+    const laenge = horizont * 1.6;
+    const breiteKeil = 0.06;
+    const a = { x: sonne.x + Math.cos(winkel - breiteKeil) * laenge, y: sonne.y + Math.sin(winkel - breiteKeil) * laenge };
+    const b = { x: sonne.x + Math.cos(winkel + breiteKeil) * laenge, y: sonne.y + Math.sin(winkel + breiteKeil) * laenge };
+    svg += `<path d="M${r(sonne.x)} ${r(sonne.y)} L${r(a.x)} ${r(a.y)} L${r(b.x)} ${r(b.y)} Z" fill="${f.sonne}" opacity="0.10"/>`;
+  }
+  for (let i = 0; i < Math.ceil(breite / 450); i++) {
+    const x = zwischen3(zufall2, 0, breite);
+    const y = zwischen3(zufall2, horizont * 0.12, horizont * 0.55);
+    svg += wolkeZeichnen(x, y, zwischen3(zufall2, 0.7, 1.3), zufall2);
+  }
+  svg += bergketteZeichnen(breite, horizont + 40, horizont * 0.62, 340, zufall2, "url(#bergFern)", f.bergFernHell, f.schnee, 0.8);
+  svg += `<rect x="0" y="${r(horizont * 0.55)}" width="${breite}" height="${r(horizont * 0.5)}" fill="url(#dunst)" opacity="0.6"/>`;
+  svg += bergketteZeichnen(breite, horizont + 60, horizont * 0.4, 260, zufall2, "url(#bergNah)", f.bergNahHell, f.schnee, 0.4);
+  if (thema.deko.wasserfall) {
+    const wx = breite * zwischen3(zufall2, 0.62, 0.8);
+    const wy = horizont - horizont * 0.22;
+    svg += `<path d="M${r(wx - 5)} ${r(wy)} L${r(wx + 5)} ${r(wy)} L${r(wx + 9)} ${r(horizont + 10)} L${r(wx - 9)} ${r(horizont + 10)} Z" fill="#ffffff" opacity="0.75"/>
+      <ellipse cx="${r(wx)}" cy="${r(horizont + 8)}" rx="30" ry="12" fill="#ffffff" opacity="0.6" filter="url(#w)"/>`;
+  }
+  svg += `<rect x="0" y="${r(horizont - 120)}" width="${breite}" height="200" fill="url(#dunst)" opacity="0.7"/>`;
+  svg += huegelreiheZeichnen(breite, horizont + 10, 70, zufall2, mischen2(f.huegelFern, f.himmelUnten, 0.35), mischen2(f.wald, f.himmelUnten, 0.4));
+  svg += huegelreiheZeichnen(breite, horizont + 70, 60, zufall2, f.huegelFern, mischen2(f.wald, f.himmelUnten, 0.15));
+  svg += `<rect x="0" y="${r(horizont + 60)}" width="${breite}" height="260" fill="${f.huegelFern}"/>`;
+  return { svg, hoehe };
+}
+function wolkeZeichnen(x, y, s, zufall2) {
+  const teile = [];
+  const n = 5 + Math.floor(zufall2() * 3);
+  for (let i = 0; i < n; i++) {
+    const dx = (i - (n - 1) / 2) * 34 * s;
+    const rr = (30 + zufall2() * 26 - Math.abs(i - (n - 1) / 2) * 6) * s;
+    teile.push(`<circle cx="${r(x + dx)}" cy="${r(y - rr * 0.35)}" r="${r(rr)}"/>`);
+  }
+  return `<g fill="url(#wolke)" opacity="0.9" filter="url(#w)">${teile.join("")}<rect x="${r(x - n * 18 * s)}" y="${r(y - 6 * s)}" width="${r(n * 36 * s)}" height="${r(22 * s)}" rx="${r(11 * s)}"/></g>`;
+}
+function bergketteZeichnen(breite, fuss, maxHoehe, abstand, zufall2, fuellung, licht, schnee, schneeAnteil) {
+  let d = `M-40 ${r(fuss)}`;
+  const gipfel = [];
+  let x = -zwischen3(zufall2, 40, 120);
+  while (x < breite + 200) {
+    const h = maxHoehe * zwischen3(zufall2, 0.55, 1);
+    const w = abstand * zwischen3(zufall2, 0.75, 1.25);
+    gipfel.push({ x: x + w / 2, y: fuss - h, w, h });
+    x += w * zwischen3(zufall2, 0.55, 0.8);
+  }
+  gipfel.forEach((g) => {
+    d += ` L${r(g.x - g.w * 0.5)} ${r(fuss - g.h * 0.15)} L${r(g.x - g.w * 0.08)} ${r(g.y + g.h * 0.06)} L${r(g.x)} ${r(g.y)} L${r(g.x + g.w * 0.12)} ${r(g.y + g.h * 0.1)}`;
+  });
+  d += ` L${breite + 40} ${r(fuss)} Z`;
+  let svg = `<path d="${d}" fill="${fuellung}"/>`;
+  gipfel.forEach((g) => {
+    svg += `<path d="M${r(g.x)} ${r(g.y)} L${r(g.x - g.w * 0.08)} ${r(g.y + g.h * 0.06)} L${r(g.x - g.w * 0.42)} ${r(fuss - g.h * 0.12)} L${r(g.x - g.w * 0.05)} ${r(fuss - g.h * 0.3)} Z" fill="${licht}" opacity="0.55"/>`;
+    for (let k = 0; k < 3; k++) {
+      const richtung = k === 0 ? -0.05 : k === 1 ? 0.18 : 0.32;
+      let x2 = g.x + g.w * richtung * 0.2;
+      let y = g.y + g.h * (0.12 + k * 0.06);
+      let rinne = `M${r(x2)} ${r(y)}`;
+      for (let s = 0; s < 4; s++) {
+        x2 += g.w * (richtung * 0.22 + zwischen3(zufall2, -0.03, 0.03));
+        y += g.h * 0.16;
+        rinne += ` L${r(x2)} ${r(y)}`;
+      }
+      svg += `<path d="${rinne}" stroke="#2a3a6a" stroke-width="${r(Math.max(3, g.w * 0.02))}" fill="none" opacity="0.08" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }
+    if (g.h / maxHoehe > 1 - schneeAnteil) {
+      const k = g.h * 0.26;
+      const zacken = [
+        [0.12, 0.1],
+        [0.11, k / g.h],
+        [0.06, k / g.h * 0.72],
+        [0.02, k / g.h * 1.1],
+        [-0.03, k / g.h * 0.8],
+        [-0.07, k / g.h * 1.18],
+        [-0.11, k / g.h * 0.78],
+        [-0.08, 0.06]
+      ];
+      const kappe = `M${r(g.x)} ${r(g.y)} ` + zacken.map(([dx, dy]) => `L${r(g.x + g.w * dx)} ${r(g.y + g.h * dy)}`).join(" ") + " Z";
+      svg += `<path d="${kappe}" fill="${schnee}"/>
+      <path d="M${r(g.x)} ${r(g.y)} L${r(g.x + g.w * 0.12)} ${r(g.y + g.h * 0.1)} L${r(g.x + g.w * 0.11)} ${r(g.y + k)} L${r(g.x + g.w * 0.06)} ${r(g.y + k * 0.72)} L${r(g.x + g.w * 0.02)} ${r(g.y + k * 1.1)} Z" fill="${mischen2(schnee, "#7f9ccf", 0.35)}"/>`;
+    }
+  });
+  return svg;
+}
+function huegelreiheZeichnen(breite, basis, wellen, zufall2, farbe2, waldFarbe) {
+  let d = `M-40 ${r(basis + 300)} L-40 ${r(basis)}`;
+  let wald = "";
+  for (let x = -40; x < breite + 80; x += 160) {
+    const y = basis - zwischen3(zufall2, 0, wellen);
+    d += ` Q${r(x + 40)} ${r(y - 30)} ${r(x + 80)} ${r(y)} T${r(x + 160)} ${r(basis - zwischen3(zufall2, 0, wellen) * 0.6)}`;
+    for (let t = 0; t < 6; t++) {
+      const bx = x + t * 27 + zufall2() * 10;
+      const by = y + zufall2() * 18 - 6;
+      wald += `<circle cx="${r(bx)}" cy="${r(by)}" r="${r(10 + zufall2() * 9)}"/>`;
+    }
+  }
+  d += ` L${breite + 40} ${r(basis + 300)} Z`;
+  return `<g fill="${waldFarbe}">${wald}</g><path d="${d}" fill="${farbe2}"/>`;
+}
+function bodenZeichnen(karte, f, thema, { ohneWiegendes = false } = {}) {
+  const { breite, hoehe, horizont } = karte;
+  const zufall2 = wuerfel2(thema.id * 977 + 3);
+  const teile = [];
+  const teil = (svg, y0, y1) => teile.push({ svg, y0, y1 });
+  let rand = `M-60 ${hoehe + 60} L-60 ${horizont + 30}`;
+  for (let x = -60; x < breite + 120; x += 140) {
+    rand += ` Q${r(x + 70)} ${r(horizont + zwischen3(zufall2, -10, 30))} ${r(x + 140)} ${r(horizont + zwischen3(zufall2, 10, 40))}`;
+  }
+  rand += ` L${breite + 60} ${hoehe + 60} Z`;
+  teil(`<path d="${rand}" fill="url(#boden)"/><path d="${rand}" fill="url(#halme)"/>`, horizont - 20, hoehe + 60);
+  let saum = "";
+  for (let x = -40; x < breite + 40; x += 24) {
+    const y = horizont + 26 + Math.sin(x / 90) * 12 + zufall2() * 10;
+    saum += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(16 + zufall2() * 14)}"/>`;
+  }
+  teil(
+    `<g fill="${mischen2(f.wald, f.himmelUnten, 0.3)}">${saum}</g>
+     <g fill="${mischen2(f.laub, f.himmelUnten, 0.25)}" opacity="0.7">${saum.replace(/cy="([\d.]+)"/g, (_, y) => `cy="${r(Number(y) - 6)}"`).replace(/r="([\d.]+)"/g, (_, v) => `r="${r(Number(v) * 0.6)}"`)}</g>`,
+    horizont - 20,
+    horizont + 120
+  );
+  const anzahl = Math.round(breite * (hoehe - horizont) / 1e6 * 9);
+  for (let i = 0; i < anzahl; i++) {
+    const x = zwischen3(zufall2, -100, breite + 100);
+    const y = zwischen3(zufall2, horizont + 120, hoehe + 50);
+    const rx = zwischen3(zufall2, 120, 300);
+    const art = zufall2() < 0.45 ? "fleckHell" : zufall2() < 0.6 ? "fleckDunkel" : "fleckGelb";
+    teil(`<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rx)}" ry="${r(rx * 0.5)}" fill="url(#${art})"/>`, y - rx * 0.5, y + rx * 0.5);
+  }
+  for (const fluss of karte.fluesse) {
+    if (fluss.klippe) teil(klippeZeichnen(fluss, f, zufall2), fluss.klippe.y1 - 40, fluss.klippe.y2 + 60);
+    if (fluss.quelle) teil(flussZeichnen(fluss.quelle.d, f, 0.72), fluss.klippe.y1 - 220, fluss.klippe.y1 + 20);
+    const ys = fluss.proben.map((p) => p.y);
+    teil(flussZeichnen(fluss.d, f, 1) + uferSteine(fluss.proben, f, zufall2), Math.min(...ys) - 80, Math.max(...ys) + 80);
+    if (fluss.wasserfall) teil(wasserfallZeichnen(fluss.wasserfall, f), fluss.wasserfall.y - fluss.wasserfall.hoehe - 10, fluss.wasserfall.y + 60);
+  }
+  if (karte.see) teil(seeZeichnen(karte.see, f, zufall2), karte.see.y - karte.see.ry - 60, karte.see.y + karte.see.ry + 60);
+  teil(wegZeichnen(karte, f, zufall2), horizont, hoehe + 80);
+  for (const fluss of karte.fluesse) teil(brueckeZeichnen(fluss.bruecke, f), fluss.bruecke.y - 90, fluss.bruecke.y + 110);
+  for (const d of karte.deko) {
+    if (ohneWiegendes && d.wiegt) continue;
+    const zeichner = DEKO[d.art === "baum" ? `baum_${thema.baum}` : d.art] ?? DEKO[d.art];
+    if (!zeichner) continue;
+    const { svg, oben, unten } = zeichner(d, f, wuerfel2(d.v * 31 + d.x));
+    teil(svg, d.y - oben * d.s, d.y + unten * d.s);
+  }
+  return teile;
+}
+function flussZeichnen(d, f, s) {
+  return `
+    <path d="${d}" stroke="${f.ufer}" stroke-width="${r(104 * s)}" fill="none" stroke-linecap="round" opacity="0.55" filter="url(#weich2)"/>
+    <path d="${d}" stroke="${mischen2(f.ufer, f.wieseDunkel, 0.4)}" stroke-width="${r(90 * s)}" fill="none" stroke-linecap="round"/>
+    <path d="${d}" stroke="${f.wasserTief}" stroke-width="${r(76 * s)}" fill="none" stroke-linecap="round"/>
+    <path d="${d}" stroke="${f.wasser}" stroke-width="${r(60 * s)}" fill="none" stroke-linecap="round"/>
+    <path d="${d}" stroke="${f.wasserHell}" stroke-width="${r(22 * s)}" fill="none" stroke-linecap="round" opacity="0.45" transform="translate(-8 -3)"/>
+    <path d="${d}" stroke="#ffffff" stroke-width="${r(3 * s)}" fill="none" stroke-dasharray="14 46" opacity="0.6" transform="translate(-12 -2)"/>
+    <path d="${d}" stroke="#ffffff" stroke-width="${r(2.5 * s)}" fill="none" stroke-dasharray="10 60" opacity="0.5" transform="translate(14 4)"/>`;
+}
+function uferSteine(proben, f, zufall2) {
+  let svg = "";
+  for (let i = 6; i < proben.length - 6; i += 7) {
+    if (zufall2() < 0.45) continue;
+    const a = proben[i];
+    const b = proben[i + 1];
+    const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const seite = zufall2() < 0.5 ? 1 : -1;
+    const x = a.x + -(b.y - a.y) / l * 46 * seite;
+    const y = a.y + (b.x - a.x) / l * 46 * seite;
+    const g = zwischen3(zufall2, 7, 15);
+    svg += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(g)}" ry="${r(g * 0.7)}" fill="url(#fels)"/>`;
+    if (zufall2() < 0.5) svg += `<ellipse cx="${r(x - g * 0.2)}" cy="${r(y - g * 0.45)}" rx="${r(g * 0.6)}" ry="${r(g * 0.3)}" fill="${f.moos}"/>`;
+  }
+  return svg;
+}
+function klippeZeichnen(fluss, f, zufall2) {
+  const { x1, x2, y1, y2 } = fluss.klippe;
+  const fall = fluss.wasserfall;
+  const innen = fluss.seite > 0 ? x2 : x1;
+  const aussen = fluss.seite > 0 ? x1 : x2;
+  const hoch = y2 - y1;
+  const tFall = (fall.x - aussen) / (innen - aussen);
+  const schritte = 16;
+  const oben = [];
+  const unten = [];
+  for (let i = 0; i <= schritte; i++) {
+    const t = i / schritte;
+    const x = aussen + (innen - aussen) * t;
+    const auslauf = t <= tFall + 0.12 ? 0 : Math.min(1, (t - tFall - 0.12) / Math.max(0.05, 1 - tFall - 0.12));
+    const kante = y1 + 14 + zwischen3(zufall2, -7, 7) + auslauf * hoch * 0.55;
+    const fuss = y2 - auslauf * hoch * 0.4 + zwischen3(zufall2, -4, 4);
+    oben.push({ x, y: kante });
+    unten.push({ x, y: Math.max(kante + 2, fuss) });
+  }
+  const pfad = (punkte) => punkte.map((p, i) => `${i ? "L" : "M"}${r(p.x)} ${r(p.y)}`).join(" ");
+  const flaeche = `${pfad(oben)} ${pfad([...unten].reverse()).replace("M", "L")} Z`;
+  let svg = `<path d="${pfad(unten)}" stroke="#000" stroke-width="30" opacity="0.2" fill="none" filter="url(#weich2)" transform="translate(0 12)"/>
+    <path d="${flaeche}" fill="${f.felsDunkel}"/>`;
+  const dunkel = mischen2(f.felsDunkel, "#000", 0.3);
+  for (let i = 0; i < schritte; ) {
+    const breite = Math.min(schritte - i, 1 + Math.floor(zufall2() * 3));
+    const a = oben[i];
+    const b = oben[i + breite];
+    const ua = unten[i];
+    const ub = unten[i + breite];
+    i += breite;
+    if (Math.max(ua.y - a.y, ub.y - b.y) < 12) continue;
+    const einzug = zwischen3(zufall2, 3, 7);
+    const xl = Math.min(a.x, b.x) + einzug;
+    const xr = Math.max(a.x, b.x) - einzug;
+    const yo = (a.y + b.y) / 2;
+    const yu = (ua.y + ub.y) / 2;
+    const d = `M${r(xl)} ${r(a.y + 6)} Q${r((xl + xr) / 2)} ${r(yo - zwischen3(zufall2, 0, 8))} ${r(xr)} ${r(b.y + 6)}
+      L${r(xr - zwischen3(zufall2, 0, 6))} ${r(ub.y - 4)} Q${r((xl + xr) / 2)} ${r(yu + 6)} ${r(xl + zwischen3(zufall2, 0, 6))} ${r(ua.y - 4)} Z`;
+    svg += `<path d="${d}" fill="url(#klippe)" stroke="${dunkel}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    svg += `<path d="M${r(xl + 4)} ${r(a.y + 10)} Q${r((xl + xr) / 2)} ${r(yo + 1)} ${r(xr - 4)} ${r(b.y + 10)}" stroke="${f.felsHell}" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round"/>`;
+    const kanten = 1 + Math.floor(zufall2() * 2);
+    for (let k = 0; k < kanten; k++) {
+      const t = zwischen3(zufall2, 0.3, 0.75);
+      const y = yo + (yu - yo) * t;
+      svg += `<path d="M${r(xl + 2)} ${r(y)} q${r((xr - xl) * 0.5)} ${r(zwischen3(zufall2, -8, 8))} ${r(xr - xl - 4)} ${r(zwischen3(zufall2, -6, 6))}" stroke="${dunkel}" stroke-width="2" fill="none" opacity="0.55"/>`;
+      svg += `<path d="M${r(xl + 2)} ${r(y + 3)} q${r((xr - xl) * 0.5)} 0 ${r(xr - xl - 4)} 0" stroke="${f.felsHell}" stroke-width="1.5" fill="none" opacity="0.3"/>`;
+    }
+  }
+  svg += `<path d="${pfad(oben)}" stroke="${mischen2(f.wieseDunkel, "#000", 0.15)}" stroke-width="20" fill="none" stroke-linecap="round" transform="translate(0 4)"/>
+    <path d="${pfad(oben)}" stroke="${f.wiese}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="${pfad(oben)}" stroke="${f.wieseHell}" stroke-width="5" fill="none" stroke-linecap="round" transform="translate(0 -5)" opacity="0.9"/>`;
+  for (let i = 0; i < schritte; i++) {
+    if (zufall2() < 0.4 || unten[i].y - oben[i].y < 30) continue;
+    const p = oben[i];
+    const x = p.x + zwischen3(zufall2, 0, 20);
+    const laenge = zwischen3(zufall2, 24, Math.min(80, unten[i].y - oben[i].y - 10));
+    svg += `<path d="M${r(x)} ${r(p.y + 6)} q${r(zwischen3(zufall2, -8, 8))} ${r(laenge / 2)} ${r(zwischen3(zufall2, -4, 4))} ${r(laenge)}" stroke="${mischen2(f.moos, "#000", 0.2)}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    svg += `<circle cx="${r(x + 1)}" cy="${r(p.y + laenge * 0.55)}" r="4" fill="${f.moos}"/><circle cx="${r(x - 2)}" cy="${r(p.y + laenge * 0.85)}" r="3" fill="${f.laubHell}"/>`;
+  }
+  svg += `<ellipse cx="${r(fall.x)}" cy="${r(fall.y + 12)}" rx="100" ry="36" fill="${f.ufer}" opacity="0.6" filter="url(#weich2)"/>
+    <ellipse cx="${r(fall.x)}" cy="${r(fall.y + 10)}" rx="86" ry="30" fill="url(#seeWasser)"/>`;
+  for (let i = 0; i < 8; i++) {
+    const x = fall.x + zwischen3(zufall2, -125, 125);
+    const y = fall.y + zwischen3(zufall2, -6, 34);
+    if (Math.abs(x - fall.x) < 60) continue;
+    svg += felsBrocken(x, y, zwischen3(zufall2, 13, 24), f, zufall2);
+  }
+  return svg;
+}
+function wasserfallZeichnen(fall, f) {
+  const { x, y, hoehe } = fall;
+  const oben = y - hoehe;
+  const b = fall.breite;
+  let svg = `
+    <path d="M${r(x - b * 0.42)} ${r(oben)} C${r(x - b * 0.5)} ${r(oben + hoehe * 0.4)} ${r(x - b * 0.6)} ${r(y - 30)} ${r(x - b * 0.62)} ${r(y)}
+      L${r(x + b * 0.62)} ${r(y)} C${r(x + b * 0.6)} ${r(y - 30)} ${r(x + b * 0.5)} ${r(oben + hoehe * 0.4)} ${r(x + b * 0.42)} ${r(oben)} Z" fill="url(#fall)"/>`;
+  for (let i = -3; i <= 3; i++) {
+    svg += `<path d="M${r(x + i * b * 0.11)} ${r(oben + 6)} L${r(x + i * b * 0.15)} ${r(y - 6)}" stroke="${i % 2 ? f.wasserHell : "#ffffff"}" stroke-width="${i % 2 ? 3 : 2}" opacity="0.7"/>`;
+  }
+  svg += `<ellipse cx="${r(x)}" cy="${r(oben + 2)}" rx="${r(b * 0.48)}" ry="8" fill="#ffffff" opacity="0.85"/>`;
+  for (let i = 0; i < 9; i++) {
+    const gx = x + (i - 4) * b * 0.17;
+    svg += `<circle cx="${r(gx)}" cy="${r(y + 2 + i % 3 * 4)}" r="${r(12 + i % 4 * 4)}" fill="#ffffff" opacity="0.9"/>`;
+  }
+  svg += `<ellipse cx="${r(x)}" cy="${r(y - 6)}" rx="${r(b * 1.2)}" ry="34" fill="#ffffff" opacity="0.45" filter="url(#weich)"/>`;
+  return svg;
+}
+function seeZeichnen(see, f, zufall2) {
+  const { x, y, rx, ry } = see;
+  let svg = `
+    <ellipse cx="${r(x + 10)}" cy="${r(y + 8)}" rx="${r(rx + 22)}" ry="${r(ry + 16)}" fill="${f.ufer}" opacity="0.55" filter="url(#weich2)"/>
+    <ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rx + 10)}" ry="${r(ry + 8)}" fill="${mischen2(f.weg, f.ufer, 0.3)}"/>
+    <ellipse cx="${r(x)}" cy="${r(y + 2)}" rx="${r(rx)}" ry="${r(ry)}" fill="url(#seeWasser)"/>
+    <ellipse cx="${r(x - rx * 0.25)}" cy="${r(y - ry * 0.35)}" rx="${r(rx * 0.45)}" ry="${r(ry * 0.18)}" fill="#ffffff" opacity="0.3"/>
+    <path d="M${r(x - rx * 0.6)} ${r(y + ry * 0.2)} q${r(rx * 0.2)} -6 ${r(rx * 0.4)} 0" stroke="#ffffff" stroke-width="3" fill="none" opacity="0.5"/>
+    <path d="M${r(x + rx * 0.1)} ${r(y + ry * 0.45)} q${r(rx * 0.15)} -5 ${r(rx * 0.3)} 0" stroke="#ffffff" stroke-width="3" fill="none" opacity="0.4"/>`;
+  for (let i = 0; i < 4; i++) {
+    const px = x + zwischen3(zufall2, -rx * 0.6, rx * 0.6);
+    const py = y + zwischen3(zufall2, -ry * 0.4, ry * 0.5);
+    const g = zwischen3(zufall2, 11, 17);
+    svg += `<path d="M${r(px)} ${r(py)} L${r(px + g)} ${r(py - g * 0.18)} A${r(g)} ${r(g * 0.55)} 0 1 1 ${r(px + g * 0.9)} ${r(py + g * 0.3)} Z" fill="${mischen2(f.laub, "#2f7f3a", 0.3)}"/>`;
+    if (i % 2 === 0) svg += `<circle cx="${r(px - 2)}" cy="${r(py - 4)}" r="5" fill="#ffc3dc"/><circle cx="${r(px - 2)}" cy="${r(py - 5)}" r="2" fill="#ffe27a"/>`;
+  }
+  for (let i = 0; i < 9; i++) {
+    const winkel = zwischen3(zufall2, 0.2, 2.9);
+    const px = x + Math.cos(winkel) * rx * 0.98;
+    const py = y + Math.sin(winkel) * ry * 0.98 + 4;
+    const h = zwischen3(zufall2, 26, 44);
+    svg += `<path d="M${r(px)} ${r(py)} q${r(zwischen3(zufall2, -6, 6))} ${r(-h / 2)} ${r(zwischen3(zufall2, -6, 6))} ${r(-h)}" stroke="${f.wieseDunkel}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    if (i % 2) svg += `<rect x="${r(px - 3)}" y="${r(py - h * 0.85)}" width="6" height="14" rx="3" fill="${f.holz}"/>`;
+  }
+  return svg;
+}
+function wegZeichnen(karte, f, zufall2) {
+  const d = karte.weg.d;
+  let steine = "";
+  const proben = karte.weg.proben;
+  for (let i = 3; i < proben.length - 3; i += 5) {
+    if (zufall2() < 0.55) continue;
+    const p = proben[i];
+    const q = proben[i + 1];
+    const l = Math.hypot(q.x - p.x, q.y - p.y) || 1;
+    const seite = zufall2() < 0.5 ? 1 : -1;
+    const abstand = zwischen3(zufall2, 14, 30) * seite;
+    const x = p.x + -(q.y - p.y) / l * abstand;
+    const y = p.y + (q.x - p.x) / l * abstand;
+    const g = zwischen3(zufall2, 3, 6);
+    steine += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(g)}" ry="${r(g * 0.7)}" fill="${mischen2(f.wegRand, "#fff", 0.2)}"/>`;
+  }
+  return `
+    <path d="${d}" stroke="#000" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.10" filter="url(#weich2)" transform="translate(4 6)"/>
+    <path d="${d}" stroke="${f.wegRand}" stroke-width="66" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+    <path d="${d}" stroke="${f.weg}" stroke-width="54" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" stroke="${mischen2(f.weg, "#ffffff", 0.35)}" stroke-width="20" fill="none" stroke-linecap="round" opacity="0.5" transform="translate(-6 -4)"/>
+    ${steine}`;
+}
+function brueckeZeichnen(b, f) {
+  const { x, y } = b;
+  const w = 118;
+  const deck = y - 16;
+  let steine = "";
+  for (let i = -5; i <= 5; i++) {
+    const sx = x + i * 21;
+    steine += `<path d="M${r(sx)} ${r(deck + 4)} l0 14" stroke="${f.felsDunkel}" stroke-width="2" opacity="0.45"/>`;
+  }
+  for (let i = -4; i <= 4; i++) {
+    const sx = x + i * 24 + 11;
+    if (Math.abs(i) < 2) continue;
+    steine += `<path d="M${r(sx)} ${r(deck + 20)} l0 16" stroke="${f.felsDunkel}" stroke-width="2" opacity="0.45"/>`;
+  }
+  return `
+    <ellipse cx="${r(x + 8)}" cy="${r(y + 64)}" rx="${r(w + 10)}" ry="20" fill="#000" opacity="0.2" filter="url(#weich2)"/>
+    <path d="M${r(x - w)} ${r(deck - 6)} L${r(x + w)} ${r(deck - 6)} L${r(x + w)} ${r(deck + 26)} L${r(x - w)} ${r(deck + 26)} Z" fill="${f.weg}"/>
+    <path d="M${r(x - w - 8)} ${r(deck + 2)} L${r(x + w + 8)} ${r(deck + 2)} L${r(x + w + 12)} ${r(y + 62)} L${r(x + 50)} ${r(y + 62)}
+             C${r(x + 46)} ${r(y + 20)} ${r(x - 46)} ${r(y + 20)} ${r(x - 50)} ${r(y + 62)} L${r(x - w - 12)} ${r(y + 62)} Z" fill="url(#fels)"/>
+    <path d="M${r(x - 50)} ${r(y + 62)} C${r(x - 46)} ${r(y + 20)} ${r(x + 46)} ${r(y + 20)} ${r(x + 50)} ${r(y + 62)} Z" fill="${mischen2(f.wasserTief, "#000", 0.45)}"/>
+    <path d="M${r(x - 38)} ${r(y + 62)} C${r(x - 30)} ${r(y + 42)} ${r(x + 30)} ${r(y + 42)} ${r(x + 38)} ${r(y + 62)} Z" fill="${f.wasser}" opacity="0.6"/>
+    <path d="M${r(x - 50)} ${r(y + 62)} C${r(x - 46)} ${r(y + 20)} ${r(x + 46)} ${r(y + 20)} ${r(x + 50)} ${r(y + 62)}" stroke="${f.felsHell}" stroke-width="5" fill="none"/>
+    ${[-3, -2, -1, 0, 1, 2, 3].map((i) => {
+    const winkel = Math.PI * (0.5 + i * 0.13);
+    const ix = x - Math.cos(winkel) * 50;
+    const iy = y + 62 - Math.sin(winkel) * 42;
+    const ax = x - Math.cos(winkel) * 64;
+    const ay = y + 62 - Math.sin(winkel) * 56;
+    return `<path d="M${r(ix)} ${r(iy)} L${r(ax)} ${r(ay)}" stroke="${f.felsDunkel}" stroke-width="2.5" opacity="0.55"/>`;
+  }).join("")}
+    <path d="M${r(x - w - 8)} ${r(deck + 2)} L${r(x + w + 8)} ${r(deck + 2)}" stroke="${f.felsDunkel}" stroke-width="3" opacity="0.5"/>
+    ${steine}
+    <rect x="${r(x - w - 10)}" y="${r(deck - 22)}" width="${r(2 * w + 20)}" height="14" rx="5" fill="url(#fels)"/>
+    <rect x="${r(x - w - 10)}" y="${r(deck - 22)}" width="${r(2 * w + 20)}" height="5" rx="2.5" fill="${f.felsHell}" opacity="0.7"/>
+    <path d="M${r(x - w - 6)} ${r(deck - 20)} q20 -10 44 -2 q16 6 30 -1" stroke="url(#moos)" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M${r(x + w - 60)} ${r(deck + 4)} q14 18 6 40" stroke="${f.moos}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+}
+function schatten(x, y, rx, ry, staerke = 0.22) {
+  return `<ellipse cx="${r(x + rx * 0.22)}" cy="${r(y + ry * 0.3)}" rx="${r(rx)}" ry="${r(ry)}" fill="#000" opacity="${staerke}" filter="url(#weich)"/>`;
+}
+function felsBrocken(x, y, g, f, zufall2) {
+  const punkte = [];
+  for (let i = 0; i < 8; i++) {
+    const w = i / 8 * Math.PI * 2;
+    const rr = g * zwischen3(zufall2, 0.8, 1.1);
+    punkte.push({ x: x + Math.cos(w) * rr, y: y + Math.sin(w) * rr * (Math.sin(w) > 0 ? 0.45 : 0.85) });
+  }
+  const d = punkte.map((p, i) => `${i ? "L" : "M"}${r(p.x)} ${r(p.y)}`).join(" ") + " Z";
+  return `${schatten(x, y + g * 0.3, g * 1.1, g * 0.4, 0.25)}<path d="${d}" fill="url(#fels)" stroke="${f.felsDunkel}" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M${r(x - g * 0.6)} ${r(y - g * 0.45)} q${r(g * 0.5)} ${r(-g * 0.35)} ${r(g * 1.1)} ${r(-g * 0.05)}" stroke="${f.felsHell}" stroke-width="${r(g * 0.18)}" fill="none" stroke-linecap="round" opacity="0.8"/>`;
+}
+function krone(cx, cy, s, zufall2, kugel, hell, dunkel, form = "rund") {
+  const ballen = [];
+  const muster = form === "breit" ? [[-78, 8, 40], [78, 8, 40], [-40, -22, 52], [40, -22, 52], [0, 6, 54], [-96, -14, 30], [96, -14, 30], [0, -52, 46], [-60, -48, 34], [60, -48, 34]] : [[-52, 10, 44], [52, 10, 44], [0, -26, 54], [-34, -52, 40], [36, -50, 42], [0, 18, 50], [-62, -18, 34], [64, -16, 34], [4, -76, 34]];
+  for (const [dx, dy, rr] of muster) {
+    ballen.push({ x: cx + (dx + zwischen3(zufall2, -6, 6)) * s, y: cy + (dy + zwischen3(zufall2, -6, 6)) * s, r: rr * s * zwischen3(zufall2, 0.9, 1.1) });
+  }
+  let svg = `<g fill="${dunkel}">${ballen.map((b) => `<circle cx="${r(b.x + 3 * s)}" cy="${r(b.y + 5 * s)}" r="${r(b.r + 3 * s)}"/>`).join("")}</g>`;
+  const sortiert = [...ballen].sort((a, b) => a.y - b.y);
+  svg += sortiert.map((b) => `<circle cx="${r(b.x)}" cy="${r(b.y)}" r="${r(b.r)}" fill="url(#${kugel})"/>`).join("");
+  svg += sortiert.slice(0, 6).map((b) => `<ellipse cx="${r(b.x - b.r * 0.32)}" cy="${r(b.y - b.r * 0.38)}" rx="${r(b.r * 0.38)}" ry="${r(b.r * 0.26)}" fill="${hell}" opacity="0.55"/>`).join("");
+  for (let i = 0; i < 10; i++) {
+    const b = ballen[i % ballen.length];
+    const w = zwischen3(zufall2, 0, Math.PI * 2);
+    svg += `<ellipse cx="${r(b.x + Math.cos(w) * b.r * 0.6)}" cy="${r(b.y + Math.sin(w) * b.r * 0.6)}" rx="${r(5 * s)}" ry="${r(3 * s)}" fill="${i % 2 ? hell : dunkel}" opacity="0.5" transform="rotate(${r(w * 57)} ${r(b.x + Math.cos(w) * b.r * 0.6)} ${r(b.y + Math.sin(w) * b.r * 0.6)})"/>`;
+  }
+  return svg;
+}
+function stammZeichnen(x, y, s, hoehe, breite) {
+  const h = hoehe * s;
+  const b = breite * s;
+  return `<path d="M${r(x - b)} ${r(y)} C${r(x - b * 0.8)} ${r(y - h * 0.35)} ${r(x - b * 0.75)} ${r(y - h * 0.7)} ${r(x - b * 0.45)} ${r(y - h)}
+      L${r(x + b * 0.45)} ${r(y - h)} C${r(x + b * 0.75)} ${r(y - h * 0.7)} ${r(x + b * 0.8)} ${r(y - h * 0.35)} ${r(x + b)} ${r(y)}
+      Q${r(x + b * 1.6)} ${r(y + 4 * s)} ${r(x + b * 1.9)} ${r(y + 6 * s)} L${r(x - b * 1.9)} ${r(y + 6 * s)} Q${r(x - b * 1.6)} ${r(y + 4 * s)} ${r(x - b)} ${r(y)} Z" fill="url(#stamm)"/>
+    <path d="M${r(x - b * 0.3)} ${r(y - h * 0.15)} q${r(-b * 0.15)} ${r(-h * 0.3)} ${r(b * 0.05)} ${r(-h * 0.6)}" stroke="rgba(0,0,0,0.25)" stroke-width="${r(2.5 * s)}" fill="none"/>`;
+}
+var DEKO = {
+  /* ---------- Bäume je Welt ---------- */
+  baum_laub(d, f, zufall2) {
+    const { x, y, s } = d;
+    const riese = d.v % 4 === 0;
+    const k = riese ? 1.2 : 1;
+    let svg = schatten(x, y, 92 * s * k, 26 * s * k);
+    svg += stammZeichnen(x, y, s * k, 96, 16);
+    if (riese) {
+      svg += `<path d="M${r(x)} ${r(y - 80 * s)} q${r(-30 * s)} ${r(-20 * s)} ${r(-62 * s)} ${r(-30 * s)} M${r(x)} ${r(y - 86 * s)} q${r(34 * s)} ${r(-18 * s)} ${r(66 * s)} ${r(-34 * s)}" stroke="${f.stamm}" stroke-width="${r(10 * s)}" fill="none" stroke-linecap="round"/>`;
+    }
+    svg += krone(x, y - 150 * s * k, s * k, zufall2, "laubKugel", f.laubHell, f.laubDunkel, riese ? "breit" : "rund");
+    return { svg, oben: 260 * k, unten: 40 };
+  },
+  bluetenbaum(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 84 * s, 24 * s);
+    svg += stammZeichnen(x, y, s, 90, 14);
+    svg += krone(x, y - 140 * s, s * 0.92, zufall2, "blueteKugel", f.blueteHell, f.blueteDunkel);
+    for (let i = 0; i < 12; i++) {
+      svg += `<circle cx="${r(x + zwischen3(zufall2, -90, 110) * s)}" cy="${r(y + zwischen3(zufall2, -6, 26) * s)}" r="${r(3 * s)}" fill="${i % 2 ? f.bluete : f.blueteHell}"/>`;
+    }
+    return { svg, oben: 240, unten: 40 };
+  },
+  baum_tanne(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 60 * s, 18 * s);
+    svg += `<rect x="${r(x - 7 * s)}" y="${r(y - 36 * s)}" width="${r(14 * s)}" height="${r(38 * s)}" fill="url(#stamm)"/>`;
+    for (let i = 0; i < 4; i++) {
+      const b = (70 - i * 13) * s;
+      const ty = y - (30 + i * 46) * s;
+      svg += `<path d="M${r(x - b)} ${r(ty)} L${r(x)} ${r(ty - 80 * s)} L${r(x + b)} ${r(ty)} Q${r(x)} ${r(ty + 14 * s)} ${r(x - b)} ${r(ty)} Z" fill="url(#laubKugel)"/>
+        <path d="M${r(x - b * 0.7)} ${r(ty - 18 * s)} L${r(x)} ${r(ty - 80 * s)} L${r(x + b * 0.35)} ${r(ty - 50 * s)} Q${r(x)} ${r(ty - 30 * s)} ${r(x - b * 0.7)} ${r(ty - 18 * s)} Z" fill="${f.schnee}" opacity="0.9"/>`;
+    }
+    return { svg, oben: 260, unten: 30 };
+  },
+  baum_kristall(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 60 * s, 16 * s);
+    const spitzen = [[-30, 90, -10], [0, 150, 0], [28, 110, 12], [-12, 70, -22], [44, 64, 20]];
+    for (const [dx, h, neig] of spitzen) {
+      const bx = x + dx * s;
+      const hh = h * s * zwischen3(zufall2, 0.85, 1.1);
+      const w = 16 * s;
+      svg += `<path d="M${r(bx - w)} ${r(y)} L${r(bx - w + neig * s * 0.3)} ${r(y - hh * 0.75)} L${r(bx + neig * s * 0.5)} ${r(y - hh)} L${r(bx + w + neig * s * 0.3)} ${r(y - hh * 0.75)} L${r(bx + w)} ${r(y)} Z" fill="url(#laubKugel)" stroke="${f.laubDunkel}" stroke-width="1.5"/>
+        <path d="M${r(bx - w)} ${r(y)} L${r(bx - w + neig * s * 0.3)} ${r(y - hh * 0.75)} L${r(bx + neig * s * 0.5)} ${r(y - hh)} L${r(bx + neig * s * 0.2)} ${r(y)} Z" fill="${f.laubHell}" opacity="0.5"/>`;
+    }
+    return { svg, oben: 170, unten: 20 };
+  },
+  baum_felsnadel(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 60 * s, 16 * s);
+    for (const [dx, h] of [[-26, 110], [10, 170], [40, 90]]) {
+      const bx = x + dx * s;
+      const hh = h * s * zwischen3(zufall2, 0.85, 1.1);
+      svg += `<path d="M${r(bx - 26 * s)} ${r(y)} L${r(bx - 8 * s)} ${r(y - hh)} L${r(bx + 6 * s)} ${r(y - hh * 0.96)} L${r(bx + 24 * s)} ${r(y)} Z" fill="url(#fels)" stroke="${f.felsDunkel}" stroke-width="2"/>
+        <path d="M${r(bx - 8 * s)} ${r(y - hh)} L${r(bx + 6 * s)} ${r(y - hh * 0.96)} L${r(bx + 2 * s)} ${r(y - hh * 0.75)} Z" fill="${f.laub}" opacity="0.8"/>`;
+    }
+    return { svg, oben: 190, unten: 20 };
+  },
+  baum_kahl(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 60 * s, 16 * s);
+    svg += stammZeichnen(x, y, s, 120, 12);
+    const aeste = [[-60, -150, -90, -190], [55, -160, 95, -200], [-30, -110, -70, -120], [30, -120, 70, -135], [0, -120, 8, -210]];
+    for (const [ax, ay, bx, by] of aeste) {
+      svg += `<path d="M${r(x)} ${r(y - 100 * s)} Q${r(x + ax * s)} ${r(y + ay * s)} ${r(x + bx * s)} ${r(y + by * s)}" stroke="${f.stamm}" stroke-width="${r(7 * s)}" fill="none" stroke-linecap="round"/>`;
+    }
+    svg += krone(x, y - 170 * s, s * 0.6, zufall2, "laubKugel", f.laubHell, f.laubDunkel).replace(/<g fill=[^>]*>.*?<\/g>/, "");
+    return { svg, oben: 230, unten: 20 };
+  },
+  baum_kaktus(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 40 * s, 12 * s);
+    svg += `<path d="M${r(x - 14 * s)} ${r(y)} L${r(x - 14 * s)} ${r(y - 120 * s)} A${r(14 * s)} ${r(14 * s)} 0 0 1 ${r(x + 14 * s)} ${r(y - 120 * s)} L${r(x + 14 * s)} ${r(y)} Z" fill="url(#laubKugel)"/>
+      <path d="M${r(x - 14 * s)} ${r(y - 60 * s)} L${r(x - 40 * s)} ${r(y - 60 * s)} L${r(x - 40 * s)} ${r(y - 95 * s)}" stroke="url(#laubKugel)" stroke-width="${r(18 * s)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M${r(x + 14 * s)} ${r(y - 80 * s)} L${r(x + 36 * s)} ${r(y - 80 * s)} L${r(x + 36 * s)} ${r(y - 108 * s)}" stroke="url(#laubKugel)" stroke-width="${r(16 * s)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M${r(x - 4 * s)} ${r(y - 6 * s)} L${r(x - 4 * s)} ${r(y - 124 * s)} M${r(x + 6 * s)} ${r(y - 6 * s)} L${r(x + 6 * s)} ${r(y - 124 * s)}" stroke="${f.laubDunkel}" stroke-width="2" opacity="0.5"/>`;
+    return { svg, oben: 150, unten: 20 };
+  },
+  baum_koralle(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 50 * s, 14 * s);
+    const aeste = [[0, -130], [-40, -100], [40, -110], [-60, -60], [62, -70]];
+    for (const [ax, ay] of aeste) {
+      svg += `<path d="M${r(x)} ${r(y)} Q${r(x + ax * 0.3 * s)} ${r(y + ay * 0.5 * s)} ${r(x + ax * s)} ${r(y + ay * s)}" stroke="${f.laub}" stroke-width="${r(14 * s)}" fill="none" stroke-linecap="round"/>
+        <circle cx="${r(x + ax * s)}" cy="${r(y + ay * s)}" r="${r(10 * s)}" fill="${f.laubHell}"/>`;
+    }
+    return { svg, oben: 150, unten: 20 };
+  },
+  baum_lolli(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 40 * s, 12 * s);
+    svg += `<rect x="${r(x - 5 * s)}" y="${r(y - 110 * s)}" width="${r(10 * s)}" height="${r(110 * s)}" rx="${r(4 * s)}" fill="#fff6ee" stroke="#e8c8b8" stroke-width="2"/>
+      <circle cx="${r(x)}" cy="${r(y - 140 * s)}" r="${r(46 * s)}" fill="url(#laubKugel)"/>
+      <path d="M${r(x)} ${r(y - 140 * s)} m-30 0 a30 30 0 1 1 30 30 a20 20 0 1 1 -20 -20 a10 10 0 1 1 10 10" stroke="#ffffff" stroke-width="${r(6 * s)}" fill="none" opacity="0.8"/>`;
+    return { svg, oben: 190, unten: 20 };
+  },
+  /* ---------- Kleinzeug ---------- */
+  busch(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 50 * s, 14 * s);
+    const ballen = [[-26, -14, 24], [24, -14, 24], [0, -30, 28], [-6, -8, 26]];
+    svg += `<g fill="${f.laubDunkel}">${ballen.map(([dx, dy, rr]) => `<circle cx="${r(x + dx * s + 2)}" cy="${r(y + dy * s + 3)}" r="${r(rr * s + 2)}"/>`).join("")}</g>`;
+    svg += ballen.map(([dx, dy, rr]) => `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}" fill="url(#laubKugel)"/>`).join("");
+    if (d.v % 3 === 0) {
+      for (let i = 0; i < 5; i++) {
+        svg += `<circle cx="${r(x + zwischen3(zufall2, -36, 36) * s)}" cy="${r(y + zwischen3(zufall2, -44, -6) * s)}" r="${r(4 * s)}" fill="${f.blumen[(d.v + i) % f.blumen.length]}"/>`;
+      }
+    }
+    return { svg, oben: 70, unten: 20 };
+  },
+  fels(d, f, zufall2) {
+    const { x, y, s } = d;
+    const g = 40 * s;
+    let svg = schatten(x, y, g * 1.3, g * 0.35, 0.28);
+    const punkte = [];
+    for (let i = 0; i < 9; i++) {
+      const w = Math.PI + i / 8 * Math.PI;
+      const rr = g * zwischen3(zufall2, 0.8, 1.15);
+      punkte.push({ x: x + Math.cos(w) * rr * 1.2, y: y + Math.sin(w) * rr });
+    }
+    const d1 = punkte.map((p, i) => `${i ? "L" : "M"}${r(p.x)} ${r(p.y)}`).join(" ") + ` Q${r(x)} ${r(y + g * 0.25)} ${r(punkte[0].x)} ${r(punkte[0].y)} Z`;
+    svg += `<path d="${d1}" fill="url(#fels)" stroke="${f.felsDunkel}" stroke-width="2" stroke-linejoin="round"/>`;
+    svg += `<path d="M${r(punkte[1].x)} ${r(punkte[1].y + g * 0.25)} Q${r(x)} ${r(y - g * 0.45)} ${r(punkte[7].x)} ${r(punkte[7].y + g * 0.2)}" stroke="${f.felsHell}" stroke-width="${r(3 * s)}" fill="none" opacity="0.7"/>`;
+    svg += `<path d="M${r(x - g * 0.8)} ${r(y - g * 0.55)} Q${r(x - g * 0.3)} ${r(y - g * 1.15)} ${r(x + g * 0.4)} ${r(y - g * 0.85)} Q${r(x + g * 0.8)} ${r(y - g * 0.7)} ${r(x + g * 0.7)} ${r(y - g * 0.45)} Q${r(x)} ${r(y - g * 0.65)} ${r(x - g * 0.8)} ${r(y - g * 0.55)} Z" fill="url(#moos)"/>`;
+    svg += `<path d="M${r(x + g * 0.1)} ${r(y - g * 0.2)} l${r(g * 0.12)} ${r(g * 0.25)} l${r(-g * 0.06)} ${r(g * 0.2)}" stroke="${f.felsDunkel}" stroke-width="2" fill="none" opacity="0.6"/>`;
+    return { svg, oben: 60, unten: 20 };
+  },
+  blumen(d, f, zufall2) {
+    const { x, y, s } = d;
+    const haupt = f.blumen[d.v % f.blumen.length];
+    let svg = `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(62 * s)}" ry="${r(26 * s)}" fill="${f.wieseHell}" opacity="0.35"/>`;
+    const n = 14 + Math.floor(zufall2() * 10);
+    const bluemchen = [];
+    for (let i = 0; i < n; i++) {
+      const w = zufall2() * Math.PI * 2;
+      const rr = Math.sqrt(zufall2());
+      bluemchen.push({ x: x + Math.cos(w) * rr * 58 * s, y: y + Math.sin(w) * rr * 22 * s, farbe: zufall2() < 0.75 ? haupt : f.blumen[Math.floor(zufall2() * f.blumen.length)] });
+    }
+    bluemchen.sort((a, b) => a.y - b.y);
+    for (const b of bluemchen) {
+      svg += `<path d="M${r(b.x)} ${r(b.y + 8)} l0 -8" stroke="${f.wieseDunkel}" stroke-width="2"/>
+        <ellipse cx="${r(b.x - 4)}" cy="${r(b.y + 6)}" rx="4" ry="2" fill="${f.laub}"/>
+        <circle cx="${r(b.x)}" cy="${r(b.y - 1)}" r="${r(5.5 * s)}" fill="${b.farbe}"/>
+        <circle cx="${r(b.x - 1.5)}" cy="${r(b.y - 2.5)}" r="${r(2.2 * s)}" fill="#ffffff" opacity="0.55"/>
+        <circle cx="${r(b.x)}" cy="${r(b.y - 1)}" r="${r(1.8 * s)}" fill="${b.farbe === "#ffd34d" ? "#e08a1f" : "#ffe27a"}"/>`;
+    }
+    return { svg, oben: 40, unten: 34 };
+  },
+  gras(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = "";
+    for (let i = 0; i < 6; i++) {
+      const dx = (i - 2.5) * 5 * s;
+      const h = zwischen3(zufall2, 18, 32) * s;
+      const neig = zwischen3(zufall2, -10, 10) * s;
+      svg += `<path d="M${r(x + dx - 3)} ${r(y)} Q${r(x + dx + neig * 0.4)} ${r(y - h * 0.6)} ${r(x + dx + neig)} ${r(y - h)} Q${r(x + dx + neig * 0.3 + 2)} ${r(y - h * 0.5)} ${r(x + dx + 3)} ${r(y)} Z" fill="${i % 2 ? f.wieseDunkel : mischen2(f.wiese, f.wieseDunkel, 0.3)}"/>`;
+    }
+    svg += `<path d="M${r(x - 2)} ${r(y)} q2 -14 8 -22" stroke="${f.wieseHell}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    return { svg, oben: 36, unten: 4 };
+  },
+  pilze(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = "";
+    const n = 2 + d.v % 3;
+    for (let i = 0; i < n; i++) {
+      const px = x + (i - (n - 1) / 2) * 16 * s + zwischen3(zufall2, -4, 4);
+      const py = y + zwischen3(zufall2, -6, 6);
+      const g = zwischen3(zufall2, 7, 12) * s;
+      svg += `<ellipse cx="${r(px + 3)}" cy="${r(py + 2)}" rx="${r(g)}" ry="${r(g * 0.3)}" fill="#000" opacity="0.2"/>
+        <rect x="${r(px - g * 0.3)}" y="${r(py - g * 1.3)}" width="${r(g * 0.6)}" height="${r(g * 1.3)}" rx="${r(g * 0.25)}" fill="#f6eedc"/>
+        <path d="M${r(px - g)} ${r(py - g * 1.1)} Q${r(px)} ${r(py - g * 2.6)} ${r(px + g)} ${r(py - g * 1.1)} Z" fill="${d.v % 2 ? "#e2453c" : "#c98a4a"}"/>
+        <circle cx="${r(px - g * 0.35)}" cy="${r(py - g * 1.6)}" r="${r(g * 0.18)}" fill="#fff"/><circle cx="${r(px + g * 0.3)}" cy="${r(py - g * 1.45)}" r="${r(g * 0.13)}" fill="#fff"/>`;
+    }
+    return { svg, oben: 40, unten: 10 };
+  },
+  ruine(d, f, zufall2) {
+    const { x, y, s } = d;
+    let svg = schatten(x, y, 80 * s, 18 * s);
+    svg += `<g transform="rotate(-8 ${r(x - 30 * s)} ${r(y)})">
+        <rect x="${r(x - 100 * s)}" y="${r(y - 22 * s)}" width="${r(80 * s)}" height="${r(26 * s)}" rx="${r(8 * s)}" fill="url(#fels)"/>
+        <ellipse cx="${r(x - 100 * s)}" cy="${r(y - 9 * s)}" rx="${r(7 * s)}" ry="${r(13 * s)}" fill="${f.felsHell}"/>
+        <path d="M${r(x - 70 * s)} ${r(y - 22 * s)} l0 26 M${r(x - 45 * s)} ${r(y - 22 * s)} l0 26" stroke="${f.felsDunkel}" stroke-width="2" opacity="0.5"/>
+      </g>`;
+    svg += saeule(x + 20 * s, y, 22 * s, 95 * s, f, true);
+    svg += felsBrocken(x + 60 * s, y + 6 * s, 12 * s, f, zufall2);
+    svg += `<path d="M${r(x + 4 * s)} ${r(y - 80 * s)} q-10 30 4 70" stroke="${f.moos}" stroke-width="${r(5 * s)}" fill="none" stroke-linecap="round"/>`;
+    return { svg, oben: 120, unten: 30 };
+  },
+  tor(d, f, zufall2) {
+    const { x, y, s } = d;
+    const b = 70 * s;
+    const h = 170 * s;
+    let svg = schatten(x, y, 140 * s, 24 * s);
+    svg += `<g opacity="0.8">${bogen(x - 130 * s, y - 36 * s, b * 0.7, h * 0.7, f, true)}</g>`;
+    svg += bogen(x, y, b, h, f, false);
+    svg += saeule(x + 140 * s, y + 10 * s, 18 * s, 80 * s, f, true);
+    svg += felsBrocken(x - 120 * s, y + 18 * s, 16 * s, f, zufall2);
+    svg += felsBrocken(x + 100 * s, y + 24 * s, 12 * s, f, zufall2);
+    return { svg, oben: 260, unten: 40 };
+  },
+  zaun(d, f) {
+    const { x, y } = d;
+    const pfosten = [-58, -20, 20, 58];
+    let svg = `<g transform="rotate(${r(d.v)} ${r(x)} ${r(y)})">`;
+    svg += `<ellipse cx="${r(x + 6)}" cy="${r(y + 6)}" rx="68" ry="8" fill="#000" opacity="0.18" filter="url(#weich2)"/>`;
+    svg += `<rect x="${r(x - 64)}" y="${r(y - 26)}" width="128" height="7" rx="3" fill="url(#holz)"/>`;
+    svg += `<rect x="${r(x - 64)}" y="${r(y - 12)}" width="128" height="7" rx="3" fill="url(#holz)"/>`;
+    for (const px of pfosten) {
+      svg += `<path d="M${r(x + px - 4)} ${r(y + 4)} L${r(x + px - 4)} ${r(y - 32)} L${r(x + px)} ${r(y - 37)} L${r(x + px + 4)} ${r(y - 32)} L${r(x + px + 4)} ${r(y + 4)} Z" fill="url(#holz)" stroke="${f.holzDunkel}" stroke-width="1"/>`;
+    }
+    svg += `<path d="M${r(x - 60)} ${r(y - 25)} q20 -3 40 0" stroke="${f.moos}" stroke-width="3" fill="none" stroke-linecap="round"/></g>`;
+    return { svg, oben: 50, unten: 12 };
+  },
+  laterne(d, f) {
+    const { x, y } = d;
+    const svg = `${schatten(x, y, 18, 5, 0.3)}
+      <circle cx="${r(x + 22)}" cy="${r(y - 86)}" r="44" fill="url(#lampe)" opacity="0.6"/>
+      <rect x="${r(x - 4)}" y="${r(y - 110)}" width="8" height="112" rx="3" fill="url(#holz)"/>
+      <path d="M${r(x)} ${r(y - 104)} l26 0" stroke="${f.holzDunkel}" stroke-width="4" stroke-linecap="round"/>
+      <path d="M${r(x + 22)} ${r(y - 104)} l0 6" stroke="#3a2a18" stroke-width="2"/>
+      <path d="M${r(x + 13)} ${r(y - 98)} l18 0 l-3 -6 l-12 0 Z" fill="#3a2a18"/>
+      <rect x="${r(x + 14)}" y="${r(y - 98)}" width="16" height="22" rx="2" fill="#ffe08a" stroke="#3a2a18" stroke-width="2"/>
+      <path d="M${r(x + 22)} ${r(y - 98)} l0 22" stroke="#3a2a18" stroke-width="1.5"/>
+      <path d="M${r(x + 12)} ${r(y - 76)} l20 0" stroke="#3a2a18" stroke-width="3"/>`;
+    return { svg, oben: 130, unten: 10 };
+  },
+  fahne(d, f) {
+    const { x, y } = d;
+    const svg = `${schatten(x, y, 26, 7, 0.3)}
+      <rect x="${r(x - 4)}" y="${r(y - 170)}" width="8" height="172" rx="3" fill="url(#holz)"/>
+      <circle cx="${r(x)}" cy="${r(y - 174)}" r="7" fill="#ffd76a" stroke="#a8741c" stroke-width="2"/>
+      <path d="M${r(x - 18)} ${r(y + 2)} L${r(x + 18)} ${r(y + 2)} L${r(x + 12)} ${r(y - 12)} L${r(x - 12)} ${r(y - 12)} Z" fill="url(#fels)"/>`;
+    return { svg, oben: 190, unten: 10 };
+  }
+};
+function saeule(x, y, b, h, f, gebrochen) {
+  const oben = y - h;
+  let svg = `<rect x="${r(x - b)}" y="${r(oben)}" width="${r(b * 2)}" height="${r(h)}" fill="url(#fels)"/>`;
+  for (let i = 1; i < 4; i++) {
+    svg += `<path d="M${r(x - b + b * 2 * i / 4)} ${r(oben + 6)} L${r(x - b + b * 2 * i / 4)} ${r(y - 4)}" stroke="${f.felsDunkel}" stroke-width="1.5" opacity="0.4"/>`;
+  }
+  svg += `<rect x="${r(x - b * 1.25)}" y="${r(y - b * 0.5)}" width="${r(b * 2.5)}" height="${r(b * 0.6)}" rx="2" fill="${f.felsDunkel}"/>`;
+  if (gebrochen) {
+    svg += `<path d="M${r(x - b)} ${r(oben)} L${r(x - b * 0.4)} ${r(oben - b * 0.5)} L${r(x + b * 0.1)} ${r(oben - b * 0.1)} L${r(x + b * 0.6)} ${r(oben - b * 0.6)} L${r(x + b)} ${r(oben)} Z" fill="${f.felsHell}"/>`;
+  } else {
+    svg += `<rect x="${r(x - b * 1.25)}" y="${r(oben - b * 0.5)}" width="${r(b * 2.5)}" height="${r(b * 0.6)}" rx="2" fill="${f.felsHell}"/>`;
+  }
+  svg += `<path d="M${r(x - b * 0.6)} ${r(oben + h * 0.2)} q${r(-b * 0.4)} ${r(h * 0.3)} ${r(b * 0.1)} ${r(h * 0.7)}" stroke="${f.moos}" stroke-width="${r(b * 0.25)}" fill="none" stroke-linecap="round"/>`;
+  return svg;
+}
+function bogen(x, y, b, h, f, ganz) {
+  const p = b * 0.42;
+  const scheitel = y - h;
+  let svg = "";
+  svg += `<path d="M${r(x - b - p)} ${r(y)} L${r(x - b - p)} ${r(scheitel + b)} A${r(b + p)} ${r(b + p)} 0 0 1 ${r(x + b + p)} ${r(scheitel + b)} L${r(x + b + p)} ${r(y)} L${r(x + b)} ${r(y)} L${r(x + b)} ${r(scheitel + b)} A${r(b)} ${r(b)} 0 0 0 ${r(x - b)} ${r(scheitel + b)} L${r(x - b)} ${r(y)} Z" fill="url(#fels)" stroke="${f.felsDunkel}" stroke-width="2"/>`;
+  for (let i = 1; i < 8; i++) {
+    const w = Math.PI - i / 8 * Math.PI;
+    svg += `<path d="M${r(x + Math.cos(w) * b)} ${r(scheitel + b - Math.sin(w) * b)} L${r(x + Math.cos(w) * (b + p))} ${r(scheitel + b - Math.sin(w) * (b + p))}" stroke="${f.felsDunkel}" stroke-width="2" opacity="0.5"/>`;
+  }
+  for (let i = 1; i < 5; i++) {
+    const yy = y - i * (h - b) / 5;
+    svg += `<path d="M${r(x - b - p)} ${r(yy)} l${r(p)} 0 M${r(x + b)} ${r(yy)} l${r(p)} 0" stroke="${f.felsDunkel}" stroke-width="2" opacity="0.45"/>`;
+  }
+  svg += `<path d="M${r(x - b - p + 3)} ${r(y)} L${r(x - b - p + 3)} ${r(scheitel + b)}" stroke="${f.felsHell}" stroke-width="4" opacity="0.7"/>`;
+  svg += `<path d="M${r(x + b + p * 0.5)} ${r(scheitel + b * 0.6)} q${r(-p)} ${r(h * 0.25)} 0 ${r(h * 0.5)} q${r(p * 0.6)} ${r(h * 0.15)} ${r(-p * 0.2)} ${r(h * 0.3)}" stroke="url(#moos)" stroke-width="${r(p * 0.45)}" fill="none" stroke-linecap="round"/>`;
+  if (!ganz) {
+    svg += `<rect x="${r(x + b * 0.4)}" y="${r(y - 10)}" width="${r(p * 0.8)}" height="${r(p * 0.5)}" rx="3" fill="url(#fels)" transform="rotate(12 ${r(x + b * 0.4)} ${r(y)})"/>`;
+  }
+  svg += `<path d="M${r(x - b - p)} ${r(scheitel + b * 0.2)} q${r(b * 0.6)} ${r(-b * 0.9)} ${r(b * 1.5)} ${r(-b * 0.75)}" stroke="url(#moos)" stroke-width="${r(p * 0.5)}" fill="none" stroke-linecap="round"/>`;
+  return svg;
+}
+function vordergrundZeichnen(stueck2, f) {
+  const zufall2 = wuerfel2(stueck2.v + 17);
+  const w = 260;
+  const h = 300;
+  let blaetter = "";
+  for (let i = 0; i < 9; i++) {
+    const t = i / 8;
+    const x = 20 + t * 170 + zwischen3(zufall2, -14, 14);
+    const y = 150 + Math.sin(t * 3) * 50 + zwischen3(zufall2, -30, 30);
+    const winkel = zwischen3(zufall2, -60, 60);
+    const g = zwischen3(zufall2, 0.8, 1.3);
+    blaetter += `<g transform="translate(${r(x)} ${r(y)}) rotate(${r(winkel)}) scale(${r(g)})">
+      <path d="M0 0 C18 -26 52 -26 72 0 C52 26 18 26 0 0 Z" fill="${i % 3 ? f.laub : f.laubDunkel}"/>
+      <path d="M2 0 L68 0" stroke="${f.laubHell}" stroke-width="2" opacity="0.6"/></g>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+    <path d="M0 160 Q90 130 200 150" stroke="${f.stamm}" stroke-width="7" fill="none"/>${blaetter}</svg>`;
+}
+
+// js/ui/weltkarte/leben.js
+function qualitaetErmitteln() {
+  if (document.body.classList.contains("no-animations")) return "aus";
+  try {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return "aus";
+  } catch {
+  }
+  const kerne = navigator.hardwareConcurrency ?? 4;
+  const speicher = navigator.deviceMemory ?? 4;
+  return kerne <= 2 || speicher <= 2 ? "niedrig" : "hoch";
+}
+function leistungPruefen(melden) {
+  let laeuft = true;
+  let id = 0;
+  const zeiten = [];
+  let letzte = 0;
+  const start = setTimeout(() => {
+    const schritt = (jetzt) => {
+      if (!laeuft) return;
+      if (letzte) zeiten.push(jetzt - letzte);
+      letzte = jetzt;
+      if (zeiten.length < 60) {
+        id = requestAnimationFrame(schritt);
+        return;
+      }
+      zeiten.sort((a, b) => a - b);
+      const mitte = zeiten[Math.floor(zeiten.length / 2)];
+      if (mitte > 22) melden("niedrig");
+    };
+    id = requestAnimationFrame(schritt);
+  }, 900);
+  return () => {
+    laeuft = false;
+    clearTimeout(start);
+    cancelAnimationFrame(id);
+  };
+}
+function lebenAnlegen(flaeche, karte, thema, m, stufe) {
+  const f = thema.farben;
+  const leben = stufe === "aus" ? {} : thema.leben;
+  const zufall2 = wuerfel2(thema.id * 4243 + 11);
+  const voll = stufe === "hoch";
+  const px = (wert) => `${r(wert * m)}px`;
+  const teile = document.createDocumentFragment();
+  const element = (klasse, x, y, html = "", stil = "") => {
+    const el = document.createElement("span");
+    el.className = klasse;
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = `left:${px(x)};top:${px(y)};${stil}`;
+    el.innerHTML = html;
+    teile.appendChild(el);
+    return el;
+  };
+  if (stufe !== "aus" && (karte.fluesse.length || karte.see)) {
+    let wasser = "";
+    for (const fluss of karte.fluesse) {
+      if (voll) {
+        wasser += `<path class="wk-fliessen" d="${fluss.d}" stroke="#ffffff" stroke-width="3.5" stroke-dasharray="20 74" opacity="0.75" transform="translate(-10 -2)"/>`;
+        wasser += `<path class="wk-fliessen wk-fliessen--langsam" d="${fluss.d}" stroke="${f.wasserHell}" stroke-width="5" stroke-dasharray="34 96" opacity="0.6" transform="translate(12 3)"/>`;
+        if (fluss.quelle) wasser += `<path class="wk-fliessen" d="${fluss.quelle.d}" stroke="#ffffff" stroke-width="3" stroke-dasharray="16 60" opacity="0.7"/>`;
+      }
+      if (fluss.wasserfall) {
+        const w = fluss.wasserfall;
+        const oben = w.y - w.hoehe;
+        const faeden = [-3, -2, -1, 0, 1, 2, 3].map((i) => `<path d="M${r(w.x + i * w.breite * 0.12)} ${r(oben - 440)} l${r(i * 0.6)} ${r(w.hoehe + 450)}" stroke="#ffffff" stroke-width="${i % 2 ? 2.5 : 4}" stroke-dasharray="${i % 2 ? "26 34" : "40 30"}" opacity="0.8"/>`).join("");
+        wasser += `<clipPath id="wk-fall-${r(w.x)}"><path d="M${r(w.x - w.breite * 0.42)} ${r(oben)} L${r(w.x + w.breite * 0.42)} ${r(oben)} L${r(w.x + w.breite * 0.62)} ${r(w.y)} L${r(w.x - w.breite * 0.62)} ${r(w.y)} Z"/></clipPath>
+          <g clip-path="url(#wk-fall-${r(w.x)})"><g class="wk-fall-faeden">${faeden}</g></g>`;
+        for (let i = 0; i < 4; i++) {
+          wasser += `<circle class="wk-gischt" style="animation-delay:${(i * -0.45).toFixed(2)}s" cx="${r(w.x + (i - 1.5) * 20)}" cy="${r(w.y + 4)}" r="${14 + i % 2 * 6}" fill="#ffffff" opacity="0.85"/>`;
+        }
+      }
+    }
+    if (karte.see) {
+      const { x, y, rx, ry } = karte.see;
+      for (let i = 0; i < (voll ? 5 : 2); i++) {
+        const gx = x + zwischen3(zufall2, -rx * 0.6, rx * 0.6);
+        const gy = y + zwischen3(zufall2, -ry * 0.5, ry * 0.5);
+        wasser += `<ellipse class="wk-glanz" style="animation-delay:${(-i * 1.3).toFixed(1)}s" cx="${r(gx)}" cy="${r(gy)}" rx="${r(zwischen3(zufall2, 14, 26))}" ry="3" fill="#ffffff"/>`;
+      }
+    }
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "wk-wasser");
+    svg.setAttribute("viewBox", `0 0 ${karte.breite} ${karte.hoehe}`);
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("aria-hidden", "true");
+    svg.style.width = px(karte.breite);
+    svg.style.height = px(karte.hoehe);
+    svg.innerHTML = `<g fill="none" stroke-linecap="round">${wasser}</g>`;
+    teile.appendChild(svg);
+  }
+  if (leben.wolken) {
+    const zahl = voll ? 4 : 2;
+    for (let i = 0; i < zahl; i++) {
+      const y = zwischen3(zufall2, karte.horizont * 0.15, karte.horizont * 0.7);
+      const g = zwischen3(zufall2, 0.7, 1.25);
+      const dauer = zwischen3(zufall2, 110, 180);
+      element("wk-wolke", 0, y, wolkeSvg(f), `width:${px(300 * g)};height:${px(138 * g)};animation-duration:${r(dauer)}s;animation-delay:-${r(dauer * (i / zahl + zufall2() * 0.2))}s`);
+    }
+  }
+  if (leben.wolkenschatten && voll) {
+    for (let y = karte.horizont + 500; y < karte.hoehe; y += zwischen3(zufall2, 700, 1e3)) {
+      const dauer = zwischen3(zufall2, 70, 110);
+      element("wk-wolkenschatten", 0, y, "", `width:${px(560)};height:${px(260)};animation-duration:${r(dauer)}s;animation-delay:-${r(dauer * zufall2())}s`);
+    }
+  }
+  if (leben.grasWiegen) {
+    const halme = karte.deko.filter((d) => d.art === "gras" && d.wiegt);
+    halme.forEach((d, i) => {
+      element("wk-halm", d.x, d.y, grasSvg(f, d.v), `width:${px(30 * d.s)};height:${px(42 * d.s)};animation-delay:-${r(i * 0.37 % 3)}s`);
+    });
+  }
+  for (const d of karte.deko) {
+    if (d.art === "laterne") element("wk-lichtschein", d.x + 22, d.y - 87, "", `width:${px(110)};height:${px(110)};animation-delay:-${r(zufall2() * 2)}s`);
+    if (d.art === "fahne") element("wk-fahne", d.x + 4, d.y - 166, fahneSvg(f), `width:${px(64)};height:${px(86)}`);
+  }
+  if (leben.glitzer) {
+    const orte = karte.deko.filter((d) => d.art === "tor" || d.art === "ruine").map((d) => ({ x: d.x, y: d.y - 90 }));
+    karte.stationen.forEach((s, i) => i % 2 === 0 && orte.push({ x: s.x, y: s.y - 80 }));
+    const proOrt = voll ? 3 : 1;
+    orte.forEach((o, i) => {
+      for (let k = 0; k < proOrt; k++) {
+        element("wk-glitzer", o.x + zwischen3(zufall2, -120, 120), o.y + zwischen3(zufall2, -80, 60), "", `--g:${r(zwischen3(zufall2, 0.6, 1.1))};animation-delay:-${r(zwischen3(zufall2, 0, 4))}s;animation-duration:${r(zwischen3(zufall2, 2.6, 4.2))}s`);
+      }
+    });
+  }
+  if (leben.schmetterlinge && karte.schmetterlinge?.length) {
+    const zahl = voll ? 8 : 3;
+    karte.schmetterlinge.slice(0, zahl).forEach((p, i) => {
+      const farbe2 = f.blumen[i % f.blumen.length] === "#ffffff" ? "#ffe27a" : f.blumen[i % f.blumen.length];
+      element(
+        "wk-falter",
+        p.x,
+        p.y,
+        '<span class="wk-falter__fluegel wk-falter__fluegel--l"></span><span class="wk-falter__fluegel wk-falter__fluegel--r"></span>',
+        `--farbe:${farbe2};--weg-x:${r(zwischen3(zufall2, 30, 70) * m * 2)}px;--weg-y:${r(zwischen3(zufall2, 20, 50) * m * 2)}px;animation-duration:${r(zwischen3(zufall2, 9, 15))}s;animation-delay:-${r(zufall2() * 10)}s`
+      );
+    });
+  }
+  flaeche.appendChild(teile);
+}
+function teilchenAnlegen(ebene, thema, stufe) {
+  if (stufe === "aus" || !thema.leben.blaetter) return;
+  const zufall2 = wuerfel2(thema.id * 71 + 5);
+  const zahl = stufe === "hoch" ? 9 : 4;
+  const f = thema.farben;
+  const farben = {
+    bluete: [f.bluete, f.blueteHell, f.blueteDunkel],
+    blatt: [f.laub, f.laubHell, f.laubDunkel],
+    flocke: ["#ffffff", "#e8f6ff"],
+    glut: ["#ffb347", "#ff7a1f"],
+    funke: [f.glitzer, "#ffffff"],
+    stern: ["#fff3b0", "#ffffff"]
+  }[thema.teilchen] ?? [f.laub];
+  for (let i = 0; i < zahl; i++) {
+    const el = document.createElement("span");
+    el.className = `wk-teilchen wk-teilchen--${thema.teilchen}`;
+    el.setAttribute("aria-hidden", "true");
+    const dauer = zwischen3(zufall2, 10, 17);
+    el.style.cssText = `left:${r(zwischen3(zufall2, -5, 95))}%;--farbe:${farben[i % farben.length]};--drift:${r(zwischen3(zufall2, 30, 120))}px;--g:${r(zwischen3(zufall2, 0.7, 1.2))};animation-duration:${r(dauer)}s;animation-delay:-${r(zufall2() * dauer)}s`;
+    ebene.appendChild(el);
+  }
+}
+function parallaxStarten(scroller, fern, vorn) {
+  let geplant = false;
+  const setzen3 = () => {
+    geplant = false;
+    const st = scroller.scrollTop;
+    if (fern) fern.style.transform = `translate3d(0, ${(st * 0.38).toFixed(1)}px, 0)`;
+    if (vorn) vorn.style.transform = `translate3d(0, ${(-st * 0.16).toFixed(1)}px, 0)`;
+  };
+  const beimScrollen = () => {
+    if (geplant) return;
+    geplant = true;
+    requestAnimationFrame(setzen3);
+  };
+  scroller.addEventListener("scroll", beimScrollen, { passive: true });
+  setzen3();
+  return () => scroller.removeEventListener("scroll", beimScrollen);
+}
+function wolkeSvg(f) {
+  return `<svg viewBox="0 0 240 110" aria-hidden="true"><defs><linearGradient id="wk-wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.65" stop-color="#ffffff"/><stop offset="1" stop-color="${f.himmelUnten}"/></linearGradient></defs>
+    <g fill="url(#wk-wg)"><circle cx="70" cy="62" r="34"/><circle cx="112" cy="46" r="42"/><circle cx="160" cy="58" r="34"/><circle cx="196" cy="72" r="24"/><circle cx="40" cy="78" r="22"/><rect x="36" y="64" width="176" height="36" rx="18"/></g></svg>`;
+}
+function grasSvg(f, v) {
+  const neig = v % 7 - 3;
+  return `<svg viewBox="0 0 24 34" aria-hidden="true">
+    <path d="M6 34 Q6 18 ${3 + neig} 4 Q9 18 10 34 Z" fill="${f.wieseDunkel}"/>
+    <path d="M10 34 Q12 14 ${14 + neig} 0 Q15 16 15 34 Z" fill="${f.laub}"/>
+    <path d="M14 34 Q17 20 ${21 + neig} 8 Q18 22 19 34 Z" fill="${f.wieseDunkel}"/>
+    <path d="M12 30 Q13 16 ${14 + neig} 6" stroke="${f.wieseHell}" stroke-width="1.2" fill="none"/></svg>`;
+}
+function fahneSvg(f) {
+  return `<svg viewBox="0 0 60 80" aria-hidden="true">
+    <path class="wk-fahne__tuch" d="M0 0 L56 0 L56 62 L28 50 L0 62 Z" fill="${f.laubDunkel}" stroke="#ffd76a" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M28 12 C18 20 18 34 28 42 C38 34 38 20 28 12 Z" fill="#ffd76a"/>
+    <path d="M28 14 L28 42" stroke="${f.laubDunkel}" stroke-width="2"/>
+  </svg>`;
+}
+
+// js/ui/weltkarte/station.js
+function stationsDefs() {
+  return `<svg class="wk-defs" aria-hidden="true" focusable="false" width="0" height="0"><defs>
+    <linearGradient id="wk-seite" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5d574e"/><stop offset="0.28" stop-color="#9c9484"/><stop offset="0.55" stop-color="#857d6e"/><stop offset="1" stop-color="#4b463f"/>
+    </linearGradient>
+    <linearGradient id="wk-seite-dunkel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#34323a"/><stop offset="0.3" stop-color="#5a5763"/><stop offset="1" stop-color="#2a2830"/>
+    </linearGradient>
+    <linearGradient id="wk-seite-boss" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3e3550"/><stop offset="0.3" stop-color="#7a6c8f"/><stop offset="0.6" stop-color="#5e5272"/><stop offset="1" stop-color="#2c2539"/>
+    </linearGradient>
+    <radialGradient id="wk-oben" cx="0.42" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#e2dccd"/><stop offset="0.6" stop-color="#b9b19f"/><stop offset="1" stop-color="#8e8676"/>
+    </radialGradient>
+    <radialGradient id="wk-oben-dunkel" cx="0.42" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#8a8794"/><stop offset="1" stop-color="#4a4752"/>
+    </radialGradient>
+    <radialGradient id="wk-oben-boss" cx="0.42" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#cfc3dc"/><stop offset="0.6" stop-color="#9886ab"/><stop offset="1" stop-color="#65557a"/>
+    </radialGradient>
+    <linearGradient id="wk-gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a8741c"/><stop offset="0.3" stop-color="#ffe9a0"/><stop offset="0.55" stop-color="#ffc53d"/><stop offset="1" stop-color="#9c6512"/>
+    </linearGradient>
+    <radialGradient id="wk-schatten"><stop offset="0" stop-color="#000" stop-opacity="0.45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="wk-mulde-gruen" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#d6ff9a"/><stop offset="0.5" stop-color="#5fd447"/><stop offset="1" stop-color="#1f7a1f"/></radialGradient>
+    <radialGradient id="wk-mulde-gold" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#fff6c0"/><stop offset="0.5" stop-color="#ffcf4a"/><stop offset="1" stop-color="#b8740f"/></radialGradient>
+    <radialGradient id="wk-mulde-dunkel" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#5b5868"/><stop offset="1" stop-color="#26242e"/></radialGradient>
+    <radialGradient id="wk-mulde-boss" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#ffb3c8"/><stop offset="0.5" stop-color="#d43a6a"/><stop offset="1" stop-color="#5a1036"/></radialGradient>
+    <radialGradient id="wk-kuppel-gruen" cx="0.4" cy="0.3" r="0.75"><stop offset="0" stop-color="#e6ffb8"/><stop offset="0.35" stop-color="#7fe05a"/><stop offset="0.8" stop-color="#2c9a2a"/><stop offset="1" stop-color="#17631a"/></radialGradient>
+    <radialGradient id="wk-kuppel-gold" cx="0.4" cy="0.3" r="0.75"><stop offset="0" stop-color="#fffbe0"/><stop offset="0.35" stop-color="#ffd85a"/><stop offset="0.8" stop-color="#e09a1c"/><stop offset="1" stop-color="#9a5c08"/></radialGradient>
+    <radialGradient id="wk-kuppel-dunkel" cx="0.4" cy="0.3" r="0.75"><stop offset="0" stop-color="#8c8a99"/><stop offset="0.5" stop-color="#55535f"/><stop offset="1" stop-color="#2a2832"/></radialGradient>
+    <radialGradient id="wk-kuppel-boss" cx="0.4" cy="0.3" r="0.75"><stop offset="0" stop-color="#ffd0e0"/><stop offset="0.35" stop-color="#ff5c8a"/><stop offset="0.8" stop-color="#a51e52"/><stop offset="1" stop-color="#5e0c2e"/></radialGradient>
+    <linearGradient id="wk-stern" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3a8"/><stop offset="0.5" stop-color="#ffc93d"/><stop offset="1" stop-color="#e08a0c"/></linearGradient>
+    <linearGradient id="wk-stern-grau" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9ccd8"/><stop offset="1" stop-color="#7d8296"/></linearGradient>
+    <linearGradient id="wk-edelstein" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd0f0"/><stop offset="0.5" stop-color="#d43a9a"/><stop offset="1" stop-color="#6a0c4a"/></linearGradient>
+  </defs></svg>`;
+}
+function sockel(art, variante) {
+  const seite = art === "dunkel" ? "wk-seite-dunkel" : art === "boss" ? "wk-seite-boss" : "wk-seite";
+  const oben = art === "dunkel" ? "wk-oben-dunkel" : art === "boss" ? "wk-oben-boss" : "wk-oben";
+  const mulde = `wk-mulde-${art}`;
+  const fuge = art === "dunkel" ? "rgba(0,0,0,0.5)" : "rgba(40,32,24,0.45)";
+  const licht = art === "dunkel" ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.28)";
+  const versatz = variante % 3 * 6;
+  const reihe = (yOben, yUnten, start) => [0, 1, 2, 3, 4].map((i) => {
+    const x = 22 + start + i * 24;
+    if (x > 122) return "";
+    const bogen2 = Math.sin((x - 12) / 116 * Math.PI) * 18;
+    return `<path d="M${x} ${yOben + bogen2} L${x} ${yUnten + bogen2}" stroke="${fuge}" stroke-width="1.6"/><path d="M${x + 1.6} ${yOben + bogen2} L${x + 1.6} ${yUnten + bogen2}" stroke="${licht}" stroke-width="1"/>`;
+  }).join("");
+  const moos = art === "dunkel" ? "" : [
+    '<path d="M16 60 q8 -8 20 -4 q6 2 4 8 q-10 4 -24 -4 Z" fill="#5c9e34"/><path d="M18 64 q2 8 -2 12" stroke="#4a8a2a" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+    '<path d="M100 74 q10 -4 20 -12 q6 4 0 10 q-10 6 -20 2 Z" fill="#5c9e34"/><circle cx="112" cy="80" r="2.5" fill="#6fb03e"/>',
+    '<path d="M50 77 q12 4 24 2 q-2 6 -12 6 q-10 0 -12 -8 Z" fill="#5c9e34"/>'
+  ][variante % 3];
+  const boss = art === "boss" ? `<path d="M10 58 L4 40 L18 52 Z M130 58 L136 40 L122 52 Z" fill="url(#wk-gold)" stroke="#6b4210" stroke-width="1"/>
+         <path d="M64 96 l6 -9 l6 9 l-6 7 Z" fill="url(#wk-edelstein)" stroke="#ffd76a" stroke-width="1.5"/>
+         <circle cx="30" cy="86" r="4" fill="url(#wk-edelstein)" stroke="#ffd76a" stroke-width="1.2"/>
+         <circle cx="110" cy="86" r="4" fill="url(#wk-edelstein)" stroke="#ffd76a" stroke-width="1.2"/>` : "";
+  const gold = art === "dunkel" ? "rgba(150,140,120,0.5)" : "url(#wk-gold)";
+  return `<svg class="station__sockel" viewBox="0 0 140 124" aria-hidden="true" focusable="false">
+    <ellipse cx="74" cy="104" rx="64" ry="15" fill="url(#wk-schatten)"/>
+    <path d="M12 58 L12 88 A58 20 0 0 0 128 88 L128 58 Z" fill="url(#${seite})"/>
+    <path d="M12 74 A58 20 0 0 0 128 74" stroke="${fuge}" stroke-width="1.6" fill="none"/>
+    <path d="M12 75.5 A58 20 0 0 0 128 75.5" stroke="${licht}" stroke-width="1" fill="none"/>
+    ${reihe(58, 74, versatz)}${reihe(76, 90, versatz + 12)}
+    <path d="M12 88 A58 20 0 0 0 128 88" stroke="rgba(0,0,0,0.35)" stroke-width="2" fill="none"/>
+    <path d="M12 62 A58 20 0 0 0 128 62" stroke="${gold}" stroke-width="4" fill="none"/>
+    ${art === "dunkel" ? "" : [26, 48, 70, 92, 114].map((x) => `<circle cx="${x}" cy="${62 + Math.sin((x - 12) / 116 * Math.PI) * 19.5}" r="2.6" fill="#ffe9a0" stroke="#8a5a10" stroke-width="0.8"/>`).join("")}
+    <ellipse cx="70" cy="58" rx="58" ry="21" fill="url(#${oben})"/>
+    <ellipse cx="70" cy="58" rx="58" ry="21" fill="none" stroke="${licht}" stroke-width="1.5"/>
+    <ellipse cx="70" cy="58" rx="50" ry="17.5" fill="none" stroke="${fuge}" stroke-width="1.4"/>
+    ${[0.2, 0.75, 1.3, 1.85, 2.4, 2.95, 3.5, 4.05, 4.6, 5.15, 5.7].map((w) => `<path d="M${(70 + Math.cos(w) * 50).toFixed(1)} ${(58 + Math.sin(w) * 17.5).toFixed(1)} L${(70 + Math.cos(w) * 58).toFixed(1)} ${(58 + Math.sin(w) * 21).toFixed(1)}" stroke="${fuge}" stroke-width="1.2"/>`).join("")}
+    <ellipse cx="70" cy="59" rx="42" ry="14.5" fill="rgba(20,16,30,0.55)"/>
+    <ellipse cx="70" cy="59.5" rx="37" ry="12.5" fill="url(#${mulde})"/>
+    ${moos}${boss}
+  </svg>`;
+}
+function emblem(art, symbol) {
+  return `<svg class="station__emblem" viewBox="0 0 64 56" aria-hidden="true" focusable="false">
+    <ellipse cx="32" cy="34" rx="29" ry="21" fill="rgba(0,0,0,0.35)"/>
+    <ellipse cx="32" cy="30" rx="29" ry="22" fill="url(#wk-gold)"/>
+    <ellipse cx="32" cy="29" rx="25.5" ry="19" fill="url(#wk-kuppel-${art})"/>
+    <ellipse cx="25" cy="20" rx="12" ry="6" fill="#ffffff" opacity="0.45"/>
+    ${SYMBOLE[symbol] ?? ""}
+  </svg>`;
+}
+var SYMBOLE = {
+  haken: `<path d="M19 30 L28 39 L46 21" stroke="rgba(10,60,10,0.45)" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 2)"/>
+          <path d="M19 30 L28 39 L46 21" stroke="#ffffff" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  schwerter: `<g stroke-linecap="round" transform="translate(0 1)">
+      <path d="M21 39 L43 17" stroke="#6b4210" stroke-width="6"/><path d="M43 39 L21 17" stroke="#6b4210" stroke-width="6"/>
+      <path d="M22 38 L42 18" stroke="#ffffff" stroke-width="3.5"/><path d="M42 38 L22 18" stroke="#ffffff" stroke-width="3.5"/>
+      <path d="M19 34 L26 41 M45 34 L38 41" stroke="#6b4210" stroke-width="4.5"/>
+      <path d="M19 34 L26 41 M45 34 L38 41" stroke="#ffe27a" stroke-width="2.5"/></g>`,
+  schloss: `<path d="M24 27 v-5 a8 8 0 0 1 16 0 v5" stroke="#c9c6d6" stroke-width="4" fill="none"/>
+          <rect x="20" y="26" width="24" height="17" rx="4" fill="#d9d5e6" stroke="#3a3846" stroke-width="1.5"/>
+          <circle cx="32" cy="33" r="2.6" fill="#3a3846"/><path d="M32 34 v4" stroke="#3a3846" stroke-width="2.4" stroke-linecap="round"/>`,
+  krone: `<path d="M18 38 L16 22 L24 29 L32 18 L40 29 L48 22 L46 38 Z" fill="#ffd76a" stroke="#6b4210" stroke-width="2" stroke-linejoin="round"/>
+          <circle cx="32" cy="31" r="3" fill="#ff5c8a"/><path d="M18 38 L46 38" stroke="#6b4210" stroke-width="3"/>`
+};
+function sterneSvg(anzahl) {
+  const stern2 = (cx, cy, g, an, i) => `<g transform="translate(${cx} ${cy}) scale(${g})"><path class="station__stern${an ? " ist-an" : ""}" data-i="${i}" style="--i:${i}"
+      d="M0 -10 L2.9 -3.6 L9.8 -3.1 L4.6 1.5 L6.1 8.3 L0 4.7 L-6.1 8.3 L-4.6 1.5 L-9.8 -3.1 L-2.9 -3.6 Z"
+      fill="url(#${an ? "wk-stern" : "wk-stern-grau"})" stroke="${an ? "#7a4a06" : "#4a4e60"}" stroke-width="1.6" stroke-linejoin="round"/></g>`;
+  return `<svg class="station__sterne" viewBox="0 0 76 30" aria-hidden="true" focusable="false">
+    ${stern2(14, 17, 1.05, anzahl >= 1, 0)}${stern2(62, 17, 1.05, anzahl >= 3, 2)}${stern2(38, 13, 1.25, anzahl >= 2, 1)}
+  </svg>`;
+}
+function stationBauen({ level, gegner, offen: offen2, geschafft, sterne, aktuell }) {
+  const art = !offen2 ? "dunkel" : level.isBoss ? "boss" : geschafft ? "gruen" : "gold";
+  const knopf = document.createElement("button");
+  knopf.type = "button";
+  knopf.className = [
+    "station",
+    `station--${art}`,
+    offen2 ? "ist-offen" : "ist-gesperrt",
+    geschafft ? "ist-geschafft" : "",
+    level.isBoss ? "ist-boss" : "",
+    aktuell ? "ist-aktuell" : ""
+  ].filter(Boolean).join(" ");
+  knopf.disabled = !offen2;
+  knopf.dataset.level = level.id;
+  knopf.setAttribute(
+    "aria-label",
+    `${level.isBoss ? "Bosskampf" : `Kampf ${level.number}`}: ${gegner.name} (${geschafft ? `geschafft, ${sterne} Sterne` : offen2 ? "offen" : "gesperrt"})`
+  );
+  const symbol = !offen2 ? "schloss" : geschafft ? "haken" : level.isBoss ? "krone" : "schwerter";
+  knopf.innerHTML = `
+    <span class="station__koerper">
+      <span class="station__schein" aria-hidden="true"></span>
+      ${sockel(art, level.number)}
+      <span class="station__ring" aria-hidden="true"></span>
+      ${level.isBoss ? '<span class="station__boss" aria-hidden="true"></span>' : ""}
+      ${emblem(art, symbol)}
+    </span>
+    ${geschafft ? sterneSvg(sterne) : ""}
+    <span class="station__name">${level.isBoss ? "BOSS" : `Kampf ${level.number}`}</span>
+  `;
+  if (level.isBoss) {
+    const figur = createSprite(gegner, { className: "station__boss-figur" });
+    knopf.querySelector(".station__boss").appendChild(figur);
+  }
+  return knopf;
+}
+
+// js/ui/weltkarte/karte.js
+var SPUR_MAX = 560;
+var STREIFEN_PX = 640;
+function weltkarteBauen({ scroller, welt, thema, levels, gegnerVon, zustand, aktuellId, obenPx, untenPx, stufe, beiWahl }) {
+  const breitePx = Math.max(280, scroller.clientWidth);
+  const spurPx = Math.min(breitePx, SPUR_MAX);
+  const m = spurPx / 1e3;
+  const stationPx = Math.round(Math.min(124, Math.max(88, spurPx * 0.26)));
+  const f = thema.farben;
+  const karte = karteAnlegen({
+    anzahl: levels.length,
+    breite: breitePx / m,
+    oben: (obenPx + 400) / m,
+    unten: (untenPx + stationPx * 1.05 + 16) / m,
+    seed: welt.id,
+    deko: thema.deko,
+    frei: {
+      x: stationPx * 0.6 / m + 10,
+      oben: stationPx * 0.62 / m,
+      unten: (stationPx * 0.5 + 34) / m
+    }
+  });
+  const hoehePx = Math.round(karte.hoehe * m);
+  const flaeche = document.createElement("div");
+  flaeche.className = "wk-flaeche";
+  flaeche.style.height = `${hoehePx}px`;
+  flaeche.style.setProperty("--breite", `${breitePx}px`);
+  flaeche.style.setProperty("--station", `${stationPx}px`);
+  flaeche.style.setProperty("--himmel", f.himmelOben);
+  flaeche.style.setProperty("--wiese", f.wiese);
+  const adressen = [];
+  const bildAus = (svg) => {
+    const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+    adressen.push(url);
+    return url;
+  };
+  const fern = document.createElement("div");
+  fern.className = "wk-fern";
+  const hg = hintergrundZeichnen(karte, f, thema);
+  fern.style.height = `${Math.round(hg.hoehe * m)}px`;
+  const hgBild = new Image();
+  hgBild.alt = "";
+  hgBild.decoding = "async";
+  hgBild.src = bildAus(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${r(karte.breite)} ${r(hg.hoehe)}" width="${breitePx}" height="${Math.round(hg.hoehe * m)}" preserveAspectRatio="none">${hg.svg}</svg>`);
+  fern.appendChild(hgBild);
+  flaeche.appendChild(fern);
+  const landschaft = document.createElement("div");
+  landschaft.className = "wk-landschaft";
+  const defs = defsZeichnen(karte, f);
+  const teile = bodenZeichnen(karte, f, thema, { ohneWiegendes: stufe !== "aus" && thema.leben.grasWiegen });
+  const streifenU = STREIFEN_PX / m;
+  for (let y0 = karte.horizont - 60; y0 < karte.hoehe; y0 += streifenU) {
+    const y1 = Math.min(karte.hoehe, y0 + streifenU);
+    const inhalt = teile.filter((t) => t.y1 >= y0 - 2 && t.y0 <= y1 + 2).map((t) => t.svg).join("");
+    const top = Math.round(y0 * m);
+    const hoehe = Math.round(y1 * m) - top + 1;
+    const vb = `0 ${r(top / m)} ${r(karte.breite)} ${r(hoehe / m)}`;
+    const bild = new Image();
+    bild.alt = "";
+    bild.decoding = "async";
+    bild.className = "wk-streifen";
+    bild.style.top = `${top}px`;
+    bild.style.height = `${hoehe}px`;
+    bild.src = bildAus(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${breitePx}" height="${hoehe}" preserveAspectRatio="none">${defs}${inhalt}</svg>`);
+    landschaft.appendChild(bild);
+  }
+  flaeche.appendChild(landschaft);
+  const leben = document.createElement("div");
+  leben.className = "wk-leben";
+  lebenAnlegen(leben, karte, thema, m, stufe);
+  flaeche.appendChild(leben);
+  const offen2 = levels.map((level) => zustand(level).offen);
+  flaeche.appendChild(lichtpfadBauen(karte, offen2, m, stufe));
+  const knoepfe = /* @__PURE__ */ new Map();
+  levels.forEach((level, i) => {
+    const z = zustand(level);
+    const knopf = stationBauen({
+      level,
+      gegner: gegnerVon(level),
+      offen: z.offen,
+      geschafft: z.geschafft,
+      sterne: z.sterne,
+      aktuell: level.id === aktuellId
+    });
+    const s = karte.stationen[i];
+    knopf.style.left = `${r(s.x * m)}px`;
+    knopf.style.top = `${r(s.y * m)}px`;
+    if (z.offen) knopf.addEventListener("click", () => beiWahl(level));
+    knoepfe.set(level.id, knopf);
+    flaeche.appendChild(knopf);
+  });
+  let vorn = null;
+  if (karte.vordergrund.length && stufe !== "aus") {
+    vorn = document.createElement("div");
+    vorn.className = "wk-vorn";
+    vorn.setAttribute("aria-hidden", "true");
+    for (const stueck2 of karte.vordergrund) {
+      const el = document.createElement("span");
+      el.className = `wk-zweig wk-zweig--${stueck2.seite < 0 ? "links" : "rechts"}`;
+      el.style.top = `${r(stueck2.y * m)}px`;
+      el.style.setProperty("--g", String(stueck2.s));
+      el.innerHTML = vordergrundZeichnen(stueck2, f);
+      vorn.appendChild(el);
+    }
+    flaeche.appendChild(vorn);
+  }
+  scroller.replaceChildren(flaeche);
+  const parallaxStop = stufe === "aus" ? () => {
+  } : parallaxStarten(scroller, fern, vorn);
+  return {
+    flaeche,
+    knoepfe,
+    massstab: m,
+    karte,
+    /** Scrollt so, dass die Station mittig zwischen Kopfleiste und Kampfkarte liegt. */
+    zeigeStation(levelId, sanft = false) {
+      const i = levels.findIndex((level) => level.id === levelId);
+      if (i < 0) return;
+      const mitteSichtbar = (obenPx + (scroller.clientHeight - untenPx)) / 2;
+      const ziel = karte.stationen[i].y * m - mitteSichtbar;
+      const max = scroller.scrollHeight - scroller.clientHeight;
+      scroller.scrollTo({ top: Math.max(0, Math.min(max, ziel)), behavior: sanft ? "smooth" : "auto" });
+    },
+    aufraeumen() {
+      parallaxStop();
+      adressen.forEach((url) => URL.revokeObjectURL(url));
+    }
+  };
+}
+function lichtpfadBauen(karte, offen2, m, stufe) {
+  const ebene = document.createElement("div");
+  ebene.className = "wk-pfad";
+  ebene.setAttribute("aria-hidden", "true");
+  const { weg } = karte;
+  const linie2 = (proben) => proben.map((p, i) => `${i ? "L" : "M"}${r(p.x)} ${r(p.y)}`).join(" ");
+  const erste = karte.stationen[0];
+  const bisErste = [];
+  for (const p of weg.proben) {
+    bisErste.push(p);
+    if (Math.hypot(p.x - erste.x, p.y - erste.y) < 4) break;
+  }
+  const erreicht = [bisErste];
+  const offenTeile = [];
+  weg.abschnitte.forEach((teil, i) => (offen2[i + 1] ? erreicht : offenTeile).push(teil));
+  const goldD = erreicht.map(linie2).join(" ");
+  const zartD = offenTeile.map(linie2).join(" ");
+  const svg = `<svg viewBox="0 0 ${r(karte.breite)} ${r(karte.hoehe)}" preserveAspectRatio="none" style="width:${r(karte.breite * m)}px;height:${r(karte.hoehe * m)}px">
+    ${zartD ? `<path d="${zartD}" stroke="#fffbe8" stroke-width="7" stroke-dasharray="1 22" stroke-linecap="round" fill="none" opacity="0.75"/>` : ""}
+    <g fill="none" stroke="#ffd25a" stroke-linecap="round" stroke-linejoin="round">
+      <path d="${goldD}" stroke-width="46" opacity="0.10"/><path d="${goldD}" stroke-width="32" opacity="0.14"/><path d="${goldD}" stroke-width="21" opacity="0.22"/>
+    </g>
+    <path d="${goldD}" stroke="#d9901a" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${goldD}" stroke="#ffe27a" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${goldD}" stroke="#ffffff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.85"/>
+  </svg>`;
+  ebene.innerHTML = svg;
+  const kannPfad = typeof CSS !== "undefined" && CSS.supports?.("offset-path", "path('M0 0 L1 1')");
+  if (stufe !== "aus" && kannPfad) {
+    const strecke = [...bisErste];
+    weg.abschnitte.forEach((teil, i) => offen2[i + 1] && strecke.push(...teil));
+    const laengePx = strecke.reduce((s, p, i) => i ? s + Math.hypot(p.x - strecke[i - 1].x, p.y - strecke[i - 1].y) : 0, 0) * m;
+    const pfad = pfadInPixeln(strecke.filter((_, i) => i % 2 === 0 || i === strecke.length - 1), m);
+    const zahl = stufe === "hoch" ? Math.min(14, Math.max(4, Math.round(laengePx / 120))) : 3;
+    const dauer = Math.max(6, laengePx / 55);
+    for (let i = 0; i < zahl; i++) {
+      const punkt = document.createElement("span");
+      punkt.className = "wk-lichtpunkt";
+      punkt.style.offsetPath = `path('${pfad}')`;
+      punkt.style.animationDuration = `${r(dauer)}s`;
+      punkt.style.animationDelay = `-${r(dauer * i / zahl)}s`;
+      ebene.appendChild(punkt);
+    }
+  }
+  return ebene;
+}
+
+// js/ui/weltkarte/rahmen.js
+var ICONS = {
+  stern: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8 L15 8.3 L22.1 9 L16.8 13.8 L18.3 20.8 L12 17.2 L5.7 20.8 L7.2 13.8 L1.9 9 L9 8.3 Z" fill="url(#wk-stern)" stroke="#7a4a06" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.5 9.4 L12 4.6 L13.3 7.6" stroke="#fffbe0" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.8"/></svg>`,
+  pokal: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3 h12 v5 a6 6 0 0 1 -12 0 Z" fill="url(#wk-stern)" stroke="#7a4a06" stroke-width="1.3"/><path d="M6 5 H2.8 a3.6 3.6 0 0 0 4.2 5 M18 5 h3.2 a3.6 3.6 0 0 1 -4.2 5" stroke="#e0a52a" stroke-width="1.8" fill="none"/><path d="M10.6 13.5 h2.8 l0.6 4 h-4 Z" fill="#e0a52a"/><rect x="7" y="17.5" width="10" height="3.6" rx="1.2" fill="#a8741c"/><path d="M8.5 5 v3" stroke="#fffbe0" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/></svg>`,
+  muenze: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="url(#wk-stern)" stroke="#8a5a10" stroke-width="1.5"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#c98a1c" stroke-width="1.4"/><path d="M10 8.4 h3.6 a1.8 1.8 0 0 1 0 3.6 h-3 h3.4 a1.8 1.8 0 0 1 0 3.6 H10 Z" fill="none" stroke="#a8741c" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.6 9 a6 6 0 0 1 3.4 -3.2" stroke="#fffbe0" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5 v14 M5 12 h14" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>`,
+  karte: `<svg viewBox="0 0 28 24" aria-hidden="true"><path d="M2 5 L9 2.5 L19 5.5 L26 3 L26 19 L19 21.5 L9 18.5 L2 21 Z" fill="#f2deb0" stroke="#8a5a20" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 2.5 V18.5 M19 5.5 V21.5" stroke="#c9a46a" stroke-width="1.2"/><path d="M5 15 q4 -6 8 -3 t8 -5" stroke="#d6453c" stroke-width="1.6" fill="none" stroke-dasharray="2 2"/><path d="M20.5 6 l1.6 1.6 M22.1 6 l-1.6 1.6" stroke="#d6453c" stroke-width="1.4" stroke-linecap="round"/><path d="M4 8 q2 1 3 0" stroke="#5a9e3a" stroke-width="1.6" fill="none"/></svg>`,
+  blatt: `<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 24 C4 12 12 4 25 3 C24 15 17 23 4 24 Z" fill="#6fcf4a" stroke="#2c7a22" stroke-width="1.4"/><path d="M4 24 L19 9 M10 18 l-1 -5 M14 14 l-1 -5 M10 18 l5 0 M14 14 l5 0" stroke="#2c7a22" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M8 17 C9 11 14 7 21 5.5" stroke="#d8ffb0" stroke-width="1.2" fill="none" opacity="0.8"/></svg>`,
+  krone: `<svg viewBox="0 0 32 26" aria-hidden="true"><path d="M3 22 L1.5 7 L9 13 L16 3 L23 13 L30.5 7 L29 22 Z" fill="url(#wk-stern)" stroke="#7a4a06" stroke-width="1.6" stroke-linejoin="round"/><circle cx="16" cy="15" r="2.6" fill="#ff5c8a" stroke="#7a1a3a"/><circle cx="8" cy="17" r="1.8" fill="#5cc8ff"/><circle cx="24" cy="17" r="1.8" fill="#5cc8ff"/><rect x="3" y="21" width="26" height="3.4" rx="1.2" fill="#c98a1c"/></svg>`,
+  schwerter: `<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 23 L22 6 M23 23 L6 6" stroke="#5a3a10" stroke-width="5" stroke-linecap="round"/><path d="M5 23 L22 6 M23 23 L6 6" stroke="#eef2ff" stroke-width="2.6" stroke-linecap="round"/><path d="M3 19 l6 6 M25 19 l-6 6" stroke="#ffd76a" stroke-width="3" stroke-linecap="round"/></svg>`,
+  zurueck: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 L7 12 L15 20" stroke="#fff" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  spielen: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5 L20 12 L7 19.5 Z" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  lorbeer: `<svg viewBox="0 0 30 40" aria-hidden="true"><path d="M24 38 C10 34 4 22 8 4" stroke="#ffe08a" stroke-width="2" fill="none" stroke-linecap="round"/>${[
+    [9, 8, -40],
+    [7, 15, -25],
+    [8, 22, -10],
+    [11, 29, 10],
+    [16, 34, 30]
+  ].map(([x, y, w]) => `<ellipse cx="${x - 3}" cy="${y}" rx="5" ry="2.4" transform="rotate(${w - 60} ${x - 3} ${y})" fill="#ffe08a"/><ellipse cx="${x + 4}" cy="${y + 1}" rx="5" ry="2.4" transform="rotate(${w + 30} ${x + 4} ${y + 1})" fill="#f5c84a"/>`).join("")}</svg>`
+};
+function weltSymbol(welt) {
+  return welt.id === 1 ? ICONS.blatt : `<span class="wk-banner__emoji">${welt.icon}</span>`;
+}
+function kopfleisteBauen({ welt, sterne, sterneMax, zuWelten, zuRangliste, zuShop }) {
+  const figur = getMonster(getAktiveFigur());
+  const { level } = charakterWerte(figur);
+  const liga = ligaVon(gameState.trophaeen);
+  const leiste = document.createElement("header");
+  leiste.className = "wk-kopf";
+  leiste.innerHTML = `
+    <div class="wk-kopf__zeile">
+      <div class="wk-avatar">
+        <span class="wk-avatar__rahmen"><span class="wk-avatar__bild hud__avatar"></span></span>
+        <span class="wk-avatar__level">Lv. ${level}</span>
+      </div>
+      <div class="wk-kopf__werte">
+        <div class="wk-chip" aria-label="${sterne} von ${sterneMax} Sternen">
+          <span class="wk-chip__icon">${ICONS.stern}</span><span class="wk-chip__zahl">${sterne}/${sterneMax}</span>
+        </div>
+        <button class="wk-chip wk-chip--knopf" type="button" style="--liga:${liga.farbe}" aria-label="${gameState.trophaeen} Trophäen - Rangliste öffnen">
+          <span class="wk-chip__icon">${ICONS.pokal}</span><span class="wk-chip__zahl">${gameState.trophaeen}</span>
+        </button>
+        <div class="wk-chip wk-chip--muenzen">
+          <span class="wk-chip__icon">${ICONS.muenze}</span><span class="wk-chip__zahl">${gameState.coins}</span>
+          <button class="wk-chip__plus" type="button" aria-label="Zum Shop">${ICONS.plus}</button>
+        </div>
+      </div>
+    </div>
+    <div class="wk-kopf__zeile wk-kopf__zeile--welt">
+      <button class="wk-knopf-welten" type="button"><span class="wk-knopf-welten__icon">${ICONS.karte}</span>Welten</button>
+      <div class="wk-banner"><span class="wk-banner__icon">${weltSymbol(welt)}</span><span class="wk-banner__name">${welt.name}</span></div>
+      <span class="wk-kopf__platz" aria-hidden="true"></span>
+    </div>
+  `;
+  leiste.querySelector(".wk-avatar__bild").appendChild(createSprite(figur));
+  leiste.querySelector(".wk-knopf-welten").addEventListener("click", zuWelten);
+  leiste.querySelector(".wk-chip--knopf").addEventListener("click", zuRangliste);
+  leiste.querySelector(".wk-chip__plus").addEventListener("click", zuShop);
+  return leiste;
+}
+function kampfkarteBauen({ zurueck, starten }) {
+  const fuss = document.createElement("footer");
+  fuss.className = "wk-fuss";
+  fuss.innerHTML = `
+    <div class="wk-karte" aria-live="polite">
+      <span class="wk-karte__ecke wk-karte__ecke--lo"></span><span class="wk-karte__ecke wk-karte__ecke--ro"></span>
+      <span class="wk-karte__ecke wk-karte__ecke--lu"></span><span class="wk-karte__ecke wk-karte__ecke--ru"></span>
+      <div class="wk-karte__buehne">
+        <span class="wk-karte__podest"></span>
+        <span class="wk-karte__figur"></span>
+        <span class="wk-karte__funke" style="--i:0"></span><span class="wk-karte__funke" style="--i:1"></span><span class="wk-karte__funke" style="--i:2"></span>
+      </div>
+      <span class="wk-karte__trenner"></span>
+      <div class="wk-karte__text">
+        <div class="wk-karte__titel"></div>
+        <div class="wk-karte__zeile wk-karte__gegner"></div>
+        <div class="wk-karte__zeile wk-karte__belohnung"></div>
+      </div>
+    </div>
+    <div class="wk-knoepfe">
+      <button class="wk-zurueck" type="button" aria-label="Zurück zum Startbildschirm">${ICONS.zurueck}</button>
+      <button class="wk-start" type="button">
+        <span class="wk-start__lorbeer">${ICONS.lorbeer}</span>
+        <span class="wk-start__text"><span class="wk-start__play">${ICONS.spielen}</span><span class="wk-start__wort"></span></span>
+        <span class="wk-start__lorbeer wk-start__lorbeer--r">${ICONS.lorbeer}</span>
+      </button>
+    </div>
+  `;
+  fuss.querySelector(".wk-zurueck").addEventListener("click", zurueck);
+  const startKnopf = fuss.querySelector(".wk-start");
+  startKnopf.addEventListener("click", starten);
+  const karte = fuss.querySelector(".wk-karte");
+  const figur = fuss.querySelector(".wk-karte__figur");
+  const titel = fuss.querySelector(".wk-karte__titel");
+  const gegnerZeile = fuss.querySelector(".wk-karte__gegner");
+  const belohnung = fuss.querySelector(".wk-karte__belohnung");
+  const wort = fuss.querySelector(".wk-start__wort");
+  function zeigen(level, gegner, anzahl) {
+    karte.classList.remove("ist-leer");
+    karte.classList.toggle("ist-boss", level.isBoss);
+    startKnopf.classList.toggle("ist-boss", level.isBoss);
+    titel.innerHTML = `${level.isBoss ? `<span class="wk-karte__krone">${ICONS.krone}</span>` : ""}Kampf ${level.number} von ${anzahl}`;
+    gegnerZeile.innerHTML = `<strong>${gegner.name}</strong>${gegner.variante ? ` <span class="map__variante">${gegner.variante}</span>` : ""} <span class="wk-karte__punkt">·</span> ${gegner.maxHp} LP`;
+    belohnung.innerHTML = `Belohnung: <span class="wk-karte__muenze">${ICONS.muenze}</span> <strong>${level.reward}</strong>`;
+    figur.replaceChildren(createSprite(gegner));
+    wort.textContent = level.isBoss ? "BOSSKAMPF" : `KAMPF ${level.number} STARTEN`;
+    startKnopf.disabled = false;
+    karte.classList.remove("ist-neu");
+    void karte.offsetWidth;
+    karte.classList.add("ist-neu");
+  }
+  function leeren() {
+    karte.classList.add("ist-leer");
+    titel.textContent = "Kein Kampf verfügbar.";
+    gegnerZeile.textContent = "";
+    belohnung.textContent = "";
+    wort.textContent = "KAMPF";
+    startKnopf.disabled = true;
+  }
+  return { element: fuss, zeigen, leeren };
+}
+
+// js/screens/map.js
+var zuletztGesehen = /* @__PURE__ */ new Map();
+var aufraeumen = () => {
+};
 var mapScreen = {
   // Auf der Karte läuft schon die Musik der Welt.
   musik: (params) => getWorld(Number(params.worldId) || gameState.unlockedWorld)?.music ?? "menue",
@@ -16890,134 +19941,142 @@ var mapScreen = {
     const worldId = Number(params.worldId) || gameState.unlockedWorld;
     const world = getWorld(worldId);
     if (!world) throw new Error(`Welt ${worldId} gibt es nicht (siehe js/data/worlds.js)`);
+    const thema = kartenThema(world);
     const levels = levelsOfWorld(worldId);
     const current = nextLevelOf(worldId);
+    let stufe = qualitaetErmitteln();
     const screen = document.createElement("div");
-    screen.className = "screen screen--map";
+    screen.className = `screen screen--map wk wk--${stufe}`;
     applyRegion(screen, world.scenery, world);
-    screen.appendChild(createScenery());
-    screen.appendChild(createHud());
-    const header = document.createElement("div");
-    header.className = "map__header";
-    header.innerHTML = `
-      <button class="btn btn--ghost btn--small" id="btn-worlds" type="button">🗺️&nbsp;Welten</button>
-      <span class="map__world">${world.icon} ${world.name}</span>
-      <span class="map__chip">${clearedInWorld(worldId)} / ${fightsInWorld(world)}</span>
-    `;
-    header.querySelector("#btn-worlds").addEventListener("click", () => showScreen("worlds"));
-    screen.appendChild(header);
-    const map = document.createElement("div");
-    map.className = "map";
-    const canvas = document.createElement("div");
-    canvas.className = "map__canvas";
-    canvas.style.setProperty("--levels", String(levels.length));
-    const points = levels.map((level) => `${level.x},${level.y}`).join(" ");
-    canvas.innerHTML = `
-      <svg class="map__path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <polyline class="map__path-line" points="${points}" vector-effect="non-scaling-stroke" />
-      </svg>
-    `;
-    levels.forEach((level) => {
-      const unlocked = isLevelUnlocked(level.id);
-      const cleared = isLevelCleared(level.id);
-      const enemy = getEnemy(level.enemyId);
-      const node = document.createElement("button");
-      node.type = "button";
-      node.className = [
-        "node",
-        unlocked ? "is-unlocked" : "is-locked",
-        cleared ? "is-cleared" : "",
-        level.isBoss ? "is-boss" : "",
-        current && current.id === level.id ? "is-current" : ""
-      ].filter(Boolean).join(" ");
-      node.style.left = `${level.x}%`;
-      node.style.top = `${level.y}%`;
-      node.disabled = !unlocked;
-      node.setAttribute(
-        "aria-label",
-        `Kampf ${level.number}: ${level.name} (${cleared ? "geschafft" : unlocked ? "offen" : "gesperrt"})`
-      );
-      const badge = cleared ? "✓" : level.isBoss && unlocked ? "💀" : unlocked ? level.number : "🔒";
-      node.innerHTML = `
-        <span class="node__circle">${badge}</span>
-        <span class="node__label">${nodeLabel(level, unlocked)}</span>
-      `;
-      const sterne = getStars(level.id);
-      if (sterne > 0) {
-        node.insertBefore(createStars(sterne), node.querySelector(".node__label"));
-      }
-      if (unlocked) node.addEventListener("click", () => selectLevel(level, enemy));
-      canvas.appendChild(node);
+    screen.insertAdjacentHTML("afterbegin", stationsDefs());
+    const scroller = document.createElement("div");
+    scroller.className = "wk-scroll";
+    screen.appendChild(scroller);
+    const teilchen = document.createElement("div");
+    teilchen.className = "wk-teilchen-ebene";
+    teilchen.setAttribute("aria-hidden", "true");
+    screen.appendChild(teilchen);
+    const kopf = kopfleisteBauen({
+      welt: world,
+      sterne: getTotalStars(worldId),
+      sterneMax: levels.length * 3,
+      zuWelten: () => showScreen("worlds"),
+      zuRangliste: () => showScreen("rangliste"),
+      zuShop: () => showScreen("shop")
     });
-    map.appendChild(canvas);
-    const footer = document.createElement("div");
-    footer.className = "map__footer";
-    const info = document.createElement("div");
-    info.className = "panel panel--tight map__info";
-    footer.appendChild(info);
-    const buttons = document.createElement("div");
-    buttons.className = "map__buttons";
-    const backButton = document.createElement("button");
-    backButton.className = "btn btn--ghost";
-    backButton.type = "button";
-    backButton.textContent = "‹";
-    backButton.setAttribute("aria-label", "Zurück zum Startbildschirm");
-    backButton.addEventListener("click", () => showScreen("start"));
-    buttons.appendChild(backButton);
-    const playButton = document.createElement("button");
-    playButton.className = "btn btn--big btn--green";
-    playButton.type = "button";
-    buttons.appendChild(playButton);
-    footer.appendChild(buttons);
+    screen.appendChild(kopf);
     let selected = null;
-    function selectLevel(level, enemy) {
-      selected = level;
-      info.innerHTML = `
-        <span class="map__info-sprite"></span>
-        <span class="map__info-title">${level.isBoss ? "👑 " : ""}Kampf ${level.number} von ${levels.length}</span>
-        <span class="map__info-text"><strong>${enemy.name}</strong>${enemy.variante ? ` · <span class="map__variante">${enemy.variante}</span>` : ""} · ${enemy.maxHp} LP</span>
-        <span class="map__info-text">Belohnung: ${MUENZE} ${level.reward}</span>
-      `;
-      info.querySelector(".map__info-sprite").appendChild(createSprite(enemy));
-      playButton.textContent = level.isBoss ? "▶  BOSSKAMPF" : `▶  KAMPF ${level.number} STARTEN`;
-      playButton.disabled = false;
-      canvas.querySelectorAll(".node").forEach((node) => node.classList.remove("is-selected"));
-      const index = levels.indexOf(level);
-      canvas.querySelectorAll(".node")[index]?.classList.add("is-selected");
-    }
-    playButton.addEventListener("click", () => {
-      if (selected) showScreen("battle", { levelId: selected.id });
+    const fuss = kampfkarteBauen({
+      zurueck: () => showScreen("start"),
+      starten: () => {
+        if (selected) showScreen("battle", { levelId: selected.id });
+      }
     });
-    const preselect = current ?? levels.findLast((level) => isLevelUnlocked(level.id)) ?? levels[0];
-    if (preselect) {
-      selectLevel(preselect, getEnemy(preselect.enemyId));
-    } else {
-      info.innerHTML = '<span class="map__info-text">Kein Kampf verfügbar.</span>';
-      playButton.disabled = true;
-    }
-    screen.appendChild(map);
-    screen.appendChild(footer);
+    screen.appendChild(fuss.element);
     root.appendChild(screen);
-    if (world.farben?.wiese) screen.style.setProperty("--welt-farbe", world.farben.wiese);
-    weltTeilchen(screen, world.id);
-    const rechts = screen.querySelector(".hud__rechts") ?? screen.querySelector(".hud");
-    const starChip = document.createElement("div");
-    starChip.className = "hud__coins hud__sterne";
-    starChip.innerHTML = `<span class="hud__coin-icon">⭐</span><span>${getTotalStars(worldId)}/${levels.length * 3}</span>`;
-    rechts.prepend(starChip);
-    const selectedNode = canvas.querySelector(".node.is-selected");
-    if (selectedNode) {
-      const mitte = selectedNode.offsetTop - map.clientHeight / 2 + selectedNode.offsetHeight / 2;
-      const rand = 60;
-      map.scrollTop = Math.max(
-        0,
-        Math.min(mitte, map.scrollHeight - map.clientHeight - rand + rand)
-      );
-    } else {
-      map.scrollTop = map.scrollHeight;
+    const zustand = (level) => ({
+      offen: isLevelUnlocked(level.id),
+      geschafft: isLevelCleared(level.id),
+      sterne: getStars(level.id)
+    });
+    let karte = null;
+    function verdeckt() {
+      const b = screen.getBoundingClientRect();
+      return {
+        oben: kopf.getBoundingClientRect().bottom - b.top,
+        unten: b.bottom - fuss.element.getBoundingClientRect().top
+      };
     }
+    function bauen() {
+      const anteil = karte ? scroller.scrollTop / Math.max(1, scroller.scrollHeight) : null;
+      karte?.aufraeumen();
+      const { oben, unten } = verdeckt();
+      karte = weltkarteBauen({
+        scroller,
+        welt: world,
+        thema,
+        levels,
+        gegnerVon: (level) => getEnemy(level.enemyId),
+        zustand,
+        aktuellId: current?.id ?? null,
+        obenPx: oben,
+        untenPx: unten,
+        stufe,
+        beiWahl: (level) => waehlen(level, true)
+      });
+      if (selected) markieren(selected);
+      if (anteil !== null) scroller.scrollTop = anteil * scroller.scrollHeight;
+    }
+    function markieren(level) {
+      karte.knoepfe.forEach((knopf, id) => knopf.classList.toggle("ist-gewaehlt", id === level.id));
+    }
+    function waehlen(level, durchTipp) {
+      selected = level;
+      fuss.zeigen(level, getEnemy(level.enemyId), levels.length);
+      markieren(level);
+      if (durchTipp) {
+        const knopf = karte.knoepfe.get(level.id);
+        knopf.classList.remove("ist-angetippt");
+        void knopf.offsetWidth;
+        knopf.classList.add("ist-angetippt");
+      }
+    }
+    bauen();
+    const preselect = current ?? levels.findLast((level) => isLevelUnlocked(level.id)) ?? null;
+    if (preselect) {
+      waehlen(preselect, false);
+      karte.zeigeStation(preselect.id);
+    } else {
+      fuss.leeren();
+      scroller.scrollTop = scroller.scrollHeight;
+    }
+    neuesFeiern(levels, karte);
+    teilchenAnlegen(teilchen, thema, stufe);
+    weltTeilchen(screen, world.id);
+    const pruefungStop = stufe === "hoch" ? leistungPruefen((neu) => {
+      stufe = neu;
+      screen.classList.replace("wk--hoch", `wk--${neu}`);
+      bauen();
+    }) : () => {
+    };
+    let letzteBreite = scroller.clientWidth;
+    let timer = 0;
+    const beobachter = new ResizeObserver(() => {
+      if (Math.abs(scroller.clientWidth - letzteBreite) < 2) return;
+      letzteBreite = scroller.clientWidth;
+      clearTimeout(timer);
+      timer = setTimeout(bauen, 150);
+    });
+    beobachter.observe(scroller);
+    aufraeumen = () => {
+      pruefungStop();
+      beobachter.disconnect();
+      clearTimeout(timer);
+      karte?.aufraeumen();
+    };
+  },
+  unmount() {
+    aufraeumen();
+    aufraeumen = () => {
+    };
   }
 };
+function neuesFeiern(levels, karte) {
+  levels.forEach((level) => {
+    const jetzt = { offen: isLevelUnlocked(level.id), sterne: getStars(level.id) };
+    const vorher = zuletztGesehen.get(level.id);
+    zuletztGesehen.set(level.id, jetzt);
+    if (!vorher) return;
+    const knopf = karte.knoepfe.get(level.id);
+    if (jetzt.offen && !vorher.offen) knopf.classList.add("ist-neu-frei");
+    if (jetzt.sterne > vorher.sterne) {
+      knopf.querySelectorAll(".station__stern.ist-an").forEach((stern2) => {
+        if (Number(stern2.dataset.i) >= vorher.sterne) stern2.classList.add("ist-neu");
+      });
+      knopf.classList.add("ist-neue-sterne");
+    }
+  });
+}
 
 // js/core/fighter.js
 var MAX_ENERGIE = 10;
@@ -17922,12 +20981,12 @@ function baueUmgebung(screen, arena, stimmung) {
       timer.add(t);
     }
   }
-  function aufraeumen2() {
+  function aufraeumen3() {
     timer.forEach((t) => t?.intervall ? clearInterval(t.intervall) : clearTimeout(t));
     timer.clear();
     clearTimeout(reaktionsTimer);
   }
-  return { reagieren, aufraeumen: aufraeumen2 };
+  return { reagieren, aufraeumen: aufraeumen3 };
 }
 
 // js/screens/battle.js
@@ -17937,7 +20996,7 @@ var klangTimer = [];
 var bildfolgeStoppen = () => {
 };
 var handSperreTimer = null;
-var aufraeumen = [];
+var aufraeumen2 = [];
 var ERGEBNIS_VERZOEGERUNG = 750;
 var ANGRIFF_AB_ENERGIE = 5;
 var KRAFT_KLANG = {
@@ -18071,7 +21130,7 @@ var battleScreen = {
     screen.querySelector("#arena").prepend(...createArenaLayers());
     const stimmung = { ...waehleStimmung(getWorld(level.worldId)), boss: Boolean(enemyMonster.isBoss) };
     const umgebung = baueUmgebung(screen, screen.querySelector("#arena"), stimmung);
-    aufraeumen.push(umgebung.aufraeumen);
+    aufraeumen2.push(umgebung.aufraeumen);
     screen.querySelector("#battle-log").textContent = `${stimmung.variantenName} · ${stimmung.wetterName}`;
     const ui = {
       enemyHpFill: screen.querySelector("#enemy-hp-fill"),
@@ -18726,7 +21785,7 @@ var battleScreen = {
       if (document.hidden) pausieren();
     };
     document.addEventListener("visibilitychange", beiSichtwechsel);
-    aufraeumen.push(() => document.removeEventListener("visibilitychange", beiSichtwechsel));
+    aufraeumen2.push(() => document.removeEventListener("visibilitychange", beiSichtwechsel));
     function losLegen() {
       if (!battle) return;
       battle.start();
@@ -18748,7 +21807,7 @@ var battleScreen = {
         }
       }
     });
-    aufraeumen.push(introAbbrechen);
+    aufraeumen2.push(introAbbrechen);
   },
   /** Wichtig: die Spielschleife stoppen, wenn der Bildschirm verlassen wird. */
   unmount() {
@@ -18769,8 +21828,8 @@ var battleScreen = {
     bildfolgeStoppen();
     bildfolgeStoppen = () => {
     };
-    aufraeumen.forEach((fn) => fn());
-    aufraeumen = [];
+    aufraeumen2.forEach((fn) => fn());
+    aufraeumen2 = [];
   }
 };
 

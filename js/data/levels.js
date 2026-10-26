@@ -4,8 +4,8 @@
  * Eine Welt besteht aus 10 bis 15 Kämpfen; der letzte ist immer der Boss.
  * Statt jeden Kampf einzeln aufzuschreiben, entstehen sie hier automatisch
  * aus der Gegnerliste einer Welt. Ein neuer Kampf = ein Gegner mehr in
- * worlds.js. Position auf der Karte, Belohnung und Freischaltung ergeben
- * sich von selbst.
+ * worlds.js. Belohnung und Freischaltung ergeben sich von selbst; wo der
+ * Kampf auf der Weltkarte liegt, plant js/ui/weltkarte/layout.js.
  *
  * Ein Level hat:
  *   id        - "1-1", "1-2", ... (Welt-Nummer und Kampf-Nummer)
@@ -16,28 +16,10 @@
  *   isBoss    - letzter Kampf einer Welt
  *   reward    - Münzen für den ersten Sieg
  *   xp        - Charakter-Erfahrung für den Sieg (auch bei Wiederholung)
- *   x, y      - Position auf der Weltkarte in Prozent
  */
 
 import { WORLDS, fightsInWorld, getWorld } from './worlds.js';
 import { enemyIdFor, getEnemy } from './enemies.js';
-
-/**
- * Position eines Kampfes auf der Karte.
- * Die Kämpfe laufen von unten nach oben; die x-Position wechselt in einem
- * Schlangenmuster, damit der Weg nicht schnurgerade verläuft.
- */
-function positionFor(index, total) {
-  const muster = [26, 50, 74, 50];
-  // Der erste und der letzte Punkt bleiben bewusst vom Rand weg (88 % bis
-  // 8 %), damit sie beim Scrollen nicht am Rand der Karte kleben und
-  // angeschnitten wirken.
-  const abstand = total > 1 ? 80 / (total - 1) : 0;
-  return {
-    x: muster[index % muster.length],
-    y: Number((88 - index * abstand).toFixed(2)),
-  };
-}
 
 function buildLevels() {
   const levels = [];
@@ -48,7 +30,6 @@ function buildLevels() {
     for (let index = 0; index < total; index++) {
       const isBoss = index === total - 1;
       const enemy = getEnemy(enemyIdFor(world, index));
-      const { x, y } = positionFor(index, total);
 
       levels.push({
         id: `${world.id}-${index + 1}`,
@@ -63,8 +44,6 @@ function buildLevels() {
         reward: Math.round(world.reward * (1 + index * 0.12) * (isBoss ? 4 : 1)),
         // Erfahrung richtet sich nach der Stärke des Gegners.
         xp: Math.round(enemy.maxHp * 0.8 * (isBoss ? 2.5 : 1)),
-        x,
-        y,
       });
     }
   }

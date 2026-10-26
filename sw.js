@@ -17,7 +17,7 @@
  *   werden dann alle alten Caches gelöscht.
  */
 
-const CACHE = 'monsterquest-v32';
+const CACHE = 'monsterquest-v33';
 
 // Das komplette Spiel, das schon beim ersten Besuch fest in den Cache soll -
 // alle Seiten, Daten, Bilder. So läuft es auch offline vollständig, sobald die
@@ -37,6 +37,7 @@ const SCHALE = [
   'css/screens.css',
   'css/erlebnis.css',
   'css/werkstatt.css',
+  'css/weltkarte.css',
   'js/core/audio.js',
   'js/core/aufgaben.js',
   'js/core/battle.js',
@@ -78,6 +79,7 @@ const SCHALE = [
   'js/data/spielmodi.js',
   'js/data/sounds.js',
   'js/data/studio-teile.js',
+  'js/data/weltkarten.js',
   'js/data/timo-skins.js',
   'js/data/trophaeen.js',
   'js/data/worlds.js',
@@ -111,6 +113,13 @@ const SCHALE = [
   'js/ui/tutorial.js',
   'js/ui/umgebung.js',
   'js/ui/willkommen.js',
+  'js/ui/weltkarte/geometrie.js',
+  'js/ui/weltkarte/karte.js',
+  'js/ui/weltkarte/layout.js',
+  'js/ui/weltkarte/leben.js',
+  'js/ui/weltkarte/rahmen.js',
+  'js/ui/weltkarte/station.js',
+  'js/ui/weltkarte/zeichnen.js',
   'bilder/app/apple-touch-icon.png',
   'bilder/app/icon-192.png',
   'bilder/app/icon-512-maskable.png',

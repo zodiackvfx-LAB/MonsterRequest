@@ -1377,28 +1377,6 @@
   filter: none;
 }
 
-/* ---------- Weltkarte: Ring in der Weltfarbe ---------- */
-.screen--map .node__circle::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  border: 3px solid var(--welt-farbe, transparent);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.screen--map .node.is-locked .node__circle::before {
-  opacity: 0.18;
-  border-style: dashed;
-}
-
-.screen--map .node.is-selected .node__circle::before {
-  opacity: 1;
-  inset: -10px;
-  box-shadow: 0 0 14px var(--welt-farbe, transparent);
-}
-
 /* ---------- Teilchen beim Betreten einer Welt ---------- */
 .welt-teilchen {
   position: absolute !important;
