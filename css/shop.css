@@ -1,0 +1,611 @@
+/* =========================================================================
+   MonsterQuest · shop.css
+   Der Shop (js/screens/shop.js) mit seiner Ausstattung (js/ui/shop-deko.js):
+   Nachtmarkt im Hintergrund, Schild mit Lorbeer, Reiter mit Bildchen,
+   verzierte Goldrahmen und Truhen auf Steinsockeln.
+
+     1. Nachtmarkt
+     2. Kopf: Schild und Reiter
+     3. Rahmen und Eckverzierungen
+     4. Truhen-Angebote
+     5. Studio und Besitz
+   ========================================================================= */
+
+.screen--shop {
+  --shop-gold: #ffd25a;
+  --shop-gold-dunkel: #a8721a;
+  --shop-tafel: linear-gradient(180deg, rgba(30, 40, 92, 0.94) 0%, rgba(16, 22, 58, 0.96) 100%);
+}
+
+/* =========================================================================
+   1. Nachtmarkt
+   ========================================================================= */
+
+.shop-kulisse {
+  background: #0b1030;
+}
+
+.shop-kulisse__himmel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.shop-kulisse__stern {
+  animation: shop-funkeln 3s ease-in-out infinite;
+}
+
+@keyframes shop-funkeln {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+
+.shop-kulisse__fenster rect {
+  animation: shop-fenster 4s ease-in-out infinite;
+}
+
+.shop-kulisse__fenster rect:nth-child(3n) { animation-delay: -1.3s; }
+.shop-kulisse__fenster rect:nth-child(3n + 1) { animation-delay: -2.6s; }
+
+@keyframes shop-fenster {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+
+/* Die beiden Stände rahmen oben das Schild ein. */
+.shop-kulisse__stand {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) - 8px);
+  width: min(36vw, 190px);
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+}
+
+.shop-kulisse__stand--links { left: -10px; }
+.shop-kulisse__stand--rechts { right: -10px; }
+
+.shop-kulisse__laternenschein,
+.shop-kulisse__flamme {
+  animation: shop-flackern 2.4s ease-in-out infinite;
+}
+
+.shop-kulisse__kristallschein {
+  animation: shop-pulsieren 3s ease-in-out infinite;
+}
+
+@keyframes shop-flackern {
+  0%, 100% { opacity: 1; }
+  30%      { opacity: 0.8; }
+  55%      { opacity: 0.95; }
+  70%      { opacity: 0.72; }
+}
+
+@keyframes shop-pulsieren {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+.shop-kulisse__banner {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: shop-wehen 4s ease-in-out infinite;
+}
+
+@keyframes shop-wehen {
+  0%, 100% { transform: skewX(0); }
+  50%      { transform: skewX(-5deg); }
+}
+
+/* Glühwürmchen - schweben und glimmen. */
+.shop-kulisse__gluehwurm {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff3a0;
+  box-shadow: 0 0 8px 3px rgba(255, 220, 100, 0.65);
+  opacity: 0;
+  animation: shop-gluehwurm 7s ease-in-out infinite;
+}
+
+@keyframes shop-gluehwurm {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  20%  { opacity: 0.9; }
+  50%  { transform: translate(18px, -26px); opacity: 0.5; }
+  80%  { opacity: 0.9; }
+  100% { transform: translate(-8px, -50px); opacity: 0; }
+}
+
+/* =========================================================================
+   2. Kopf: Schild und Reiter
+   ========================================================================= */
+
+.screen--shop .topbar__title {
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.screen--shop .topbar__title::after {
+  display: none;
+}
+
+.shop-titel {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #24306e 0%, #121a46 100%);
+  border: 2px solid var(--shop-gold);
+  box-shadow: 0 0 0 2px rgba(12, 16, 40, 0.8), 0 0 18px rgba(255, 197, 61, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Rauten oben und unten am Schild. */
+.shop-titel::before,
+.shop-titel::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #e6fbff, #5ecbff);
+  border: 2px solid var(--shop-gold);
+  box-shadow: 0 0 8px rgba(94, 203, 255, 0.8);
+}
+
+.shop-titel::before { top: -7px; }
+.shop-titel::after { bottom: -7px; }
+
+.shop-titel__text {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  background: linear-gradient(180deg, #fffdf0 0%, #ffe27a 50%, #ffb32b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 #4a2a00) drop-shadow(0 0 8px rgba(255, 197, 61, 0.45));
+}
+
+.shop-titel__lorbeer {
+  width: 15px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.shop-titel__lorbeer:last-child {
+  transform: scaleX(-1);
+}
+
+/* Reiter mit Bildchen */
+.tabs--shop .tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 8px;
+  font-size: 0.86rem;
+  border-color: #3c4a96;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #202b62, #121a44);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.tabs--shop .tab.is-active {
+  color: #fff;
+  border-color: var(--shop-gold);
+  background: linear-gradient(180deg, #34428c, #1b2456);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 14px rgba(255, 197, 61, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.tab__icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.tab__icon svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tabs--shop .tab:not(.is-active) .tab__icon {
+  opacity: 0.75;
+  filter: saturate(0.7);
+}
+
+/* =========================================================================
+   3. Rahmen und Eckverzierungen
+   ========================================================================= */
+
+.shop-info,
+.shop-rahmen,
+.chest-card {
+  position: relative;
+  border-radius: 16px;
+  border: 2px solid var(--shop-gold-dunkel);
+  background: var(--shop-tafel);
+  box-shadow: 0 0 0 1px rgba(10, 14, 36, 0.9), inset 0 0 0 3px rgba(10, 14, 36, 0.55),
+    inset 0 0 0 4px rgba(255, 210, 90, 0.28), inset 0 1px 0 4px rgba(255, 255, 255, 0.06),
+    0 10px 22px rgba(4, 8, 24, 0.55);
+}
+
+.zier-ecke {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.zier-ecke svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.zier-ecke--lo { left: -3px; top: -3px; }
+.zier-ecke--ro { right: -3px; top: -3px; transform: scaleX(-1); }
+.zier-ecke--lu { left: -3px; bottom: -3px; transform: scaleY(-1); }
+.zier-ecke--ru { right: -3px; bottom: -3px; transform: scale(-1, -1); }
+
+/* Hinweis mit "i" */
+.shop-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+/* Raute oben und unten in der Mitte - wie am Schild. */
+.shop-info::before,
+.shop-info::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  transform: rotate(45deg);
+  background: var(--shop-gold);
+  border: 1px solid #6e4a10;
+}
+
+.shop-info::before { top: -5px; }
+.shop-info::after { bottom: -5px; }
+
+.shop-info__i {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--shop-gold);
+  border: 2px solid var(--shop-gold);
+  background: radial-gradient(circle at 40% 35%, #34428c, #121a44);
+  box-shadow: 0 0 10px rgba(255, 197, 61, 0.35);
+}
+
+.shop-info__text {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: #e3e9ff;
+}
+
+.shop-info__text strong {
+  color: #fff;
+}
+
+.shop-info--studio .studio-shop__link {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  text-decoration: none;
+}
+
+.shop-rahmen {
+  padding: 12px;
+}
+
+.shop-rahmen__titel {
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--shop-gold);
+  text-shadow: 0 2px 0 rgba(10, 14, 36, 0.8);
+}
+
+/* =========================================================================
+   4. Truhen-Angebote
+   ========================================================================= */
+
+.chest-card--holz   { --truhe-farbe: #ff9a3c; }
+.chest-card--silber { --truhe-farbe: #4fb8ff; }
+.chest-card--gold   { --truhe-farbe: #ffc53d; }
+.chest-card--boss   { --truhe-farbe: #c77dff; }
+
+.chest-card {
+  display: grid;
+  grid-template-columns: 104px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 10px 6px;
+  border-color: var(--shop-gold);
+  background:
+    radial-gradient(ellipse 60% 90% at 14% 60%, color-mix(in srgb, var(--truhe-farbe) 30%, transparent), transparent 70%),
+    var(--shop-tafel);
+  animation: shop-karte-rein 0.4s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+.chest-card:nth-of-type(2) { animation-delay: 0.06s; }
+.chest-card:nth-of-type(3) { animation-delay: 0.12s; }
+.chest-card:nth-of-type(4) { animation-delay: 0.18s; }
+
+@keyframes shop-karte-rein {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Glanz, der ab und zu über die Karte zieht. Bewegt wird der Verlauf
+   (background-position), nicht das Element - so bleibt er im Rahmen, ohne
+   dass die Karte overflow: hidden braucht (das ließe sie im Raster
+   schrumpfen und schnitte sie ab). */
+.chest-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 42%, rgba(255, 235, 170, 0.16) 50%, transparent 58%) no-repeat;
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  animation: shop-glanz 6s ease-in-out infinite;
+}
+
+.chest-card:nth-of-type(3)::after { animation-delay: 2s; }
+.chest-card:nth-of-type(4)::after { animation-delay: 4s; }
+
+@keyframes shop-glanz {
+  0%, 70% { background-position: 100% 0; }
+  100%    { background-position: 0 0; }
+}
+
+/* Bühne: Strahlen, Sockel und die Truhe darauf. */
+.chest-card__buehne {
+  position: relative;
+  height: 104px;
+  display: grid;
+  place-items: center;
+}
+
+.chest-card__strahlen {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 130px;
+  height: 130px;
+  margin: -65px 0 0 -65px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, var(--truhe-farbe) 0deg 6deg, transparent 6deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 65%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 65%);
+  opacity: 0.32;
+  animation: strahlen-drehen 18s linear infinite;
+}
+
+.chest-card .sockel {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 0;
+  width: calc(100% - 4px);
+  height: auto;
+}
+
+.sockel__schein {
+  fill: var(--truhe-farbe);
+  opacity: 0.35;
+  animation: shop-pulsieren 2.6s ease-in-out infinite;
+}
+
+.chest-card__icon {
+  position: relative;
+  width: 86px;
+  height: 93px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--truhe-farbe) 55%, transparent));
+}
+
+/* Die Truhe im Shop wippt sacht - sie will geöffnet werden. */
+.chest-card__icon .truhe {
+  animation: truhe-wippen 2.8s ease-in-out infinite;
+}
+
+.chest-card:nth-of-type(3) .chest-card__icon .truhe { animation-delay: -0.9s; }
+.chest-card:nth-of-type(4) .chest-card__icon .truhe { animation-delay: -1.8s; }
+
+@keyframes truhe-wippen {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-3px) rotate(-2deg); }
+}
+
+.chest-card__body {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.chest-card__name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(10, 14, 36, 0.85);
+}
+
+.chest-card__text {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #dfe6ff;
+}
+
+.chest-card__odds {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: #c3cdf0;
+}
+
+/* Eine Chance bricht nie mitten in "Selten 25%" um. */
+.chest-card__odds > * {
+  white-space: nowrap;
+}
+
+.chest-card__buy {
+  position: relative;
+  z-index: 1;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* =========================================================================
+   5. Studio und Besitz
+   ========================================================================= */
+
+.studio-shop {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.studio-teil {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  text-align: center;
+  border-radius: 14px;
+  border: 2px solid color-mix(in srgb, var(--rarity) 75%, transparent);
+  background:
+    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--rarity) 35%, transparent), transparent 62%),
+    linear-gradient(180deg, #1f2a5e, #121a44);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 12px -4px var(--rarity);
+}
+
+.studio-teil.is-owned {
+  opacity: 0.75;
+}
+
+.studio-teil__icon {
+  font-size: 1.8rem;
+  line-height: 1.2;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
+}
+
+.studio-teil__name {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.studio-teil__rarity {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rarity);
+}
+
+.studio-teil__hat {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--green-1);
+}
+
+.studio-teil__kaufen {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.besitz {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.besitz__kachel {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 12px 6px 10px;
+  border-radius: 14px;
+  text-align: center;
+  border: 2px solid color-mix(in srgb, var(--farbe) 60%, transparent);
+  background:
+    radial-gradient(circle at 50% 25%, color-mix(in srgb, var(--farbe) 30%, transparent), transparent 65%),
+    linear-gradient(180deg, #1f2a5e, #121a44);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  animation: pop-in 0.3s ease-out both;
+}
+
+/* Die letzte Kachel (Hüte und Muster) über die ganze Breite. */
+.besitz__kachel:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.besitz__icon {
+  font-size: 1.7rem;
+  line-height: 1.2;
+}
+
+.besitz__wert {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--farbe);
+  text-shadow: 0 2px 0 rgba(10, 14, 36, 0.8);
+}
+
+.besitz__name {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* Schmale Handys: Truhe und Knopf etwas kleiner, damit der Text Platz hat. */
+@media (max-width: 370px) {
+  .chest-card {
+    grid-template-columns: 84px 1fr auto;
+    padding-right: 8px;
+  }
+
+  .chest-card__icon {
+    width: 72px;
+    height: 78px;
+  }
+
+  .chest-card__buy {
+    padding: 6px 10px;
+    font-size: 0.92rem;
+  }
+
+  .shop-kulisse__stand {
+    width: 32vw;
+  }
+}
