@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 
 const WURZEL = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ZIEL = join(WURZEL, 'dist', 'MonsterQuest.html');
-const CSS = ['css/base.css', 'css/scenery.css', 'css/ui.css', 'css/screens.css', 'css/erlebnis.css', 'css/duell.css'];
+const CSS = ['css/base.css', 'css/scenery.css', 'css/ui.css', 'css/screens.css', 'css/erlebnis.css', 'css/duell.css', 'css/weltkarte.css'];
 const ESBUILD = 'esbuild@0.24.0';
 
 const MIME = { png: 'image/png', woff2: 'font/woff2', svg: 'image/svg+xml', jpg: 'image/jpeg' };

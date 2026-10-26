@@ -57,6 +57,8 @@ css/
   screens.css           Aufbau der einzelnen Bildschirme
   erlebnis.css          Pause, Ergebnisfenster, Kampf-Intros, Auftritte,
                         Kartenrahmen, Wetter, Tageszeit, Weltkarten-Teilchen
+  weltkarte.css         Weltkarte: Stationen, Lichtpfad, Kopfleiste,
+                        Kampfkarte und alle Bewegungen auf der Karte
 
 fonts/                  Spielschrift Fredoka (lokal, kein externer Aufruf)
 
@@ -85,6 +87,8 @@ js/
     studio-teile.js     Hüte und Muster fürs Skin-Studio: Seltenheit und Preis
     trophaeen.js        Trophäen je Sieg und die 8 Ligen
     duell.js            2v2: ALLE Werte (Kombo, Rollen, Paare je Welt, Grade, Belohnung)
+    weltkarten.js       Aussehen der Weltkarte je Welt (Farben, Bäume,
+                        Fluss, See, Ruinen, Effekte)
 
   core/                 NUR Logik – kennt kein HTML
     screens.js          Bildschirmverwaltung
@@ -116,13 +120,21 @@ js/
     truhen.js           Die gezeichneten Truhen (Holz, Silber, Gold, Boss)
     truhe-oeffnen.js    Die Öffnungs-Animation (Landen, Rütteln, Aufspringen,
                         Beute fliegt heraus)
+    weltkarte/          Die Weltkarte (siehe "Die Weltkarte" unten)
+      layout.js         plant Stationen, Weg, Fluss, Brücke, See, Verzierung
+      zeichnen.js       zeichnet Himmel, Berge, Wiese, Wasser, Bäume ... (SVG)
+      station.js        die steinernen Kampfplattformen
+      leben.js          alles, was sich bewegt, und die Parallaxe
+      rahmen.js         Kopfleiste und Kampfkarte unten
+      karte.js          setzt alle Ebenen zur scrollbaren Karte zusammen
+      geometrie.js      Rechenhilfen (Kurven, Abstände, Würfel)
 
   screens/              NUR Darstellung – baut HTML, reagiert auf Tipps
     lobby.js            Lobby wie bei Clash Royale: Seiten zum Wischen und
                         die Leiste unten (Shop, Figur, Deck, Start, Welten,
                         Sammlung, Optionen)
     start.js            Startbildschirm (die mittlere Seite der Lobby)
-    map.js              Weltkarte
+    map.js              Weltkarte (verbindet Spielstand und js/ui/weltkarte/)
     battle.js           Kampfbildschirm
     monster.js          Monsterübersicht
     deck.js             Deckübersicht
@@ -188,7 +200,49 @@ und Karten-Level 8–9). Neue Welt = ein Eintrag in `js/data/worlds.js`, dazu
 Boss-Kraft (`js/data/kraefte.js`), Musik (`js/data/musik.js`), Kampfstimmung
 (`STIMMUNGEN` in `js/ui/umgebung.js`), Teilchen auf der Karte
 (`WELT_TEILCHEN` in `js/ui/effekte.js`) und optional eine eigene Kulisse
-(`.region--…` in `css/scenery.css`).
+(`.region--…` in `css/scenery.css`). Die Weltkarte entsteht automatisch aus
+den Farben der Welt; eine eigene, ausgearbeitete Karte bekommt sie über
+`js/data/weltkarten.js` (siehe „Die Weltkarte“).
+
+## Die Weltkarte
+
+Die Kämpfe einer Welt liegen auf einer lebendigen, senkrecht scrollbaren
+Landschaft: unten Kampf 1, oben der Boss vor einem Bergpanorama. Ein
+goldener Lichtpfad verbindet die Stationen; bis zum nächsten offenen Kampf
+leuchtet er und Lichtpunkte wandern darauf entlang.
+
+* **Stationen** sind steinerne Plattformen mit goldenem Band:
+  geschafft = grünes Emblem mit Haken und drei Sternen (gold erreicht, grau
+  fehlend), offen = goldenes Emblem mit Schwertern und pulsierendem Ring,
+  gesperrt = dunkler Stein mit Schloss. Auf dem Boss-Sockel steht der Boss
+  selbst (gesperrt nur als Schatten). Antippen lässt die Plattform hüpfen;
+  neue Sterne und frisch freigeschaltete Kämpfe werden kurz gefeiert.
+* **Grünes Tal** ist voll ausgestaltet: Wasserfall an einer Felskante, ein
+  Fluss mit Steinbrücke, ein See mit Seerosen, Ruinen und Steintore,
+  Laub- und Blütenbäume, Blumenwiesen, Zäune, Laternen und eine Fahne.
+* **Bewegung:** fließendes Wasser, Gischt, ziehende Wolken und ihre
+  Schatten, wiegendes Gras, Schmetterlinge, fallende Blüten, Glitzer,
+  flackernde Laternen. Beim Scrollen bewegen sich Berge langsamer und die
+  Zweige am Rand schneller als die Karte (Parallaxe).
+* **Kopfleiste:** Figur mit Level, Sterne der Welt, Trophäen (Tipp öffnet
+  die Rangliste), Münzen (Plus öffnet den Shop), Welten-Knopf, Weltname.
+  Eine Energieanzeige gibt es nicht.
+* **Kampfkarte unten:** der gewählte Gegner (der Boss mit Krone) mit
+  Lebenspunkten und Belohnung - alles aus den Spieldaten.
+
+**Leistung:** Die stehende Landschaft wird einmal als Bild gerastert (in
+Streifen, damit iPhones kein Riesenbild halten müssen); bewegt wird fast
+nur über `transform` und `opacity`. Ruckelt es beim Öffnen, schaltet die
+Karte selbst auf weniger Effekte. Mit „Animationen aus“ oder „Weniger
+Bewegung“ am Gerät steht alles still.
+
+**Eigene Karte für eine Welt:** In `js/data/weltkarten.js` unter `KARTEN`
+einen Eintrag für die Welt ergänzen (Farben, Baumform, welche Dinge mit
+welcher Dichte, welche Effekte). Ohne Eintrag leitet sich die Karte aus den
+Farben in `js/data/worlds.js` und einer Vorlage zur Kulisse ab
+(`VORLAGEN`: Vulkan mit Lavafluss, Eis mit Tannen, Wüste mit Kakteen ...).
+Die Grafiken sind selbst gezeichnet (SVG im Code) - es werden keine fremden
+Bilder verwendet.
 
 ## Spielregeln
 
@@ -495,6 +549,13 @@ Schaden und Schild) prüft ein Test ohne Browser:
 node tests/regeln.test.mjs
 ```
 
+Die Weltkarte hat einen eigenen Test (Stationen, Weg, Fluss und Brücke,
+nichts steht auf einer Station, keine kaputten Farben in den Zeichnungen):
+
+```bash
+node tests/weltkarte.test.mjs
+```
+
 Der 2v2-Modus hat zwei eigene Tests: Regeln, KI, Belohnungen und zwei
 echte Sitzungen über eine Leitung im Arbeitsspeicher (mit absichtlichen
 Verbindungsabbrüchen) - und einen Browser-Test mit zwei Spielern in zwei
@@ -573,8 +634,9 @@ keinen hat, wird höchstens einmal pro Woche daran erinnert.
 **Neues Monster:** Eintrag in `js/data/monsters.js` mit `deck` aus 8 Attacken.
 Gegner brauchen zusätzlich `reactionTime` und `patience` für ihre KI.
 
-**Neues Level:** Eintrag in `js/data/levels.js` – inklusive `x`/`y` für die
-Position auf der Karte. Weltkarte, Weg und Freischaltung passen sich an.
+**Neues Level:** ein Gegner mehr in der Welt (`js/data/worlds.js`) –
+`js/data/levels.js` macht daraus den Kampf. Weltkarte, Weg und
+Freischaltung passen sich an.
 
 **Neue Region:** Farbschema in `css/scenery.css` ergänzen (nach dem Vorbild von
 `.scenery--sumpf`) und in den Leveln als `scenery` eintragen.
@@ -605,5 +667,6 @@ Der restliche Code bleibt unverändert.
 
 Alle Monster, Attacken und Namen sind eigene Erfindungen. Es werden bewusst
 keine geschützten Inhalte Dritter verwendet. Timo ist eigens gezeichnet, alle
-anderen Figuren sind berechnete Pixel-Figuren (`js/ui/sprite.js`).
+anderen Figuren sind berechnete Pixel-Figuren (`js/ui/sprite.js`). Die
+Landschaft der Weltkarte ist im Code gezeichnet (`js/ui/weltkarte/`).
 Die Schrift Fredoka steht unter der SIL Open Font License (`fonts/OFL.txt`).

@@ -1,0 +1,1319 @@
+/* =========================================================================
+   MonsterQuest · weltkarte.css
+   Die Weltkarte: Landschaft, Kampfstationen, Lichtpfad, Kopfleiste,
+   Kampfkarte und alle Bewegungen darauf. Aufgebaut in js/ui/weltkarte/.
+   ========================================================================= */
+
+.screen--map.wk {
+  --wk-gold: #d9a53a;
+  --wk-gold-hell: #ffe08a;
+  --wk-tief: #0f1736;
+  --wk-panel: linear-gradient(180deg, #26377a 0%, #172352 55%, #0f1838 100%);
+  justify-content: space-between;
+  gap: 0;
+  overflow: hidden;
+  background: #6fc04a;
+}
+
+/* Die Karte füllt den ganzen Bildschirm - auch hinter Notch und Leisten.
+   (Die doppelte Klasse schlägt die allgemeine Regel aus base.css, die alle
+   Kinder eines Bildschirms in den Fluss zurückholt.) */
+.screen.wk > .wk-scroll {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  background: var(--s-sky-top);
+}
+
+.wk-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.screen.wk > .wk-teilchen-ebene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.screen.wk > .wk-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.screen.wk > .wk-kopf,
+.screen.wk > .wk-fuss {
+  z-index: 2;
+}
+
+/* ---------- Ebenen der Karte ---------- */
+.wk-flaeche {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--wiese);
+  /* Lange Tipps auf der Karte sollen nichts markieren. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.wk-fern {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  will-change: transform;
+}
+
+/* Himmel über dem oberen Rand - sichtbar, wenn iOS die Karte beim
+   Hochziehen nachfedern lässt. */
+.wk-fern::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 900px;
+  background: var(--himmel);
+}
+
+.wk-fern img,
+.wk-streifen {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.wk-fern img {
+  height: 100%;
+}
+
+.wk-landschaft,
+.wk-leben,
+.wk-pfad,
+.wk-vorn {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wk-streifen {
+  position: absolute;
+  left: 0;
+}
+
+.wk-pfad svg,
+.wk-wasser {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+
+.wk-vorn {
+  z-index: 3;
+  will-change: transform;
+}
+
+/* ---------- Wasser ---------- */
+.wk-fliessen {
+  animation: wk-fliessen 2.4s linear infinite;
+}
+
+.wk-fliessen--langsam {
+  animation-name: wk-fliessen-langsam;
+  animation-duration: 4.2s;
+}
+
+@keyframes wk-fliessen {
+  to { stroke-dashoffset: -94; }
+}
+
+@keyframes wk-fliessen-langsam {
+  to { stroke-dashoffset: -130; }
+}
+
+.wk-fall-faeden {
+  animation: wk-fallen 2.6s linear infinite;
+}
+
+@keyframes wk-fallen {
+  to { transform: translateY(420px); }
+}
+
+.wk-gischt {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wk-gischt 1.6s ease-in-out infinite;
+}
+
+@keyframes wk-gischt {
+  50% { transform: scale(1.3); opacity: 0.45; }
+}
+
+.wk-glanz {
+  opacity: 0;
+  animation: wk-glanz 4.2s ease-in-out infinite;
+}
+
+@keyframes wk-glanz {
+  50% { opacity: 0.75; }
+}
+
+/* ---------- Wolken und ihre Schatten ---------- */
+.wk-wolke,
+.wk-wolkenschatten {
+  position: absolute;
+  left: 0;
+  animation: wk-ziehen linear infinite;
+  will-change: transform;
+}
+
+.wk-wolke {
+  opacity: 0.92;
+  filter: drop-shadow(0 6px 6px rgba(40, 80, 140, 0.18));
+}
+
+.wk-wolke svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wk-wolkenschatten {
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(12, 40, 20, 0.2), rgba(12, 40, 20, 0.08) 60%, rgba(12, 40, 20, 0));
+}
+
+@keyframes wk-ziehen {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(var(--breite, 400px)); }
+}
+
+/* ---------- Gras, Laternen, Fahne, Glitzer ---------- */
+.wk-halm {
+  position: absolute;
+  translate: -50% -100%;
+  transform-origin: 50% 100%;
+  animation: wk-wiegen 3.2s ease-in-out infinite;
+}
+
+.wk-halm svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes wk-wiegen {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(6deg); }
+}
+
+.wk-lichtschein {
+  position: absolute;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 232, 150, 0.75), rgba(255, 196, 90, 0.25) 55%, rgba(255, 190, 80, 0));
+  animation: wk-flackern 2.8s ease-in-out infinite;
+}
+
+@keyframes wk-flackern {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  30% { opacity: 0.6; transform: scale(0.94); }
+  55% { opacity: 1; transform: scale(1.05); }
+  70% { opacity: 0.75; }
+}
+
+.wk-fahne {
+  position: absolute;
+  transform-origin: 0 20%;
+  animation: wk-wehen 2.6s ease-in-out infinite;
+  filter: drop-shadow(3px 4px 3px rgba(0, 0, 0, 0.3));
+}
+
+.wk-fahne svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes wk-wehen {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50% { transform: skewY(6deg) scaleX(0.9); }
+}
+
+.wk-glitzer {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  translate: -50% -50%;
+  opacity: 0;
+  background: radial-gradient(circle, #fff 0 18%, rgba(255, 243, 176, 0.9) 30%, rgba(255, 243, 176, 0) 62%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  animation: wk-glitzern 3.4s ease-in-out infinite;
+}
+
+@keyframes wk-glitzern {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  50% { opacity: 1; transform: scale(var(--g, 1)) rotate(45deg); }
+}
+
+/* ---------- Schmetterlinge ---------- */
+.wk-falter {
+  position: absolute;
+  width: 18px;
+  height: 13px;
+  animation: wk-falter-weg 12s ease-in-out infinite alternate;
+}
+
+.wk-falter::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 15%;
+  width: 2px;
+  height: 75%;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: #3a2a1a;
+}
+
+.wk-falter__fluegel {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 40%, #fff 0 12%, var(--farbe) 30%);
+  border: 1px solid rgba(60, 30, 40, 0.5);
+  animation: wk-schlag 0.22s ease-in-out infinite alternate;
+}
+
+.wk-falter__fluegel--l {
+  right: 50%;
+  border-radius: 70% 20% 40% 60%;
+  transform-origin: right center;
+}
+
+.wk-falter__fluegel--r {
+  left: 50%;
+  border-radius: 20% 70% 60% 40%;
+  transform-origin: left center;
+}
+
+@keyframes wk-schlag {
+  to { transform: scaleX(0.2); }
+}
+
+@keyframes wk-falter-weg {
+  0% { transform: translate(0, 0) rotate(-8deg); }
+  25% { transform: translate(var(--weg-x), calc(var(--weg-y) * -1)) rotate(10deg); }
+  50% { transform: translate(calc(var(--weg-x) * 1.6), calc(var(--weg-y) * 0.4)) rotate(-6deg); }
+  75% { transform: translate(calc(var(--weg-x) * 0.6), calc(var(--weg-y) * 1.1)) rotate(12deg); }
+  100% { transform: translate(calc(var(--weg-x) * -0.4), calc(var(--weg-y) * -0.6)) rotate(-10deg); }
+}
+
+/* ---------- Vordergrund-Zweige ---------- */
+.wk-zweig {
+  position: absolute;
+  width: calc(112px * var(--g, 1));
+  height: calc(129px * var(--g, 1));
+  filter: blur(1.6px) drop-shadow(0 10px 10px rgba(0, 0, 0, 0.25));
+}
+
+.wk-zweig svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wk-zweig--links {
+  left: -50px;
+}
+
+.wk-zweig--rechts {
+  right: -50px;
+  transform: scaleX(-1);
+}
+
+/* ---------- Fallende Blüten über dem Bildschirm ---------- */
+.wk-teilchen {
+  position: absolute;
+  top: -4%;
+  width: 11px;
+  height: 8px;
+  border-radius: 80% 0 80% 0;
+  background: var(--farbe);
+  box-shadow: inset -2px -1px 0 rgba(0, 0, 0, 0.12);
+  opacity: 0.9;
+  animation: wk-blatt-faellt linear infinite;
+}
+
+.wk-teilchen--flocke,
+.wk-teilchen--funke,
+.wk-teilchen--glut,
+.wk-teilchen--stern {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--farbe);
+}
+
+@keyframes wk-blatt-faellt {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(var(--g, 1)); }
+  50% { transform: translate3d(var(--drift), 55vh, 0) rotate(220deg) scale(var(--g, 1)); }
+  100% { transform: translate3d(calc(var(--drift) * -0.4), 112vh, 0) rotate(440deg) scale(var(--g, 1)); }
+}
+
+/* ---------- Lichtpfad ---------- */
+.wk-lichtpunkt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 20%, rgba(255, 233, 160, 0.95) 38%, rgba(255, 196, 70, 0) 70%);
+  offset-rotate: 0deg;
+  offset-anchor: center;
+  opacity: 0;
+  animation: wk-wandern linear infinite;
+}
+
+@keyframes wk-wandern {
+  0% { offset-distance: 0%; opacity: 0; }
+  6% { opacity: 1; }
+  94% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* =========================================================
+   Kampfstationen
+   ========================================================= */
+.station {
+  position: absolute;
+  z-index: 2;
+  width: var(--station);
+  translate: -50% -50%;
+  display: grid;
+  justify-items: center;
+  padding: 0;
+  font: inherit;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.station:disabled {
+  cursor: default;
+}
+
+.station.ist-boss {
+  --station-b: calc(var(--station) * 1.32);
+  width: var(--station-b);
+}
+
+.station__koerper {
+  position: relative;
+  display: block;
+  width: var(--station);
+  aspect-ratio: 140 / 124;
+}
+
+.station.ist-boss .station__koerper {
+  width: var(--station-b);
+}
+
+.station__sockel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Lichtschein auf dem Boden rund um die Plattform. */
+.station__schein {
+  position: absolute;
+  left: 50%;
+  top: 72%;
+  width: 150%;
+  aspect-ratio: 2.3;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 220, 110, 0.6), rgba(255, 220, 110, 0.18) 60%, rgba(255, 220, 110, 0));
+  opacity: 0;
+}
+
+.station--gruen .station__schein {
+  background: radial-gradient(closest-side, rgba(150, 255, 110, 0.4), rgba(150, 255, 110, 0));
+  opacity: 0.55;
+}
+
+.station.ist-aktuell .station__schein {
+  opacity: 1;
+  animation: wk-schein 2.4s ease-in-out infinite;
+}
+
+.station.ist-boss.ist-offen .station__schein {
+  background: radial-gradient(closest-side, rgba(255, 90, 140, 0.5), rgba(255, 90, 140, 0));
+  opacity: 0.9;
+}
+
+@keyframes wk-schein {
+  50% { opacity: 0.55; transform: scale(0.92); }
+}
+
+/* Leuchtender Ring auf der Oberseite. */
+.station__ring {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 66%;
+  aspect-ratio: 2.85;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 236, 150, 0.95);
+  box-shadow: 0 0 10px 3px rgba(255, 205, 80, 0.75), inset 0 0 8px 2px rgba(255, 220, 120, 0.6);
+  opacity: 0;
+}
+
+.station--gruen .station__ring {
+  border-color: rgba(200, 255, 160, 0.9);
+  box-shadow: 0 0 8px 2px rgba(110, 230, 80, 0.7), inset 0 0 6px 1px rgba(160, 255, 120, 0.5);
+  opacity: 0.85;
+}
+
+.station--gold .station__ring {
+  opacity: 1;
+  animation: wk-ring 2.2s ease-in-out infinite;
+}
+
+.station--boss .station__ring {
+  border-color: rgba(255, 190, 210, 0.95);
+  box-shadow: 0 0 12px 3px rgba(255, 70, 130, 0.7), inset 0 0 8px 2px rgba(255, 120, 160, 0.6);
+  opacity: 1;
+  animation: wk-ring 2.6s ease-in-out infinite;
+}
+
+@keyframes wk-ring {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.55; }
+}
+
+.station.ist-gewaehlt .station__ring {
+  opacity: 1;
+  border-color: #fff;
+}
+
+/* Das Emblem schwebt knapp über der Oberseite. */
+.station__emblem {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: 50%;
+  translate: -50% 0;
+  overflow: visible;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35));
+}
+
+.station.ist-aktuell .station__emblem {
+  animation: wk-schweben 2s ease-in-out infinite;
+}
+
+@keyframes wk-schweben {
+  50% { transform: translateY(-6%); }
+}
+
+.station--gold .station__emblem {
+  filter: drop-shadow(0 0 6px rgba(255, 210, 80, 0.85)) drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35));
+}
+
+.station--gruen .station__emblem {
+  filter: drop-shadow(0 0 5px rgba(120, 255, 90, 0.7)) drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* Boss: Er steht selbst auf dem Sockel, das Emblem sitzt vorn als Plakette. */
+.station__boss {
+  position: absolute;
+  left: 50%;
+  bottom: 44%;
+  width: 62%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  display: grid;
+  place-items: end center;
+  transform-origin: 50% 100%;
+  animation: wk-boss-atmen 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));
+}
+
+.station__boss .pixel-sprite {
+  width: 100%;
+  height: 100%;
+}
+
+.station.ist-gesperrt .station__boss {
+  filter: brightness(0.1) drop-shadow(0 0 5px rgba(190, 130, 255, 0.8));
+  opacity: 0.85;
+  animation: none;
+}
+
+@keyframes wk-boss-atmen {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.03, 0.96) translateY(1%); }
+}
+
+.station.ist-boss .station__emblem {
+  top: 58%;
+  width: 30%;
+}
+
+.station__sterne {
+  position: relative;
+  z-index: 1;
+  width: 62%;
+  /* Die Sterne sitzen vorn auf dem Sockel, zwischen Plattform und Schild. */
+  margin-top: calc(var(--station) * -0.3);
+  overflow: visible;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.5));
+}
+
+.station__stern {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.station__name {
+  /* Die Plattform füllt ihren Kasten nach unten nicht ganz (Schatten) -
+     das Schild rückt deshalb etwas hinauf. */
+  margin-top: calc(var(--station) * -0.1);
+  position: relative;
+  z-index: 1;
+  padding: 2px 11px 3px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: rgba(14, 20, 46, 0.8);
+  border: 1px solid rgba(255, 215, 106, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.station__sterne + .station__name {
+  margin-top: 1px;
+}
+
+.station.ist-gesperrt .station__name {
+  color: #c4c8de;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.station.ist-boss .station__name {
+  padding: 2px 14px 3px;
+  letter-spacing: 0.08em;
+  color: #fff3c4;
+  background: linear-gradient(180deg, #7a1f45, #3e0c26);
+  border-color: rgba(255, 215, 106, 0.8);
+}
+
+.station.ist-gewaehlt .station__name {
+  color: var(--wk-tief);
+  background: linear-gradient(180deg, #fff0b0, #ffc53d);
+  border-color: #fff6d0;
+  text-shadow: none;
+}
+
+/* Antippen: Plattform hüpft, eine Lichtwelle läuft nach außen. */
+.station__koerper::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 70%;
+  aspect-ratio: 2.85;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 245, 200, 0.95);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.station.ist-angetippt .station__koerper {
+  animation: wk-huepfen 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.station.ist-angetippt .station__koerper::after {
+  animation: wk-welle 0.6s ease-out;
+}
+
+@keyframes wk-huepfen {
+  0% { transform: scale(1); }
+  35% { transform: translateY(-8%) scale(1.07); }
+  70% { transform: translateY(1%) scale(0.98); }
+  100% { transform: none; }
+}
+
+@keyframes wk-welle {
+  0% { opacity: 1; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(2); }
+}
+
+.station:not(:disabled):active .station__koerper {
+  transform: translateY(3%) scale(0.97);
+}
+
+/* Schwebende Lichtfunken über offenen Plattformen. */
+.station.ist-aktuell .station__koerper::before,
+.station.ist-gewaehlt .station__koerper::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 70%;
+  height: 50%;
+  translate: -50% -50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, #fff6c8 0 1.5px, transparent 2.5px) 12% 80% / 8px 8px no-repeat,
+    radial-gradient(circle, #fff6c8 0 1.5px, transparent 2.5px) 82% 70% / 8px 8px no-repeat,
+    radial-gradient(circle, #fff 0 1.2px, transparent 2px) 50% 95% / 6px 6px no-repeat,
+    radial-gradient(circle, #ffe9a0 0 1.4px, transparent 2.4px) 30% 60% / 8px 8px no-repeat;
+  animation: wk-funken-steigen 2.4s linear infinite;
+}
+
+@keyframes wk-funken-steigen {
+  0% { transform: translateY(20%); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-70%); opacity: 0; }
+}
+
+/* Neu freigeschaltet: kurzer Funkenregen und ein Aufploppen. */
+.station.ist-neu-frei .station__emblem {
+  animation: wk-plopp 0.7s 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) both;
+}
+
+.station.ist-neu-frei .station__schein {
+  animation: wk-blitz 1.2s 0.4s ease-out both;
+}
+
+@keyframes wk-plopp {
+  0% { transform: scale(0.2); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes wk-blitz {
+  0% { opacity: 0; transform: scale(0.4); }
+  30% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.station__stern.ist-neu {
+  animation: wk-stern-plopp 0.6s calc(0.5s + var(--i) * 0.25s) cubic-bezier(0.3, 1.8, 0.5, 1) both;
+}
+
+@keyframes wk-stern-plopp {
+  0% { transform: scale(0) rotate(-90deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* =========================================================
+   Kopfleiste
+   ========================================================= */
+.wk-kopf {
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.wk-kopf > * > * {
+  pointer-events: auto;
+}
+
+.wk-kopf__zeile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.wk-kopf__zeile--welt {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.wk-kopf__zeile--welt .wk-knopf-welten {
+  justify-self: start;
+}
+
+.wk-avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+}
+
+.wk-avatar__rahmen {
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, #a8741c, #ffe9a0, #ffc53d, #9c6512, #ffe08a, #a8741c);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+.wk-avatar__bild.hud__avatar {
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--wk-tief);
+  background: radial-gradient(circle at 50% 35%, #bfe4ff, #5a86d6 70%, #2e4a96);
+}
+
+.wk-avatar__level {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  translate: -50% 0;
+  padding: 1px 9px 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 8px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.wk-kopf__werte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.wk-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 11px 0 5px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.wk-chip__icon svg {
+  display: block;
+  width: 23px;
+  height: 23px;
+}
+
+.wk-chip--knopf {
+  cursor: pointer;
+  border-color: var(--liga, var(--wk-gold));
+}
+
+.wk-chip--knopf:active,
+.wk-chip__plus:active,
+.wk-knopf-welten:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.wk-chip--muenzen {
+  padding-right: 3px;
+}
+
+.wk-chip__plus {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 3px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: linear-gradient(180deg, #7ee06a, #2a9a24);
+  border: 1.5px solid #c9ffb0;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.wk-chip__plus svg {
+  width: 15px;
+  height: 15px;
+}
+
+.wk-knopf-welten {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px 0 9px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 14px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.wk-knopf-welten__icon svg {
+  display: block;
+  width: 27px;
+  height: 23px;
+}
+
+/* Weltname auf einem Banner mit goldenen Spitzen links und rechts. */
+.wk-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 10px;
+  background: var(--wk-panel);
+  border: 1.5px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 3px rgba(15, 23, 54, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.wk-banner::before,
+.wk-banner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  translate: 0 -50%;
+  rotate: 45deg;
+  background: linear-gradient(135deg, #ffe9a0, #c98a1c);
+  border: 1.5px solid #6b4210;
+}
+
+.wk-banner::before {
+  left: -7px;
+}
+
+.wk-banner::after {
+  right: -7px;
+}
+
+.wk-banner__icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.wk-banner__emoji {
+  font-size: 1.15rem;
+}
+
+/* =========================================================
+   Kampfkarte und Knöpfe unten
+   ========================================================= */
+.wk-fuss {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.wk-karte {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 16px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60 L0 40 L14 22 L28 40 L36 30 L50 12 L64 32 L72 26 L84 40 L92 34 L100 60 Z M300 60 L304 38 L318 18 L332 38 L344 26 L358 8 L372 30 L384 22 L400 36 L400 60 Z' fill='%23ffffff' opacity='0.05'/%3E%3C/svg%3E") bottom / 100% 60% no-repeat,
+    linear-gradient(180deg, rgba(34, 46, 98, 0.97) 0%, rgba(16, 24, 56, 0.98) 60%, rgba(10, 16, 40, 0.98) 100%);
+  border: 2px solid var(--wk-gold);
+  box-shadow: 0 0 0 3px rgba(12, 18, 44, 0.85), 0 0 0 4.5px rgba(217, 165, 58, 0.45), 0 14px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.wk-karte__ecke {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  rotate: 45deg;
+  background: linear-gradient(135deg, #ffe9a0, #c98a1c);
+  border: 1.5px solid #6b4210;
+}
+
+.wk-karte__ecke--lo { left: 50%; top: -7px; translate: -50% 0; }
+.wk-karte__ecke--ro { display: none; }
+.wk-karte__ecke--lu { left: -7px; top: 50%; translate: 0 -50%; }
+.wk-karte__ecke--ru { right: -7px; top: 50%; translate: 0 -50%; }
+
+.wk-karte__buehne {
+  position: relative;
+  width: 84px;
+  height: 80px;
+  display: grid;
+  place-items: end center;
+}
+
+.wk-karte__podest {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 78px;
+  height: 18px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(130, 205, 255, 0.55), rgba(80, 140, 255, 0));
+  border: 2px solid rgba(150, 215, 255, 0.75);
+  box-shadow: 0 0 14px rgba(120, 200, 255, 0.6);
+}
+
+.wk-karte.ist-boss .wk-karte__podest {
+  background: radial-gradient(closest-side, rgba(255, 110, 160, 0.55), rgba(255, 60, 120, 0));
+  border-color: rgba(255, 170, 200, 0.8);
+  box-shadow: 0 0 16px rgba(255, 80, 140, 0.6);
+}
+
+.wk-karte__figur {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 8px;
+  display: grid;
+  place-items: end center;
+  transform-origin: 50% 100%;
+  animation: wk-atmen 2.8s ease-in-out infinite;
+}
+
+.wk-karte__figur .pixel-sprite {
+  width: 100%;
+  height: 100%;
+}
+
+.wk-karte.ist-neu .wk-karte__figur .pixel-sprite {
+  animation: wk-aufleuchten 0.6s ease-out;
+}
+
+@keyframes wk-atmen {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-4px) scale(1.03, 0.97); }
+}
+
+@keyframes wk-aufleuchten {
+  0% { filter: brightness(2.4) drop-shadow(0 0 10px #fff); }
+  100% { filter: none; }
+}
+
+.wk-karte__funke {
+  position: absolute;
+  bottom: 14px;
+  left: calc(22% + var(--i) * 26%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff6c8;
+  box-shadow: 0 0 6px #ffe08a;
+  opacity: 0;
+  animation: wk-funke 2.4s calc(var(--i) * 0.8s) ease-out infinite;
+}
+
+.wk-karte.ist-boss .wk-karte__funke {
+  background: #ffd0e0;
+  box-shadow: 0 0 6px #ff5c8a;
+}
+
+@keyframes wk-funke {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-58px); opacity: 0; }
+}
+
+.wk-karte__trenner {
+  width: 2px;
+  align-self: stretch;
+  margin: 6px 0;
+  background: linear-gradient(180deg, transparent, var(--wk-gold), transparent);
+}
+
+.wk-karte__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wk-karte__titel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 1.14rem;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.wk-karte__krone svg {
+  display: block;
+  width: 28px;
+  height: 23px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+.wk-karte__zeile {
+  font-size: 0.9rem;
+  color: #d4dcfa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wk-karte__zeile strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.wk-karte__punkt {
+  margin: 0 3px;
+  color: var(--wk-gold);
+}
+
+.wk-karte__muenze svg {
+  display: inline-block;
+  width: 19px;
+  height: 19px;
+  vertical-align: -4px;
+}
+
+.wk-knoepfe {
+  display: flex;
+  gap: 10px;
+}
+
+.wk-zurueck {
+  flex: 0 0 auto;
+  width: 64px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border-radius: 18px;
+  background: var(--wk-panel);
+  border: 2px solid var(--wk-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 0 rgba(6, 10, 30, 0.7), 0 8px 14px rgba(0, 0, 0, 0.35);
+}
+
+.wk-zurueck svg {
+  width: 26px;
+  height: 26px;
+}
+
+.wk-zurueck:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 0 rgba(6, 10, 30, 0.7);
+}
+
+.wk-start {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: clamp(1.02rem, 5.2vw, 1.42rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  cursor: pointer;
+  text-shadow: 0 2px 0 rgba(0, 70, 0, 0.65);
+  border-radius: 22px;
+  border: 3px solid #f2c45a;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(180deg, #8fe86a 0%, #4cc23a 46%, #2f9e26 54%, #1f7a1c 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55), inset 0 -4px 0 rgba(0, 60, 0, 0.35),
+    0 0 0 2px rgba(90, 56, 10, 0.65), 0 5px 0 #145214, 0 0 22px rgba(130, 255, 100, 0.45);
+  animation: wk-knopf-glimmen 2.6s ease-in-out infinite;
+  transition: transform 0.08s ease;
+}
+
+.wk-start.ist-boss {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(180deg, #8fe86a 0%, #4cc23a 46%, #2f9e26 54%, #1f7a1c 100%);
+}
+
+.wk-start:active {
+  transform: translateY(4px) scale(0.985);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 0 rgba(0, 60, 0, 0.35),
+    0 0 0 2px rgba(90, 56, 10, 0.65), 0 1px 0 #145214, 0 0 30px rgba(170, 255, 140, 0.75);
+}
+
+.wk-start:disabled {
+  filter: grayscale(0.8) brightness(0.8);
+  animation: none;
+  cursor: default;
+}
+
+@keyframes wk-knopf-glimmen {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.1); }
+}
+
+.wk-start__text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.wk-start__play svg {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+  filter: drop-shadow(0 2px 0 rgba(0, 70, 0, 0.6));
+}
+
+.wk-start__lorbeer svg {
+  display: block;
+  width: 20px;
+  height: 28px;
+  filter: drop-shadow(0 1px 0 rgba(0, 60, 0, 0.6));
+}
+
+.wk-start__lorbeer--r {
+  transform: scaleX(-1);
+}
+
+/* ---------- Schmale Handys ---------- */
+@media (max-width: 370px) {
+  .wk-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .wk-chip {
+    height: 31px;
+    padding: 0 8px 0 4px;
+    font-size: 0.78rem;
+  }
+
+  .wk-chip__icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .wk-chip__plus {
+    width: 22px;
+    height: 22px;
+  }
+
+  .wk-banner {
+    padding: 0 12px;
+    font-size: 0.95rem;
+  }
+
+  .wk-knopf-welten {
+    padding: 0 10px 0 7px;
+    font-size: 0.84rem;
+  }
+
+  .wk-start__lorbeer {
+    display: none;
+  }
+
+  .wk-karte__buehne {
+    width: 70px;
+  }
+}
+
+/* Niedrige Bildschirme (kleine Handys, Querformat): Kopfleiste und
+   Kampfkarte rücken zusammen, damit genug Karte sichtbar bleibt. */
+@media (max-height: 700px) {
+  .wk-kopf {
+    gap: 6px;
+  }
+
+  .wk-fuss {
+    gap: 8px;
+  }
+
+  .wk-karte {
+    gap: 10px;
+    padding: 6px 12px 6px 8px;
+  }
+
+  .wk-karte__buehne {
+    width: 62px;
+    height: 58px;
+  }
+
+  .wk-karte__figur {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 6px;
+  }
+
+  .wk-karte__podest {
+    width: 58px;
+    height: 14px;
+  }
+
+  .wk-karte__titel {
+    font-size: 1rem;
+  }
+
+  .wk-karte__zeile {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .wk-start {
+    min-height: 54px;
+  }
+}
+
+.wk-karte.ist-leer .wk-karte__buehne,
+.wk-karte.ist-leer .wk-karte__trenner {
+  display: none;
+}
+
+/* ---------- Sparsamer Modus ---------- */
+.wk--niedrig .wk-zweig {
+  filter: none;
+}
+
+.wk--niedrig .wk-wolke {
+  filter: none;
+}
