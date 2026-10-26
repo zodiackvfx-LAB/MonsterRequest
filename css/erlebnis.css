@@ -1654,26 +1654,6 @@
   animation-delay: 1.1s;
 }
 
-/* ---------- Im Shop ---------- */
-.chest-card__icon {
-  width: 66px;
-  height: 66px;
-  padding: 6px 5px 4px;
-}
-
-/* Die Truhe im Shop wippt sacht - sie will geöffnet werden. */
-.chest-card__icon .truhe {
-  animation: truhe-wippen 2.8s ease-in-out infinite;
-}
-
-.chest-card:nth-child(3n) .chest-card__icon .truhe { animation-delay: -0.9s; }
-.chest-card:nth-child(3n + 1) .chest-card__icon .truhe { animation-delay: -1.8s; }
-
-@keyframes truhe-wippen {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  50%      { transform: translateY(-2px) rotate(-2deg); }
-}
-
 /* ---------- Beim Öffnen ---------- */
 .chest-open__chest {
   width: 150px;
@@ -2401,9 +2381,41 @@
 }
 
 /* ---------- Das Öffnen ---------- */
+/* Grundfarbe je Truhe: Zauberkreis, Band mit dem Namen, Schein. */
+.oeffnung--holz   { --truhe-farbe: #ff9a3c; }
+.oeffnung--silber { --truhe-farbe: #4fb8ff; }
+.oeffnung--gold   { --truhe-farbe: #ffc53d; }
+.oeffnung--boss   { --truhe-farbe: #c77dff; }
+
 .overlay--oeffnung {
-  background: radial-gradient(ellipse at 50% 35%, rgba(40, 52, 110, 0.82) 0%, rgba(6, 8, 22, 0.94) 75%);
+  --truhe-farbe: #ffc53d;
+  background:
+    radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--truhe-farbe) 22%, transparent) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 35%, rgba(40, 52, 110, 0.85) 0%, rgba(6, 8, 22, 0.95) 75%);
   cursor: pointer;
+  overflow: hidden;
+}
+
+/* Lichtstaub, der langsam aufsteigt. */
+.oeffnung__staub {
+  position: absolute;
+  bottom: -10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 2px var(--truhe-farbe);
+  opacity: 0;
+  pointer-events: none;
+  animation: staub-steigen 6s linear infinite;
+}
+
+@keyframes staub-steigen {
+  0%   { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  15%  { opacity: 0.8; }
+  50%  { transform: translate(14px, -50vh) scale(1); }
+  85%  { opacity: 0.5; }
+  100% { transform: translate(-10px, -100vh) scale(0.4); opacity: 0; }
 }
 
 .oeffnung {
@@ -2452,6 +2464,124 @@
   position: relative;
   width: 160px;
   height: 173px;
+}
+
+/* Zauberkreis unter der Truhe: zwei Ringe, die sich gegenläufig drehen. */
+.oeffnung__kreis {
+  position: absolute;
+  left: 50%;
+  top: 90%;
+  width: 210px;
+  height: 210px;
+  margin: -105px 0 0 -105px;
+  border-radius: 50%;
+  transform: scaleY(0.3);
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--truhe-farbe) 45%, transparent) 0%, transparent 55%),
+    repeating-conic-gradient(from 0deg, var(--truhe-farbe) 0deg 3deg, transparent 3deg 15deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0 38%, transparent 39% 44%, #000 45% 50%, transparent 51%);
+  mask-image: radial-gradient(circle, #000 0 38%, transparent 39% 44%, #000 45% 50%, transparent 51%);
+  opacity: 0.8;
+  animation: kreis-drehen 9s linear infinite;
+}
+
+@keyframes kreis-drehen {
+  from { transform: scaleY(0.3) rotate(0); }
+  to   { transform: scaleY(0.3) rotate(360deg); }
+}
+
+.ist-offen .oeffnung__kreis {
+  animation-duration: 3s;
+  opacity: 1;
+}
+
+/* Lichtsäule, die beim Öffnen aus der Truhe steigt. */
+.oeffnung__saeule {
+  position: absolute;
+  left: 50%;
+  bottom: 40%;
+  width: 120px;
+  height: 70vh;
+  margin-left: -60px;
+  pointer-events: none;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--leucht-farbe) 80%, #fff) 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  transform-origin: 50% 100%;
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.ist-offen .oeffnung__saeule {
+  animation: saeule-steigen 1.4s ease-out both;
+}
+
+@keyframes saeule-steigen {
+  0%   { transform: scaleX(0.2) scaleY(0); opacity: 1; }
+  30%  { transform: scaleX(1) scaleY(1); opacity: 0.9; }
+  100% { transform: scaleX(0.5) scaleY(1); opacity: 0; }
+}
+
+/* Druckwelle im Moment des Öffnens. */
+.oeffnung__welle {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  border: 6px solid var(--leucht-farbe);
+  box-shadow: 0 0 24px var(--leucht-farbe), inset 0 0 24px var(--leucht-farbe);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ist-offen .oeffnung__welle {
+  animation: welle-aus 0.75s ease-out both;
+}
+
+@keyframes welle-aus {
+  from { transform: scale(0.3); opacity: 1; }
+  to   { transform: scale(3.6); opacity: 0; border-width: 1px; }
+}
+
+/* Die Zahl an der Truhe: wie viele Stücke noch drin sind. */
+.oeffnung__zaehler {
+  position: absolute;
+  right: 4px;
+  top: 34%;
+  z-index: 2;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(60, 10, 10, 0.8);
+  background: radial-gradient(circle at 35% 30%, #ff9aa2, #e2333f 60%, #8f1420);
+  border: 3px solid #ffe27a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 90, 90, 0.5);
+  animation: pop-in 0.35s 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.oeffnung__zaehler.huepft {
+  animation: zaehler-huepfen 0.3s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.oeffnung__zaehler.ist-leer {
+  transform: scale(0);
+  opacity: 0;
+}
+
+@keyframes zaehler-huepfen {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
 }
 
 /* 1. Landen: aus dem Himmel, federnd aufsetzen. */
@@ -2539,15 +2669,54 @@
   animation: funke-spruehen 0.9s ease-out forwards;
 }
 
+/* Erst hinaus, dann ein Stück fallen - wie bei einem echten Funkenregen. */
 @keyframes funke-spruehen {
-  0%   { transform: translate(0, 0) scale(1.2); opacity: 1; }
-  100% { transform: translate(var(--fx), var(--fy)) scale(0.2); opacity: 0; }
+  0%   { transform: translate(0, 0) scale(1.2) rotate(0); opacity: 1; }
+  55%  { transform: translate(var(--fx), var(--fy)) scale(1) rotate(calc(var(--dreh, 0deg) * 0.6)); opacity: 1; }
+  100% { transform: translate(calc(var(--fx) * 1.15), calc(var(--fy) + 80px)) scale(0.3) rotate(var(--dreh, 0deg)); opacity: 0; }
 }
 
+.oeffnung__funke--stern {
+  width: 16px;
+  height: 16px;
+  margin: -8px;
+  border-radius: 0;
+  background: #fff6c9;
+  box-shadow: none;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 6px var(--leucht-farbe));
+  animation-duration: 1.2s;
+}
+
+.oeffnung__funke--muenze {
+  width: 14px;
+  height: 14px;
+  margin: -7px;
+  background: radial-gradient(circle at 34% 28%, #ffeda6 0%, var(--gold-1) 42%, var(--gold-2) 100%);
+  border: 2px solid #a86c14;
+  box-shadow: 0 0 8px rgba(255, 197, 61, 0.7);
+  animation-duration: 1.3s;
+}
+
+/* Der Name auf einem Band in der Farbe der Truhe. */
 .oeffnung__titel {
+  position: relative;
+  z-index: 1;
   font-size: 1.3rem;
   font-weight: 700;
-  text-shadow: 0 2px 0 rgba(8, 14, 40, 0.8);
+}
+
+.oeffnung__titel span {
+  display: inline-block;
+  padding: 4px 26px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--truhe-farbe) 70%, #fff) 0%, var(--truhe-farbe) 45%, color-mix(in srgb, var(--truhe-farbe) 55%, #000) 100%);
+  border: 2px solid #ffe27a;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(8, 14, 40, 0.75);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%);
+  animation: pop-in 0.4s 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
 
 .oeffnung__hinweis {
@@ -2578,11 +2747,36 @@
   animation: stueck-fliegen 0.5s cubic-bezier(0.25, 1.3, 0.5, 1) both;
 }
 
+/* Fliegt aus der Truhe und dreht sich dabei um - wie eine Karte. */
 @keyframes stueck-fliegen {
-  0%   { transform: translate(var(--von-x), var(--von-y)) scale(0.2) rotate(-25deg); opacity: 0; }
+  0%   { transform: translate(var(--von-x), var(--von-y)) scale(0.2) rotateY(-90deg) rotate(-25deg); opacity: 0; }
   20%  { opacity: 1; }
-  70%  { transform: translate(0, 0) scale(1.12) rotate(4deg); }
-  100% { transform: translate(0, 0) scale(1) rotate(0); }
+  70%  { transform: translate(0, 0) scale(1.12) rotateY(0) rotate(4deg); }
+  100% { transform: translate(0, 0) scale(1) rotateY(0) rotate(0); }
+}
+
+/* Legendäre Stücke: ein Regenbogenrand, der umläuft. */
+.overlay--oeffnung .loot-item.is-legendaer {
+  border-color: transparent;
+  background:
+    linear-gradient(180deg, #4a3a85 0%, var(--panel-solid) 60%, #18224e 100%) padding-box,
+    conic-gradient(from var(--legendaer-winkel, 0deg), #ffb32b, #ff5f8a, #c07bff, #49c7ff, #7ee06a, #ffb32b) border-box;
+  animation: legendaer-umlauf 2.4s linear infinite;
+}
+
+.overlay--oeffnung .loot-item.is-legendaer.fliegt {
+  animation: stueck-fliegen 0.5s cubic-bezier(0.25, 1.3, 0.5, 1) both, besonders-gluehen 1.6s 0.5s ease-in-out infinite,
+    legendaer-umlauf 2.4s linear infinite;
+}
+
+@property --legendaer-winkel {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes legendaer-umlauf {
+  to { --legendaer-winkel: 360deg; }
 }
 
 /* Seltene Stücke: ein Lichtring, der sich ausdehnt, und ein Glühen. */
@@ -2990,58 +3184,6 @@
   width: 100%;
   margin-top: 14px;
   text-decoration: none;
-}
-
-/* ---------- Shop: Hüte und Muster fürs Skin-Studio (js/screens/shop.js) ---------- */
-.studio-shop__link {
-  margin-top: 10px;
-  text-decoration: none;
-}
-
-.studio-shop {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 8px;
-}
-
-.studio-teil {
-  display: grid;
-  justify-items: center;
-  gap: 3px;
-  padding: 10px 6px;
-  text-align: center;
-  border-radius: 14px;
-  border: 2px solid color-mix(in srgb, var(--rarity) 70%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--rarity) 22%, #1b2450), #16204a);
-}
-
-.studio-teil__icon {
-  font-size: 1.7rem;
-  line-height: 1.2;
-}
-
-.studio-teil__name {
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.studio-teil__rarity {
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--rarity);
-}
-
-.studio-teil__hat {
-  font-size: 0.66rem;
-  font-weight: 700;
-  color: var(--green-1);
-}
-
-.studio-teil__kaufen {
-  min-height: 34px;
-  padding: 4px 10px;
-  font-size: 0.8rem;
-  margin-top: 2px;
 }
 
 /* ---------- Ergebnisfenster auf Handys ----------

@@ -59,6 +59,8 @@ css/
                         Kartenrahmen, Wetter, Tageszeit, Weltkarten-Teilchen
   weltkarte.css         Weltkarte: Stationen, Lichtpfad, Kopfleiste,
                         Kampfkarte und alle Bewegungen auf der Karte
+  shop.css              Shop: Nachtmarkt, Schild, Reiter, Goldrahmen,
+                        Truhen auf Steinsockeln, Studio und Besitz
 
 fonts/                  Spielschrift Fredoka (lokal, kein externer Aufruf)
 
@@ -118,8 +120,11 @@ js/
     kampfintro.js       Intro vor dem Kampf, Auftritte, Bewegung je Gegnerform
     umgebung.js         Arena-Varianten, Tageszeit, Wetter, kleine Tiere
     truhen.js           Die gezeichneten Truhen (Holz, Silber, Gold, Boss)
-    truhe-oeffnen.js    Die Öffnungs-Animation (Landen, Rütteln, Aufspringen,
-                        Beute fliegt heraus)
+    shop-deko.js        Ausstattung des Shops: Nachtmarkt, Schild mit Lorbeer,
+                        Eckverzierungen, Steinsockel, Reiter-Bildchen
+    truhe-oeffnen.js    Die Öffnungs-Animation (Landen auf dem Zauberkreis,
+                        Rütteln, Druckwelle und Lichtsäule, Beute fliegt
+                        heraus, Zähler an der Truhe)
     weltkarte/          Die Weltkarte (siehe "Die Weltkarte" unten)
       layout.js         plant Stationen, Weg, Fluss, Brücke, See, Verzierung
       zeichnen.js       zeichnet Himmel, Berge, Wiese, Wasser, Bäume ... (SVG)

@@ -1,5 +1,6 @@
 /**
- * Shop - in zwei Reitern, wie die Sammlung.
+ * Shop - in drei Reitern, wie die Sammlung. Hinter allem liegt ein
+ * Nachtmarkt (js/ui/shop-deko.js), gestaltet in css/shop.css.
  *
  *   Truhen  Truhen kaufen und öffnen
  *   Studio  Hüte und Muster fürs Skin-Studio kaufen (js/data/studio-teile.js)
@@ -19,7 +20,7 @@ import { bezahlen, gameState, kannBezahlen } from '../core/state.js';
 import { spieleKlang } from '../core/audio.js';
 import { pruefeNeueErfolge, statistikSpeichern } from '../core/statistik.js';
 import { zeigeErfolgToast } from '../ui/toast.js';
-import { createScenery } from '../ui/scenery.js';
+import { REITER_ICONS, shopKulisse, shopTitel, sockelSvg, zierEcken } from '../ui/shop-deko.js';
 import { createHud, createTopbar } from '../ui/hud.js';
 import { spritesNeuZeichnen } from '../ui/sprite.js';
 import { STUDIO_TEILE } from '../data/studio-teile.js';
@@ -29,13 +30,13 @@ import { besitztStudioTeil } from '../core/state.js';
 export const shopScreen = {
   mount(root, params = {}) {
     const screen = document.createElement('div');
-    screen.className = 'screen screen--page';
-    screen.appendChild(createScenery({ dimmed: true }));
-    screen.appendChild(createTopbar('Shop', () => showScreen('start')));
+    screen.className = 'screen screen--page screen--shop';
+    screen.appendChild(shopKulisse());
+    screen.appendChild(createTopbar(shopTitel('Shop'), () => showScreen('start')));
     screen.appendChild(createHud());
 
     const reiterLeiste = document.createElement('div');
-    reiterLeiste.className = 'tabs';
+    reiterLeiste.className = 'tabs tabs--shop';
     screen.appendChild(reiterLeiste);
 
     const content = document.createElement('div');
@@ -56,7 +57,7 @@ export const shopScreen = {
         const knopf = document.createElement('button');
         knopf.className = `tab${reiter.id === aktiv ? ' is-active' : ''}`;
         knopf.type = 'button';
-        knopf.textContent = reiter.label;
+        knopf.innerHTML = `<span class="tab__icon">${REITER_ICONS[reiter.id]()}</span><span>${reiter.label}</span>`;
         knopf.addEventListener('click', () => {
           if (aktiv === reiter.id) return;
           aktiv = reiter.id;
@@ -75,9 +76,10 @@ export const shopScreen = {
     /* ---------- Reiter 1: Truhen ---------- */
     function baueTruhen(content) {
       const hinweis = document.createElement('div');
-      hinweis.className = 'panel panel--tight';
+      hinweis.className = 'shop-info';
       hinweis.innerHTML = `
-        <p class="map__info-text">
+        <span class="shop-info__i" aria-hidden="true">i</span>
+        <p class="shop-info__text">
           Münzen verdienst du in Kämpfen. Jede Truhe enthält
           <strong>5 Beutestücke</strong>: einmal <strong>150 bis 500 Münzen</strong>,
           einmal Material und <strong>Fähigkeitskarten</strong> (ab und zu ein Skin, Hut oder Muster).
@@ -85,19 +87,25 @@ export const shopScreen = {
           <br>🎁 <strong>Jeder 2. Sieg</strong> bringt eine Holztruhe gratis –
           noch ${siegeBisGratisTruhe()} Sieg${siegeBisGratisTruhe() === 1 ? '' : 'e'}.
         </p>
+        ${zierEcken()}
       `;
       content.appendChild(hinweis);
 
       TRUHEN.forEach((truhe) => {
         const karte = document.createElement('div');
-        karte.className = 'chest-card';
+        karte.className = `chest-card chest-card--${truhe.design}`;
         karte.innerHTML = `
-          <div class="chest-card__icon">${truheSvg(truhe.design)}</div>
+          <div class="chest-card__buehne">
+            <span class="chest-card__strahlen" aria-hidden="true"></span>
+            ${sockelSvg()}
+            <div class="chest-card__icon">${truheSvg(truhe.design)}</div>
+          </div>
           <div class="chest-card__body">
             <div class="chest-card__name">${truhe.name}</div>
             <div class="chest-card__text">${truhe.text}</div>
             <div class="chest-card__odds">${chancenText(truhe)}</div>
           </div>
+          ${zierEcken()}
         `;
 
         const kaufen = document.createElement('button');
@@ -122,21 +130,23 @@ export const shopScreen = {
     function baueStudio(content) {
       const { hat, alle } = teileZaehlen();
       const kopf = document.createElement('div');
-      kopf.className = 'panel panel--tight';
+      kopf.className = 'shop-info shop-info--studio';
       kopf.innerHTML = `
-        <p class="map__info-text">
+        <span class="shop-info__i" aria-hidden="true">i</span>
+        <p class="shop-info__text">
           Hüte und Muster für dein eigenes Outfit im <strong>Skin-Studio</strong>.
           Farben sind dort immer kostenlos. Alles hier gibt es auch aus Truhen.
           <br>Freigeschaltet: <strong>${hat} von ${alle}</strong>
         </p>
         <a class="btn btn--small studio-shop__link" href="werkstatt.html">🎨 Zum Skin-Studio</a>
+        ${zierEcken()}
       `;
       content.appendChild(kopf);
 
       [['hut', '🎩 Hüte'], ['muster', '🧵 Muster']].forEach(([art, titel]) => {
         const block = document.createElement('div');
-        block.className = 'panel';
-        block.innerHTML = `<div class="panel__title">${titel}</div><div class="studio-shop"></div>`;
+        block.className = 'shop-rahmen';
+        block.innerHTML = `<div class="shop-rahmen__titel">${titel}</div><div class="studio-shop"></div>${zierEcken()}`;
         const gitter = block.querySelector('.studio-shop');
         STUDIO_TEILE.filter((t) => t.art === art).forEach((teil) => {
           const { name, icon } = teilAnzeige(teil);
@@ -177,30 +187,27 @@ export const shopScreen = {
 
     /* ---------- Reiter 3: Besitz ---------- */
     function baueBesitz(content) {
+      const { hat, alle } = teileZaehlen();
+      const KACHELN = [
+        { icon: MUENZE, wert: gameState.coins, name: 'Münzen', farbe: '#ffc53d' },
+        { icon: '💠', wert: gameState.materials, name: 'Material', farbe: '#5ecbff' },
+        { icon: '🃏', wert: gameState.ownedAttacks.length, name: 'Attacken aus Truhen', farbe: '#c07bff' },
+        { icon: '👕', wert: gameState.ownedSkins.length, name: 'Skins', farbe: '#7ee06a' },
+        { icon: '🎩', wert: `${hat} / ${alle}`, name: 'Hüte und Muster', farbe: '#ff8ad8' },
+      ];
       const besitz = document.createElement('div');
-      besitz.className = 'panel';
+      besitz.className = 'shop-rahmen';
       besitz.innerHTML = `
-        <div class="panel__title">Dein Besitz</div>
-        <div class="stat-row">
-          <span class="stat-row__label">Münzen</span>
-          <span class="stat-row__value">${MUENZE} ${gameState.coins}</span>
+        <div class="shop-rahmen__titel">🎒 Dein Besitz</div>
+        <div class="besitz">
+          ${KACHELN.map((k) => `
+            <div class="besitz__kachel" style="--farbe:${k.farbe}">
+              <span class="besitz__icon">${k.icon}</span>
+              <span class="besitz__wert">${k.wert}</span>
+              <span class="besitz__name">${k.name}</span>
+            </div>`).join('')}
         </div>
-        <div class="stat-row">
-          <span class="stat-row__label">Material</span>
-          <span class="stat-row__value">💠 ${gameState.materials}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-row__label">Attacken aus Truhen</span>
-          <span class="stat-row__value">${gameState.ownedAttacks.length}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-row__label">Skins</span>
-          <span class="stat-row__value">${gameState.ownedSkins.length}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-row__label">Hüte und Muster</span>
-          <span class="stat-row__value">${teileZaehlen().hat} / ${teileZaehlen().alle}</span>
-        </div>
+        ${zierEcken()}
       `;
       content.appendChild(besitz);
     }
@@ -216,7 +223,7 @@ function chancenText(truhe) {
       return `<span style="color:${seltenheit.farbe}">${seltenheit.name} ${chance}%</span>`;
     });
   const garantie = truhe.garantie
-    ? ` · garantiert ${SELTENHEITEN[truhe.garantie].name}`
+    ? ` · <strong style="color:${SELTENHEITEN[truhe.garantie].farbe}">garantiert ${SELTENHEITEN[truhe.garantie].name}</strong>`
     : '';
   return teile.join(' · ') + garantie;
 }

@@ -2,14 +2,18 @@
  * Das Öffnen einer Truhe - mit großer Animation.
  *
  * Ablauf:
- *   1. Die Truhe fällt herab und landet federnd, hinter ihr drehen sich
- *      Lichtstrahlen. "Tippen zum Öffnen".
+ *   1. Die Truhe fällt herab und landet federnd auf einem leuchtenden
+ *      Zauberkreis, hinter ihr drehen sich Lichtstrahlen, Lichtstaub steigt
+ *      auf. Eine Zahl an der Truhe sagt, wie viele Stücke drin sind.
+ *      "Tippen zum Öffnen".
  *   2. Nach dem Tipp rüttelt sie immer stärker und beginnt zu leuchten.
- *   3. Ein Lichtblitz - der Deckel springt auf, Funken sprühen in der Farbe
- *      des wertvollsten Stücks.
- *   4. Die Stücke fliegen einzeln aus der Truhe auf ihren Platz. Seltene
- *      Stücke bekommen eine kurze Pause, einen Lichtring und ihren Klang.
- *      Ein Tipp zeigt sofort alle.
+ *   3. Ein Lichtblitz und eine Druckwelle - der Deckel springt auf, eine
+ *      Lichtsäule steigt auf, Funken, Sterne und Münzen sprühen in der
+ *      Farbe des wertvollsten Stücks.
+ *   4. Die Stücke fliegen einzeln aus der Truhe auf ihren Platz und drehen
+ *      sich dabei um; die Zahl an der Truhe zählt herunter. Seltene Stücke
+ *      bekommen eine kurze Pause, einen Lichtring und ihren Klang,
+ *      legendäre zusätzlich einen schimmernden Rand. Ein Tipp zeigt sofort alle.
  *   5. "Alles einsammeln" (und, falls im Lager noch Truhen liegen,
  *      "Nächste Truhe").
  *
@@ -62,6 +66,9 @@ function inhaltFuer(stueck, seltenheit) {
 const TAKT = 380;
 const TAKT_SELTEN = 820;
 
+/** Lichtstaub, der während des Öffnens aufsteigt: [links %, Verzögerung s]. */
+const STAUB = [[12, 0], [24, 2.2], [36, 0.9], [48, 3.1], [58, 1.5], [70, 0.4], [82, 2.6], [90, 1.2], [6, 3.6], [64, 4.2]];
+
 function animationenAn() {
   if (document.body.classList.contains('no-animations')) return false;
   try {
@@ -103,10 +110,14 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
     <div class="oeffnung">
       <div class="oeffnung__buehne">
         <span class="oeffnung__strahlen" aria-hidden="true"></span>
+        <span class="oeffnung__kreis" aria-hidden="true"></span>
+        <span class="oeffnung__saeule" aria-hidden="true"></span>
+        <span class="oeffnung__welle" aria-hidden="true"></span>
         <div class="oeffnung__truhe">${truheSvg(truhe.design)}</div>
+        <span class="oeffnung__zaehler" aria-label="${stuecke.length} Stücke">${stuecke.length}</span>
         <span class="oeffnung__funken" aria-hidden="true"></span>
       </div>
-      <div class="oeffnung__titel">${truhe.name}</div>
+      <div class="oeffnung__titel"><span>${truhe.name}</span></div>
       <div class="oeffnung__hinweis">Tippen zum Öffnen</div>
       <div class="loot-grid oeffnung__beute"></div>
       <div class="oeffnung__knoepfe" hidden>
@@ -114,6 +125,7 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
         ${weitere > 0 ? `<button class="btn" data-aktion="naechste" type="button">🎁 Nächste Truhe öffnen (${weitere})</button>` : ''}
       </div>
     </div>
+    ${STAUB.map(([x, t]) => `<span class="oeffnung__staub" style="left:${x}%;animation-delay:${t}s" aria-hidden="true"></span>`).join('')}
     <span class="oeffnung__blitz" aria-hidden="true"></span>
   `;
   behaelter.appendChild(overlay);
@@ -123,6 +135,7 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
   const gitter = overlay.querySelector('.oeffnung__beute');
   const knoepfe = overlay.querySelector('.oeffnung__knoepfe');
   const funken = overlay.querySelector('.oeffnung__funken');
+  const zaehler = overlay.querySelector('.oeffnung__zaehler');
 
   // Leere Plätze für die Stücke - so steht das Raster von Anfang an fest.
   const felder = stuecke.map(() => {
@@ -134,6 +147,17 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
 
   let phase = 'wartet'; // wartet -> ruettelt -> zeigt -> fertig
   let naechstes = 0;
+
+  /** Die Zahl an der Truhe: wie viele Stücke noch drin sind. */
+  function zaehlerSetzen() {
+    const rest = stuecke.length - naechstes;
+    zaehler.textContent = rest;
+    zaehler.classList.toggle('ist-leer', rest === 0);
+    // Kurz hüpfen lassen - Klasse neu setzen startet die Animation neu.
+    zaehler.classList.remove('huepft');
+    void zaehler.offsetWidth;
+    zaehler.classList.add('huepft');
+  }
 
   if (bewegt) {
     overlay.classList.add('ist-landend');
@@ -173,6 +197,7 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
     }
     const index = naechstes++;
     aufdecken(index);
+    zaehlerSetzen();
     const stueck = stuecke[index];
     const selten = RANG[stueck.seltenheit] >= 2 || stueck.art === 'attacke' ||
       (stueck.ergebnis && stueck.ergebnis.level > stueck.ergebnis.levelVorher);
@@ -185,22 +210,30 @@ export function zeigeTruhenOeffnung(behaelter, truhe, { weitere = 0, fertig = ()
     timer.length = 0;
     // Was noch fehlt, erscheint sofort.
     for (; naechstes < stuecke.length; naechstes++) aufdecken(naechstes, true);
+    zaehlerSetzen();
     phase = 'fertig';
     overlay.classList.add('ist-fertig');
     hinweis.textContent = 'Du erhältst:';
     knoepfe.hidden = false;
   }
 
-  /** Funken in alle Richtungen - in der Farbe des besten Stücks. */
+  /**
+   * Funken in alle Richtungen - in der Farbe des besten Stücks. Dazwischen
+   * ein paar Sterne und Münzen, die nach oben fliegen und wieder fallen.
+   */
   function funkenSpruehen() {
     if (!bewegt) return;
-    for (let i = 0; i < 16; i++) {
+    const ANZAHL = 26;
+    for (let i = 0; i < ANZAHL; i++) {
       const funke = document.createElement('span');
-      funke.className = 'oeffnung__funke';
-      const winkel = (i / 16) * Math.PI * 2;
-      const weite = 70 + Math.random() * 60;
+      const art = i % 6 === 0 ? ' oeffnung__funke--muenze' : i % 4 === 0 ? ' oeffnung__funke--stern' : '';
+      funke.className = `oeffnung__funke${art}`;
+      const winkel = (i / ANZAHL) * Math.PI * 2 + Math.random() * 0.3;
+      const weite = 80 + Math.random() * 90;
       funke.style.setProperty('--fx', `${Math.cos(winkel) * weite}px`);
-      funke.style.setProperty('--fy', `${Math.sin(winkel) * weite - 20}px`);
+      funke.style.setProperty('--fy', `${Math.sin(winkel) * weite * 0.8 - 40}px`);
+      funke.style.setProperty('--dreh', `${Math.round(Math.random() * 540 - 270)}deg`);
+      funke.style.animationDelay = `${Math.random() * 0.12}s`;
       funken.appendChild(funke);
     }
   }
